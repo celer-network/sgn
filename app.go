@@ -12,6 +12,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	// "github.com/cosmos/cosmos-sdk/client/context"
+	// "github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -28,6 +30,7 @@ import (
 	"github.com/cosmos/sdk-application-tutorial/x/nameservice"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	// "github.com/cosmos/cosmos-sdk/x/auth/types/txbuilder"
 )
 
 const appName = "nameservice"
@@ -296,7 +299,7 @@ func (app *nameServiceApp) InitChainer(ctx sdk.Context, req abci.RequestInitChai
 func (app *nameServiceApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	if !monitor {
 		monitor = true
-		app.setupMonitor(ctx)
+		go app.setupMonitor(ctx)
 	}
 	return app.mm.BeginBlock(ctx, req)
 }
@@ -329,7 +332,7 @@ func (app *nameServiceApp) ExportAppStateAndValidators(forZeroHeight bool, jailW
 func (app *nameServiceApp) setupMonitor(ctx sdk.Context) {
 	app.Logger().Info("setup monitor")
 
-	s, err := simple.NewSimpleFilterer(ethcommon.HexToAddress("0xbe1eb37fb7ed74b592ed770663f9aa399184d622"), ethClient)
+	s, err := simple.NewSimpleFilterer(ethcommon.HexToAddress("0x99a89c797b60235d8ebffea5c36cedffc6645673"), ethClient)
 	if err != nil {
 		app.Logger().Error("new filter err:", err)
 		return
@@ -343,13 +346,18 @@ func (app *nameServiceApp) setupMonitor(ctx sdk.Context) {
 	}
 
 	defer sub.Unsubscribe()
-
 	for {
 		select {
 		case err := <-sub.Err():
 			app.Logger().Error("sub error", err)
 		case test := <-testEvent:
 			app.Logger().Info("Seeing test event", test.I.String())
+			app.nsKeeper.SetNumber(ctx)
+			// cliCtx := context.NewCLIContext().
+			// 	WithCodec(app.cdc)
+			// txBldr := txbuilder.NewTxBuilderFromCLI().
+			// 	WithTxEncoder(utils.GetTxEncoder(app.cdc)).
+			// 	WithChainID(chainID)
 		}
 	}
 }

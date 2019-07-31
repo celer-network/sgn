@@ -11,17 +11,14 @@ const (
 )
 
 var (
-	NewMsgBuyName = types.NewMsgBuyName
-	NewMsgSetName = types.NewMsgSetName
-	NewWhois      = types.NewWhois
-	ModuleCdc     = types.ModuleCdc
-	RegisterCodec = types.RegisterCodec
+	NewMsgSetNumber = types.NewMsgSetNumber
+	ModuleCdc       = types.ModuleCdc
+	RegisterCodec   = types.RegisterCodec
+	NewSimple       = types.NewNumber
 )
 
 type (
-	MsgSetName      = types.MsgSetName
-	MsgBuyName      = types.MsgBuyName
-	QueryResResolve = types.QueryResResolve
-	QueryResNames   = types.QueryResNames
-	Whois           = types.Whois
+	MsgSetNumber   = types.MsgSetNumber
+	QueryResNumber = types.QueryResNumber
+	Number         = types.Number
 )

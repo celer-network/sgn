@@ -28,10 +28,10 @@ var (
 )
 
 // SimpleABI is the input ABI used to generate the binding from.
-const SimpleABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"emitEvent\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"Test\",\"type\":\"event\"}]"
+const SimpleABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"a\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"emitEvent\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"Test\",\"type\":\"event\"}]"
 
 // SimpleBin is the compiled bytecode used for deploying new contracts.
-const SimpleBin = `0x6080604052348015600f57600080fd5b5060a08061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c80637b0cb83914602d575b600080fd5b60336035565b005b604080516001815290517f63a242a632efe33c0e210e04e4173612a17efa4f16aa4890bc7e46caece80de09181900360200190a156fea265627a7a723058201330c5d47880b0e49551f0c544d660d42837c0ec185c66930758d93ba6150df664736f6c634300050a0032`
+const SimpleBin = `0x608060405234801561001057600080fd5b5060e18061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630dbe671f1460375780634d43bec914604f575b600080fd5b603d606b565b60408051918252519081900360200190f35b606960048036036020811015606357600080fd5b50356071565b005b60005481565b60008190556040805182815290517f63a242a632efe33c0e210e04e4173612a17efa4f16aa4890bc7e46caece80de09181900360200190a15056fea265627a7a72305820fca68aed6bc91a562680bea687531038ed557ff296a7bdea542d996ea8b3bb1564736f6c634300050a0032`
 
 // DeploySimple deploys a new Ethereum contract, binding an instance of Simple to it.
 func DeploySimple(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Simple, error) {
@@ -188,25 +188,51 @@ func (_Simple *SimpleTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Simple.Contract.contract.Transact(opts, method, params...)
 }
 
-// EmitEvent is a paid mutator transaction binding the contract method 0x7b0cb839.
+// A is a free data retrieval call binding the contract method 0x0dbe671f.
 //
-// Solidity: function emitEvent() returns()
-func (_Simple *SimpleTransactor) EmitEvent(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Simple.contract.Transact(opts, "emitEvent")
+// Solidity: function a() constant returns(uint256)
+func (_Simple *SimpleCaller) A(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Simple.contract.Call(opts, out, "a")
+	return *ret0, err
 }
 
-// EmitEvent is a paid mutator transaction binding the contract method 0x7b0cb839.
+// A is a free data retrieval call binding the contract method 0x0dbe671f.
 //
-// Solidity: function emitEvent() returns()
-func (_Simple *SimpleSession) EmitEvent() (*types.Transaction, error) {
-	return _Simple.Contract.EmitEvent(&_Simple.TransactOpts)
+// Solidity: function a() constant returns(uint256)
+func (_Simple *SimpleSession) A() (*big.Int, error) {
+	return _Simple.Contract.A(&_Simple.CallOpts)
 }
 
-// EmitEvent is a paid mutator transaction binding the contract method 0x7b0cb839.
+// A is a free data retrieval call binding the contract method 0x0dbe671f.
 //
-// Solidity: function emitEvent() returns()
-func (_Simple *SimpleTransactorSession) EmitEvent() (*types.Transaction, error) {
-	return _Simple.Contract.EmitEvent(&_Simple.TransactOpts)
+// Solidity: function a() constant returns(uint256)
+func (_Simple *SimpleCallerSession) A() (*big.Int, error) {
+	return _Simple.Contract.A(&_Simple.CallOpts)
+}
+
+// EmitEvent is a paid mutator transaction binding the contract method 0x4d43bec9.
+//
+// Solidity: function emitEvent(uint256 i) returns()
+func (_Simple *SimpleTransactor) EmitEvent(opts *bind.TransactOpts, i *big.Int) (*types.Transaction, error) {
+	return _Simple.contract.Transact(opts, "emitEvent", i)
+}
+
+// EmitEvent is a paid mutator transaction binding the contract method 0x4d43bec9.
+//
+// Solidity: function emitEvent(uint256 i) returns()
+func (_Simple *SimpleSession) EmitEvent(i *big.Int) (*types.Transaction, error) {
+	return _Simple.Contract.EmitEvent(&_Simple.TransactOpts, i)
+}
+
+// EmitEvent is a paid mutator transaction binding the contract method 0x4d43bec9.
+//
+// Solidity: function emitEvent(uint256 i) returns()
+func (_Simple *SimpleTransactorSession) EmitEvent(i *big.Int) (*types.Transaction, error) {
+	return _Simple.Contract.EmitEvent(&_Simple.TransactOpts, i)
 }
 
 // SimpleTestIterator is returned from FilterTest and is used to iterate over the raw logs and unpacked data for Test events raised by the Simple contract.
