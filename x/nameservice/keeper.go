@@ -3,6 +3,9 @@ package nameservice
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/sdk-application-tutorial/mainchain"
+	"github.com/cosmos/sdk-application-tutorial/simple"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -35,9 +38,21 @@ func (k Keeper) GetNumber(ctx sdk.Context) Number {
 	return number
 }
 
-// Sets the entire Whois metadata struct for a name
+// Sets the entire Whois metadata struc2t for a name
 func (k Keeper) SetNumber(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
-	store.Set([]byte("test"), k.cdc.MustMarshalBinaryBare(Number{Value: 2}))
+	simple, err := simple.NewSimple(mainchain.SimpleAddress, mainchain.EthClient)
+	if err != nil {
+		ctx.Logger().Error("set number error", err)
+		return
+	}
+
+	result, err := simple.A(&bind.CallOpts{})
+	if err != nil {
+		ctx.Logger().Error("set number error", err)
+		return
+	}
+
+	store.Set([]byte("test"), k.cdc.MustMarshalBinaryBare(Number{Value: uint(result.Uint64())}))
 }

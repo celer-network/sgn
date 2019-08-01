@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -26,10 +25,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-	"github.com/cosmos/sdk-application-tutorial/simple"
 	"github.com/cosmos/sdk-application-tutorial/x/nameservice"
-	ethcommon "github.com/ethereum/go-ethereum/common"
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/cosmos/sdk-application-tutorial/mainchain"
+	"github.com/cosmos/sdk-application-tutorial/simple"
 	// "github.com/cosmos/cosmos-sdk/x/auth/types/txbuilder"
 )
 
@@ -64,8 +62,7 @@ var (
 		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
 	}
 
-	monitor   bool
-	ethClient = getEthClient()
+	monitor bool
 )
 
 // MakeCodec generates the necessary codecs for Amino
@@ -329,10 +326,10 @@ func (app *nameServiceApp) ExportAppStateAndValidators(forZeroHeight bool, jailW
 	return appState, validators, nil
 }
 
-func (app *nameServiceApp) setupMonitor(ctx sdk.Context) {
+func (app *nameServiceApp)setupMonitor(ctx sdk.Context) {
 	app.Logger().Info("setup monitor")
 
-	s, err := simple.NewSimpleFilterer(ethcommon.HexToAddress("0x99a89c797b60235d8ebffea5c36cedffc6645673"), ethClient)
+	s, err := simple.NewSimpleFilterer(mainchain.SimpleAddress, mainchain.EthClient)
 	if err != nil {
 		app.Logger().Error("new filter err:", err)
 		return
@@ -360,13 +357,4 @@ func (app *nameServiceApp) setupMonitor(ctx sdk.Context) {
 			// 	WithChainID(chainID)
 		}
 	}
-}
-
-func getEthClient() *ethclient.Client {
-	const address = "wss://ropsten.infura.io/ws"
-	rpcClient, err := ethrpc.Dial(address)
-	if err != nil {
-		panic(err)
-	}
-	return ethclient.NewClient(rpcClient)
 }
