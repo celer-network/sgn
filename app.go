@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -11,12 +12,12 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	// "github.com/cosmos/cosmos-sdk/client/context"
-	// "github.com/cosmos/cosmos-sdk/client/utils"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
@@ -25,10 +26,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-	"github.com/cosmos/sdk-application-tutorial/x/nameservice"
 	"github.com/cosmos/sdk-application-tutorial/mainchain"
 	"github.com/cosmos/sdk-application-tutorial/simple"
-	// "github.com/cosmos/cosmos-sdk/x/auth/types/txbuilder"
+	"github.com/cosmos/sdk-application-tutorial/x/nameservice"
 )
 
 const appName = "nameservice"
@@ -326,7 +326,7 @@ func (app *nameServiceApp) ExportAppStateAndValidators(forZeroHeight bool, jailW
 	return appState, validators, nil
 }
 
-func (app *nameServiceApp)setupMonitor(ctx sdk.Context) {
+func (app *nameServiceApp) setupMonitor(ctx sdk.Context) {
 	app.Logger().Info("setup monitor")
 
 	s, err := simple.NewSimpleFilterer(mainchain.SimpleAddress, mainchain.EthClient)
@@ -346,15 +346,47 @@ func (app *nameServiceApp)setupMonitor(ctx sdk.Context) {
 	for {
 		select {
 		case err := <-sub.Err():
-			app.Logger().Error("sub error", err)
+			app.Logger().Error("sub error", err.Error())
 		case test := <-testEvent:
 			app.Logger().Info("Seeing test event", test.I.String())
-			app.nsKeeper.SetNumber(ctx)
-			// cliCtx := context.NewCLIContext().
-			// 	WithCodec(app.cdc)
-			// txBldr := txbuilder.NewTxBuilderFromCLI().
-			// 	WithTxEncoder(utils.GetTxEncoder(app.cdc)).
-			// 	WithChainID(chainID)
+
+			kb, err := client.NewKeyBaseFromDir(DefaultCLIHome)
+			if err != nil {
+				app.Logger().Error("new key base err:", err.Error())
+				return
+			}
+
+			key, err := kb.Get("jack")
+			if err != nil {
+				app.Logger().Error("get key err:", err.Error())
+				return
+			}
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(app.cdc)).WithChainID(ctx.ChainID()).WithKeybase(kb)
+			cliCtx := client.NewCLIContext().WithCodec(app.cdc).WithFromAddress(key.GetAddress()).WithFromName(key.GetName()).WithNodeURI("tcp://localhost:26657").WithBroadcastMode("sync")
+
+			txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
+			if err != nil {
+				fmt.Println(err)
+				app.Logger().Error("prepare tx err:", err.Error())
+				return
+			}
+
+			msg := nameservice.NewMsgSetNumber(key.GetAddress())
+			txBytes, err := txBldr.BuildAndSign(key.GetName(), "12341234", []sdk.Msg{msg})
+			if err != nil {
+				app.Logger().Error("build tx err:", err.Error())
+				return
+			}
+
+			res, err := cliCtx.BroadcastTx(txBytes)
+			if err != nil {
+				fmt.Println(err)
+				app.Logger().Error("broadcast err:", err.Error())
+				return
+			}
+
+			app.Logger().Info("watch info", res.String())
 		}
 	}
 }
