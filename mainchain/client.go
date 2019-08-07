@@ -1,7 +1,7 @@
 package mainchain
 
 import (
-	// "github.com/cosmos/sdk-application-tutorial/simple"
+	// "github.com/celer-network/sgn/simple"
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
