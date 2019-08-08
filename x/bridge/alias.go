@@ -20,7 +20,6 @@ var (
 
 type (
 	MsgSetEthAddress      = types.MsgSetEthAddress
-	QueryResEthAddress    = types.QueryResEthAddress
 	EthAddress            = types.EthAddress
 	QueryEthAddressParams = types.QueryEthAddressParams
 )

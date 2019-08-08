@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/celer-network/sgn/x/bridge"
+	"github.com/celer-network/sgn/x/subscribe"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,27 +74,29 @@ type sgnApp struct {
 	cdc *codec.Codec
 
 	// Keys to access the substores
-	keyMain     *sdk.KVStoreKey
-	keyAccount  *sdk.KVStoreKey
-	keySupply   *sdk.KVStoreKey
-	keyStaking  *sdk.KVStoreKey
-	tkeyStaking *sdk.TransientStoreKey
-	keyDistr    *sdk.KVStoreKey
-	tkeyDistr   *sdk.TransientStoreKey
-	keyBridge   *sdk.KVStoreKey
-	keyParams   *sdk.KVStoreKey
-	tkeyParams  *sdk.TransientStoreKey
-	keySlashing *sdk.KVStoreKey
+	tkeyStaking  *sdk.TransientStoreKey
+	tkeyDistr    *sdk.TransientStoreKey
+	tkeyParams   *sdk.TransientStoreKey
+	keyMain      *sdk.KVStoreKey
+	keyAccount   *sdk.KVStoreKey
+	keySupply    *sdk.KVStoreKey
+	keyStaking   *sdk.KVStoreKey
+	keyDistr     *sdk.KVStoreKey
+	keyParams    *sdk.KVStoreKey
+	keySlashing  *sdk.KVStoreKey
+	keyBridge    *sdk.KVStoreKey
+	keySubscribe *sdk.KVStoreKey
 
 	// Keepers
-	accountKeeper  auth.AccountKeeper
-	bankKeeper     bank.Keeper
-	stakingKeeper  staking.Keeper
-	slashingKeeper slashing.Keeper
-	distrKeeper    distr.Keeper
-	supplyKeeper   supply.Keeper
-	paramsKeeper   params.Keeper
-	bridgeKeeper   bridge.Keeper
+	accountKeeper   auth.AccountKeeper
+	bankKeeper      bank.Keeper
+	stakingKeeper   staking.Keeper
+	slashingKeeper  slashing.Keeper
+	distrKeeper     distr.Keeper
+	supplyKeeper    supply.Keeper
+	paramsKeeper    params.Keeper
+	bridgeKeeper    bridge.Keeper
+	subscribeKeeper subscribe.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -113,22 +116,23 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		BaseApp: bApp,
 		cdc:     cdc,
 
-		keyMain:     sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyAccount:  sdk.NewKVStoreKey(auth.StoreKey),
-		keySupply:   sdk.NewKVStoreKey(supply.StoreKey),
-		keyStaking:  sdk.NewKVStoreKey(staking.StoreKey),
-		tkeyStaking: sdk.NewTransientStoreKey(staking.TStoreKey),
-		keyDistr:    sdk.NewKVStoreKey(distr.StoreKey),
-		tkeyDistr:   sdk.NewTransientStoreKey(distr.TStoreKey),
-		keyBridge:   sdk.NewKVStoreKey(bridge.StoreKey),
-		keyParams:   sdk.NewKVStoreKey(params.StoreKey),
-		tkeyParams:  sdk.NewTransientStoreKey(params.TStoreKey),
-		keySlashing: sdk.NewKVStoreKey(slashing.StoreKey),
+		keyMain:      sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount:   sdk.NewKVStoreKey(auth.StoreKey),
+		keySupply:    sdk.NewKVStoreKey(supply.StoreKey),
+		keyStaking:   sdk.NewKVStoreKey(staking.StoreKey),
+		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
+		keyDistr:     sdk.NewKVStoreKey(distr.StoreKey),
+		tkeyDistr:    sdk.NewTransientStoreKey(distr.TStoreKey),
+		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
+		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
+		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
+		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
+		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
 	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams, params.DefaultCodespace)
-	// Set specific supspaces
+	// Set specific subspaces
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
@@ -201,16 +205,23 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.cdc,
 	)
 
+	app.subscribeKeeper = subscribe.NewKeeper(
+		app.bankKeeper,
+		app.keyBridge,
+		app.cdc,
+	)
+
 	app.mm = module.NewManager(
 		genaccounts.NewAppModule(app.accountKeeper),
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
-		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
+		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
+		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
@@ -224,8 +235,9 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		auth.ModuleName,
 		bank.ModuleName,
 		slashing.ModuleName,
-		bridge.ModuleName,
 		genutil.ModuleName,
+		bridge.ModuleName,
+		subscribe.ModuleName,
 	)
 
 	// register all module routes and module queriers
@@ -246,17 +258,18 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	)
 
 	app.MountStores(
+		app.tkeyDistr,
+		app.tkeyParams,
+		app.tkeyStaking,
 		app.keyMain,
 		app.keyAccount,
 		app.keySupply,
 		app.keyStaking,
-		app.tkeyStaking,
 		app.keyDistr,
-		app.tkeyDistr,
 		app.keySlashing,
-		app.keyBridge,
 		app.keyParams,
-		app.tkeyParams,
+		app.keyBridge,
+		app.keySubscribe,
 	)
 
 	err := app.LoadLatestVersion(app.keyMain)

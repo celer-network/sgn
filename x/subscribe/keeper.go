@@ -1,4 +1,4 @@
-package bridge
+package subscribe
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,7 +15,7 @@ type Keeper struct {
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 }
 
-// NewKeeper creates new instances of the bridge Keeper
+// NewKeeper creates new instances of the subscribe Keeper
 func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
 	return Keeper{
 		coinKeeper: coinKeeper,
@@ -24,18 +24,18 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 	}
 }
 
-// Gets the entire EthAddress metadata for a cosmos address
-func (k Keeper) GetEthAddress(ctx sdk.Context, address sdk.AccAddress) EthAddress {
+// Gets the entire Subscription metadata for a ethAddress
+func (k Keeper) GetSubscription(ctx sdk.Context, ethAddress string) Subscription {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(address.Bytes())
+	bz := store.Get([]byte(ethAddress))
 
-	var ethAddress EthAddress
-	k.cdc.MustUnmarshalBinaryBare(bz, &ethAddress)
-	return ethAddress
+	var subscription Subscription
+	k.cdc.MustUnmarshalBinaryBare(bz, &subscription)
+	return subscription
 }
 
-// Sets the entire EthAddress metadata for a cosmos address
-func (k Keeper) SetEthAddress(ctx sdk.Context, sender sdk.AccAddress, ethAddress string) {
+// Sets the entire Subscription metadata for a ethAddress
+func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(sender.Bytes(), k.cdc.MustMarshalBinaryBare(NewEthAddress(ethAddress)))
+	store.Set([]byte(ethAddress), k.cdc.MustMarshalBinaryBare(NewSubscription(2)))
 }

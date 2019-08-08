@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -18,14 +16,4 @@ func NewQueryEthAddressParams(addr sdk.AccAddress) QueryEthAddressParams {
 	return QueryEthAddressParams{
 		Address: addr,
 	}
-}
-
-// Query Result Payload for a names query
-type QueryResEthAddress struct {
-	Address string `json:"address"`
-}
-
-// implement fmt.Stringer
-func (q QueryResEthAddress) String() string {
-	return fmt.Sprint(q.Address)
 }
