@@ -1,4 +1,4 @@
-module github.com/cosmos/sdk-application-tutorial
+module github.com/celer-network/sgn
 
 go 1.12
 
@@ -8,6 +8,7 @@ require (
 	github.com/btcsuite/btcd v0.0.0-20190427004231-96897255fd17 // indirect
 	github.com/celer-network/goCeler v0.12.10
 	github.com/cosmos/cosmos-sdk v0.36.0-rc1
+	github.com/cosmos/sdk-application-tutorial v0.0.0-20190806083653-879a19843c67 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/elastic/gosigar v0.10.4 // indirect
 	github.com/ethereum/go-ethereum v1.9.0
@@ -21,7 +22,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/prometheus/common v0.4.1
 	github.com/prometheus/tsdb v0.10.0 // indirect
-	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
 	github.com/status-im/keycard-go v0.0.0-20190424133014-d95853db0f48 // indirect

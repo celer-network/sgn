@@ -2,22 +2,14 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
-
+	"github.com/celer-network/sgn/x/bridge"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
@@ -26,12 +18,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-	"github.com/cosmos/sdk-application-tutorial/mainchain"
-	"github.com/cosmos/sdk-application-tutorial/simple"
-	"github.com/cosmos/sdk-application-tutorial/x/nameservice"
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const appName = "nameservice"
+const appName = "sgn"
 
 var (
 	// default home directories for the application CLI
@@ -52,7 +46,7 @@ var (
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
-		nameservice.AppModule{},
+		bridge.AppModule{},
 	)
 	// account permissions
 	maccPerms = map[string][]string{
@@ -74,7 +68,7 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-type nameServiceApp struct {
+type sgnApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
@@ -86,7 +80,7 @@ type nameServiceApp struct {
 	tkeyStaking *sdk.TransientStoreKey
 	keyDistr    *sdk.KVStoreKey
 	tkeyDistr   *sdk.TransientStoreKey
-	keyNS       *sdk.KVStoreKey
+	keyBridge   *sdk.KVStoreKey
 	keyParams   *sdk.KVStoreKey
 	tkeyParams  *sdk.TransientStoreKey
 	keySlashing *sdk.KVStoreKey
@@ -99,14 +93,14 @@ type nameServiceApp struct {
 	distrKeeper    distr.Keeper
 	supplyKeeper   supply.Keeper
 	paramsKeeper   params.Keeper
-	nsKeeper       nameservice.Keeper
+	bridgeKeeper   bridge.Keeper
 
 	// Module Manager
 	mm *module.Manager
 }
 
-// NewNameServiceApp is a constructor function for nameServiceApp
-func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
+// NewSgnApp is a constructor function for sgnApp
+func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
@@ -115,7 +109,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc))
 
 	// Here you initialize your application with the store keys it requires
-	var app = &nameServiceApp{
+	var app = &sgnApp{
 		BaseApp: bApp,
 		cdc:     cdc,
 
@@ -126,7 +120,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 		tkeyStaking: sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyDistr:    sdk.NewKVStoreKey(distr.StoreKey),
 		tkeyDistr:   sdk.NewTransientStoreKey(distr.TStoreKey),
-		keyNS:       sdk.NewKVStoreKey(nameservice.StoreKey),
+		keyBridge:   sdk.NewKVStoreKey(bridge.StoreKey),
 		keyParams:   sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:  sdk.NewTransientStoreKey(params.TStoreKey),
 		keySlashing: sdk.NewKVStoreKey(slashing.StoreKey),
@@ -201,11 +195,9 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 			app.slashingKeeper.Hooks()),
 	)
 
-	// The NameserviceKeeper is the Keeper from the module for this tutorial
-	// It handles interactions with the namestore
-	app.nsKeeper = nameservice.NewKeeper(
+	app.bridgeKeeper = bridge.NewKeeper(
 		app.bankKeeper,
-		app.keyNS,
+		app.keyBridge,
 		app.cdc,
 	)
 
@@ -214,7 +206,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
-		nameservice.NewAppModule(app.nsKeeper, app.bankKeeper),
+		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
@@ -232,7 +224,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 		auth.ModuleName,
 		bank.ModuleName,
 		slashing.ModuleName,
-		nameservice.ModuleName,
+		bridge.ModuleName,
 		genutil.ModuleName,
 	)
 
@@ -262,7 +254,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 		app.keyDistr,
 		app.tkeyDistr,
 		app.keySlashing,
-		app.keyNS,
+		app.keyBridge,
 		app.keyParams,
 		app.tkeyParams,
 	)
@@ -282,7 +274,7 @@ func NewDefaultGenesisState() GenesisState {
 	return ModuleBasics.DefaultGenesis()
 }
 
-func (app *nameServiceApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
 
 	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
@@ -293,23 +285,23 @@ func (app *nameServiceApp) InitChainer(ctx sdk.Context, req abci.RequestInitChai
 	return app.mm.InitGenesis(ctx, genesisState)
 }
 
-func (app *nameServiceApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	if !monitor {
 		monitor = true
-		go app.setupMonitor(ctx)
+		// go app.setupMonitor(ctx)
 	}
 	return app.mm.BeginBlock(ctx, req)
 }
-func (app *nameServiceApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *sgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
-func (app *nameServiceApp) LoadHeight(height int64) error {
+func (app *sgnApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
 }
 
 //_________________________________________________________
 
-func (app *nameServiceApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
+func (app *sgnApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
 ) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
 	// as if they could withdraw from the start of the next block
@@ -326,67 +318,67 @@ func (app *nameServiceApp) ExportAppStateAndValidators(forZeroHeight bool, jailW
 	return appState, validators, nil
 }
 
-func (app *nameServiceApp) setupMonitor(ctx sdk.Context) {
-	app.Logger().Info("setup monitor")
+// func (app *sgnApp) setupMonitor(ctx sdk.Context) {
+// 	app.Logger().Info("setup monitor")
 
-	s, err := simple.NewSimpleFilterer(mainchain.SimpleAddress, mainchain.EthClient)
-	if err != nil {
-		app.Logger().Error("new filter err:", err)
-		return
-	}
+// 	s, err := simple.NewSimpleFilterer(mainchain.SimpleAddress, mainchain.EthClient)
+// 	if err != nil {
+// 		app.Logger().Error("new filter err:", err)
+// 		return
+// 	}
 
-	testEvent := make(chan *simple.SimpleTest)
-	sub, err := s.WatchTest(nil, testEvent)
-	if err != nil {
-		app.Logger().Error("watch err:", err)
-		return
-	}
+// 	testEvent := make(chan *simple.SimpleTest)
+// 	sub, err := s.WatchTest(nil, testEvent)
+// 	if err != nil {
+// 		app.Logger().Error("watch err:", err)
+// 		return
+// 	}
 
-	defer sub.Unsubscribe()
-	for {
-		select {
-		case err := <-sub.Err():
-			app.Logger().Error("sub error", err.Error())
-		case test := <-testEvent:
-			app.Logger().Info("Seeing test event", test.I.String())
+// 	defer sub.Unsubscribe()
+// 	for {
+// 		select {
+// 		case err := <-sub.Err():
+// 			app.Logger().Error("sub error", err.Error())
+// 		case test := <-testEvent:
+// 			app.Logger().Info("Seeing test event", test.I.String())
 
-			kb, err := client.NewKeyBaseFromDir(DefaultCLIHome)
-			if err != nil {
-				app.Logger().Error("new key base err:", err.Error())
-				return
-			}
+// 			kb, err := client.NewKeyBaseFromDir(DefaultCLIHome)
+// 			if err != nil {
+// 				app.Logger().Error("new key base err:", err.Error())
+// 				return
+// 			}
 
-			key, err := kb.Get("jack")
-			if err != nil {
-				app.Logger().Error("get key err:", err.Error())
-				return
-			}
+// 			key, err := kb.Get("jack")
+// 			if err != nil {
+// 				app.Logger().Error("get key err:", err.Error())
+// 				return
+// 			}
 
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(app.cdc)).WithChainID(ctx.ChainID()).WithKeybase(kb)
-			cliCtx := client.NewCLIContext().WithCodec(app.cdc).WithFromAddress(key.GetAddress()).WithFromName(key.GetName()).WithNodeURI("tcp://localhost:26657").WithBroadcastMode("sync")
+// 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(app.cdc)).WithChainID(ctx.ChainID()).WithKeybase(kb)
+// 			cliCtx := client.NewCLIContext().WithCodec(app.cdc).WithFromAddress(key.GetAddress()).WithFromName(key.GetName()).WithNodeURI("tcp://localhost:26657").WithBroadcastMode("sync")
 
-			txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
-			if err != nil {
-				fmt.Println(err)
-				app.Logger().Error("prepare tx err:", err.Error())
-				return
-			}
+// 			txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
+// 			if err != nil {
+// 				fmt.Println(err)
+// 				app.Logger().Error("prepare tx err:", err.Error())
+// 				return
+// 			}
 
-			msg := nameservice.NewMsgSetNumber(key.GetAddress())
-			txBytes, err := txBldr.BuildAndSign(key.GetName(), "12341234", []sdk.Msg{msg})
-			if err != nil {
-				app.Logger().Error("build tx err:", err.Error())
-				return
-			}
+// 			msg := bridge.NewMsgSetNumber(key.GetAddress())
+// 			txBytes, err := txBldr.BuildAndSign(key.GetName(), "12341234", []sdk.Msg{msg})
+// 			if err != nil {
+// 				app.Logger().Error("build tx err:", err.Error())
+// 				return
+// 			}
 
-			res, err := cliCtx.BroadcastTx(txBytes)
-			if err != nil {
-				fmt.Println(err)
-				app.Logger().Error("broadcast err:", err.Error())
-				return
-			}
+// 			res, err := cliCtx.BroadcastTx(txBytes)
+// 			if err != nil {
+// 				fmt.Println(err)
+// 				app.Logger().Error("broadcast err:", err.Error())
+// 				return
+// 			}
 
-			app.Logger().Info("watch info", res.String())
-		}
-	}
-}
+// 			app.Logger().Info("watch info", res.String())
+// 		}
+// 	}
+// }

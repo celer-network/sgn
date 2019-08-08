@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	app "github.com/cosmos/sdk-application-tutorial"
+	app "github.com/celer-network/sgn"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
@@ -20,7 +20,7 @@ import (
 
 const (
 	storeAcc = "acc"
-	storeNS  = "nameservice"
+	storeNS  = "sgn"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "nscli",
-		Short: "nameservice Client",
+		Short: "sgn Client",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
