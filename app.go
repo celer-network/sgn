@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/celer-network/sgn/x/bridge"
+	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -48,6 +49,8 @@ var (
 		supply.AppModuleBasic{},
 
 		bridge.AppModule{},
+		subscribe.AppModule{},
+		guardianmanager.AppModule{},
 	)
 	// account permissions
 	maccPerms = map[string][]string{
@@ -86,6 +89,7 @@ type sgnApp struct {
 	keySlashing  *sdk.KVStoreKey
 	keyBridge    *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
+	keyGm        *sdk.KVStoreKey
 
 	// Keepers
 	accountKeeper   auth.AccountKeeper
@@ -97,6 +101,7 @@ type sgnApp struct {
 	paramsKeeper    params.Keeper
 	bridgeKeeper    bridge.Keeper
 	subscribeKeeper subscribe.Keeper
+	gmKeeper        guardianmanager.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -128,6 +133,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
 		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
+		keyGm:        sdk.NewKVStoreKey(guardianmanager.StoreKey),
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
@@ -207,7 +213,13 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 
 	app.subscribeKeeper = subscribe.NewKeeper(
 		app.bankKeeper,
-		app.keyBridge,
+		app.keySubscribe,
+		app.cdc,
+	)
+
+	app.gmKeeper = guardianmanager.NewKeeper(
+		app.bankKeeper,
+		app.keyGm,
 		app.cdc,
 	)
 
@@ -222,6 +234,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
+		guardianmanager.NewAppModule(app.gmKeeper, app.bankKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
@@ -238,6 +251,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		genutil.ModuleName,
 		bridge.ModuleName,
 		subscribe.ModuleName,
+		guardianmanager.ModuleName,
 	)
 
 	// register all module routes and module queriers
@@ -270,6 +284,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyParams,
 		app.keyBridge,
 		app.keySubscribe,
+		app.keyGm,
 	)
 
 	err := app.LoadLatestVersion(app.keyMain)
