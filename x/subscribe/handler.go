@@ -10,8 +10,8 @@ import (
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case NewMsgSubscribe:
-			return handleNewMsgSubscribe(ctx, keeper, msg)
+		case MsgSubscribe:
+			return handleMsgSubscribe(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -19,8 +19,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 	}
 }
 
-// Handle a message to set name
-func handleNewMsgSubscribe(ctx sdk.Context, keeper Keeper, msg NewMsgSubscribe) sdk.Result {
-	keeper.Subscribe(ctx, msg.EthAddress) // If so, set the name to the value specified in the msg.
-	return sdk.Result{}                   // return
+// Handle a message to subscribe
+func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
+	keeper.Subscribe(ctx, msg.EthAddress)
+	return sdk.Result{}
 }

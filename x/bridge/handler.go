@@ -19,8 +19,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 	}
 }
 
-// Handle a message to set name
+// Handle a message to set eth address
 func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) sdk.Result {
-	keeper.SetEthAddress(ctx, msg.Sender, msg.EthAddress) // If so, set the name to the value specified in the msg.
-	return sdk.Result{}                                   // return
+	keeper.SetEthAddress(ctx, msg.Sender, msg.EthAddress)
+	return sdk.Result{}
 }
