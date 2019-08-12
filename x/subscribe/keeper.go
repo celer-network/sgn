@@ -25,17 +25,37 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 }
 
 // Gets the entire Subscription metadata for a ethAddress
-func (k Keeper) GetSubscription(ctx sdk.Context, ethAddress string) Subscription {
+func (k Keeper) GetSubscription(ctx sdk.Context, ethAddress string) (subscription Subscription, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get([]byte(ethAddress))
+	value := store.Get([]byte(ethAddress))
 
-	var subscription Subscription
-	k.cdc.MustUnmarshalBinaryBare(bz, &subscription)
-	return subscription
+	if value == nil {
+		return subscription, false
+	}
+
+	k.cdc.MustUnmarshalBinaryBare(value, &subscription)
+	return subscription, true
+}
+
+// Sets the entire Subscription metadata for a ethAddress
+func (k Keeper) SetSubscription(ctx sdk.Context, ethAddress string, subscription Subscription) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set([]byte(ethAddress), k.cdc.MustMarshalBinaryBare(subscription))
 }
 
 // Sets the entire Subscription metadata for a ethAddress
 func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(ethAddress), k.cdc.MustMarshalBinaryBare(NewSubscription(2)))
+	k.SetSubscription(ctx, ethAddress, NewSubscription(2))
+}
+
+// Sets the entire Subscription metadata for a ethAddress
+func (k Keeper) RequestGuard(ctx sdk.Context, ethAddress string, signedSimplexStateBytes []byte) sdk.Error {
+	subscription, found := k.GetSubscription(ctx, ethAddress)
+	if !found {
+		return sdk.ErrInternal("Cannot find subscription")
+	}
+
+	subscription.SignedSimplexStateBytes = signedSimplexStateBytes
+	k.SetSubscription(ctx, ethAddress, subscription)
+	return nil
 }

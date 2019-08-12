@@ -233,7 +233,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
-		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
+		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper, app.gmKeeper),
 		guardianmanager.NewAppModule(app.gmKeeper, app.bankKeeper),
 	)
 

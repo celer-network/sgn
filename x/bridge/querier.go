@@ -31,7 +31,8 @@ func queryEthAddress(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 	ethAddress := keeper.GetEthAddress(ctx, params.Address)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, ethAddress)
 	if err != nil {
-		panic("could not marshal result to JSON")
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+
 	}
 
 	return res, nil
