@@ -16,7 +16,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QuerySubscrption:
 			return queryEthAddress(ctx, req, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown subscribe query endpoint")
+			return nil, sdk.ErrUnknownRequest("Unknown subscribe query endpoint")
 		}
 	}
 }
@@ -35,7 +35,7 @@ func queryEthAddress(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
 	}
 
 	return res, nil

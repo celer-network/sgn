@@ -6,7 +6,7 @@ import (
 )
 
 type Guardian struct {
-	Balance uint `json:"balance"`
+	Balance uint64 `json:"balance"`
 }
 
 // Returns a new Number with the minprice as the price

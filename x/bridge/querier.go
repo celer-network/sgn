@@ -16,7 +16,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryEthAddress:
 			return queryEthAddress(ctx, req, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown bridge query endpoint")
+			return nil, sdk.ErrUnknownRequest("Unknown bridge query endpoint")
 		}
 	}
 }
@@ -31,7 +31,7 @@ func queryEthAddress(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 	ethAddress := keeper.GetEthAddress(ctx, params.Address)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, ethAddress)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
 
 	}
 

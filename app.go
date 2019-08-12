@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/bridge"
 	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
@@ -20,6 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -31,10 +33,10 @@ const appName = "sgn"
 
 var (
 	// default home directories for the application CLI
-	DefaultCLIHome = os.ExpandEnv("$HOME/.nscli")
+	DefaultCLIHome = os.ExpandEnv("$HOME/.sgncli")
 
 	// DefaultNodeHome sets the folder where the applcation data and configuration will be stored
-	DefaultNodeHome = os.ExpandEnv("$HOME/.nsd")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.sgn")
 
 	// ModuleBasicManager is in charge of setting up basic module elemnets
 	ModuleBasics = module.NewBasicManager(
@@ -109,6 +111,16 @@ type sgnApp struct {
 
 // NewSgnApp is a constructor function for sgnApp
 func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
+	viper.SetConfigFile("config.json")
+	err := viper.ReadInConfig()
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	ethClient, err := mainchain.NewEthClient()
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
 
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
@@ -215,12 +227,14 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.bankKeeper,
 		app.keySubscribe,
 		app.cdc,
+		ethClient,
 	)
 
 	app.gmKeeper = guardianmanager.NewKeeper(
 		app.bankKeeper,
 		app.keyGm,
 		app.cdc,
+		ethClient,
 	)
 
 	app.mm = module.NewManager(
@@ -287,7 +301,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyGm,
 	)
 
-	err := app.LoadLatestVersion(app.keyMain)
+	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}

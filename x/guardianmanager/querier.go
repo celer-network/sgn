@@ -16,7 +16,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryGuardian:
 			return queryEthAddress(ctx, req, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown guardianmanager query endpoint")
+			return nil, sdk.ErrUnknownRequest("Unknown guardianmanager query endpoint")
 		}
 	}
 }
@@ -25,13 +25,13 @@ func queryEthAddress(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 	var params QueryGuardianParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
 	}
 
 	guaridan := keeper.GetGuardian(ctx, params.EthAddress)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, guaridan)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
 
 	}
 
