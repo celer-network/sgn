@@ -6,13 +6,13 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
-// MsgSetName defines a SetName message
+// MsgDeposit defines a Deposit message
 type MsgDeposit struct {
 	EthAddress string         `json:"ethAddress"`
 	Sender     sdk.AccAddress `json:"sender"`
 }
 
-// NewMsgSetName is a constructor function for MsgSetName
+// NewMsgDeposit is a constructor function for MsgDeposit
 func NewMsgDeposit(ethAddress string, sender sdk.AccAddress) MsgDeposit {
 	return MsgDeposit{
 		EthAddress: ethAddress,
@@ -29,7 +29,7 @@ func (msg MsgDeposit) Type() string { return "deposit" }
 // ValidateBasic runs stateless checks on the message
 func (msg MsgDeposit) ValidateBasic() sdk.Error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("Eth adress cannot be empty")
+		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {

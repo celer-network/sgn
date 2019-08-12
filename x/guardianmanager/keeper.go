@@ -32,9 +32,9 @@ func (k Keeper) GetGuardian(ctx sdk.Context, ethAddress string) Guardian {
 		return NewGuardian()
 	}
 
-	bz := store.Get([]byte(ethAddress))
+	value := store.Get([]byte(ethAddress))
 	var guardian Guardian
-	k.cdc.MustUnmarshalBinaryBare(bz, &guardian)
+	k.cdc.MustUnmarshalBinaryBare(value, &guardian)
 	return guardian
 }
 

@@ -28,10 +28,14 @@ func queryEthAddress(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	subscription := keeper.GetSubscription(ctx, params.EthAddress)
+	subscription, found := keeper.GetSubscription(ctx, params.EthAddress)
+	if !found {
+		return nil, sdk.ErrInternal("cannot find subscription")
+	}
+
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)
 	if err != nil {
-		panic("could not marshal result to JSON")
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
 	return res, nil

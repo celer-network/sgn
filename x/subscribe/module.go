@@ -3,14 +3,15 @@ package subscribe
 import (
 	"encoding/json"
 
-	"github.com/gorilla/mux"
-	"github.com/spf13/cobra"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe/client/cli"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -64,14 +65,16 @@ type AppModule struct {
 	AppModuleBasic
 	keeper     Keeper
 	coinKeeper bank.Keeper
+	gmKeep     guardianmanager.Keeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k Keeper, bankKeeper bank.Keeper) AppModule {
+func NewAppModule(k Keeper, bankKeeper bank.Keeper, gmKeep guardianmanager.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
 		coinKeeper:     bankKeeper,
+		gmKeep:         gmKeep,
 	}
 }
 
@@ -86,7 +89,7 @@ func (am AppModule) Route() string {
 }
 
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper)
+	return NewHandler(am.keeper, am.gmKeep)
 }
 func (am AppModule) QuerierRoute() string {
 	return ModuleName
