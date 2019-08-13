@@ -1,4 +1,14 @@
 {
-  "ethWs": "wss://ropsten.infura.io/ws",
-  "guardAddress": "0x8B5240d9D8d70FC4dd1773E7e1FF75d0c1Ea7381"
+  "eth": {
+    "ws": "wss://ropsten.infura.io/ws",
+    "guardAddress": "0x8B5240d9D8d70FC4dd1773E7e1FF75d0c1Ea7381",
+    "keystore": "./keys/client.json",
+    "passphrase": ""
+  },
+  "sgn": {
+    "name": "jack",
+    "passphrase": "12341234",
+    "chainID": "sgnchain",
+    "nodeURI": "tcp://localhost:26657"
+  }
 }
