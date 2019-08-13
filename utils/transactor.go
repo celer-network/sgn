@@ -29,8 +29,18 @@ func NewTransactor(cliHome, accName, chainID, nodeURI string, cdc *codec.Codec) 
 		return nil, err
 	}
 
-	txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc)).WithChainID(chainID).WithKeybase(kb)
-	cliCtx := client.NewCLIContext().WithCodec(cdc).WithFromAddress(key.GetAddress()).WithFromName(key.GetName()).WithNodeURI(nodeURI).WithBroadcastMode("sync")
+	txBldr := auth.
+		NewTxBuilderFromCLI().
+		WithTxEncoder(utils.GetTxEncoder(cdc)).
+		WithChainID(chainID).
+		WithKeybase(kb)
+	cliCtx := client.
+		NewCLIContext().
+		WithCodec(cdc).
+		WithFromAddress(key.GetAddress()).
+		WithFromName(key.GetName()).
+		WithNodeURI(nodeURI).
+		WithBroadcastMode("sync")
 	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
 		return nil, err
