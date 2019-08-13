@@ -21,6 +21,10 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to deposit
 func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg MsgDeposit) sdk.Result {
-	keeper.Deposit(ctx, msg.EthAddress)
+	err := keeper.Deposit(ctx, msg.EthAddress)
+	if err != nil {
+		return err.Result()
+	}
+
 	return sdk.Result{}
 }

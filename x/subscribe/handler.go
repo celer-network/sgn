@@ -24,7 +24,11 @@ func NewHandler(keeper Keeper, gmKeep guardianmanager.Keeper) sdk.Handler {
 
 // Handle a message to subscribe
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
-	keeper.Subscribe(ctx, msg.EthAddress)
+	err := keeper.Subscribe(ctx, msg.EthAddress)
+	if err != nil {
+		return err.Result()
+	}
+
 	return sdk.Result{}
 }
 

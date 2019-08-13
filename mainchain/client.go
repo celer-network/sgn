@@ -1,23 +1,31 @@
 package mainchain
 
 import (
-	// "github.com/celer-network/sgn/simple"
-
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/viper"
 )
 
-var (
-	EthClient     = getEthClient()
-	SimpleAddress = ethcommon.HexToAddress("0x2595a2907f3a895a320f817b72ecb654e6d50004")
-)
+type EthClient struct {
+	Client *ethclient.Client
+	Guard  *Guard
+}
 
-func getEthClient() *ethclient.Client {
-	const address = "wss://ropsten.infura.io/ws"
-	rpcClient, err := ethrpc.Dial(address)
+func NewEthClient() (*EthClient, error) {
+	rpcClient, err := ethrpc.Dial(viper.GetString("ethWs"))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return ethclient.NewClient(rpcClient)
+	client := ethclient.NewClient(rpcClient)
+
+	guard, err := NewGuard(ethcommon.HexToAddress(viper.GetString("guardAddress")), client)
+	if err != nil {
+		return nil, err
+	}
+
+	return &EthClient{
+		Client: client,
+		Guard:  guard,
+	}, nil
 }

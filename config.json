@@ -1,0 +1,4 @@
+{
+  "ethWs": "wss://ropsten.infura.io/ws",
+  "guardAddress": "0x8B5240d9D8d70FC4dd1773E7e1FF75d0c1Ea7381"
+}
