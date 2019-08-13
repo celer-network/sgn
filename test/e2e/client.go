@@ -29,7 +29,7 @@ func main() {
 	}
 
 	setupTransactor()
-	sendSubscribe()
+	sendSubscribeTx()
 }
 
 func setupTransactor() {
@@ -50,7 +50,7 @@ func setupTransactor() {
 	transactor = t
 }
 
-func sendSubscribe() {
+func sendSubscribeTx() {
 	msg := subscribe.NewMsgSubscribe(ethClient.Address.String(), transactor.Key.GetAddress())
 	res, err := transactor.BroadcastTx(msg)
 	if err != nil {
