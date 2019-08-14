@@ -58,15 +58,3 @@ func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string) sdk.Error {
 	k.SetSubscription(ctx, ethAddress, NewSubscription(uint(expiration.Uint64())))
 	return nil
 }
-
-// Sets the entire Subscription metadata for a ethAddress
-func (k Keeper) RequestGuard(ctx sdk.Context, ethAddress string, signedSimplexStateBytes []byte) sdk.Error {
-	subscription, found := k.GetSubscription(ctx, ethAddress)
-	if !found {
-		return sdk.ErrInternal("Cannot find subscription")
-	}
-
-	subscription.SignedSimplexStateBytes = signedSimplexStateBytes
-	k.SetSubscription(ctx, ethAddress, subscription)
-	return nil
-}

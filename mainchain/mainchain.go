@@ -1,6 +1,7 @@
 package mainchain
 
 import (
+	"context"
 	"io/ioutil"
 	"strings"
 
@@ -40,6 +41,15 @@ func NewEthClient() (*EthClient, error) {
 	ethClient.setupAuth()
 
 	return ethClient, nil
+}
+
+func (ethClient *EthClient) GetLatestBlkNum() (uint64, error) {
+	head, err := ethClient.Client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		return 0, err
+	}
+	latestBlkNum := head.Number.Uint64()
+	return latestBlkNum, nil
 }
 
 func (ethClient *EthClient) setupAuth() error {
