@@ -9,7 +9,7 @@ checkout_pr_merge: &checkout_pr_merge
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12.1
+      - image: circleci/golang:1.12.7
     steps:
       - checkout
       - <<: *checkout_pr_merge
