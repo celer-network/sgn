@@ -55,10 +55,6 @@ github.com/celer-network/cChannel-eth-go v0.0.0-20181210204426-4aae3ca959c7/go.m
 github.com/celer-network/cChannel-eth-go v0.10.0/go.mod h1:Cdq0erIopHHgSYSIkkB6j+QbU4b8XhWZYgdAGDjT0iY=
 github.com/celer-network/cChannel-eth-go v0.12.0/go.mod h1:xnRR+j5/Ozhen9gcna7cd8YmJQ/yfZdRr55Cw2ZEnpc=
 github.com/celer-network/cChannel-eth-go v0.12.4/go.mod h1:KaRnogaIIQdrIygVDdMxS0vaPCOxfTLZr0/xZ9MY2Jc=
-github.com/celer-network/goCeler v0.7.1/go.mod h1:zlJjkx2ImR2y48/DYJO8Ofx6G3xllcC38xrWPSXfyy0=
-github.com/celer-network/goCeler v0.10.2/go.mod h1:nSTcr58bHdLrH2HpLh3bcoWMyZnwXAxFNA3Xk5PuEoQ=
-github.com/celer-network/goCeler v0.12.1/go.mod h1:I5Q4SUeKFfZQn3A7LEWzqkc0KdXCnfH27tE6RDVq0WQ=
-github.com/celer-network/goCeler v0.12.10/go.mod h1:u/nUbR0fGK46UTxiu7jmMhak6BR2aH/qbhJ25OaHxNE=
 github.com/celer-network/pushservice v0.0.0-20190511041352-72dae88d9d58/go.mod h1:RKNG6jLXB9l6Yoej88U7cMTTLrKQ2ZMBamJDGnQQ+SE=
 github.com/celer-network/pushservice v0.0.0-20190703041808-4c61a3dc8d27/go.mod h1:7aMc83XEU4Mru17jLNvQB2F9Ivr5UWxtrj87pOw/afA=
 github.com/cespare/cp v1.0.0/go.mod h1:SOGHArjBr4JWaSDEVpWpo/hNg6RoKrls6Oh40hiwW+s=
