@@ -1,6 +1,7 @@
 package guardianmanager
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/celer-network/sgn/mainchain"
@@ -14,11 +15,11 @@ import (
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	coinKeeper bank.Keeper
+	coinKeeper      bank.Keeper
 	subscribeKeeper subscribe.Keeper
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
-	cdc        *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient  *mainchain.EthClient
+	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
+	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
+	ethClient       *mainchain.EthClient
 }
 
 // NewKeeper creates new instances of the guardianmanager Keeper
@@ -69,6 +70,16 @@ func (k Keeper) RequestGuard(ctx sdk.Context, ethAddress string, signedSimplexSt
 	subscription, found := k.subscribeKeeper.GetSubscription(ctx, ethAddress)
 	if !found {
 		return sdk.ErrInternal("Cannot find subscription")
+	}
+
+	head, err := k.ethClient.Client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to query latest block number: %s", err))
+	}
+	latestBlkNum := head.Number.Uint()
+	// TODO: add a safe margin to ensure consistent validation and that guardians have enough time to submit tx
+	if latestBlkNum > subscription.Expiration {
+		return sdk.ErrInternal("Subscription expired")
 	}
 
 	subscription.SignedSimplexStateBytes = signedSimplexStateBytes
