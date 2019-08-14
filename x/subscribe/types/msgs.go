@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -15,7 +16,7 @@ type MsgSubscribe struct {
 // NewMsgSubscribe is a constructor function for MsgSubscribe
 func NewMsgSubscribe(ethAddress string, sender sdk.AccAddress) MsgSubscribe {
 	return MsgSubscribe{
-		EthAddress: ethAddress,
+		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
 		Sender:     sender,
 	}
 }

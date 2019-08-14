@@ -55,6 +55,6 @@ func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string) sdk.Error {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query subscription expiration: %s", err))
 	}
 
-	k.SetSubscription(ctx, ethAddress, NewSubscription(uint(expiration.Uint64())))
+	k.SetSubscription(ctx, ethAddress, NewSubscription(expiration.Uint64()))
 	return nil
 }

@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -15,7 +16,7 @@ type MsgSetEthAddress struct {
 // NewMsgSetEthAddress is a constructor function for MsgSetEthAddress
 func NewMsgSetEthAddress(ethAddress string, sender sdk.AccAddress) MsgSetEthAddress {
 	return MsgSetEthAddress{
-		EthAddress: ethAddress,
+		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
 		Sender:     sender,
 	}
 }

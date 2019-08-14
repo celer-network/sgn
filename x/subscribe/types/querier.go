@@ -1,5 +1,9 @@
 package types
 
+import (
+	ethcommon "github.com/ethereum/go-ethereum/common"
+)
+
 const (
 	QuerySubscrption = "subscription"
 )
@@ -10,6 +14,6 @@ type QuerySubscrptionParams struct {
 
 func NewQuerySubscrptionParams(addr string) QuerySubscrptionParams {
 	return QuerySubscrptionParams{
-		EthAddress: addr,
+		EthAddress: ethcommon.HexToAddress(addr).String(),
 	}
 }

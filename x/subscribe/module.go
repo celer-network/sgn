@@ -3,7 +3,6 @@ package subscribe
 import (
 	"encoding/json"
 
-	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe/client/cli"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -65,16 +64,14 @@ type AppModule struct {
 	AppModuleBasic
 	keeper     Keeper
 	coinKeeper bank.Keeper
-	gmKeep     guardianmanager.Keeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k Keeper, bankKeeper bank.Keeper, gmKeep guardianmanager.Keeper) AppModule {
+func NewAppModule(k Keeper, bankKeeper bank.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
 		coinKeeper:     bankKeeper,
-		gmKeep:         gmKeep,
 	}
 }
 
@@ -89,7 +86,7 @@ func (am AppModule) Route() string {
 }
 
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper, am.gmKeep)
+	return NewHandler(am.keeper)
 }
 func (am AppModule) QuerierRoute() string {
 	return ModuleName
