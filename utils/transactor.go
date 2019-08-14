@@ -59,10 +59,5 @@ func (t *Transactor) BroadcastTx(msg sdk.Msg) (sdk.TxResponse, error) {
 		return sdk.TxResponse{}, err
 	}
 
-	res, err := t.CliCtx.BroadcastTx(txBytes)
-	if err != nil {
-		return sdk.TxResponse{}, err
-	}
-
-	return res, nil
+	return t.CliCtx.BroadcastTx(txBytes)
 }
