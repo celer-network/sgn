@@ -60,7 +60,7 @@ type MsgRequestGuard struct {
 // NewMsgRequestGuard is a constructor function for MsgRequestGuard
 func NewMsgRequestGuard(ethAddress string, signedSimplexStateBytes []byte, sender sdk.AccAddress) MsgRequestGuard {
 	return MsgRequestGuard{
-		EthAddress:              ethAddress,
+		EthAddress:              ethcommon.HexToAddress(ethAddress).String(),
 		SignedSimplexStateBytes: signedSimplexStateBytes,
 		Sender:                  sender,
 	}

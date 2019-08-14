@@ -3,12 +3,11 @@ package subscribe
 import (
 	"fmt"
 
-	"github.com/celer-network/sgn/x/guardianmanager"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewHandler returns a handler for "subscribe" type messages.
-func NewHandler(keeper Keeper, gmKeep guardianmanager.Keeper) sdk.Handler {
+func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case MsgSubscribe:

@@ -6,12 +6,12 @@ import (
 )
 
 type Subscription struct {
-	Expiration              uint   `json:"expiration"`
+	Expiration              uint64 `json:"expiration"`
 	SignedSimplexStateBytes []byte `json:"signedSimplexStateBytes"`
 }
 
 // Returns a new Number with the minprice as the price
-func NewSubscription(expiration uint) Subscription {
+func NewSubscription(expiration uint64) Subscription {
 	return Subscription{
 		Expiration: expiration,
 	}
