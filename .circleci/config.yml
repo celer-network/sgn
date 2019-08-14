@@ -13,6 +13,7 @@ jobs:
     steps:
       - checkout
       - <<: *checkout_pr_merge
+      - run: sudo chown -R circleci /go/bin  # fix /go/bin permission for later restore
       - restore_cache:
           key: go-cache-{{ checksum "go.sum" }}  # use go.mod should also work
       - run:
