@@ -13,8 +13,6 @@ func NewHandler(keeper Keeper, gmKeep guardianmanager.Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgSubscribe:
 			return handleMsgSubscribe(ctx, keeper, msg)
-		case MsgRequestGuard:
-			return handleMsgRequestGuard(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -25,17 +23,6 @@ func NewHandler(keeper Keeper, gmKeep guardianmanager.Keeper) sdk.Handler {
 // Handle a message to subscribe
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
 	err := keeper.Subscribe(ctx, msg.EthAddress)
-	if err != nil {
-		return err.Result()
-	}
-
-	return sdk.Result{}
-}
-
-// Handle a message to request guard
-func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
-	// TODO: need to validate signed simple state bytes
-	err := keeper.RequestGuard(ctx, msg.EthAddress, msg.SignedSimplexStateBytes)
 	if err != nil {
 		return err.Result()
 	}
