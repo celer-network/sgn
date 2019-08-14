@@ -1,7 +1,6 @@
 package guardianmanager
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/celer-network/sgn/mainchain"
@@ -72,11 +71,10 @@ func (k Keeper) RequestGuard(ctx sdk.Context, ethAddress string, signedSimplexSt
 		return sdk.ErrInternal("Cannot find subscription")
 	}
 
-	head, err := k.ethClient.Client.HeaderByNumber(context.Background(), nil)
+	latestBlkNum, err := k.ethClient.GetLatestBlkNum()
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query latest block number: %s", err))
 	}
-	latestBlkNum := head.Number.Uint()
 	// TODO: add a safe margin to ensure consistent validation and that guardians have enough time to submit tx
 	if latestBlkNum > subscription.Expiration {
 		return sdk.ErrInternal("Subscription expired")
