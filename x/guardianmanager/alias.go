@@ -12,14 +12,16 @@ const (
 )
 
 var (
-	ModuleCdc        = types.ModuleCdc
-	RegisterCodec    = types.RegisterCodec
-	NewGuardian      = types.NewGuardian
-	NewMsgMsgDeposit = types.NewMsgDeposit
+	ModuleCdc          = types.ModuleCdc
+	RegisterCodec      = types.RegisterCodec
+	NewGuardian        = types.NewGuardian
+	NewMsgMsgDeposit   = types.NewMsgDeposit
+	NewMsgRequestGuard = types.NewMsgRequestGuard
 )
 
 type (
 	MsgDeposit          = types.MsgDeposit
 	Guardian            = types.Guardian
 	QueryGuardianParams = types.QueryGuardianParams
+	MsgRequestGuard     = types.MsgRequestGuard
 )
