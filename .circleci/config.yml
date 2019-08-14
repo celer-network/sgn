@@ -1,0 +1,26 @@
+version: 2
+
+# try to checkout pr merge if it exists, no op if not a pr build
+checkout_pr_merge: &checkout_pr_merge
+  run:
+    name: try to checkout pr merge
+    command: git fetch origin "+refs/pull/${CIRCLE_PULL_REQUEST##*/}/merge" && git checkout -qf FETCH_HEAD || echo "not pr build"
+
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12.7
+    steps:
+      - checkout
+      - <<: *checkout_pr_merge
+      - restore_cache:
+          key: go-cache-{{ checksum "go.sum" }}  # use go.mod should also work
+      - run:
+          name: make install test
+          command: |
+            make install
+      - save_cache:
+          key: go-cache-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg"
+            - "/go/bin"
