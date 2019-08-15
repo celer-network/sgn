@@ -62,7 +62,7 @@ var (
 		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
 	}
 
-	monitor bool
+	monitor *EthMonitor
 )
 
 // MakeCodec generates the necessary codecs for Amino
@@ -304,6 +304,8 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
+	monitor = NewEthMonitor(ethClient, app)
+
 	return app
 }
 
@@ -326,10 +328,7 @@ func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.
 }
 
 func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if !monitor {
-		monitor = true
-		// go app.setupMonitor(ctx)
-	}
+	go monitor.Start(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
 func (app *sgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
