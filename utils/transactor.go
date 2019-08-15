@@ -18,7 +18,7 @@ type Transactor struct {
 	Passphrase string
 }
 
-func NewTransactor(cliHome, accName, chainID, nodeURI string, cdc *codec.Codec) (*Transactor, error) {
+func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *codec.Codec) (*Transactor, error) {
 	kb, err := client.NewKeyBaseFromDir(cliHome)
 	if err != nil {
 		return nil, err
@@ -40,6 +40,7 @@ func NewTransactor(cliHome, accName, chainID, nodeURI string, cdc *codec.Codec) 
 		WithFromAddress(key.GetAddress()).
 		WithFromName(key.GetName()).
 		WithNodeURI(nodeURI).
+		WithTrustNode(true).
 		WithBroadcastMode("sync")
 	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
@@ -47,9 +48,10 @@ func NewTransactor(cliHome, accName, chainID, nodeURI string, cdc *codec.Codec) 
 	}
 
 	return &Transactor{
-		TxBuilder: txBldr,
-		CliCtx:    cliCtx,
-		Key:       key,
+		TxBuilder:  txBldr,
+		CliCtx:     cliCtx,
+		Key:        key,
+		Passphrase: passphrase,
 	}, nil
 }
 

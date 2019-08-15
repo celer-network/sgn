@@ -12,10 +12,11 @@ const (
 )
 
 var (
-	NewMsgSubscribe = types.NewMsgSubscribe
-	ModuleCdc       = types.ModuleCdc
-	RegisterCodec   = types.RegisterCodec
-	NewSubscription = types.NewSubscription
+	NewMsgSubscribe           = types.NewMsgSubscribe
+	ModuleCdc                 = types.ModuleCdc
+	RegisterCodec             = types.RegisterCodec
+	NewSubscription           = types.NewSubscription
+	NewQuerySubscrptionParams = types.NewQuerySubscrptionParams
 )
 
 type (
