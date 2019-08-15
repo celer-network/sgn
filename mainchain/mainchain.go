@@ -5,13 +5,11 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/celer-network/sgn/flags"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/spf13/viper"
 )
 
 type EthClient struct {
@@ -22,14 +20,14 @@ type EthClient struct {
 }
 
 // Get a new eth client
-func NewEthClient() (*EthClient, error) {
-	rpcClient, err := ethrpc.Dial(viper.GetString(flags.FlagEthWS))
+func NewEthClient(ws, guardAddress, ks, passphrase string) (*EthClient, error) {
+	rpcClient, err := ethrpc.Dial(ws)
 	if err != nil {
 		return nil, err
 	}
 
 	client := ethclient.NewClient(rpcClient)
-	guard, err := NewGuard(ethcommon.HexToAddress(viper.GetString(flags.FlagEthGuardAddress)), client)
+	guard, err := NewGuard(ethcommon.HexToAddress(guardAddress), client)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +36,7 @@ func NewEthClient() (*EthClient, error) {
 		Client: client,
 		Guard:  guard,
 	}
-	ethClient.setupAuth()
+	ethClient.setupAuth(ks, passphrase)
 
 	return ethClient, nil
 }
@@ -52,13 +50,12 @@ func (ethClient *EthClient) GetLatestBlkNum() (uint64, error) {
 	return latestBlkNum, nil
 }
 
-func (ethClient *EthClient) setupAuth() error {
-	keystoreBytes, err := ioutil.ReadFile(viper.GetString(flags.FlagEthKeystore))
+func (ethClient *EthClient) setupAuth(ks, passphrase string) error {
+	keystoreBytes, err := ioutil.ReadFile(ks)
 	if err != nil {
 		return err
 	}
 
-	passphrase := viper.GetString(flags.FlagEthPassphrase)
 	key, err := keystore.DecryptKey(keystoreBytes, passphrase)
 	if err != nil {
 		return err

@@ -20,6 +20,10 @@ jobs:
           name: make install test
           command: |
             make install
+      - run:
+          name: run test client
+          command: |
+            make test-client
       - save_cache:
           key: go-cache-{{ checksum "go.sum" }}
           paths:

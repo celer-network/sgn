@@ -3,8 +3,11 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"time"
 
+	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/bridge"
 	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
@@ -61,8 +64,6 @@ var (
 		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
 	}
-
-	monitor *EthMonitor
 )
 
 // MakeCodec generates the necessary codecs for Amino
@@ -116,7 +117,12 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
-	ethClient, err := mainchain.NewEthClient()
+	ethClient, err := mainchain.NewEthClient(
+		viper.GetString(flags.FlagEthWS),
+		viper.GetString(flags.FlagEthGuardAddress),
+		viper.GetString(flags.FlagEthKeystore),
+		viper.GetString(flags.FlagEthPassphrase),
+	)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -304,7 +310,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
-	monitor = NewEthMonitor(ethClient, app)
+	go app.startMonitor(ethClient)
 
 	return app
 }
@@ -314,6 +320,24 @@ type GenesisState map[string]json.RawMessage
 
 func NewDefaultGenesisState() GenesisState {
 	return ModuleBasics.DefaultGenesis()
+}
+
+func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
+	time.Sleep(5 * time.Second)
+
+	transactor, err := utils.NewTransactor(
+		DefaultCLIHome,
+		viper.GetString(flags.FlagSgnChainID),
+		viper.GetString(flags.FlagSgnNodeURI),
+		viper.GetString(flags.FlagSgnName),
+		viper.GetString(flags.FlagSgnPassphrase),
+		app.cdc,
+	)
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+	monitor := NewEthMonitor(ethClient, transactor, app.cdc)
+	monitor.Start()
 }
 
 func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
@@ -328,7 +352,6 @@ func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.
 }
 
 func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	go monitor.Start(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
 func (app *sgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {

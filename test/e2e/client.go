@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	app "github.com/celer-network/sgn"
+	app "github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
@@ -23,7 +23,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ethClient, err = mainchain.NewEthClient()
+	ethClient, err = mainchain.NewEthClient(
+		viper.GetString(flags.FlagEthWS),
+		viper.GetString(flags.FlagEthGuardAddress),
+		viper.GetString(flags.FlagEthKeystore),
+		viper.GetString(flags.FlagEthPassphrase),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,19 +39,18 @@ func main() {
 
 func setupTransactor() {
 	cdc := app.MakeCodec()
-	accName := viper.GetString(flags.FlagSgnName)
 	t, err := utils.NewTransactor(
 		app.DefaultCLIHome,
-		accName,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
+		viper.GetString(flags.FlagSgnName),
+		viper.GetString(flags.FlagSgnPassphrase),
 		cdc,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	t.Passphrase = viper.GetString(flags.FlagSgnPassphrase)
 	transactor = t
 }
 
