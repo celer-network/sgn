@@ -24,9 +24,9 @@ import (
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 )
 
 const appName = "sgn"
@@ -80,7 +80,6 @@ type sgnApp struct {
 
 	// Keys to access the substores
 	tkeyStaking  *sdk.TransientStoreKey
-	tkeyDistr    *sdk.TransientStoreKey
 	tkeyParams   *sdk.TransientStoreKey
 	keyMain      *sdk.KVStoreKey
 	keyAccount   *sdk.KVStoreKey
@@ -139,7 +138,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keyStaking:   sdk.NewKVStoreKey(staking.StoreKey),
 		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyDistr:     sdk.NewKVStoreKey(distr.StoreKey),
-		tkeyDistr:    sdk.NewTransientStoreKey(distr.TStoreKey),
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
@@ -170,6 +168,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.accountKeeper,
 		bankSupspace,
 		bank.DefaultCodespace,
+		app.ModuleAccountAddrs(),
 	)
 
 	// The SupplyKeeper collects transaction fees and renders them to the fee distribution module
@@ -178,7 +177,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keySupply,
 		app.accountKeeper,
 		app.bankKeeper,
-		supply.DefaultCodespace,
 		maccPerms)
 
 	// The staking keeper
@@ -199,6 +197,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.supplyKeeper,
 		distr.DefaultCodespace,
 		auth.FeeCollectorName,
+		app.ModuleAccountAddrs(),
 	)
 
 	app.slashingKeeper = slashing.NewKeeper(
@@ -286,7 +285,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	)
 
 	app.MountStores(
-		app.tkeyDistr,
 		app.tkeyParams,
 		app.tkeyStaking,
 		app.keyMain,
@@ -358,4 +356,14 @@ func (app *sgnApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList
 	validators = staking.WriteValidators(ctx, app.stakingKeeper)
 
 	return appState, validators, nil
+}
+
+// ModuleAccountAddrs returns all the app's module account addresses.
+func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
+	modAccAddrs := make(map[string]bool)
+	for acc := range maccPerms {
+		modAccAddrs[app.supplyKeeper.GetModuleAddress(acc).String()] = true
+	}
+
+	return modAccAddrs
 }

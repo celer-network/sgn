@@ -6,8 +6,7 @@ require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20190712234253-ed1100a1c015 // indirect
 	github.com/btcsuite/btcd v0.0.0-20190427004231-96897255fd17 // indirect
-	github.com/cosmos/cosmos-sdk v0.36.0-rc1
-	github.com/cosmos/sdk-application-tutorial v0.0.0-20190806083653-879a19843c67 // indirect
+	github.com/cosmos/cosmos-sdk v0.36.0
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/elastic/gosigar v0.10.4 // indirect
@@ -23,7 +22,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
-	github.com/prometheus/common v0.4.1
 	github.com/prometheus/tsdb v0.10.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.5
@@ -32,7 +30,8 @@ require (
 	github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570 // indirect
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/tendermint/go-amino v0.15.0
-	github.com/tendermint/tendermint v0.32.1
+	github.com/tendermint/tendermint v0.32.2
+	github.com/tendermint/tm-db v0.1.1
 	github.com/tyler-smith/go-bip39 v1.0.0 // indirect
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7 // indirect

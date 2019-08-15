@@ -4,7 +4,7 @@ import (
 	"os"
 	"path"
 
-	app "github.com/celer-network/sgn"
+	"github.com/celer-network/sgn/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
