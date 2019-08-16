@@ -34,7 +34,7 @@ func NewEthClient(ws, guardAddress, ledgerAddress, ks, passphrase string) (*EthC
 		return nil, err
 	}
 
-	ledger, err := NewGuard(ethcommon.HexToAddress(ledgerAddress), client)
+	ledger, err := NewCelerLedger(ethcommon.HexToAddress(ledgerAddress), client)
 	if err != nil {
 		return nil, err
 	}

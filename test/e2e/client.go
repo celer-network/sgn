@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
@@ -75,18 +76,22 @@ func sendRequestGuardTx() {
 	copy(channelId[:], []byte{1})
 	log.Println(channelId)
 
-	simplexPaymentChannel, err := proto.Marshal(&entity.SimplexPaymentChannel{
+	simplexPaymentChannelBytes, err := proto.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    10,
 		ChannelId: channelId[:],
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	proto.Marshal(&chain.SignedSimplexState{
-		SimplexState: simplexPaymentChannel,
-	})
 
-	msg := subscribe.NewMsgSubscribe(ethClient.Address.String(), transactor.Key.GetAddress())
+	signedSimplexStateBytes, err := proto.Marshal(&chain.SignedSimplexState{
+		SimplexState: simplexPaymentChannelBytes,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	msg := guardianmanager.NewMsgRequestGuard(ethClient.Address.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	res, err := transactor.BroadcastTx(msg)
 	if err != nil {
 		log.Fatal(err)

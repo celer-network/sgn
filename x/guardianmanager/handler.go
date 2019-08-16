@@ -36,6 +36,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	// TODO: need to validate signed simple state bytes
 	err := keeper.RequestGuard(ctx, msg.EthAddress, msg.SignedSimplexStateBytes)
 	if err != nil {
+		ctx.Logger().Error(err.Error())
 		return err.Result()
 	}
 

@@ -25,12 +25,13 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the guardianmanager Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient) Keeper {
+func NewKeeper(coinKeeper bank.Keeper, subscribeKeeper subscribe.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient) Keeper {
 	return Keeper{
-		coinKeeper: coinKeeper,
-		storeKey:   storeKey,
-		cdc:        cdc,
-		ethClient:  ethClient,
+		coinKeeper:      coinKeeper,
+		subscribeKeeper: subscribeKeeper,
+		storeKey:        storeKey,
+		cdc:             cdc,
+		ethClient:       ethClient,
 	}
 }
 
@@ -96,7 +97,7 @@ func (k Keeper) RequestGuard(ctx sdk.Context, ethAddress string, signedSimplexSt
 	}
 
 	// TODO: add extra validation for the msg
-	if subscription.SeqNum > simplexPaymentChannel.SeqNum {
+	if simplexPaymentChannel.SeqNum < subscription.SeqNum {
 		return sdk.ErrInternal("Seq Num must be larger than previous request")
 	}
 

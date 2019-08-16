@@ -238,6 +238,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 
 	app.gmKeeper = guardianmanager.NewKeeper(
 		app.bankKeeper,
+		app.subscribeKeeper,
 		app.keyGm,
 		app.cdc,
 		ethClient,

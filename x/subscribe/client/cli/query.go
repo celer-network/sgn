@@ -32,21 +32,12 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			data, err := cdc.MarshalJSON(types.NewQuerySubscrptionParams(args[0]))
+			subscription, err := QuerySubscrption(cdc, cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySubscrption)
-			res, _, err := cliCtx.QueryWithData(route, data)
-			if err != nil {
-				fmt.Printf("query error", err)
-				return nil
-			}
-
-			var out types.Subscription
-			cdc.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintOutput(out)
+			return cliCtx.PrintOutput(subscription)
 		},
 	}
 }
