@@ -3,11 +3,15 @@ package main
 import (
 	"log"
 
+	"github.com/celer-network/sgn/chain"
+
 	app "github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/entity"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
 )
 
@@ -26,6 +30,7 @@ func main() {
 	ethClient, err = mainchain.NewEthClient(
 		viper.GetString(flags.FlagEthWS),
 		viper.GetString(flags.FlagEthGuardAddress),
+		viper.GetString(flags.FlagEthLedgerAddress),
 		viper.GetString(flags.FlagEthKeystore),
 		viper.GetString(flags.FlagEthPassphrase),
 	)
@@ -34,7 +39,8 @@ func main() {
 	}
 
 	setupTransactor()
-	sendSubscribeTx()
+	// sendSubscribeTx()
+	sendRequestGuardTx()
 }
 
 func setupTransactor() {
@@ -55,6 +61,31 @@ func setupTransactor() {
 }
 
 func sendSubscribeTx() {
+	msg := subscribe.NewMsgSubscribe(ethClient.Address.String(), transactor.Key.GetAddress())
+	res, err := transactor.BroadcastTx(msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(res)
+}
+
+func sendRequestGuardTx() {
+	channelId := [32]byte{}
+	copy(channelId[:], []byte{1})
+	log.Println(channelId)
+
+	simplexPaymentChannel, err := proto.Marshal(&entity.SimplexPaymentChannel{
+		SeqNum:    10,
+		ChannelId: channelId[:],
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	proto.Marshal(&chain.SignedSimplexState{
+		SimplexState: simplexPaymentChannel,
+	})
+
 	msg := subscribe.NewMsgSubscribe(ethClient.Address.String(), transactor.Key.GetAddress())
 	res, err := transactor.BroadcastTx(msg)
 	if err != nil {

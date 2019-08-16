@@ -12,6 +12,7 @@ require (
 	github.com/elastic/gosigar v0.10.4 // indirect
 	github.com/ethereum/go-ethereum v1.9.2
 	github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff // indirect
+	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/mux v1.7.0
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/huin/goupnp v1.0.0 // indirect

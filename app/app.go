@@ -120,6 +120,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	ethClient, err := mainchain.NewEthClient(
 		viper.GetString(flags.FlagEthWS),
 		viper.GetString(flags.FlagEthGuardAddress),
+		viper.GetString(flags.FlagEthLedgerAddress),
 		viper.GetString(flags.FlagEthKeystore),
 		viper.GetString(flags.FlagEthPassphrase),
 	)

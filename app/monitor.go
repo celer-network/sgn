@@ -29,12 +29,30 @@ func (m *EthMonitor) Start() {
 		return
 	}
 
-	go m.querySubscription()
+	go m.monitorIntendSettle()
 	m.started = true
 }
 
-func (m *EthMonitor) querySubscription() {
-	data, err := m.cdc.MarshalJSON(subscribe.NewQuerySubscrptionParams("0x674fa8ec8572f476f07b2bc7042e80a4f4d64107"))
+func (m *EthMonitor) monitorIntendSettle() {
+	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
+	sub, err := m.ethClient.Ledger.WatchIntendSettle
+	if err != nil {
+		fmt.Printf("WatchIntendSettle err", err)
+		return
+	}
+	defer sub.Unsubscribe()
+	for {
+		select {
+		case err := <-sub.Err():
+			fmt.Printf("WatchIntendSettle err", err)
+		case intendSettle := <-intendSettleChan:
+
+		}
+	}
+}
+
+func (m *EthMonitor) querySubscription(ethAddress string) {
+	data, err := m.cdc.MarshalJSON(subscribe.NewQuerySubscrptionParams(ethAddress))
 	if err != nil {
 		return
 	}

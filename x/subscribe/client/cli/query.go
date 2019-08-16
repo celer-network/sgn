@@ -50,3 +50,20 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		},
 	}
 }
+
+func QuerySubscrption(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, ethAddress string) (subscription types.Subscription, err error) {
+	data, err := cdc.MarshalJSON(types.NewQuerySubscrptionParams(ethAddress))
+	if err != nil {
+		return
+	}
+
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySubscrption)
+	res, _, err := cliCtx.QueryWithData(route, data)
+	if err != nil {
+		fmt.Printf("query error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(res, &subscription)
+	return
+}
