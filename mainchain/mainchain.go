@@ -16,18 +16,25 @@ type EthClient struct {
 	Address ethcommon.Address
 	Client  *ethclient.Client
 	Guard   *Guard
+	Ledger  *CelerLedger
 	Auth    *bind.TransactOpts
 }
 
 // Get a new eth client
-func NewEthClient(ws, guardAddress, ks, passphrase string) (*EthClient, error) {
+func NewEthClient(ws, guardAddress, ledgerAddress, ks, passphrase string) (*EthClient, error) {
 	rpcClient, err := ethrpc.Dial(ws)
 	if err != nil {
 		return nil, err
 	}
 
 	client := ethclient.NewClient(rpcClient)
+
 	guard, err := NewGuard(ethcommon.HexToAddress(guardAddress), client)
+	if err != nil {
+		return nil, err
+	}
+
+	ledger, err := NewCelerLedger(ethcommon.HexToAddress(ledgerAddress), client)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +42,7 @@ func NewEthClient(ws, guardAddress, ks, passphrase string) (*EthClient, error) {
 	ethClient := &EthClient{
 		Client: client,
 		Guard:  guard,
+		Ledger: ledger,
 	}
 	ethClient.setupAuth(ks, passphrase)
 

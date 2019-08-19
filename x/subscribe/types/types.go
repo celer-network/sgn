@@ -7,6 +7,8 @@ import (
 
 type Subscription struct {
 	Expiration              uint64 `json:"expiration"`
+	SeqNum                  uint64 `json:"seqNum"`
+	ChannelId               []byte `json:"channelId"`
 	SignedSimplexStateBytes []byte `json:"signedSimplexStateBytes"`
 }
 

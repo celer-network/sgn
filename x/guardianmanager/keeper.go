@@ -3,6 +3,8 @@ package guardianmanager
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/chain"
+	"github.com/celer-network/sgn/entity"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -10,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/golang/protobuf/proto"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
@@ -22,12 +25,13 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the guardianmanager Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient) Keeper {
+func NewKeeper(coinKeeper bank.Keeper, subscribeKeeper subscribe.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient) Keeper {
 	return Keeper{
-		coinKeeper: coinKeeper,
-		storeKey:   storeKey,
-		cdc:        cdc,
-		ethClient:  ethClient,
+		coinKeeper:      coinKeeper,
+		subscribeKeeper: subscribeKeeper,
+		storeKey:        storeKey,
+		cdc:             cdc,
+		ethClient:       ethClient,
 	}
 }
 
@@ -80,6 +84,25 @@ func (k Keeper) RequestGuard(ctx sdk.Context, ethAddress string, signedSimplexSt
 		return sdk.ErrInternal("Subscription expired")
 	}
 
+	var signedSimplexState chain.SignedSimplexState
+	err = proto.Unmarshal(signedSimplexStateBytes, &signedSimplexState)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal signedSimplexStateBytes: %s", err))
+	}
+
+	var simplexPaymentChannel entity.SimplexPaymentChannel
+	err = proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal simplexState: %s", err))
+	}
+
+	// TODO: add extra validation for the msg
+	if simplexPaymentChannel.SeqNum < subscription.SeqNum {
+		return sdk.ErrInternal("Seq Num must be larger than previous request")
+	}
+
+	subscription.SeqNum = simplexPaymentChannel.SeqNum
+	subscription.ChannelId = simplexPaymentChannel.ChannelId
 	subscription.SignedSimplexStateBytes = signedSimplexStateBytes
 	k.subscribeKeeper.SetSubscription(ctx, ethAddress, subscription)
 	return nil

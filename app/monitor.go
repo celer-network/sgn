@@ -5,7 +5,7 @@ import (
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/subscribe/client/cli"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -29,20 +29,35 @@ func (m *EthMonitor) Start() {
 		return
 	}
 
-	go m.querySubscription()
+	go m.monitorIntendSettle()
 	m.started = true
 }
 
-func (m *EthMonitor) querySubscription() {
-	data, err := m.cdc.MarshalJSON(subscribe.NewQuerySubscrptionParams("0x674fa8ec8572f476f07b2bc7042e80a4f4d64107"))
+func (m *EthMonitor) monitorIntendSettle() {
+	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
+	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, [][32]byte{})
 	if err != nil {
+		fmt.Printf("WatchIntendSettle err", err)
 		return
 	}
-	route := fmt.Sprintf("custom/subscribe/%s", subscribe.QuerySubscrption)
-	res, _, err := m.transactor.CliCtx.QueryWithData(route, data)
-	if err != nil {
-		fmt.Printf("query error", err)
+	defer sub.Unsubscribe()
+	for {
+		select {
+		case err := <-sub.Err():
+			fmt.Printf("WatchIntendSettle err", err)
+		case intendSettle := <-intendSettleChan:
+			m.handleIntendSettle(intendSettle)
+		}
 	}
+}
 
-	fmt.Printf("query result", res)
+func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+	// TODO: figure out query subscription by channel ID
+	subscription, err := cli.QuerySubscrption(m.cdc, m.transactor.CliCtx, "subscribe", "1f7402f55e142820ea3812106d0657103fc1709e")
+
+	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, subscription.SignedSimplexStateBytes)
+	if err != nil {
+		fmt.Printf("tx err", err)
+	}
+	fmt.Printf("tx detail", tx)
 }
