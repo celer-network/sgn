@@ -312,7 +312,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
-	// go app.startMonitor(ethClient)
+	go app.startMonitor(ethClient)
 
 	return app
 }
@@ -325,7 +325,7 @@ func NewDefaultGenesisState() GenesisState {
 }
 
 func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
-	time.Sleep(6 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	transactor, err := utils.NewTransactor(
 		DefaultCLIHome,
