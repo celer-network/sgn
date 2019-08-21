@@ -28,7 +28,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdEthAddress queries the eth address associated with the sidechain address
 func GetCmdEthAddress(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "eth-address",
+		Use:   "eth-address [ethAddress]",
 		Short: "query eth address associated with the sidechain address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -14,14 +14,14 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
 		case QuerySubscrption:
-			return queryEthAddress(ctx, req, keeper)
+			return querySubscription(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("Unknown subscribe query endpoint")
 		}
 	}
 }
 
-func queryEthAddress(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params QuerySubscrptionParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {

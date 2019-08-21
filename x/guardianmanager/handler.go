@@ -63,15 +63,18 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal simplexState: %s", err)).Result()
 	}
 
+	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId)
+	if !found {
+		request = NewRequest(simplexPaymentChannel.ChannelId, simplexPaymentChannel.SeqNum)
+	}
+
 	// TODO: add extra validation for the msg
-	if simplexPaymentChannel.SeqNum < subscription.SeqNum {
+	if simplexPaymentChannel.SeqNum < request.SeqNum {
 		return sdk.ErrInternal("Seq Num must be larger than previous request").Result()
 	}
 
-	subscription.SeqNum = simplexPaymentChannel.SeqNum
-	subscription.ChannelId = simplexPaymentChannel.ChannelId
-	subscription.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
-	keeper.subscribeKeeper.SetSubscription(ctx, msg.EthAddress, subscription)
+	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
+	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
 
 	return sdk.Result{}
 }

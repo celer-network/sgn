@@ -6,10 +6,7 @@ import (
 )
 
 type Subscription struct {
-	Expiration              uint64 `json:"expiration"`
-	SeqNum                  uint64 `json:"seqNum"`
-	ChannelId               []byte `json:"channelId"`
-	SignedSimplexStateBytes []byte `json:"signedSimplexStateBytes"`
+	Expiration uint64 `json:"expiration"`
 }
 
 // Returns a new Number with the minprice as the price
@@ -21,5 +18,5 @@ func NewSubscription(expiration uint64) Subscription {
 
 // implement fmt.Stringer
 func (s Subscription) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Expiration: %d, SignedSimplexStateBytes: %x`, s.Expiration, s.SignedSimplexStateBytes))
+	return strings.TrimSpace(fmt.Sprintf(`Expiration: %d`, s.Expiration))
 }

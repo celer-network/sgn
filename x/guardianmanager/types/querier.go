@@ -6,6 +6,7 @@ import (
 
 const (
 	QueryGuardian = "guardian"
+	QueryRequest  = "request"
 )
 
 type QueryGuardianParams struct {
@@ -15,5 +16,15 @@ type QueryGuardianParams struct {
 func NewQueryGuardianParams(addr string) QueryGuardianParams {
 	return QueryGuardianParams{
 		EthAddress: ethcommon.HexToAddress(addr).String(),
+	}
+}
+
+type QueryRequestParams struct {
+	ChannelId []byte
+}
+
+func NewQueryRequestParams(channelId []byte) QueryRequestParams {
+	return QueryRequestParams{
+		ChannelId: channelId,
 	}
 }
