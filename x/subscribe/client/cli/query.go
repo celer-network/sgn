@@ -27,7 +27,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdSubscription queries subscription info
 func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "subscription",
+		Use:   "subscription [ethAddress]",
 		Short: "query subscription info associated with the eth address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -36,11 +36,11 @@ func NewKeeper(coinKeeper bank.Keeper, subscribeKeeper subscribe.Keeper, storeKe
 func (k Keeper) GetGuardian(ctx sdk.Context, ethAddress string) Guardian {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has([]byte(ethAddress)) {
+	if !store.Has(GetGuardianKey(ethAddress)) {
 		return NewGuardian()
 	}
 
-	value := store.Get([]byte(ethAddress))
+	value := store.Get(GetGuardianKey(ethAddress))
 	var guardian Guardian
 	k.cdc.MustUnmarshalBinaryBare(value, &guardian)
 	return guardian
@@ -49,7 +49,27 @@ func (k Keeper) GetGuardian(ctx sdk.Context, ethAddress string) Guardian {
 // Sets the entire Guardian metadata for a ethAddress
 func (k Keeper) SetGuardian(ctx sdk.Context, ethAddress string, guardian Guardian) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(ethAddress), k.cdc.MustMarshalBinaryBare(guardian))
+	store.Set(GetGuardianKey(ethAddress), k.cdc.MustMarshalBinaryBare(guardian))
+}
+
+// Gets the entire Request metadata for a channelId
+func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte) (Request, bool) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetRequestKey(channelId)) {
+		return Request{}, false
+	}
+
+	value := store.Get(GetRequestKey(channelId))
+	var request Request
+	k.cdc.MustUnmarshalBinaryBare(value, &request)
+	return request, true
+}
+
+// Sets the entire Request metadata for a channelId
+func (k Keeper) SetRequest(ctx sdk.Context, channelId []byte, request Request) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetRequestKey(channelId), k.cdc.MustMarshalBinaryBare(request))
 }
 
 // Sets the entire Guardian metadata for a ethAddress

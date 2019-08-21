@@ -5,7 +5,7 @@ import (
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
-	"github.com/celer-network/sgn/x/subscribe/client/cli"
+	"github.com/celer-network/sgn/x/guardianmanager/client/cli"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -52,12 +52,16 @@ func (m *EthMonitor) monitorIntendSettle() {
 }
 
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	// TODO: figure out query subscription by channel ID
-	subscription, err := cli.QuerySubscrption(m.cdc, m.transactor.CliCtx, "subscribe", "1f7402f55e142820ea3812106d0657103fc1709e")
+	request, err := cli.QueryRequest(m.cdc, m.transactor.CliCtx, "guardianmanager", intendSettle.ChannelId[:])
+	if err != nil {
+		fmt.Printf("query request err", err)
+		return
+	}
 
-	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, subscription.SignedSimplexStateBytes)
+	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, request.SignedSimplexStateBytes)
 	if err != nil {
 		fmt.Printf("tx err", err)
+		return
 	}
 	fmt.Printf("tx detail", tx)
 }
