@@ -312,7 +312,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
-	go app.startMonitor(ethClient)
+	// go app.startMonitor(ethClient)
 
 	return app
 }
@@ -325,7 +325,7 @@ func NewDefaultGenesisState() GenesisState {
 }
 
 func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	transactor, err := utils.NewTransactor(
 		DefaultCLIHome,
@@ -386,7 +386,7 @@ func (app *sgnApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList
 func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
-		modAccAddrs[app.supplyKeeper.GetModuleAddress(acc).String()] = true
+		modAccAddrs[supply.NewModuleAddress(acc).String()] = true
 	}
 
 	return modAccAddrs
