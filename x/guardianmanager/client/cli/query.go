@@ -21,6 +21,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 	guardianmanagerQueryCmd.AddCommand(client.GetCommands(
 		GetCmdGuardian(storeKey, cdc),
+		GetCmdRequest(storeKey, cdc),
 	)...)
 	return guardianmanagerQueryCmd
 }

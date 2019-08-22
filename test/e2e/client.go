@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
 )
@@ -75,6 +76,7 @@ func sendRequestGuardTx() {
 	channelId := [32]byte{}
 	copy(channelId[:], []byte{1})
 	log.Println(channelId)
+	log.Println(ethcommon.Bytes2Hex(channelId[:]))
 
 	simplexPaymentChannelBytes, err := proto.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    10,

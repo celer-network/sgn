@@ -41,14 +41,16 @@ func (m *EthMonitor) monitorIntendSettle() {
 		return
 	}
 	defer sub.Unsubscribe()
-	for {
-		select {
-		case err := <-sub.Err():
-			fmt.Printf("WatchIntendSettle err", err)
-		case intendSettle := <-intendSettleChan:
-			m.handleIntendSettle(intendSettle)
-		}
+
+	// TODO: make sure only submit intendSettle when sequence num is smaller
+	// for {
+	select {
+	case err := <-sub.Err():
+		fmt.Printf("WatchIntendSettle err", err)
+	case intendSettle := <-intendSettleChan:
+		m.handleIntendSettle(intendSettle)
 	}
+	// }
 }
 
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
