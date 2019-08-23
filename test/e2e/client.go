@@ -78,9 +78,11 @@ func sendRequestGuardTx() {
 	log.Println(channelId)
 	log.Println(ethcommon.Bytes2Hex(channelId[:]))
 
+	// TODO: currently, only use two same address
 	simplexPaymentChannelBytes, err := proto.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    10,
 		ChannelId: channelId[:],
+		PeerFrom:  ethClient.Address.Bytes(),
 	})
 	if err != nil {
 		log.Fatal(err)

@@ -42,28 +42,32 @@ func (m *EthMonitor) monitorIntendSettle() {
 	}
 	defer sub.Unsubscribe()
 
-	// TODO: make sure only submit intendSettle when sequence num is smaller
-	// for {
-	select {
-	case err := <-sub.Err():
-		fmt.Printf("WatchIntendSettle err", err)
-	case intendSettle := <-intendSettleChan:
-		m.handleIntendSettle(intendSettle)
+	for {
+		select {
+		case err := <-sub.Err():
+			fmt.Printf("WatchIntendSettle err", err)
+		case intendSettle := <-intendSettleChan:
+			m.handleIntendSettle(intendSettle)
+		}
 	}
-	// }
 }
 
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	request, err := cli.QueryRequest(m.cdc, m.transactor.CliCtx, "guardianmanager", intendSettle.ChannelId[:])
 	if err != nil {
-		fmt.Printf("query request err", err)
+		fmt.Printf("Query request err", err)
+		return
+	}
+
+	if intendSettle.SeqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+		fmt.Printf("Ignore the intendSettle event due to larger seqNum")
 		return
 	}
 
 	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, request.SignedSimplexStateBytes)
 	if err != nil {
-		fmt.Printf("tx err", err)
+		fmt.Printf("Tx err", err)
 		return
 	}
-	fmt.Printf("tx detail", tx)
+	fmt.Printf("Tx detail", tx)
 }

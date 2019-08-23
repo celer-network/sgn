@@ -36,7 +36,6 @@ func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg MsgDeposit) sdk.Result
 
 // Handle a message to request guard
 func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
-	// TODO: need to validate signed simple state bytes
 	subscription, found := keeper.subscribeKeeper.GetSubscription(ctx, msg.EthAddress)
 	if !found {
 		return sdk.ErrInternal("Cannot find subscription").Result()
@@ -63,16 +62,21 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal simplexState: %s", err)).Result()
 	}
 
-	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId)
-	if !found {
-		request = NewRequest(simplexPaymentChannel.ChannelId, simplexPaymentChannel.SeqNum)
+	request, err := getRequest(ctx, keeper, simplexPaymentChannel)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to get request: %s", err)).Result()
 	}
 
-	// TODO: add extra validation for the msg
 	if simplexPaymentChannel.SeqNum < request.SeqNum {
 		return sdk.ErrInternal("Seq Num must be larger than previous request").Result()
 	}
 
+	err = verifySignedSimplexStateSigs(request, signedSimplexState)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to verify sigs: %s", err)).Result()
+	}
+
+	request.SeqNum = simplexPaymentChannel.SeqNum
 	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
 	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
 
