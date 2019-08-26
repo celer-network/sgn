@@ -9,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/bridge"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -89,6 +90,7 @@ type sgnApp struct {
 	keyDistr     *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
 	keySlashing  *sdk.KVStoreKey
+	keyGlobal    *sdk.KVStoreKey
 	keyBridge    *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyGm        *sdk.KVStoreKey
@@ -101,6 +103,7 @@ type sgnApp struct {
 	distrKeeper     distr.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
+	globalKeeper    global.Keeper
 	bridgeKeeper    bridge.Keeper
 	subscribeKeeper subscribe.Keeper
 	gmKeeper        guardianmanager.Keeper
@@ -148,6 +151,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
+		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyGm:        sdk.NewKVStoreKey(guardianmanager.StoreKey),
@@ -223,21 +227,25 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 			app.slashingKeeper.Hooks()),
 	)
 
+	app.globalKeeper = global.NewKeeper(
+		app.keyGlobal,
+		app.cdc,
+		ethClient,
+	)
+
 	app.bridgeKeeper = bridge.NewKeeper(
-		app.bankKeeper,
 		app.keyBridge,
 		app.cdc,
 	)
 
 	app.subscribeKeeper = subscribe.NewKeeper(
-		app.bankKeeper,
 		app.keySubscribe,
 		app.cdc,
 		ethClient,
 	)
 
 	app.gmKeeper = guardianmanager.NewKeeper(
-		app.bankKeeper,
+		app.globalKeeper,
 		app.subscribeKeeper,
 		app.keyGm,
 		app.cdc,

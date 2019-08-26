@@ -41,12 +41,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
 
-	latestBlkNum, err := keeper.ethClient.GetLatestBlkNum()
+	latestBlk, err := keeper.globalKeeper.GetLatestBlock(ctx)
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query latest block number: %s", err)).Result()
+		return sdk.ErrInternal(fmt.Sprintf("Failed to get latest block number: %s", err)).Result()
 	}
 	// TODO: add a safe margin to ensure consistent validation and that guardians have enough time to submit tx
-	if latestBlkNum > subscription.Expiration {
+	if latestBlk.Number > subscription.Expiration {
 		return sdk.ErrInternal("Subscription expired").Result()
 	}
 
