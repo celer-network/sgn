@@ -9,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/bridge"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -53,6 +54,7 @@ var (
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
+		global.AppModule{},
 		bridge.AppModule{},
 		subscribe.AppModule{},
 		guardianmanager.AppModule{},
@@ -89,6 +91,7 @@ type sgnApp struct {
 	keyDistr     *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
 	keySlashing  *sdk.KVStoreKey
+	keyGlobal    *sdk.KVStoreKey
 	keyBridge    *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyGm        *sdk.KVStoreKey
@@ -101,6 +104,7 @@ type sgnApp struct {
 	distrKeeper     distr.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
+	globalKeeper    global.Keeper
 	bridgeKeeper    bridge.Keeper
 	subscribeKeeper subscribe.Keeper
 	gmKeeper        guardianmanager.Keeper
@@ -148,6 +152,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
+		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyGm:        sdk.NewKVStoreKey(guardianmanager.StoreKey),
@@ -223,21 +228,25 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 			app.slashingKeeper.Hooks()),
 	)
 
+	app.globalKeeper = global.NewKeeper(
+		app.keyGlobal,
+		app.cdc,
+		ethClient,
+	)
+
 	app.bridgeKeeper = bridge.NewKeeper(
-		app.bankKeeper,
 		app.keyBridge,
 		app.cdc,
 	)
 
 	app.subscribeKeeper = subscribe.NewKeeper(
-		app.bankKeeper,
 		app.keySubscribe,
 		app.cdc,
 		ethClient,
 	)
 
 	app.gmKeeper = guardianmanager.NewKeeper(
-		app.bankKeeper,
+		app.globalKeeper,
 		app.subscribeKeeper,
 		app.keyGm,
 		app.cdc,
@@ -253,6 +262,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
+		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		guardianmanager.NewAppModule(app.gmKeeper, app.bankKeeper),
@@ -270,6 +280,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		bank.ModuleName,
 		slashing.ModuleName,
 		genutil.ModuleName,
+		global.ModuleName,
 		bridge.ModuleName,
 		subscribe.ModuleName,
 		guardianmanager.ModuleName,
@@ -302,6 +313,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyDistr,
 		app.keySlashing,
 		app.keyParams,
+		app.keyGlobal,
 		app.keyBridge,
 		app.keySubscribe,
 		app.keyGm,
@@ -325,7 +337,7 @@ func NewDefaultGenesisState() GenesisState {
 }
 
 func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	transactor, err := utils.NewTransactor(
 		DefaultCLIHome,

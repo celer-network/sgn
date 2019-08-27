@@ -42,10 +42,6 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 		WithNodeURI(nodeURI).
 		WithTrustNode(true).
 		WithBroadcastMode("sync")
-	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
-	if err != nil {
-		return nil, err
-	}
 
 	return &Transactor{
 		TxBuilder:  txBldr,
@@ -56,7 +52,12 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 }
 
 func (t *Transactor) BroadcastTx(msg sdk.Msg) (sdk.TxResponse, error) {
-	txBytes, err := t.TxBuilder.BuildAndSign(t.Key.GetName(), t.Passphrase, []sdk.Msg{msg})
+	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+	if err != nil {
+		return sdk.TxResponse{}, err
+	}
+
+	txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, []sdk.Msg{msg})
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}

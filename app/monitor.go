@@ -1,12 +1,15 @@
 package app
 
 import (
-	"fmt"
+	"context"
+	"log"
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/guardianmanager/client/cli"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type EthMonitor struct {
@@ -29,15 +32,16 @@ func (m *EthMonitor) Start() {
 		return
 	}
 
+	go m.monitorBlockHead()
 	go m.monitorIntendSettle()
 	m.started = true
 }
 
-func (m *EthMonitor) monitorIntendSettle() {
-	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
-	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, [][32]byte{})
+func (m *EthMonitor) monitorBlockHead() {
+	headerChan := make(chan *types.Header)
+	sub, err := m.ethClient.Client.SubscribeNewHead(context.Background(), headerChan)
 	if err != nil {
-		fmt.Printf("WatchIntendSettle err", err)
+		log.Printf("SubscribeNewHead err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -45,7 +49,31 @@ func (m *EthMonitor) monitorIntendSettle() {
 	for {
 		select {
 		case err := <-sub.Err():
-			fmt.Printf("WatchIntendSettle err", err)
+			log.Printf("SubscribeNewHead err", err)
+		case header := <-headerChan:
+			msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
+			_, err := m.transactor.BroadcastTx(msg)
+			if err != nil {
+				log.Printf("SyncBlock err", err)
+				return
+			}
+		}
+	}
+}
+
+func (m *EthMonitor) monitorIntendSettle() {
+	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
+	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, [][32]byte{})
+	if err != nil {
+		log.Printf("WatchIntendSettle err", err)
+		return
+	}
+	defer sub.Unsubscribe()
+
+	for {
+		select {
+		case err := <-sub.Err():
+			log.Printf("WatchIntendSettle err", err)
 		case intendSettle := <-intendSettleChan:
 			m.handleIntendSettle(intendSettle)
 		}
@@ -55,19 +83,19 @@ func (m *EthMonitor) monitorIntendSettle() {
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	request, err := cli.QueryRequest(m.cdc, m.transactor.CliCtx, "guardianmanager", intendSettle.ChannelId[:])
 	if err != nil {
-		fmt.Printf("Query request err", err)
+		log.Printf("Query request err", err)
 		return
 	}
 
 	if intendSettle.SeqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-		fmt.Printf("Ignore the intendSettle event due to larger seqNum")
+		log.Printf("Ignore the intendSettle event due to larger seqNum")
 		return
 	}
 
 	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, request.SignedSimplexStateBytes)
 	if err != nil {
-		fmt.Printf("Tx err", err)
+		log.Printf("Tx err", err)
 		return
 	}
-	fmt.Printf("Tx detail", tx)
+	log.Printf("Tx detail", tx)
 }

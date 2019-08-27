@@ -6,26 +6,23 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	coinKeeper bank.Keeper
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
-	cdc        *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient  *mainchain.EthClient
+	storeKey  sdk.StoreKey // Unexposed key to access store from sdk.Context
+	cdc       *codec.Codec // The wire codec for binary encoding/decoding.
+	ethClient *mainchain.EthClient
 }
 
 // NewKeeper creates new instances of the subscribe Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient) Keeper {
 	return Keeper{
-		coinKeeper: coinKeeper,
-		storeKey:   storeKey,
-		cdc:        cdc,
-		ethClient:  ethClient,
+		storeKey:  storeKey,
+		cdc:       cdc,
+		ethClient: ethClient,
 	}
 }
 
