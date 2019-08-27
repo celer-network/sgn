@@ -2,8 +2,11 @@ package subscribe
 
 import (
 	"fmt"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // NewHandler returns a handler for "subscribe" type messages.
@@ -21,10 +24,14 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to subscribe
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
-	err := keeper.Subscribe(ctx, msg.EthAddress)
+	expiration, err := keeper.ethClient.Guard.SubscriptionExpiration(&bind.CallOpts{
+		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+	}, ethcommon.HexToAddress(msg.EthAddress))
 	if err != nil {
-		return err.Result()
+		return sdk.ErrInternal(fmt.Sprintf("Failed to query subscription expiration: %s", err)).Result()
 	}
+
+	keeper.Subscribe(ctx, msg.EthAddress, expiration.Uint64())
 
 	return sdk.Result{}
 }

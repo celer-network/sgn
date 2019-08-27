@@ -2,6 +2,7 @@ package guardianmanager
 
 import (
 	"errors"
+	"math/big"
 
 	"github.com/celer-network/sgn/chain"
 	"github.com/celer-network/sgn/entity"
@@ -16,7 +17,9 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 	if !found {
 		channelId := [32]byte{}
 		copy(channelId[:], simplexPaymentChannel.ChannelId)
-		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, channelId)
+		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
+			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+		}, channelId)
 		if err != nil {
 			return Request{}, err
 		}
