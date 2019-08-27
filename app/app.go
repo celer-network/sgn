@@ -243,14 +243,15 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keySubscribe,
 		app.cdc,
 		ethClient,
+		app.globalKeeper,
 	)
 
 	app.gmKeeper = guardianmanager.NewKeeper(
-		app.globalKeeper,
-		app.subscribeKeeper,
 		app.keyGm,
 		app.cdc,
 		ethClient,
+		app.globalKeeper,
+		app.subscribeKeeper,
 	)
 
 	app.mm = module.NewManager(

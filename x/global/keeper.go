@@ -1,16 +1,12 @@
 package global
 
 import (
-	"context"
-	"errors"
-	"math"
-
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const maxBlockInterval = 2
+const confirmationCount = 5
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -41,24 +37,20 @@ func (k Keeper) GetLatestBlock(ctx sdk.Context) Block {
 	return lastestBlock
 }
 
-// sync the lastest Block metadata
-func (k Keeper) SyncBlock(ctx sdk.Context, blockNumber uint64) error {
-	lastestBlock := k.GetLatestBlock(ctx)
-	if blockNumber < lastestBlock.Number {
-		return errors.New("Block number is smaller than current latest block")
+// Gets the secure block number
+func (k Keeper) GetSecureBlockNum(ctx sdk.Context) uint64 {
+	latestBlock := k.GetLatestBlock(ctx)
+
+	if latestBlock.Number < confirmationCount {
+		return 0
 	}
 
+	return latestBlock.Number - confirmationCount
+}
+
+// Sync the lastest Block metadata
+func (k Keeper) SyncBlock(ctx sdk.Context, blockNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
-	head, err := k.ethClient.Client.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		return err
-	}
-
-	if math.Abs(float64(blockNumber-head.Number.Uint64())) > maxBlockInterval {
-		return errors.New("Block number is out of bound")
-	}
-
 	newBlock := NewBlock(blockNumber)
 	store.Set(LatestBlockKey, k.cdc.MustMarshalBinaryBare(newBlock))
-	return nil
 }
