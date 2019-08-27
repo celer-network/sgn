@@ -41,17 +41,14 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
 
-	latestBlk, err := keeper.globalKeeper.GetLatestBlock(ctx)
-	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to get latest block number: %s", err)).Result()
-	}
+	latestBlk := keeper.globalKeeper.GetLatestBlock(ctx)
 	// TODO: add a safe margin to ensure consistent validation and that guardians have enough time to submit tx
 	if latestBlk.Number > subscription.Expiration {
 		return sdk.ErrInternal("Subscription expired").Result()
 	}
 
 	var signedSimplexState chain.SignedSimplexState
-	err = proto.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
+	err := proto.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal signedSimplexStateBytes: %s", err)).Result()
 	}

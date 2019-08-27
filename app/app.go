@@ -54,6 +54,7 @@ var (
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
+		global.AppModule{},
 		bridge.AppModule{},
 		subscribe.AppModule{},
 		guardianmanager.AppModule{},
@@ -261,6 +262,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
+		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		guardianmanager.NewAppModule(app.gmKeeper, app.bankKeeper),
@@ -278,6 +280,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		bank.ModuleName,
 		slashing.ModuleName,
 		genutil.ModuleName,
+		global.ModuleName,
 		bridge.ModuleName,
 		subscribe.ModuleName,
 		guardianmanager.ModuleName,
@@ -310,6 +313,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyDistr,
 		app.keySlashing,
 		app.keyParams,
+		app.keyGlobal,
 		app.keyBridge,
 		app.keySubscribe,
 		app.keyGm,
@@ -333,7 +337,7 @@ func NewDefaultGenesisState() GenesisState {
 }
 
 func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	transactor, err := utils.NewTransactor(
 		DefaultCLIHome,

@@ -5,18 +5,21 @@ import (
 )
 
 const (
-	ModuleName = types.ModuleName
-	RouterKey  = types.RouterKey
-	StoreKey   = types.StoreKey
+	ModuleName       = types.ModuleName
+	RouterKey        = types.RouterKey
+	StoreKey         = types.StoreKey
+	QueryLatestBlock = types.QueryLatestBlock
 )
 
 var (
-	ModuleCdc      = types.ModuleCdc
-	RegisterCodec  = types.RegisterCodec
-	NewBlock       = types.NewBlock
-	LatestBlockKey = types.LatestBlockKey
+	ModuleCdc       = types.ModuleCdc
+	RegisterCodec   = types.RegisterCodec
+	NewBlock        = types.NewBlock
+	NewMsgSyncBlock = types.NewMsgSyncBlock
+	LatestBlockKey  = types.LatestBlockKey
 )
 
 type (
-	Block = types.Block
+	Block        = types.Block
+	MsgSyncBlock = types.MsgSyncBlock
 )
