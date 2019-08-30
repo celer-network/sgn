@@ -25,6 +25,11 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to set eth address
 func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator) sdk.Result {
+	pk, err := sdk.GetConsPubKeyBech32(msg.PubKey)
+	if err != nil {
+		return sdk.ErrInvalidPubKey(err.Error()).Result()
+	}
+
 	cp, err := keeper.ethClient.Guard.CandidateProfiles(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, ethcommon.HexToAddress(msg.EthAddress))
@@ -38,7 +43,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 	valAddress := sdk.ValAddress(msg.Sender)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
-	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(msg.PubKey))
+	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
 
 	if found != f {
 		return sdk.ErrInternal("Invalid sender address or public key").Result()
@@ -48,12 +53,14 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		description := staking.Description{
 			Moniker: msg.EthAddress,
 		}
-		validator = staking.NewValidator(valAddress, msg.PubKey, description)
+		validator = staking.NewValidator(valAddress, pk, description)
+		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
-	validator, _ = validator.AddTokensFromDel(sdk.NewIntFromBigInt(cp.Stakes))
+	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
+	validator.Tokens = sdk.NewIntFromBigInt(cp.Stakes)
+	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
-	keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 
 	return sdk.Result{}
