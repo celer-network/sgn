@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,10 +55,11 @@ var (
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
-		global.AppModule{},
 		bridge.AppModule{},
-		subscribe.AppModule{},
+		global.AppModule{},
 		guardianmanager.AppModule{},
+		subscribe.AppModule{},
+		validator.AppModuleBasic{},
 	)
 	// account permissions
 	maccPerms = map[string][]string{
@@ -93,8 +95,9 @@ type sgnApp struct {
 	keySlashing  *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
 	keyBridge    *sdk.KVStoreKey
-	keySubscribe *sdk.KVStoreKey
 	keyGm        *sdk.KVStoreKey
+	keySubscribe *sdk.KVStoreKey
+	keyValidator *sdk.KVStoreKey
 
 	// Keepers
 	accountKeeper   auth.AccountKeeper
@@ -106,8 +109,9 @@ type sgnApp struct {
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
 	bridgeKeeper    bridge.Keeper
-	subscribeKeeper subscribe.Keeper
 	gmKeeper        guardianmanager.Keeper
+	subscribeKeeper subscribe.Keeper
+	validatorKeeper validator.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -154,8 +158,9 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
-		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyGm:        sdk.NewKVStoreKey(guardianmanager.StoreKey),
+		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
+		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
@@ -254,6 +259,14 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.subscribeKeeper,
 	)
 
+	app.validatorKeeper = validator.NewKeeper(
+		app.keyGm,
+		app.cdc,
+		ethClient,
+		app.globalKeeper,
+		app.stakingKeeper,
+	)
+
 	app.mm = module.NewManager(
 		genaccounts.NewAppModule(app.accountKeeper),
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
@@ -265,8 +278,9 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
-		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		guardianmanager.NewAppModule(app.gmKeeper, app.bankKeeper),
+		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
+		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
@@ -283,8 +297,9 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		genutil.ModuleName,
 		global.ModuleName,
 		bridge.ModuleName,
-		subscribe.ModuleName,
 		guardianmanager.ModuleName,
+		subscribe.ModuleName,
+		validator.ModuleName,
 	)
 
 	// register all module routes and module queriers
@@ -316,8 +331,9 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyParams,
 		app.keyGlobal,
 		app.keyBridge,
-		app.keySubscribe,
 		app.keyGm,
+		app.keySubscribe,
+		app.keyValidator,
 	)
 
 	err = app.LoadLatestVersion(app.keyMain)
