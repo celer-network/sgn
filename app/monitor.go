@@ -7,7 +7,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/celer-network/sgn/x/guardianmanager/client/cli"
+	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -81,7 +81,7 @@ func (m *EthMonitor) monitorIntendSettle() {
 }
 
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	request, err := cli.QueryRequest(m.cdc, m.transactor.CliCtx, "guardianmanager", intendSettle.ChannelId[:])
+	request, err := subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, intendSettle.ChannelId[:])
 	if err != nil {
 		log.Printf("Query request err", err)
 		return

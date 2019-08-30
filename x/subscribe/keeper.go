@@ -28,7 +28,7 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.Eth
 // Gets the entire Subscription metadata for a ethAddress
 func (k Keeper) GetSubscription(ctx sdk.Context, ethAddress string) (subscription Subscription, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	value := store.Get([]byte(ethAddress))
+	value := store.Get(GetSubscriptionKey(ethAddress))
 
 	if value == nil {
 		return subscription, false
@@ -41,10 +41,30 @@ func (k Keeper) GetSubscription(ctx sdk.Context, ethAddress string) (subscriptio
 // Sets the entire Subscription metadata for a ethAddress
 func (k Keeper) SetSubscription(ctx sdk.Context, ethAddress string, subscription Subscription) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(ethAddress), k.cdc.MustMarshalBinaryBare(subscription))
+	store.Set(GetSubscriptionKey(ethAddress), k.cdc.MustMarshalBinaryBare(subscription))
 }
 
 // Sets the entire Subscription metadata for a ethAddress
 func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string, expiration uint64) {
 	k.SetSubscription(ctx, ethAddress, NewSubscription(expiration))
+}
+
+// Gets the entire Request metadata for a channelId
+func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte) (Request, bool) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetRequestKey(channelId)) {
+		return Request{}, false
+	}
+
+	value := store.Get(GetRequestKey(channelId))
+	var request Request
+	k.cdc.MustUnmarshalBinaryBare(value, &request)
+	return request, true
+}
+
+// Sets the entire Request metadata for a channelId
+func (k Keeper) SetRequest(ctx sdk.Context, channelId []byte, request Request) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetRequestKey(channelId), k.cdc.MustMarshalBinaryBare(request))
 }

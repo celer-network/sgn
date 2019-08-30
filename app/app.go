@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/bridge"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -57,7 +56,6 @@ var (
 
 		bridge.AppModule{},
 		global.AppModule{},
-		guardianmanager.AppModule{},
 		subscribe.AppModule{},
 		validator.AppModuleBasic{},
 	)
@@ -109,7 +107,6 @@ type sgnApp struct {
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
 	bridgeKeeper    bridge.Keeper
-	gmKeeper        guardianmanager.Keeper
 	subscribeKeeper subscribe.Keeper
 	validatorKeeper validator.Keeper
 
@@ -158,7 +155,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
-		keyGm:        sdk.NewKVStoreKey(guardianmanager.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
@@ -251,14 +247,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.globalKeeper,
 	)
 
-	app.gmKeeper = guardianmanager.NewKeeper(
-		app.keyGm,
-		app.cdc,
-		ethClient,
-		app.globalKeeper,
-		app.subscribeKeeper,
-	)
-
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyGm,
 		app.cdc,
@@ -278,7 +266,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
-		guardianmanager.NewAppModule(app.gmKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
@@ -297,7 +284,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		genutil.ModuleName,
 		global.ModuleName,
 		bridge.ModuleName,
-		guardianmanager.ModuleName,
 		subscribe.ModuleName,
 		validator.ModuleName,
 	)
