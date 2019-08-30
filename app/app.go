@@ -7,6 +7,7 @@ import (
 
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/bridge"
 	"github.com/celer-network/sgn/x/global"
@@ -353,8 +354,8 @@ func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
-	monitor := NewEthMonitor(ethClient, transactor, app.cdc)
-	monitor.Start()
+	m := monitor.NewEthMonitor(ethClient, transactor, app.cdc)
+	m.Start()
 }
 
 func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
