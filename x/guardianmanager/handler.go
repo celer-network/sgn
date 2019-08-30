@@ -2,13 +2,10 @@ package guardianmanager
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/celer-network/sgn/chain"
 	"github.com/celer-network/sgn/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -29,14 +26,14 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to deposit
 func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg MsgDeposit) sdk.Result {
-	deposit, err := keeper.ethClient.Guard.SecurityDeposit(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, ethcommon.HexToAddress(msg.EthAddress))
-	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query security deposit: %s", err)).Result()
-	}
+	// deposit, err := keeper.ethClient.Guard.SecurityDeposit(&bind.CallOpts{
+	// 	BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+	// }, ethcommon.HexToAddress(msg.EthAddress))
+	// if err != nil {
+	// 	return sdk.ErrInternal(fmt.Sprintf("Failed to query security deposit: %s", err)).Result()
+	// }
 
-	keeper.Deposit(ctx, msg.EthAddress, deposit.Uint64())
+	// keeper.Deposit(ctx, msg.EthAddress, deposit.Uint64())
 
 	return sdk.Result{}
 }
