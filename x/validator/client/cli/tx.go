@@ -34,15 +34,10 @@ func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
 		Short: "claim validator for the eth address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			pk, err := sdk.GetConsPubKeyBech32(args[1])
-			if err != nil {
-				return err
-			}
-
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgClaimValidator(args[0], pk, cliCtx.GetFromAddress())
-			err = msg.ValidateBasic()
+			msg := types.NewMsgClaimValidator(args[0], args[1], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
