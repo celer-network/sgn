@@ -1,4 +1,4 @@
-package guardianmanager
+package subscribe
 
 import (
 	"errors"

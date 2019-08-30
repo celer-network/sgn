@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
-	"github.com/celer-network/sgn/x/guardianmanager"
 	"github.com/celer-network/sgn/x/subscribe"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/golang/protobuf/proto"
@@ -95,7 +94,7 @@ func sendRequestGuardTx() {
 		log.Fatal(err)
 	}
 
-	msg := guardianmanager.NewMsgRequestGuard(ethClient.Address.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
+	msg := subscribe.NewMsgRequestGuard(ethClient.Address.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	res, err := transactor.BroadcastTx(msg)
 	if err != nil {
 		log.Fatal(err)
