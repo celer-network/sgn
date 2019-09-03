@@ -3,6 +3,7 @@ package utils
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,7 +42,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 		WithFromName(key.GetName()).
 		WithNodeURI(nodeURI).
 		WithTrustNode(true).
-		WithBroadcastMode("sync")
+		WithBroadcastMode(flags.BroadcastSync)
 
 	return &Transactor{
 		TxBuilder:  txBldr,
