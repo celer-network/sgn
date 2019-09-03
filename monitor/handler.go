@@ -26,6 +26,7 @@ func (m *EthMonitor) handleStake(stake *mainchain.GuardStake) {
 	if m.isValidator {
 		m.claimValidator(stake.Candidate)
 	} else {
+		// Check with mainchain to make sure that the candidate can become validator
 		tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth, m.transactor.Key.GetAddress().Bytes())
 		if err != nil {
 			log.Printf("ClaimValidator tx err", err)
@@ -37,8 +38,10 @@ func (m *EthMonitor) handleStake(stake *mainchain.GuardStake) {
 
 func (m *EthMonitor) handleValidatorUpdate(vu *mainchain.GuardValidatorUpdate) {
 	log.Printf("New validator update", vu.SidechainAddr)
-	m.isValidator = true
-	m.claimValidator(vu.EthAddr)
+	m.isValidator = vu.Added
+	if m.isValidator {
+		m.claimValidator(vu.EthAddr)
+	}
 }
 
 func (m *EthMonitor) claimValidator(address ethcommon.Address) {
