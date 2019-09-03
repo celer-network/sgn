@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"os"
-	"time"
 
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
@@ -67,6 +66,9 @@ var (
 		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
 	}
+
+	monitored = false
+	ethClient *mainchain.EthClient
 )
 
 // MakeCodec generates the necessary codecs for Amino
@@ -94,7 +96,6 @@ type sgnApp struct {
 	keySlashing  *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
 	keyBridge    *sdk.KVStoreKey
-	keyGm        *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
 
@@ -123,7 +124,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
-	ethClient, err := mainchain.NewEthClient(
+	ethClient, err = mainchain.NewEthClient(
 		viper.GetString(flags.FlagEthWS),
 		viper.GetString(flags.FlagEthGuardAddress),
 		viper.GetString(flags.FlagEthLedgerAddress),
@@ -249,7 +250,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	)
 
 	app.validatorKeeper = validator.NewKeeper(
-		app.keyGm,
+		app.keyValidator,
 		app.cdc,
 		ethClient,
 		app.globalKeeper,
@@ -318,7 +319,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyParams,
 		app.keyGlobal,
 		app.keyBridge,
-		app.keyGm,
 		app.keySubscribe,
 		app.keyValidator,
 	)
@@ -328,8 +328,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		cmn.Exit(err.Error())
 	}
 
-	go app.startMonitor(ethClient)
-
 	return app
 }
 
@@ -338,24 +336,6 @@ type GenesisState map[string]json.RawMessage
 
 func NewDefaultGenesisState() GenesisState {
 	return ModuleBasics.DefaultGenesis()
-}
-
-func (app *sgnApp) startMonitor(ethClient *mainchain.EthClient) {
-	time.Sleep(6 * time.Second)
-
-	transactor, err := utils.NewTransactor(
-		DefaultCLIHome,
-		viper.GetString(flags.FlagSgnChainID),
-		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnName),
-		viper.GetString(flags.FlagSgnPassphrase),
-		app.cdc,
-	)
-	if err != nil {
-		cmn.Exit(err.Error())
-	}
-	m := monitor.NewEthMonitor(ethClient, transactor, app.cdc)
-	m.Start()
 }
 
 func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
@@ -370,6 +350,10 @@ func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.
 }
 
 func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	if !monitored {
+		monitored = true
+		go app.startMonitor(ctx)
+	}
 	return app.mm.BeginBlock(ctx, req)
 }
 func (app *sgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
@@ -406,4 +390,21 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 	}
 
 	return modAccAddrs
+}
+
+func (app *sgnApp) startMonitor(ctx sdk.Context) {
+	transactor, err := utils.NewTransactor(
+		DefaultCLIHome,
+		ctx.ChainID(),
+		viper.GetString(flags.FlagSgnNodeURI),
+		viper.GetString(flags.FlagSgnName),
+		viper.GetString(flags.FlagSgnPassphrase),
+		app.cdc,
+	)
+
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey))
 }

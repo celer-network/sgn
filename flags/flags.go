@@ -9,6 +9,7 @@ const (
 
 	FlagSgnName       = "sgn.name"
 	FlagSgnPassphrase = "sgn.passphrase"
+	FlagSgnPubKey     = "sgn.pubkey"
 	FlagSgnChainID    = "sgn.chainID"
 	FlagSgnNodeURI    = "sgn.nodeURI"
 )
