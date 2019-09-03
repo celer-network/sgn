@@ -12,6 +12,7 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
+	// TODO: Only assigned validator needs to submit the tx
 	log.Printf("New block", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	_, err := m.transactor.BroadcastTx(msg)
@@ -26,7 +27,7 @@ func (m *EthMonitor) handleStake(stake *mainchain.GuardStake) {
 	if m.isValidator {
 		m.claimValidator(stake.Candidate)
 	} else {
-		// Check with mainchain to make sure that the candidate can become validator
+		// TODO: Check with mainchain to make sure that the candidate can become validator
 		tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth, m.transactor.Key.GetAddress().Bytes())
 		if err != nil {
 			log.Printf("ClaimValidator tx err", err)
