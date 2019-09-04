@@ -122,6 +122,10 @@ func (msg MsgGuardProof) Type() string { return "guard_proof" }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgGuardProof) ValidateBasic() sdk.Error {
+	if len(msg.ChannelId) == 0 {
+		return sdk.ErrUnknownRequest("channelId cannot be empty")
+	}
+
 	if msg.TxHash == "" {
 		return sdk.ErrUnknownRequest("tx hash cannot be empty")
 	}
