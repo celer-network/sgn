@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	NewMsgClaimValidator = types.NewMsgClaimValidator
+	NewMsgSyncValidator = types.NewMsgSyncValidator
 	ModuleCdc            = types.ModuleCdc
 	RegisterCodec        = types.RegisterCodec
 	PullerKey            = types.PullerKey
@@ -23,5 +23,5 @@ var (
 
 type (
 	Puller            = types.Puller
-	MsgClaimValidator = types.MsgClaimValidator
+	MsgSyncValidator = types.MsgSyncValidator
 )
