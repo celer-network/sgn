@@ -21,6 +21,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	validatorQueryCmd.AddCommand(client.GetCommands(
+		GetCmdPuller(storeKey, cdc),
 		stakingCli.GetCmdQueryValidator(staking.StoreKey, cdc),
 		stakingCli.GetCmdQueryValidators(staking.StoreKey, cdc),
 	)...)
