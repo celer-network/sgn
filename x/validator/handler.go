@@ -14,8 +14,8 @@ import (
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgClaimValidator:
-			return handleMsgClaimValidator(ctx, keeper, msg)
+		case MsgSyncValidator:
+			return handleMsgSyncValidator(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -24,7 +24,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 // Handle a message to set eth address
-func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator) sdk.Result {
+func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
 	pk, err := sdk.GetConsPubKeyBech32(msg.PubKey)
 	if err != nil {
 		return sdk.ErrInvalidPubKey(err.Error()).Result()

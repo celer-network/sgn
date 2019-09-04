@@ -12,7 +12,6 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	// TODO: Only assigned validator needs to submit the tx
 	log.Printf("New block", header.Number)
 	puller := m.getPuller()
 	if !puller.ValidatorAddr.Equals(m.transactor.Key.GetAddress()) {
@@ -30,7 +29,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 func (m *EthMonitor) handleStake(stake *mainchain.GuardStake) {
 	log.Printf("New stake", stake.NewStake)
 	if m.isValidator {
-		m.claimValidator(stake.Candidate)
+		m.syncValidator(stake.Candidate)
 	} else {
 		// TODO: Check with mainchain to make sure that the candidate can become validator
 		tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth, m.transactor.Key.GetAddress().Bytes())
@@ -46,15 +45,15 @@ func (m *EthMonitor) handleValidatorUpdate(vu *mainchain.GuardValidatorUpdate) {
 	log.Printf("New validator update", vu.SidechainAddr)
 	m.isValidator = vu.Added
 	if m.isValidator {
-		m.claimValidator(vu.EthAddr)
+		m.syncValidator(vu.EthAddr)
 	}
 }
 
-func (m *EthMonitor) claimValidator(address ethcommon.Address) {
-	msg := validator.NewMsgClaimValidator(address.String(), m.pubkey, m.transactor.Key.GetAddress())
+func (m *EthMonitor) syncValidator(address ethcommon.Address) {
+	msg := validator.NewMsgSyncValidator(address.String(), m.pubkey, m.transactor.Key.GetAddress())
 	_, err := m.transactor.BroadcastTx(msg)
 	if err != nil {
-		log.Printf("ClaimValidator err", err)
+		log.Printf("SyncValidator err", err)
 		return
 	}
 }
