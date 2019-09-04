@@ -7,3 +7,7 @@ const (
 	// StoreKey to be used when creating the KVStore
 	StoreKey = ModuleName
 )
+
+var (
+	PullerKey = []byte{0x01} // Prefix for puller
+)

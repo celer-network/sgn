@@ -14,6 +14,11 @@ import (
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	// TODO: Only assigned validator needs to submit the tx
 	log.Printf("New block", header.Number)
+	puller := m.getPuller()
+	if !puller.ValidatorAddr.Equals(m.transactor.Key.GetAddress()) {
+		return
+	}
+
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	_, err := m.transactor.BroadcastTx(msg)
 	if err != nil {
@@ -73,4 +78,14 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		return
 	}
 	log.Printf("IntendSettle tx detail", tx)
+}
+
+func (m *EthMonitor) getPuller() validator.Puller {
+	puller, err := validator.CLIQueryPuller(m.cdc, m.transactor.CliCtx, validator.StoreKey)
+	if err != nil {
+		log.Printf("Get puller err", err)
+		return validator.Puller{}
+	}
+
+	return puller
 }
