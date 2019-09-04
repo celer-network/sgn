@@ -20,6 +20,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgSubscribe(ctx, keeper, msg)
 		case MsgRequestGuard:
 			return handleMsgRequestGuard(ctx, keeper, msg)
+		case MsgGuardProof:
+			return handleMsgGuardProof(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -83,6 +85,25 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	request.SeqNum = simplexPaymentChannel.SeqNum
 	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
 	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
+
+	return sdk.Result{}
+}
+
+// Handle a message to submit guard proof
+func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.Result {
+	pusher := keeper.validatorKeeper.GetPusher(ctx)
+	if !msg.Sender.Equals(pusher.ValidatorAddr) {
+		return sdk.ErrInternal("Non pusher is not allowed to submit guard proof").Result()
+	}
+
+	request, found := keeper.GetRequest(ctx, msg.ChannelId)
+	if !found {
+		return sdk.ErrInternal("Cannot find request").Result()
+	}
+
+	// TODO: need to validate tx hash
+	request.TxHash = msg.TxHash
+	keeper.SetRequest(ctx, msg.ChannelId, request)
 
 	return sdk.Result{}
 }

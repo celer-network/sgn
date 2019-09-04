@@ -242,19 +242,20 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.cdc,
 	)
 
-	app.subscribeKeeper = subscribe.NewKeeper(
-		app.keySubscribe,
-		app.cdc,
-		ethClient,
-		app.globalKeeper,
-	)
-
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyValidator,
 		app.cdc,
 		ethClient,
 		app.globalKeeper,
 		app.stakingKeeper,
+	)
+
+	app.subscribeKeeper = subscribe.NewKeeper(
+		app.keySubscribe,
+		app.cdc,
+		ethClient,
+		app.globalKeeper,
+		app.validatorKeeper,
 	)
 
 	app.mm = module.NewManager(

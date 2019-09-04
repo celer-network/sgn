@@ -25,15 +25,14 @@ type Request struct {
 	SeqNum                  uint64   `json:"seqNum"`
 	PeerAddresses           []string `json:"peerAddresses"`
 	PeerFromIndex           uint     `json:"peerFromIndex"`
-	ChannelId               []byte   `json:"channelId"`
 	SignedSimplexStateBytes []byte   `json:"signedSimplexStateBytes"`
+	TxHash                  string   `json:"txHash"`
 }
 
 // Returns a new Number with the minprice as the price
-func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint) Request {
+func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint) Request {
 	return Request{
 		SeqNum:        seqNum,
-		ChannelId:     channelId,
 		PeerAddresses: peerAddresses,
 		PeerFromIndex: peerFromIndex,
 	}
@@ -41,6 +40,6 @@ func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFro
 
 // implement fmt.Stringer
 func (r Request) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, ChannelId: %x, PeerAddresses: %x, PeerFromIndex: %d, SignedSimplexStateBytes: %x`,
-		r.SeqNum, r.ChannelId, r.PeerAddresses, r.PeerFromIndex, r.SignedSimplexStateBytes))
+	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %x, PeerFromIndex: %d, SignedSimplexStateBytes: %x, TxHash: %s`,
+		r.SeqNum, r.PeerAddresses, r.PeerFromIndex, r.SignedSimplexStateBytes, r.TxHash))
 }

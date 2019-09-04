@@ -9,14 +9,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/gammazero/deque"
 )
 
 type EthMonitor struct {
-	ethClient   *mainchain.EthClient
-	transactor  *utils.Transactor
-	cdc         *codec.Codec
-	pubkey      string
-	isValidator bool
+	ethClient         *mainchain.EthClient
+	transactor        *utils.Transactor
+	cdc               *codec.Codec
+	intendSettleQueue deque.Deque
+	pubkey            string
+	isValidator       bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor, cdc *codec.Codec, pubkey string) {
@@ -49,6 +51,7 @@ func (m *EthMonitor) monitorBlockHead() {
 			log.Printf("SubscribeNewHead err", err)
 		case header := <-headerChan:
 			m.handleNewBlock(header)
+			go m.processQueue()
 		}
 	}
 }
@@ -86,7 +89,8 @@ func (m *EthMonitor) monitorValidatorUpdate() {
 		case err := <-sub.Err():
 			log.Printf("WatchStake err", err)
 		case validatorUpdate := <-validatorUpdateChan:
-			m.handleValidatorUpdate(validatorUpdate)
+			m.intendSettleQueue.PushBack(validatorUpdate)
+			go m.processQueue()
 		}
 	}
 }

@@ -58,3 +58,34 @@ func QueryPuller(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string)
 	cdc.MustUnmarshalJSON(res, &puller)
 	return
 }
+
+// GetCmdPusher queries pusher info
+func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "pusher",
+		Short: "query pusher info",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			pusher, err := QueryPusher(cdc, cliCtx, queryRoute)
+			if err != nil {
+				return err
+			}
+
+			return cliCtx.PrintOutput(pusher)
+		},
+	}
+}
+
+// Query pusher info
+func QueryPusher(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (pusher types.Pusher, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
+	res, _, err := cliCtx.Query(route)
+	if err != nil {
+		fmt.Printf("query pusher error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(res, &pusher)
+	return
+}

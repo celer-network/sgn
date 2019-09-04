@@ -97,3 +97,48 @@ func (msg MsgRequestGuard) GetSignBytes() []byte {
 func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
+
+// MsgGuardProof defines a Subscribe message
+type MsgGuardProof struct {
+	ChannelId []byte         `json:"channelId"`
+	TxHash    string         `json:"txHash"`
+	Sender    sdk.AccAddress `json:"sender"`
+}
+
+// NewMsgGuardProof is a constructor function for MsgGuardProof
+func NewMsgGuardProof(channelId []byte, txHash string, sender sdk.AccAddress) MsgGuardProof {
+	return MsgGuardProof{
+		ChannelId: channelId,
+		TxHash:    txHash,
+		Sender:    sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgGuardProof) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgGuardProof) Type() string { return "guard_proof" }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgGuardProof) ValidateBasic() sdk.Error {
+	if msg.TxHash == "" {
+		return sdk.ErrUnknownRequest("tx hash cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgGuardProof) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgGuardProof) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}

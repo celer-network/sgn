@@ -6,8 +6,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
-	"github.com/celer-network/sgn/x/validator"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -49,15 +47,6 @@ func (m *EthMonitor) handleValidatorUpdate(vu *mainchain.GuardValidatorUpdate) {
 	}
 }
 
-func (m *EthMonitor) syncValidator(address ethcommon.Address) {
-	msg := validator.NewMsgSyncValidator(address.String(), m.pubkey, m.transactor.Key.GetAddress())
-	_, err := m.transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Printf("SyncValidator err", err)
-		return
-	}
-}
-
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Printf("New intend settle", intendSettle.ChannelId)
 	request, err := subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, intendSettle.ChannelId[:])
@@ -77,14 +66,4 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		return
 	}
 	log.Printf("IntendSettle tx detail", tx)
-}
-
-func (m *EthMonitor) getPuller() validator.Puller {
-	puller, err := validator.CLIQueryPuller(m.cdc, m.transactor.CliCtx, validator.StoreKey)
-	if err != nil {
-		log.Printf("Get puller err", err)
-		return validator.Puller{}
-	}
-
-	return puller
 }

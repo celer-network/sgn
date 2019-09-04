@@ -14,4 +14,5 @@ func init() {
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSubscribe{}, "subscribe/MsgSubscribe", nil)
 	cdc.RegisterConcrete(MsgRequestGuard{}, "subscribe/MsgRequestGuard", nil)
+	cdc.RegisterConcrete(MsgGuardProof{}, "subscribe/MsgGuardProof", nil)
 }
