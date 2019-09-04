@@ -5,16 +5,16 @@ import (
 )
 
 const (
-	QuerySubscrption = "subscription"
+	QuerySubscription = "subscription"
 	QueryRequest     = "request"
 )
 
-type QuerySubscrptionParams struct {
+type QuerySubscriptionParams struct {
 	EthAddress string
 }
 
-func NewQuerySubscrptionParams(addr string) QuerySubscrptionParams {
-	return QuerySubscrptionParams{
+func NewQuerySubscriptionParams(addr string) QuerySubscriptionParams {
+	return QuerySubscriptionParams{
 		EthAddress: ethcommon.HexToAddress(addr).String(),
 	}
 }

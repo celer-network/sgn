@@ -27,3 +27,23 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.Eth
 		globalKeeper:  globalKeeper,
 	}
 }
+
+// Gets the entire Puller metadata for a channelId
+func (k Keeper) GetPuller(ctx sdk.Context) Puller {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(PullerKey) {
+		return Puller{}
+	}
+
+	value := store.Get(PullerKey)
+	var puller Puller
+	k.cdc.MustUnmarshalBinaryBare(value, &puller)
+	return puller
+}
+
+// Sets the entire Puller metadata for a channelId
+func (k Keeper) SetPuller(ctx sdk.Context, puller Puller) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(PullerKey, k.cdc.MustMarshalBinaryBare(puller))
+}
