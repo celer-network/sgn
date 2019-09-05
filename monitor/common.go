@@ -3,8 +3,8 @@ package monitor
 import (
 	"log"
 
+	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 func (m *EthMonitor) getPuller() validator.Puller {
@@ -27,11 +27,6 @@ func (m *EthMonitor) getPusher() validator.Pusher {
 	return pusher
 }
 
-func (m *EthMonitor) syncValidator(address ethcommon.Address) {
-	msg := validator.NewMsgSyncValidator(address.String(), m.pubkey, m.transactor.Key.GetAddress())
-	_, err := m.transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Printf("SyncValidator err", err)
-		return
-	}
+func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
+	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, channelId)
 }

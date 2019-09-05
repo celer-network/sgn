@@ -89,8 +89,7 @@ func (m *EthMonitor) monitorValidatorUpdate() {
 		case err := <-sub.Err():
 			log.Printf("WatchStake err", err)
 		case validatorUpdate := <-validatorUpdateChan:
-			m.intendSettleQueue.PushBack(validatorUpdate)
-			go m.processQueue()
+			m.handleValidatorUpdate(validatorUpdate)
 		}
 	}
 }
