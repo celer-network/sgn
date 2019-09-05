@@ -33,6 +33,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 	go m.monitorBlockHead()
 	go m.monitorDelegate()
 	go m.monitorValidatorChange()
+	go m.monitorIntendWithdraw()
 	go m.monitorIntendSettle()
 }
 
@@ -115,7 +116,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 
 func (m *EthMonitor) monitorIntendSettle() {
 	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
-	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, [][32]byte{})
+	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, nil)
 	if err != nil {
 		log.Printf("WatchIntendSettle err", err)
 		return

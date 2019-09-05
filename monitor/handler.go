@@ -36,7 +36,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 			return
 		}
 
-		if delegate.TotalLockedStake.Uint64() < minStake.Uint64() {
+		if delegate.TotalLockedStake.Uint64() <= minStake.Uint64() {
 			log.Printf("Not enough stake to become validator")
 			return
 		}
