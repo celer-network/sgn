@@ -6,14 +6,14 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/validator"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	log.Printf("New block", header.Number)
-	puller := m.getPuller()
-	if !puller.ValidatorAddr.Equals(m.transactor.Key.GetAddress()) {
+	if !m.isPuller() {
 		return
 	}
 
@@ -25,13 +25,23 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	}
 }
 
-func (m *EthMonitor) handleStake(stake *mainchain.GuardStake) {
-	log.Printf("New stake", stake.NewStake)
+func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
+	log.Printf("New delegate", delegate.Candidate)
 	if m.isValidator {
-		m.syncValidator(stake.Candidate)
+		m.syncValidator(delegate.Candidate)
 	} else {
-		// TODO: Check with mainchain to make sure that the candidate can become validator
-		tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth, m.transactor.Key.GetAddress().Bytes())
+		minStake, err := m.ethClient.Guard.GetMinStake(&bind.CallOpts{})
+		if err != nil {
+			log.Printf("GetMinStake err", err)
+			return
+		}
+
+		if delegate.TotalLockedStake.Uint64() < minStake.Uint64() {
+			log.Printf("Not enough stake to become validator")
+			return
+		}
+
+		tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
 		if err != nil {
 			log.Printf("ClaimValidator tx err", err)
 			return
@@ -40,11 +50,36 @@ func (m *EthMonitor) handleStake(stake *mainchain.GuardStake) {
 	}
 }
 
-func (m *EthMonitor) handleValidatorUpdate(vu *mainchain.GuardValidatorUpdate) {
-	log.Printf("New validator update", vu.SidechainAddr)
-	m.isValidator = vu.Added
-	if m.isValidator {
-		m.syncValidator(vu.EthAddr)
+func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
+	log.Printf("New validator update", validatorChange.EthAddr)
+	doSync := m.isPuller()
+
+	if validatorChange.EthAddr.String() == m.ethClient.Address.String() {
+		m.isValidator = validatorChange.ChangeType == mainchain.AddValidator
+		if m.isValidator {
+			m.claimValidator()
+			return
+		}
+
+		doSync = true
+	}
+
+	if doSync {
+		m.syncValidator(validatorChange.EthAddr)
+	}
+}
+
+func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendWithdraw) {
+	log.Printf("New intend withdraw", intendWithdraw.Candidate)
+	// Current puller or validator itself will trigger the sync
+	doSync := m.isPuller()
+
+	if intendWithdraw.Candidate.String() == m.ethClient.Address.String() {
+		doSync = m.isValidator
+	}
+
+	if doSync {
+		m.syncValidator(intendWithdraw.Candidate)
 	}
 }
 
@@ -64,8 +99,17 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 	m.intendSettleQueue.PushBack(intendSettle)
 }
 
+func (m *EthMonitor) claimValidator() {
+	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, m.transactor.Key.GetAddress())
+	_, err := m.transactor.BroadcastTx(msg)
+	if err != nil {
+		log.Printf("ClaimValidator err", err)
+		return
+	}
+}
+
 func (m *EthMonitor) syncValidator(address ethcommon.Address) {
-	msg := validator.NewMsgSyncValidator(address.String(), m.pubkey, m.transactor.Key.GetAddress())
+	msg := validator.NewMsgSyncValidator(address.String(), m.transactor.Key.GetAddress())
 	_, err := m.transactor.BroadcastTx(msg)
 	if err != nil {
 		log.Printf("SyncValidator err", err)

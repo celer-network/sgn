@@ -8,8 +8,7 @@ import (
 )
 
 func (m *EthMonitor) processQueue() {
-	pusher := m.getPusher()
-	if !pusher.ValidatorAddr.Equals(m.transactor.Key.GetAddress()) {
+	if !m.isPusher() {
 		return
 	}
 

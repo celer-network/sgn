@@ -31,8 +31,8 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 
 	// TODO: initiate isValidator value
 	go m.monitorBlockHead()
-	go m.monitorStake()
-	go m.monitorValidatorUpdate()
+	go m.monitorDelegate()
+	go m.monitorValidatorChange()
 	go m.monitorIntendSettle()
 }
 
@@ -56,11 +56,11 @@ func (m *EthMonitor) monitorBlockHead() {
 	}
 }
 
-func (m *EthMonitor) monitorStake() {
-	stakeChan := make(chan *mainchain.GuardStake)
-	sub, err := m.ethClient.Guard.WatchStake(nil, stakeChan, []ethcommon.Address{m.ethClient.Address})
+func (m *EthMonitor) monitorDelegate() {
+	delegateChan := make(chan *mainchain.GuardDelegate)
+	sub, err := m.ethClient.Guard.WatchDelegate(nil, delegateChan, nil, []ethcommon.Address{m.ethClient.Address})
 	if err != nil {
-		log.Printf("WatchStake err", err)
+		log.Printf("WatchDelegate err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -68,18 +68,18 @@ func (m *EthMonitor) monitorStake() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchStake err", err)
-		case stake := <-stakeChan:
-			m.handleStake(stake)
+			log.Printf("WatchDelegate err", err)
+		case delegate := <-delegateChan:
+			m.handleDelegate(delegate)
 		}
 	}
 }
 
-func (m *EthMonitor) monitorValidatorUpdate() {
-	validatorUpdateChan := make(chan *mainchain.GuardValidatorUpdate)
-	sub, err := m.ethClient.Guard.WatchValidatorUpdate(nil, validatorUpdateChan, []ethcommon.Address{m.ethClient.Address})
+func (m *EthMonitor) monitorValidatorChange() {
+	validatorChangeChan := make(chan *mainchain.GuardValidatorChange)
+	sub, err := m.ethClient.Guard.WatchValidatorChange(nil, validatorChangeChan, nil, nil)
 	if err != nil {
-		log.Printf("WatchValidatorUpdate err", err)
+		log.Printf("WatchValidatorChange err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -87,9 +87,28 @@ func (m *EthMonitor) monitorValidatorUpdate() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchStake err", err)
-		case validatorUpdate := <-validatorUpdateChan:
-			m.handleValidatorUpdate(validatorUpdate)
+			log.Printf("WatchValidatorChange err", err)
+		case validatorChange := <-validatorChangeChan:
+			m.handleValidatorChange(validatorChange)
+		}
+	}
+}
+
+func (m *EthMonitor) monitorIntendWithdraw() {
+	intendWithdrawChan := make(chan *mainchain.GuardIntendWithdraw)
+	sub, err := m.ethClient.Guard.WatchIntendWithdraw(nil, intendWithdrawChan, nil, nil)
+	if err != nil {
+		log.Printf("WatchIntendWithdraw err", err)
+		return
+	}
+	defer sub.Unsubscribe()
+
+	for {
+		select {
+		case err := <-sub.Err():
+			log.Printf("WatchIntendWithdraw err", err)
+		case intendWithdraw := <-intendWithdrawChan:
+			m.handleIntendWithdraw(intendWithdraw)
 		}
 	}
 }

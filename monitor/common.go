@@ -7,24 +7,24 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 )
 
-func (m *EthMonitor) getPuller() validator.Puller {
+func (m *EthMonitor) isPuller() bool {
 	puller, err := validator.CLIQueryPuller(m.cdc, m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Printf("Get puller err", err)
-		return validator.Puller{}
+		return false
 	}
 
-	return puller
+	return puller.ValidatorAddr.Equals(m.transactor.Key.GetAddress())
 }
 
-func (m *EthMonitor) getPusher() validator.Pusher {
-	pusher, err := validator.CLIQueryPusher(m.cdc, m.transactor.CliCtx, validator.StoreKey)
+func (m *EthMonitor) isPusher() bool {
+	pusher, err := validator.CLIQueryPuller(m.cdc, m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Printf("Get pusher err", err)
-		return validator.Pusher{}
+		return false
 	}
 
-	return pusher
+	return pusher.ValidatorAddr.Equals(m.transactor.Key.GetAddress())
 }
 
 func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {

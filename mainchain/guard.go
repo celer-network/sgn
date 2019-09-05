@@ -28,18 +28,18 @@ var (
 )
 
 // GuardABI is the input ABI used to generate the binding from.
-const GuardABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"feePerBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"subscriptionExpiration\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"VALIDATOR_SET_MAX_SIZE\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"celerToken\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"candidateProfiles\",\"outputs\":[{\"name\":\"stakes\",\"type\":\"uint256\"},{\"name\":\"sidechainAddr\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"newStake\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"totalStake\",\"type\":\"uint256\"}],\"name\":\"Stake\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"ethAddr\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"sidechainAddr\",\"type\":\"bytes\"},{\"indexed\":false,\"name\":\"added\",\"type\":\"bool\"}],\"name\":\"ValidatorUpdate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"IntendWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ConfirmWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"indemnitor\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"indemnitee\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Punish\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"consumer\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"subscriptionExpiration\",\"type\":\"uint256\"}],\"name\":\"Subscription\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_candidate\",\"type\":\"address\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"claimValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_candidate\",\"type\":\"address\"}],\"name\":\"intendWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_punishRequest\",\"type\":\"bytes\"}],\"name\":\"punish\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_indemnitor\",\"type\":\"address\"},{\"name\":\"_indemnitee\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mockPunish\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"subscribe\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const GuardABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"feePerBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"subscriptionExpiration\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"sidechainGoLive\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"VALIDATOR_SET_MAX_SIZE\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawTimeout\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"celerToken\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minValidatorNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_celerTokenAddress\",\"type\":\"address\"},{\"name\":\"_feePerBlock\",\"type\":\"uint256\"},{\"name\":\"_withdrawTimeout\",\"type\":\"uint256\"},{\"name\":\"_minValidatorNum\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"minSelfStake\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"InitializeCandidate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"newStake\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"totalLockedStake\",\"type\":\"uint256\"}],\"name\":\"Delegate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"oldSidechainAddr\",\"type\":\"bytes\"},{\"indexed\":true,\"name\":\"newSidechainAddr\",\"type\":\"bytes\"}],\"name\":\"UpdateSidechainAddr\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"ethAddr\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"changeType\",\"type\":\"uint8\"}],\"name\":\"ValidatorChange\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"withdrawAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"unlockTime\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"totalLockedStake\",\"type\":\"uint256\"}],\"name\":\"IntendWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ConfirmWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"indemnitor\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"indemnitee\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Punish\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"consumer\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"subscriptionExpiration\",\"type\":\"uint256\"}],\"name\":\"Subscription\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"name\":\"_minSelfStake\",\"type\":\"uint256\"},{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"initializeCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"delegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"updateSidechainAddr\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"intendWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"subscribe\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"isValidator\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidatorNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinStake\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"getCandidateInfo\",\"outputs\":[{\"name\":\"initialized\",\"type\":\"bool\"},{\"name\":\"minSelfStake\",\"type\":\"uint256\"},{\"name\":\"sidechainAddr\",\"type\":\"bytes\"},{\"name\":\"totalLockedStake\",\"type\":\"uint256\"},{\"name\":\"isVldt\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"},{\"name\":\"_delegatorAddr\",\"type\":\"address\"}],\"name\":\"getDelegatorInfo\",\"outputs\":[{\"name\":\"lockedStake\",\"type\":\"uint256\"},{\"name\":\"intentAmounts\",\"type\":\"uint256[]\"},{\"name\":\"intentUnlockTimes\",\"type\":\"uint256[]\"},{\"name\":\"nextWithdrawIntent\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // GuardBin is the compiled bytecode used for deploying new contracts.
-const GuardBin = `0x608060405234801561001057600080fd5b50600a600e55610a1d806100256000396000f3fe608060405234801561001057600080fd5b50600436106100ec576000357c0100000000000000000000000000000000000000000000000000000000900480637121435b116100a9578063859012a911610083578063859012a9146102a2578063c6c21e9d146102ce578063d678bded146102f2578063e64808f314610397576100ec565b80637121435b146101d057806378df5d2e146102405780637acb775714610276576100ec565b80630f574ba7146100f15780633620d149146101105780634415f47a1461018057806355bf3b331461019a57806363a20c06146101c057806368124f9a146101c8575b600080fd5b61010e6004803603602081101561010757600080fd5b50356103b4565b005b61010e6004803603602081101561012657600080fd5b81019060208101813564010000000081111561014157600080fd5b82018360208201111561015357600080fd5b8035906020019184600183028401116401000000008311171561017557600080fd5b509092509050610486565b6101886104c4565b60408051918252519081900360200190f35b610188600480360360208110156101b057600080fd5b5035600160a060020a03166104ca565b6101886104dc565b61010e6104e1565b61010e600480360360208110156101e657600080fd5b81019060208101813564010000000081111561020157600080fd5b82018360208201111561021357600080fd5b8035906020019184600183028401116401000000008311171561023557600080fd5b50909250905061057d565b61010e6004803603606081101561025657600080fd5b50600160a060020a03813581169160208101359091169060400135610614565b61010e6004803603604081101561028c57600080fd5b5080359060200135600160a060020a0316610670565b61010e600480360360408110156102b857600080fd5b5080359060200135600160a060020a03166106e0565b6102d6610769565b60408051600160a060020a039092168252519081900360200190f35b6103186004803603602081101561030857600080fd5b5035600160a060020a0316610778565b6040518083815260200180602001828103825283818151815260200191508051906020019080838360005b8381101561035b578181015183820152602001610343565b50505050905090810190601f1680156103885780820380516001836020036101000a031916815260200191505b50935050505060405180910390f35b6102d6600480360360208110156103ad57600080fd5b503561081f565b600e54339060009083816103c457fe5b600160a060020a0384166000908152600f6020526040902054919004915043111561040b57600160a060020a0382166000908152600f60205260409020438201905561042a565b600160a060020a0382166000908152600f602052604090208054820190555b600160a060020a0382166000818152600f602090815260409182902054825193845290830186905282820152517f8eb8bcc7421f99b92ab7d727e056544fb59514f8f56251e69658c21ece8977fa9181900360600190a1505050565b73e0b6b1e22182ae2b8382bac06f5392dad89ebf0473f0d9fcb4fefdbd3e7929374b4632f8ad511bd7e360646104bd838383610614565b5050505050565b600e5481565b600f6020526000908152604090205481565b600b81565b336000818152600d60205260409020600180820154600290920154610514928492600160a060020a03909116919061083c565b600160a060020a038082166000818152600d6020908152604091829020600181015460029091015483519485529416908301528181019290925290517f08d0283ea9a2e520a2f09611cf37ca6eb70f62e9a807e53756047dd2dc0272209181900360600190a150565b336000818152600c6020526040902061059a90600101848461094d565b5060408051600160208201819052828252918101849052600160a060020a038316917f19cf6af75cb9d1290db4d6ddf4143e0808ad392f53f9e05e38b2d2519a7d797991869186918060608101858580828437600083820152604051601f909101601f1916909201829003965090945050505050a2505050565b610621838483600161083c565b60408051600160a060020a0380861682528416602082015280820183905290517f111897aba775ed4cb659e35805c453dcd8f0024cc414f560f9677bdfae30952a9181900360600190a1505050565b3361067e818385600061083c565b600160a060020a038083166000818152600c60209081526040918290205482519486168552908401879052838201525190917f63602d0ecc7b3a0ef7ff1a116e23056662d64280355ba8031b6d0d767c4b4458919081900360600190a2505050565b336000818152600d6020908152604091829020600181018054600160a060020a03871673ffffffffffffffffffffffffffffffffffffffff199091168117909155600290910186905582518481529182015280820185905290517ff0835827db57a4706bf4c0686f93f0d0bfbe30895d855f0b9585a2b3f0d1f3489181900360600190a1505050565b600054600160a060020a031681565b600c602090815260009182526040918290208054600180830180548651600293821615610100026000190190911692909204601f8101869004860283018601909652858252919492939092908301828280156108155780601f106107ea57610100808354040283529160200191610815565b820191906000526020600020905b8154815290600101906020018083116107f857829003601f168201915b5050505050905082565b600181600b811061082c57fe5b0154600160a060020a0316905081565b600081600181111561084a57fe5b141561088d57600160a060020a038085166000908152600d602090815260408083209387168352928152828220805486019055600c905220805483019055610947565b600181600181111561089b57fe5b14156108e057600160a060020a038085166000908152600d60209081526040808320938716835292815282822080548690039055600c90522080548390039055610947565b604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152601160248201527f496e76616c6964206f7065726174696f6e000000000000000000000000000000604482015290519081900360640190fd5b50505050565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061098e5782800160ff198235161785556109bb565b828001600101855582156109bb579182015b828111156109bb5782358255916020019190600101906109a0565b506109c79291506109cb565b5090565b6109e591905b808211156109c757600081556001016109d1565b9056fea265627a7a72305820feaf77c2592c2d031f148c7dea10d956df642c0befd7594175f6f4dc98017ec764736f6c634300050a0032`
+const GuardBin = `0x`
 
 // DeployGuard deploys a new Ethereum contract, binding an instance of Guard to it.
-func DeployGuard(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Guard, error) {
+func DeployGuard(auth *bind.TransactOpts, backend bind.ContractBackend, _celerTokenAddress common.Address, _feePerBlock *big.Int, _withdrawTimeout *big.Int, _minValidatorNum *big.Int) (common.Address, *types.Transaction, *Guard, error) {
 	parsed, err := abi.JSON(strings.NewReader(GuardABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(GuardBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(GuardBin), backend, _celerTokenAddress, _feePerBlock, _withdrawTimeout, _minValidatorNum)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -214,42 +214,6 @@ func (_Guard *GuardCallerSession) VALIDATORSETMAXSIZE() (*big.Int, error) {
 	return _Guard.Contract.VALIDATORSETMAXSIZE(&_Guard.CallOpts)
 }
 
-// CandidateProfiles is a free data retrieval call binding the contract method 0xd678bded.
-//
-// Solidity: function candidateProfiles(address ) constant returns(uint256 stakes, bytes sidechainAddr)
-func (_Guard *GuardCaller) CandidateProfiles(opts *bind.CallOpts, arg0 common.Address) (struct {
-	Stakes        *big.Int
-	SidechainAddr []byte
-}, error) {
-	ret := new(struct {
-		Stakes        *big.Int
-		SidechainAddr []byte
-	})
-	out := ret
-	err := _Guard.contract.Call(opts, out, "candidateProfiles", arg0)
-	return *ret, err
-}
-
-// CandidateProfiles is a free data retrieval call binding the contract method 0xd678bded.
-//
-// Solidity: function candidateProfiles(address ) constant returns(uint256 stakes, bytes sidechainAddr)
-func (_Guard *GuardSession) CandidateProfiles(arg0 common.Address) (struct {
-	Stakes        *big.Int
-	SidechainAddr []byte
-}, error) {
-	return _Guard.Contract.CandidateProfiles(&_Guard.CallOpts, arg0)
-}
-
-// CandidateProfiles is a free data retrieval call binding the contract method 0xd678bded.
-//
-// Solidity: function candidateProfiles(address ) constant returns(uint256 stakes, bytes sidechainAddr)
-func (_Guard *GuardCallerSession) CandidateProfiles(arg0 common.Address) (struct {
-	Stakes        *big.Int
-	SidechainAddr []byte
-}, error) {
-	return _Guard.Contract.CandidateProfiles(&_Guard.CallOpts, arg0)
-}
-
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
 // Solidity: function celerToken() constant returns(address)
@@ -300,6 +264,228 @@ func (_Guard *GuardSession) FeePerBlock() (*big.Int, error) {
 // Solidity: function feePerBlock() constant returns(uint256)
 func (_Guard *GuardCallerSession) FeePerBlock() (*big.Int, error) {
 	return _Guard.Contract.FeePerBlock(&_Guard.CallOpts)
+}
+
+// GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
+//
+// Solidity: function getCandidateInfo(address _candidateAddr) constant returns(bool initialized, uint256 minSelfStake, bytes sidechainAddr, uint256 totalLockedStake, bool isVldt)
+func (_Guard *GuardCaller) GetCandidateInfo(opts *bind.CallOpts, _candidateAddr common.Address) (struct {
+	Initialized      bool
+	MinSelfStake     *big.Int
+	SidechainAddr    []byte
+	TotalLockedStake *big.Int
+	IsVldt           bool
+}, error) {
+	ret := new(struct {
+		Initialized      bool
+		MinSelfStake     *big.Int
+		SidechainAddr    []byte
+		TotalLockedStake *big.Int
+		IsVldt           bool
+	})
+	out := ret
+	err := _Guard.contract.Call(opts, out, "getCandidateInfo", _candidateAddr)
+	return *ret, err
+}
+
+// GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
+//
+// Solidity: function getCandidateInfo(address _candidateAddr) constant returns(bool initialized, uint256 minSelfStake, bytes sidechainAddr, uint256 totalLockedStake, bool isVldt)
+func (_Guard *GuardSession) GetCandidateInfo(_candidateAddr common.Address) (struct {
+	Initialized      bool
+	MinSelfStake     *big.Int
+	SidechainAddr    []byte
+	TotalLockedStake *big.Int
+	IsVldt           bool
+}, error) {
+	return _Guard.Contract.GetCandidateInfo(&_Guard.CallOpts, _candidateAddr)
+}
+
+// GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
+//
+// Solidity: function getCandidateInfo(address _candidateAddr) constant returns(bool initialized, uint256 minSelfStake, bytes sidechainAddr, uint256 totalLockedStake, bool isVldt)
+func (_Guard *GuardCallerSession) GetCandidateInfo(_candidateAddr common.Address) (struct {
+	Initialized      bool
+	MinSelfStake     *big.Int
+	SidechainAddr    []byte
+	TotalLockedStake *big.Int
+	IsVldt           bool
+}, error) {
+	return _Guard.Contract.GetCandidateInfo(&_Guard.CallOpts, _candidateAddr)
+}
+
+// GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
+//
+// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) constant returns(uint256 lockedStake, uint256[] intentAmounts, uint256[] intentUnlockTimes, uint256 nextWithdrawIntent)
+func (_Guard *GuardCaller) GetDelegatorInfo(opts *bind.CallOpts, _candidateAddr common.Address, _delegatorAddr common.Address) (struct {
+	LockedStake        *big.Int
+	IntentAmounts      []*big.Int
+	IntentUnlockTimes  []*big.Int
+	NextWithdrawIntent *big.Int
+}, error) {
+	ret := new(struct {
+		LockedStake        *big.Int
+		IntentAmounts      []*big.Int
+		IntentUnlockTimes  []*big.Int
+		NextWithdrawIntent *big.Int
+	})
+	out := ret
+	err := _Guard.contract.Call(opts, out, "getDelegatorInfo", _candidateAddr, _delegatorAddr)
+	return *ret, err
+}
+
+// GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
+//
+// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) constant returns(uint256 lockedStake, uint256[] intentAmounts, uint256[] intentUnlockTimes, uint256 nextWithdrawIntent)
+func (_Guard *GuardSession) GetDelegatorInfo(_candidateAddr common.Address, _delegatorAddr common.Address) (struct {
+	LockedStake        *big.Int
+	IntentAmounts      []*big.Int
+	IntentUnlockTimes  []*big.Int
+	NextWithdrawIntent *big.Int
+}, error) {
+	return _Guard.Contract.GetDelegatorInfo(&_Guard.CallOpts, _candidateAddr, _delegatorAddr)
+}
+
+// GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
+//
+// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) constant returns(uint256 lockedStake, uint256[] intentAmounts, uint256[] intentUnlockTimes, uint256 nextWithdrawIntent)
+func (_Guard *GuardCallerSession) GetDelegatorInfo(_candidateAddr common.Address, _delegatorAddr common.Address) (struct {
+	LockedStake        *big.Int
+	IntentAmounts      []*big.Int
+	IntentUnlockTimes  []*big.Int
+	NextWithdrawIntent *big.Int
+}, error) {
+	return _Guard.Contract.GetDelegatorInfo(&_Guard.CallOpts, _candidateAddr, _delegatorAddr)
+}
+
+// GetMinStake is a free data retrieval call binding the contract method 0x56a3b5fa.
+//
+// Solidity: function getMinStake() constant returns(uint256)
+func (_Guard *GuardCaller) GetMinStake(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Guard.contract.Call(opts, out, "getMinStake")
+	return *ret0, err
+}
+
+// GetMinStake is a free data retrieval call binding the contract method 0x56a3b5fa.
+//
+// Solidity: function getMinStake() constant returns(uint256)
+func (_Guard *GuardSession) GetMinStake() (*big.Int, error) {
+	return _Guard.Contract.GetMinStake(&_Guard.CallOpts)
+}
+
+// GetMinStake is a free data retrieval call binding the contract method 0x56a3b5fa.
+//
+// Solidity: function getMinStake() constant returns(uint256)
+func (_Guard *GuardCallerSession) GetMinStake() (*big.Int, error) {
+	return _Guard.Contract.GetMinStake(&_Guard.CallOpts)
+}
+
+// GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
+//
+// Solidity: function getValidatorNum() constant returns(uint256)
+func (_Guard *GuardCaller) GetValidatorNum(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Guard.contract.Call(opts, out, "getValidatorNum")
+	return *ret0, err
+}
+
+// GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
+//
+// Solidity: function getValidatorNum() constant returns(uint256)
+func (_Guard *GuardSession) GetValidatorNum() (*big.Int, error) {
+	return _Guard.Contract.GetValidatorNum(&_Guard.CallOpts)
+}
+
+// GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
+//
+// Solidity: function getValidatorNum() constant returns(uint256)
+func (_Guard *GuardCallerSession) GetValidatorNum() (*big.Int, error) {
+	return _Guard.Contract.GetValidatorNum(&_Guard.CallOpts)
+}
+
+// IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
+//
+// Solidity: function isValidator(address _addr) constant returns(bool)
+func (_Guard *GuardCaller) IsValidator(opts *bind.CallOpts, _addr common.Address) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _Guard.contract.Call(opts, out, "isValidator", _addr)
+	return *ret0, err
+}
+
+// IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
+//
+// Solidity: function isValidator(address _addr) constant returns(bool)
+func (_Guard *GuardSession) IsValidator(_addr common.Address) (bool, error) {
+	return _Guard.Contract.IsValidator(&_Guard.CallOpts, _addr)
+}
+
+// IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
+//
+// Solidity: function isValidator(address _addr) constant returns(bool)
+func (_Guard *GuardCallerSession) IsValidator(_addr common.Address) (bool, error) {
+	return _Guard.Contract.IsValidator(&_Guard.CallOpts, _addr)
+}
+
+// MinValidatorNum is a free data retrieval call binding the contract method 0xea5976a9.
+//
+// Solidity: function minValidatorNum() constant returns(uint256)
+func (_Guard *GuardCaller) MinValidatorNum(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Guard.contract.Call(opts, out, "minValidatorNum")
+	return *ret0, err
+}
+
+// MinValidatorNum is a free data retrieval call binding the contract method 0xea5976a9.
+//
+// Solidity: function minValidatorNum() constant returns(uint256)
+func (_Guard *GuardSession) MinValidatorNum() (*big.Int, error) {
+	return _Guard.Contract.MinValidatorNum(&_Guard.CallOpts)
+}
+
+// MinValidatorNum is a free data retrieval call binding the contract method 0xea5976a9.
+//
+// Solidity: function minValidatorNum() constant returns(uint256)
+func (_Guard *GuardCallerSession) MinValidatorNum() (*big.Int, error) {
+	return _Guard.Contract.MinValidatorNum(&_Guard.CallOpts)
+}
+
+// SidechainGoLive is a free data retrieval call binding the contract method 0x55d04500.
+//
+// Solidity: function sidechainGoLive() constant returns(uint256)
+func (_Guard *GuardCaller) SidechainGoLive(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Guard.contract.Call(opts, out, "sidechainGoLive")
+	return *ret0, err
+}
+
+// SidechainGoLive is a free data retrieval call binding the contract method 0x55d04500.
+//
+// Solidity: function sidechainGoLive() constant returns(uint256)
+func (_Guard *GuardSession) SidechainGoLive() (*big.Int, error) {
+	return _Guard.Contract.SidechainGoLive(&_Guard.CallOpts)
+}
+
+// SidechainGoLive is a free data retrieval call binding the contract method 0x55d04500.
+//
+// Solidity: function sidechainGoLive() constant returns(uint256)
+func (_Guard *GuardCallerSession) SidechainGoLive() (*big.Int, error) {
+	return _Guard.Contract.SidechainGoLive(&_Guard.CallOpts)
 }
 
 // SubscriptionExpiration is a free data retrieval call binding the contract method 0x55bf3b33.
@@ -354,130 +540,135 @@ func (_Guard *GuardCallerSession) ValidatorSet(arg0 *big.Int) (common.Address, e
 	return _Guard.Contract.ValidatorSet(&_Guard.CallOpts, arg0)
 }
 
-// ClaimValidator is a paid mutator transaction binding the contract method 0x7121435b.
+// WithdrawTimeout is a free data retrieval call binding the contract method 0x9c15d1a2.
 //
-// Solidity: function claimValidator(bytes _sidechainAddr) returns()
-func (_Guard *GuardTransactor) ClaimValidator(opts *bind.TransactOpts, _sidechainAddr []byte) (*types.Transaction, error) {
-	return _Guard.contract.Transact(opts, "claimValidator", _sidechainAddr)
+// Solidity: function withdrawTimeout() constant returns(uint256)
+func (_Guard *GuardCaller) WithdrawTimeout(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Guard.contract.Call(opts, out, "withdrawTimeout")
+	return *ret0, err
 }
 
-// ClaimValidator is a paid mutator transaction binding the contract method 0x7121435b.
+// WithdrawTimeout is a free data retrieval call binding the contract method 0x9c15d1a2.
 //
-// Solidity: function claimValidator(bytes _sidechainAddr) returns()
-func (_Guard *GuardSession) ClaimValidator(_sidechainAddr []byte) (*types.Transaction, error) {
-	return _Guard.Contract.ClaimValidator(&_Guard.TransactOpts, _sidechainAddr)
+// Solidity: function withdrawTimeout() constant returns(uint256)
+func (_Guard *GuardSession) WithdrawTimeout() (*big.Int, error) {
+	return _Guard.Contract.WithdrawTimeout(&_Guard.CallOpts)
 }
 
-// ClaimValidator is a paid mutator transaction binding the contract method 0x7121435b.
+// WithdrawTimeout is a free data retrieval call binding the contract method 0x9c15d1a2.
 //
-// Solidity: function claimValidator(bytes _sidechainAddr) returns()
-func (_Guard *GuardTransactorSession) ClaimValidator(_sidechainAddr []byte) (*types.Transaction, error) {
-	return _Guard.Contract.ClaimValidator(&_Guard.TransactOpts, _sidechainAddr)
+// Solidity: function withdrawTimeout() constant returns(uint256)
+func (_Guard *GuardCallerSession) WithdrawTimeout() (*big.Int, error) {
+	return _Guard.Contract.WithdrawTimeout(&_Guard.CallOpts)
 }
 
-// ConfirmWithdraw is a paid mutator transaction binding the contract method 0x68124f9a.
+// ClaimValidator is a paid mutator transaction binding the contract method 0x6e7cf85d.
 //
-// Solidity: function confirmWithdraw() returns()
-func (_Guard *GuardTransactor) ConfirmWithdraw(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Guard.contract.Transact(opts, "confirmWithdraw")
+// Solidity: function claimValidator() returns()
+func (_Guard *GuardTransactor) ClaimValidator(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Guard.contract.Transact(opts, "claimValidator")
 }
 
-// ConfirmWithdraw is a paid mutator transaction binding the contract method 0x68124f9a.
+// ClaimValidator is a paid mutator transaction binding the contract method 0x6e7cf85d.
 //
-// Solidity: function confirmWithdraw() returns()
-func (_Guard *GuardSession) ConfirmWithdraw() (*types.Transaction, error) {
-	return _Guard.Contract.ConfirmWithdraw(&_Guard.TransactOpts)
+// Solidity: function claimValidator() returns()
+func (_Guard *GuardSession) ClaimValidator() (*types.Transaction, error) {
+	return _Guard.Contract.ClaimValidator(&_Guard.TransactOpts)
 }
 
-// ConfirmWithdraw is a paid mutator transaction binding the contract method 0x68124f9a.
+// ClaimValidator is a paid mutator transaction binding the contract method 0x6e7cf85d.
 //
-// Solidity: function confirmWithdraw() returns()
-func (_Guard *GuardTransactorSession) ConfirmWithdraw() (*types.Transaction, error) {
-	return _Guard.Contract.ConfirmWithdraw(&_Guard.TransactOpts)
+// Solidity: function claimValidator() returns()
+func (_Guard *GuardTransactorSession) ClaimValidator() (*types.Transaction, error) {
+	return _Guard.Contract.ClaimValidator(&_Guard.TransactOpts)
+}
+
+// ConfirmWithdraw is a paid mutator transaction binding the contract method 0xd2bfc1c7.
+//
+// Solidity: function confirmWithdraw(address _candidateAddr) returns()
+func (_Guard *GuardTransactor) ConfirmWithdraw(opts *bind.TransactOpts, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.contract.Transact(opts, "confirmWithdraw", _candidateAddr)
+}
+
+// ConfirmWithdraw is a paid mutator transaction binding the contract method 0xd2bfc1c7.
+//
+// Solidity: function confirmWithdraw(address _candidateAddr) returns()
+func (_Guard *GuardSession) ConfirmWithdraw(_candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.Contract.ConfirmWithdraw(&_Guard.TransactOpts, _candidateAddr)
+}
+
+// ConfirmWithdraw is a paid mutator transaction binding the contract method 0xd2bfc1c7.
+//
+// Solidity: function confirmWithdraw(address _candidateAddr) returns()
+func (_Guard *GuardTransactorSession) ConfirmWithdraw(_candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.Contract.ConfirmWithdraw(&_Guard.TransactOpts, _candidateAddr)
+}
+
+// Delegate is a paid mutator transaction binding the contract method 0x08bbb824.
+//
+// Solidity: function delegate(uint256 _amount, address _candidateAddr) returns()
+func (_Guard *GuardTransactor) Delegate(opts *bind.TransactOpts, _amount *big.Int, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.contract.Transact(opts, "delegate", _amount, _candidateAddr)
+}
+
+// Delegate is a paid mutator transaction binding the contract method 0x08bbb824.
+//
+// Solidity: function delegate(uint256 _amount, address _candidateAddr) returns()
+func (_Guard *GuardSession) Delegate(_amount *big.Int, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.Contract.Delegate(&_Guard.TransactOpts, _amount, _candidateAddr)
+}
+
+// Delegate is a paid mutator transaction binding the contract method 0x08bbb824.
+//
+// Solidity: function delegate(uint256 _amount, address _candidateAddr) returns()
+func (_Guard *GuardTransactorSession) Delegate(_amount *big.Int, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.Contract.Delegate(&_Guard.TransactOpts, _amount, _candidateAddr)
+}
+
+// InitializeCandidate is a paid mutator transaction binding the contract method 0x26c36617.
+//
+// Solidity: function initializeCandidate(uint256 _minSelfStake, bytes _sidechainAddr) returns()
+func (_Guard *GuardTransactor) InitializeCandidate(opts *bind.TransactOpts, _minSelfStake *big.Int, _sidechainAddr []byte) (*types.Transaction, error) {
+	return _Guard.contract.Transact(opts, "initializeCandidate", _minSelfStake, _sidechainAddr)
+}
+
+// InitializeCandidate is a paid mutator transaction binding the contract method 0x26c36617.
+//
+// Solidity: function initializeCandidate(uint256 _minSelfStake, bytes _sidechainAddr) returns()
+func (_Guard *GuardSession) InitializeCandidate(_minSelfStake *big.Int, _sidechainAddr []byte) (*types.Transaction, error) {
+	return _Guard.Contract.InitializeCandidate(&_Guard.TransactOpts, _minSelfStake, _sidechainAddr)
+}
+
+// InitializeCandidate is a paid mutator transaction binding the contract method 0x26c36617.
+//
+// Solidity: function initializeCandidate(uint256 _minSelfStake, bytes _sidechainAddr) returns()
+func (_Guard *GuardTransactorSession) InitializeCandidate(_minSelfStake *big.Int, _sidechainAddr []byte) (*types.Transaction, error) {
+	return _Guard.Contract.InitializeCandidate(&_Guard.TransactOpts, _minSelfStake, _sidechainAddr)
 }
 
 // IntendWithdraw is a paid mutator transaction binding the contract method 0x859012a9.
 //
-// Solidity: function intendWithdraw(uint256 _amount, address _candidate) returns()
-func (_Guard *GuardTransactor) IntendWithdraw(opts *bind.TransactOpts, _amount *big.Int, _candidate common.Address) (*types.Transaction, error) {
-	return _Guard.contract.Transact(opts, "intendWithdraw", _amount, _candidate)
+// Solidity: function intendWithdraw(uint256 _amount, address _candidateAddr) returns()
+func (_Guard *GuardTransactor) IntendWithdraw(opts *bind.TransactOpts, _amount *big.Int, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.contract.Transact(opts, "intendWithdraw", _amount, _candidateAddr)
 }
 
 // IntendWithdraw is a paid mutator transaction binding the contract method 0x859012a9.
 //
-// Solidity: function intendWithdraw(uint256 _amount, address _candidate) returns()
-func (_Guard *GuardSession) IntendWithdraw(_amount *big.Int, _candidate common.Address) (*types.Transaction, error) {
-	return _Guard.Contract.IntendWithdraw(&_Guard.TransactOpts, _amount, _candidate)
+// Solidity: function intendWithdraw(uint256 _amount, address _candidateAddr) returns()
+func (_Guard *GuardSession) IntendWithdraw(_amount *big.Int, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.Contract.IntendWithdraw(&_Guard.TransactOpts, _amount, _candidateAddr)
 }
 
 // IntendWithdraw is a paid mutator transaction binding the contract method 0x859012a9.
 //
-// Solidity: function intendWithdraw(uint256 _amount, address _candidate) returns()
-func (_Guard *GuardTransactorSession) IntendWithdraw(_amount *big.Int, _candidate common.Address) (*types.Transaction, error) {
-	return _Guard.Contract.IntendWithdraw(&_Guard.TransactOpts, _amount, _candidate)
-}
-
-// MockPunish is a paid mutator transaction binding the contract method 0x78df5d2e.
-//
-// Solidity: function mockPunish(address _indemnitor, address _indemnitee, uint256 _amount) returns()
-func (_Guard *GuardTransactor) MockPunish(opts *bind.TransactOpts, _indemnitor common.Address, _indemnitee common.Address, _amount *big.Int) (*types.Transaction, error) {
-	return _Guard.contract.Transact(opts, "mockPunish", _indemnitor, _indemnitee, _amount)
-}
-
-// MockPunish is a paid mutator transaction binding the contract method 0x78df5d2e.
-//
-// Solidity: function mockPunish(address _indemnitor, address _indemnitee, uint256 _amount) returns()
-func (_Guard *GuardSession) MockPunish(_indemnitor common.Address, _indemnitee common.Address, _amount *big.Int) (*types.Transaction, error) {
-	return _Guard.Contract.MockPunish(&_Guard.TransactOpts, _indemnitor, _indemnitee, _amount)
-}
-
-// MockPunish is a paid mutator transaction binding the contract method 0x78df5d2e.
-//
-// Solidity: function mockPunish(address _indemnitor, address _indemnitee, uint256 _amount) returns()
-func (_Guard *GuardTransactorSession) MockPunish(_indemnitor common.Address, _indemnitee common.Address, _amount *big.Int) (*types.Transaction, error) {
-	return _Guard.Contract.MockPunish(&_Guard.TransactOpts, _indemnitor, _indemnitee, _amount)
-}
-
-// Punish is a paid mutator transaction binding the contract method 0x3620d149.
-//
-// Solidity: function punish(bytes _punishRequest) returns()
-func (_Guard *GuardTransactor) Punish(opts *bind.TransactOpts, _punishRequest []byte) (*types.Transaction, error) {
-	return _Guard.contract.Transact(opts, "punish", _punishRequest)
-}
-
-// Punish is a paid mutator transaction binding the contract method 0x3620d149.
-//
-// Solidity: function punish(bytes _punishRequest) returns()
-func (_Guard *GuardSession) Punish(_punishRequest []byte) (*types.Transaction, error) {
-	return _Guard.Contract.Punish(&_Guard.TransactOpts, _punishRequest)
-}
-
-// Punish is a paid mutator transaction binding the contract method 0x3620d149.
-//
-// Solidity: function punish(bytes _punishRequest) returns()
-func (_Guard *GuardTransactorSession) Punish(_punishRequest []byte) (*types.Transaction, error) {
-	return _Guard.Contract.Punish(&_Guard.TransactOpts, _punishRequest)
-}
-
-// Stake is a paid mutator transaction binding the contract method 0x7acb7757.
-//
-// Solidity: function stake(uint256 _amount, address _candidate) returns()
-func (_Guard *GuardTransactor) Stake(opts *bind.TransactOpts, _amount *big.Int, _candidate common.Address) (*types.Transaction, error) {
-	return _Guard.contract.Transact(opts, "stake", _amount, _candidate)
-}
-
-// Stake is a paid mutator transaction binding the contract method 0x7acb7757.
-//
-// Solidity: function stake(uint256 _amount, address _candidate) returns()
-func (_Guard *GuardSession) Stake(_amount *big.Int, _candidate common.Address) (*types.Transaction, error) {
-	return _Guard.Contract.Stake(&_Guard.TransactOpts, _amount, _candidate)
-}
-
-// Stake is a paid mutator transaction binding the contract method 0x7acb7757.
-//
-// Solidity: function stake(uint256 _amount, address _candidate) returns()
-func (_Guard *GuardTransactorSession) Stake(_amount *big.Int, _candidate common.Address) (*types.Transaction, error) {
-	return _Guard.Contract.Stake(&_Guard.TransactOpts, _amount, _candidate)
+// Solidity: function intendWithdraw(uint256 _amount, address _candidateAddr) returns()
+func (_Guard *GuardTransactorSession) IntendWithdraw(_amount *big.Int, _candidateAddr common.Address) (*types.Transaction, error) {
+	return _Guard.Contract.IntendWithdraw(&_Guard.TransactOpts, _amount, _candidateAddr)
 }
 
 // Subscribe is a paid mutator transaction binding the contract method 0x0f574ba7.
@@ -499,6 +690,27 @@ func (_Guard *GuardSession) Subscribe(_amount *big.Int) (*types.Transaction, err
 // Solidity: function subscribe(uint256 _amount) returns()
 func (_Guard *GuardTransactorSession) Subscribe(_amount *big.Int) (*types.Transaction, error) {
 	return _Guard.Contract.Subscribe(&_Guard.TransactOpts, _amount)
+}
+
+// UpdateSidechainAddr is a paid mutator transaction binding the contract method 0xe02f39bd.
+//
+// Solidity: function updateSidechainAddr(bytes _sidechainAddr) returns()
+func (_Guard *GuardTransactor) UpdateSidechainAddr(opts *bind.TransactOpts, _sidechainAddr []byte) (*types.Transaction, error) {
+	return _Guard.contract.Transact(opts, "updateSidechainAddr", _sidechainAddr)
+}
+
+// UpdateSidechainAddr is a paid mutator transaction binding the contract method 0xe02f39bd.
+//
+// Solidity: function updateSidechainAddr(bytes _sidechainAddr) returns()
+func (_Guard *GuardSession) UpdateSidechainAddr(_sidechainAddr []byte) (*types.Transaction, error) {
+	return _Guard.Contract.UpdateSidechainAddr(&_Guard.TransactOpts, _sidechainAddr)
+}
+
+// UpdateSidechainAddr is a paid mutator transaction binding the contract method 0xe02f39bd.
+//
+// Solidity: function updateSidechainAddr(bytes _sidechainAddr) returns()
+func (_Guard *GuardTransactorSession) UpdateSidechainAddr(_sidechainAddr []byte) (*types.Transaction, error) {
+	return _Guard.Contract.UpdateSidechainAddr(&_Guard.TransactOpts, _sidechainAddr)
 }
 
 // GuardConfirmWithdrawIterator is returned from FilterConfirmWithdraw and is used to iterate over the raw logs and unpacked data for ConfirmWithdraw events raised by the Guard contract.
@@ -578,10 +790,19 @@ type GuardConfirmWithdraw struct {
 
 // FilterConfirmWithdraw is a free log retrieval operation binding the contract event 0x08d0283ea9a2e520a2f09611cf37ca6eb70f62e9a807e53756047dd2dc027220.
 //
-// Solidity: event ConfirmWithdraw(address delegator, address candidate, uint256 amount)
-func (_Guard *GuardFilterer) FilterConfirmWithdraw(opts *bind.FilterOpts) (*GuardConfirmWithdrawIterator, error) {
+// Solidity: event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint256 amount)
+func (_Guard *GuardFilterer) FilterConfirmWithdraw(opts *bind.FilterOpts, delegator []common.Address, candidate []common.Address) (*GuardConfirmWithdrawIterator, error) {
 
-	logs, sub, err := _Guard.contract.FilterLogs(opts, "ConfirmWithdraw")
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "ConfirmWithdraw", delegatorRule, candidateRule)
 	if err != nil {
 		return nil, err
 	}
@@ -590,10 +811,19 @@ func (_Guard *GuardFilterer) FilterConfirmWithdraw(opts *bind.FilterOpts) (*Guar
 
 // WatchConfirmWithdraw is a free log subscription operation binding the contract event 0x08d0283ea9a2e520a2f09611cf37ca6eb70f62e9a807e53756047dd2dc027220.
 //
-// Solidity: event ConfirmWithdraw(address delegator, address candidate, uint256 amount)
-func (_Guard *GuardFilterer) WatchConfirmWithdraw(opts *bind.WatchOpts, sink chan<- *GuardConfirmWithdraw) (event.Subscription, error) {
+// Solidity: event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint256 amount)
+func (_Guard *GuardFilterer) WatchConfirmWithdraw(opts *bind.WatchOpts, sink chan<- *GuardConfirmWithdraw, delegator []common.Address, candidate []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _Guard.contract.WatchLogs(opts, "ConfirmWithdraw")
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "ConfirmWithdraw", delegatorRule, candidateRule)
 	if err != nil {
 		return nil, err
 	}
@@ -605,6 +835,293 @@ func (_Guard *GuardFilterer) WatchConfirmWithdraw(opts *bind.WatchOpts, sink cha
 				// New log arrived, parse the event and forward to the user
 				event := new(GuardConfirmWithdraw)
 				if err := _Guard.contract.UnpackLog(event, "ConfirmWithdraw", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// GuardDelegateIterator is returned from FilterDelegate and is used to iterate over the raw logs and unpacked data for Delegate events raised by the Guard contract.
+type GuardDelegateIterator struct {
+	Event *GuardDelegate // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *GuardDelegateIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(GuardDelegate)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(GuardDelegate)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *GuardDelegateIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *GuardDelegateIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// GuardDelegate represents a Delegate event raised by the Guard contract.
+type GuardDelegate struct {
+	Delegator        common.Address
+	Candidate        common.Address
+	NewStake         *big.Int
+	TotalLockedStake *big.Int
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterDelegate is a free log retrieval operation binding the contract event 0x500599802164a08023e87ffc3eed0ba3ae60697b3083ba81d046683679d81c6b.
+//
+// Solidity: event Delegate(address indexed delegator, address indexed candidate, uint256 newStake, uint256 totalLockedStake)
+func (_Guard *GuardFilterer) FilterDelegate(opts *bind.FilterOpts, delegator []common.Address, candidate []common.Address) (*GuardDelegateIterator, error) {
+
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "Delegate", delegatorRule, candidateRule)
+	if err != nil {
+		return nil, err
+	}
+	return &GuardDelegateIterator{contract: _Guard.contract, event: "Delegate", logs: logs, sub: sub}, nil
+}
+
+// WatchDelegate is a free log subscription operation binding the contract event 0x500599802164a08023e87ffc3eed0ba3ae60697b3083ba81d046683679d81c6b.
+//
+// Solidity: event Delegate(address indexed delegator, address indexed candidate, uint256 newStake, uint256 totalLockedStake)
+func (_Guard *GuardFilterer) WatchDelegate(opts *bind.WatchOpts, sink chan<- *GuardDelegate, delegator []common.Address, candidate []common.Address) (event.Subscription, error) {
+
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "Delegate", delegatorRule, candidateRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(GuardDelegate)
+				if err := _Guard.contract.UnpackLog(event, "Delegate", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// GuardInitializeCandidateIterator is returned from FilterInitializeCandidate and is used to iterate over the raw logs and unpacked data for InitializeCandidate events raised by the Guard contract.
+type GuardInitializeCandidateIterator struct {
+	Event *GuardInitializeCandidate // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *GuardInitializeCandidateIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(GuardInitializeCandidate)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(GuardInitializeCandidate)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *GuardInitializeCandidateIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *GuardInitializeCandidateIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// GuardInitializeCandidate represents a InitializeCandidate event raised by the Guard contract.
+type GuardInitializeCandidate struct {
+	Candidate     common.Address
+	MinSelfStake  *big.Int
+	SidechainAddr common.Hash
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterInitializeCandidate is a free log retrieval operation binding the contract event 0x377f6597c5132797119197fab0e953f73fd5bb109a897a11c871834af2d092a9.
+//
+// Solidity: event InitializeCandidate(address indexed candidate, uint256 minSelfStake, bytes indexed sidechainAddr)
+func (_Guard *GuardFilterer) FilterInitializeCandidate(opts *bind.FilterOpts, candidate []common.Address, sidechainAddr [][]byte) (*GuardInitializeCandidateIterator, error) {
+
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	var sidechainAddrRule []interface{}
+	for _, sidechainAddrItem := range sidechainAddr {
+		sidechainAddrRule = append(sidechainAddrRule, sidechainAddrItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "InitializeCandidate", candidateRule, sidechainAddrRule)
+	if err != nil {
+		return nil, err
+	}
+	return &GuardInitializeCandidateIterator{contract: _Guard.contract, event: "InitializeCandidate", logs: logs, sub: sub}, nil
+}
+
+// WatchInitializeCandidate is a free log subscription operation binding the contract event 0x377f6597c5132797119197fab0e953f73fd5bb109a897a11c871834af2d092a9.
+//
+// Solidity: event InitializeCandidate(address indexed candidate, uint256 minSelfStake, bytes indexed sidechainAddr)
+func (_Guard *GuardFilterer) WatchInitializeCandidate(opts *bind.WatchOpts, sink chan<- *GuardInitializeCandidate, candidate []common.Address, sidechainAddr [][]byte) (event.Subscription, error) {
+
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	var sidechainAddrRule []interface{}
+	for _, sidechainAddrItem := range sidechainAddr {
+		sidechainAddrRule = append(sidechainAddrRule, sidechainAddrItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "InitializeCandidate", candidateRule, sidechainAddrRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(GuardInitializeCandidate)
+				if err := _Guard.contract.UnpackLog(event, "InitializeCandidate", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -694,30 +1211,50 @@ func (it *GuardIntendWithdrawIterator) Close() error {
 
 // GuardIntendWithdraw represents a IntendWithdraw event raised by the Guard contract.
 type GuardIntendWithdraw struct {
-	Delegator common.Address
-	Candidate common.Address
-	Amount    *big.Int
-	Raw       types.Log // Blockchain specific contextual infos
+	Delegator        common.Address
+	Candidate        common.Address
+	WithdrawAmount   *big.Int
+	UnlockTime       *big.Int
+	TotalLockedStake *big.Int
+	Raw              types.Log // Blockchain specific contextual infos
 }
 
-// FilterIntendWithdraw is a free log retrieval operation binding the contract event 0xf0835827db57a4706bf4c0686f93f0d0bfbe30895d855f0b9585a2b3f0d1f348.
+// FilterIntendWithdraw is a free log retrieval operation binding the contract event 0x9e772df8b63d7657919bf5919c475e4033a0bd817b2468bc7ced0d962f21ded0.
 //
-// Solidity: event IntendWithdraw(address delegator, address candidate, uint256 amount)
-func (_Guard *GuardFilterer) FilterIntendWithdraw(opts *bind.FilterOpts) (*GuardIntendWithdrawIterator, error) {
+// Solidity: event IntendWithdraw(address indexed delegator, address indexed candidate, uint256 withdrawAmount, uint256 unlockTime, uint256 totalLockedStake)
+func (_Guard *GuardFilterer) FilterIntendWithdraw(opts *bind.FilterOpts, delegator []common.Address, candidate []common.Address) (*GuardIntendWithdrawIterator, error) {
 
-	logs, sub, err := _Guard.contract.FilterLogs(opts, "IntendWithdraw")
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "IntendWithdraw", delegatorRule, candidateRule)
 	if err != nil {
 		return nil, err
 	}
 	return &GuardIntendWithdrawIterator{contract: _Guard.contract, event: "IntendWithdraw", logs: logs, sub: sub}, nil
 }
 
-// WatchIntendWithdraw is a free log subscription operation binding the contract event 0xf0835827db57a4706bf4c0686f93f0d0bfbe30895d855f0b9585a2b3f0d1f348.
+// WatchIntendWithdraw is a free log subscription operation binding the contract event 0x9e772df8b63d7657919bf5919c475e4033a0bd817b2468bc7ced0d962f21ded0.
 //
-// Solidity: event IntendWithdraw(address delegator, address candidate, uint256 amount)
-func (_Guard *GuardFilterer) WatchIntendWithdraw(opts *bind.WatchOpts, sink chan<- *GuardIntendWithdraw) (event.Subscription, error) {
+// Solidity: event IntendWithdraw(address indexed delegator, address indexed candidate, uint256 withdrawAmount, uint256 unlockTime, uint256 totalLockedStake)
+func (_Guard *GuardFilterer) WatchIntendWithdraw(opts *bind.WatchOpts, sink chan<- *GuardIntendWithdraw, delegator []common.Address, candidate []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _Guard.contract.WatchLogs(opts, "IntendWithdraw")
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "IntendWithdraw", delegatorRule, candidateRule)
 	if err != nil {
 		return nil, err
 	}
@@ -826,10 +1363,19 @@ type GuardPunish struct {
 
 // FilterPunish is a free log retrieval operation binding the contract event 0x111897aba775ed4cb659e35805c453dcd8f0024cc414f560f9677bdfae30952a.
 //
-// Solidity: event Punish(address indemnitor, address indemnitee, uint256 amount)
-func (_Guard *GuardFilterer) FilterPunish(opts *bind.FilterOpts) (*GuardPunishIterator, error) {
+// Solidity: event Punish(address indexed indemnitor, address indexed indemnitee, uint256 amount)
+func (_Guard *GuardFilterer) FilterPunish(opts *bind.FilterOpts, indemnitor []common.Address, indemnitee []common.Address) (*GuardPunishIterator, error) {
 
-	logs, sub, err := _Guard.contract.FilterLogs(opts, "Punish")
+	var indemnitorRule []interface{}
+	for _, indemnitorItem := range indemnitor {
+		indemnitorRule = append(indemnitorRule, indemnitorItem)
+	}
+	var indemniteeRule []interface{}
+	for _, indemniteeItem := range indemnitee {
+		indemniteeRule = append(indemniteeRule, indemniteeItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "Punish", indemnitorRule, indemniteeRule)
 	if err != nil {
 		return nil, err
 	}
@@ -838,10 +1384,19 @@ func (_Guard *GuardFilterer) FilterPunish(opts *bind.FilterOpts) (*GuardPunishIt
 
 // WatchPunish is a free log subscription operation binding the contract event 0x111897aba775ed4cb659e35805c453dcd8f0024cc414f560f9677bdfae30952a.
 //
-// Solidity: event Punish(address indemnitor, address indemnitee, uint256 amount)
-func (_Guard *GuardFilterer) WatchPunish(opts *bind.WatchOpts, sink chan<- *GuardPunish) (event.Subscription, error) {
+// Solidity: event Punish(address indexed indemnitor, address indexed indemnitee, uint256 amount)
+func (_Guard *GuardFilterer) WatchPunish(opts *bind.WatchOpts, sink chan<- *GuardPunish, indemnitor []common.Address, indemnitee []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _Guard.contract.WatchLogs(opts, "Punish")
+	var indemnitorRule []interface{}
+	for _, indemnitorItem := range indemnitor {
+		indemnitorRule = append(indemnitorRule, indemnitorItem)
+	}
+	var indemniteeRule []interface{}
+	for _, indemniteeItem := range indemnitee {
+		indemniteeRule = append(indemniteeRule, indemniteeItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "Punish", indemnitorRule, indemniteeRule)
 	if err != nil {
 		return nil, err
 	}
@@ -853,141 +1408,6 @@ func (_Guard *GuardFilterer) WatchPunish(opts *bind.WatchOpts, sink chan<- *Guar
 				// New log arrived, parse the event and forward to the user
 				event := new(GuardPunish)
 				if err := _Guard.contract.UnpackLog(event, "Punish", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// GuardStakeIterator is returned from FilterStake and is used to iterate over the raw logs and unpacked data for Stake events raised by the Guard contract.
-type GuardStakeIterator struct {
-	Event *GuardStake // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *GuardStakeIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(GuardStake)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(GuardStake)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *GuardStakeIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *GuardStakeIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// GuardStake represents a Stake event raised by the Guard contract.
-type GuardStake struct {
-	Delegator  common.Address
-	Candidate  common.Address
-	NewStake   *big.Int
-	TotalStake *big.Int
-	Raw        types.Log // Blockchain specific contextual infos
-}
-
-// FilterStake is a free log retrieval operation binding the contract event 0x63602d0ecc7b3a0ef7ff1a116e23056662d64280355ba8031b6d0d767c4b4458.
-//
-// Solidity: event Stake(address delegator, address indexed candidate, uint256 newStake, uint256 totalStake)
-func (_Guard *GuardFilterer) FilterStake(opts *bind.FilterOpts, candidate []common.Address) (*GuardStakeIterator, error) {
-
-	var candidateRule []interface{}
-	for _, candidateItem := range candidate {
-		candidateRule = append(candidateRule, candidateItem)
-	}
-
-	logs, sub, err := _Guard.contract.FilterLogs(opts, "Stake", candidateRule)
-	if err != nil {
-		return nil, err
-	}
-	return &GuardStakeIterator{contract: _Guard.contract, event: "Stake", logs: logs, sub: sub}, nil
-}
-
-// WatchStake is a free log subscription operation binding the contract event 0x63602d0ecc7b3a0ef7ff1a116e23056662d64280355ba8031b6d0d767c4b4458.
-//
-// Solidity: event Stake(address delegator, address indexed candidate, uint256 newStake, uint256 totalStake)
-func (_Guard *GuardFilterer) WatchStake(opts *bind.WatchOpts, sink chan<- *GuardStake, candidate []common.Address) (event.Subscription, error) {
-
-	var candidateRule []interface{}
-	for _, candidateItem := range candidate {
-		candidateRule = append(candidateRule, candidateItem)
-	}
-
-	logs, sub, err := _Guard.contract.WatchLogs(opts, "Stake", candidateRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(GuardStake)
-				if err := _Guard.contract.UnpackLog(event, "Stake", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1085,10 +1505,15 @@ type GuardSubscription struct {
 
 // FilterSubscription is a free log retrieval operation binding the contract event 0x8eb8bcc7421f99b92ab7d727e056544fb59514f8f56251e69658c21ece8977fa.
 //
-// Solidity: event Subscription(address consumer, uint256 amount, uint256 subscriptionExpiration)
-func (_Guard *GuardFilterer) FilterSubscription(opts *bind.FilterOpts) (*GuardSubscriptionIterator, error) {
+// Solidity: event Subscription(address indexed consumer, uint256 amount, uint256 subscriptionExpiration)
+func (_Guard *GuardFilterer) FilterSubscription(opts *bind.FilterOpts, consumer []common.Address) (*GuardSubscriptionIterator, error) {
 
-	logs, sub, err := _Guard.contract.FilterLogs(opts, "Subscription")
+	var consumerRule []interface{}
+	for _, consumerItem := range consumer {
+		consumerRule = append(consumerRule, consumerItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "Subscription", consumerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1097,10 +1522,15 @@ func (_Guard *GuardFilterer) FilterSubscription(opts *bind.FilterOpts) (*GuardSu
 
 // WatchSubscription is a free log subscription operation binding the contract event 0x8eb8bcc7421f99b92ab7d727e056544fb59514f8f56251e69658c21ece8977fa.
 //
-// Solidity: event Subscription(address consumer, uint256 amount, uint256 subscriptionExpiration)
-func (_Guard *GuardFilterer) WatchSubscription(opts *bind.WatchOpts, sink chan<- *GuardSubscription) (event.Subscription, error) {
+// Solidity: event Subscription(address indexed consumer, uint256 amount, uint256 subscriptionExpiration)
+func (_Guard *GuardFilterer) WatchSubscription(opts *bind.WatchOpts, sink chan<- *GuardSubscription, consumer []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _Guard.contract.WatchLogs(opts, "Subscription")
+	var consumerRule []interface{}
+	for _, consumerItem := range consumer {
+		consumerRule = append(consumerRule, consumerItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "Subscription", consumerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1132,9 +1562,9 @@ func (_Guard *GuardFilterer) WatchSubscription(opts *bind.WatchOpts, sink chan<-
 	}), nil
 }
 
-// GuardValidatorUpdateIterator is returned from FilterValidatorUpdate and is used to iterate over the raw logs and unpacked data for ValidatorUpdate events raised by the Guard contract.
-type GuardValidatorUpdateIterator struct {
-	Event *GuardValidatorUpdate // Event containing the contract specifics and raw log
+// GuardUpdateSidechainAddrIterator is returned from FilterUpdateSidechainAddr and is used to iterate over the raw logs and unpacked data for UpdateSidechainAddr events raised by the Guard contract.
+type GuardUpdateSidechainAddrIterator struct {
+	Event *GuardUpdateSidechainAddr // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1148,7 +1578,7 @@ type GuardValidatorUpdateIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *GuardValidatorUpdateIterator) Next() bool {
+func (it *GuardUpdateSidechainAddrIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1157,7 +1587,7 @@ func (it *GuardValidatorUpdateIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(GuardValidatorUpdate)
+			it.Event = new(GuardUpdateSidechainAddr)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1172,7 +1602,7 @@ func (it *GuardValidatorUpdateIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(GuardValidatorUpdate)
+		it.Event = new(GuardUpdateSidechainAddr)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1188,53 +1618,69 @@ func (it *GuardValidatorUpdateIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *GuardValidatorUpdateIterator) Error() error {
+func (it *GuardUpdateSidechainAddrIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *GuardValidatorUpdateIterator) Close() error {
+func (it *GuardUpdateSidechainAddrIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// GuardValidatorUpdate represents a ValidatorUpdate event raised by the Guard contract.
-type GuardValidatorUpdate struct {
-	EthAddr       common.Address
-	SidechainAddr []byte
-	Added         bool
-	Raw           types.Log // Blockchain specific contextual infos
+// GuardUpdateSidechainAddr represents a UpdateSidechainAddr event raised by the Guard contract.
+type GuardUpdateSidechainAddr struct {
+	Candidate        common.Address
+	OldSidechainAddr common.Hash
+	NewSidechainAddr common.Hash
+	Raw              types.Log // Blockchain specific contextual infos
 }
 
-// FilterValidatorUpdate is a free log retrieval operation binding the contract event 0x19cf6af75cb9d1290db4d6ddf4143e0808ad392f53f9e05e38b2d2519a7d7979.
+// FilterUpdateSidechainAddr is a free log retrieval operation binding the contract event 0x16de3299ab034ce7e21b22d55f4f9a1474bd3c4d20dbd1cc9bcd39c1ad3d5a2c.
 //
-// Solidity: event ValidatorUpdate(address indexed ethAddr, bytes sidechainAddr, bool added)
-func (_Guard *GuardFilterer) FilterValidatorUpdate(opts *bind.FilterOpts, ethAddr []common.Address) (*GuardValidatorUpdateIterator, error) {
+// Solidity: event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr)
+func (_Guard *GuardFilterer) FilterUpdateSidechainAddr(opts *bind.FilterOpts, candidate []common.Address, oldSidechainAddr [][]byte, newSidechainAddr [][]byte) (*GuardUpdateSidechainAddrIterator, error) {
 
-	var ethAddrRule []interface{}
-	for _, ethAddrItem := range ethAddr {
-		ethAddrRule = append(ethAddrRule, ethAddrItem)
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+	var oldSidechainAddrRule []interface{}
+	for _, oldSidechainAddrItem := range oldSidechainAddr {
+		oldSidechainAddrRule = append(oldSidechainAddrRule, oldSidechainAddrItem)
+	}
+	var newSidechainAddrRule []interface{}
+	for _, newSidechainAddrItem := range newSidechainAddr {
+		newSidechainAddrRule = append(newSidechainAddrRule, newSidechainAddrItem)
 	}
 
-	logs, sub, err := _Guard.contract.FilterLogs(opts, "ValidatorUpdate", ethAddrRule)
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "UpdateSidechainAddr", candidateRule, oldSidechainAddrRule, newSidechainAddrRule)
 	if err != nil {
 		return nil, err
 	}
-	return &GuardValidatorUpdateIterator{contract: _Guard.contract, event: "ValidatorUpdate", logs: logs, sub: sub}, nil
+	return &GuardUpdateSidechainAddrIterator{contract: _Guard.contract, event: "UpdateSidechainAddr", logs: logs, sub: sub}, nil
 }
 
-// WatchValidatorUpdate is a free log subscription operation binding the contract event 0x19cf6af75cb9d1290db4d6ddf4143e0808ad392f53f9e05e38b2d2519a7d7979.
+// WatchUpdateSidechainAddr is a free log subscription operation binding the contract event 0x16de3299ab034ce7e21b22d55f4f9a1474bd3c4d20dbd1cc9bcd39c1ad3d5a2c.
 //
-// Solidity: event ValidatorUpdate(address indexed ethAddr, bytes sidechainAddr, bool added)
-func (_Guard *GuardFilterer) WatchValidatorUpdate(opts *bind.WatchOpts, sink chan<- *GuardValidatorUpdate, ethAddr []common.Address) (event.Subscription, error) {
+// Solidity: event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr)
+func (_Guard *GuardFilterer) WatchUpdateSidechainAddr(opts *bind.WatchOpts, sink chan<- *GuardUpdateSidechainAddr, candidate []common.Address, oldSidechainAddr [][]byte, newSidechainAddr [][]byte) (event.Subscription, error) {
 
-	var ethAddrRule []interface{}
-	for _, ethAddrItem := range ethAddr {
-		ethAddrRule = append(ethAddrRule, ethAddrItem)
+	var candidateRule []interface{}
+	for _, candidateItem := range candidate {
+		candidateRule = append(candidateRule, candidateItem)
+	}
+	var oldSidechainAddrRule []interface{}
+	for _, oldSidechainAddrItem := range oldSidechainAddr {
+		oldSidechainAddrRule = append(oldSidechainAddrRule, oldSidechainAddrItem)
+	}
+	var newSidechainAddrRule []interface{}
+	for _, newSidechainAddrItem := range newSidechainAddr {
+		newSidechainAddrRule = append(newSidechainAddrRule, newSidechainAddrItem)
 	}
 
-	logs, sub, err := _Guard.contract.WatchLogs(opts, "ValidatorUpdate", ethAddrRule)
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "UpdateSidechainAddr", candidateRule, oldSidechainAddrRule, newSidechainAddrRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1244,8 +1690,149 @@ func (_Guard *GuardFilterer) WatchValidatorUpdate(opts *bind.WatchOpts, sink cha
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(GuardValidatorUpdate)
-				if err := _Guard.contract.UnpackLog(event, "ValidatorUpdate", log); err != nil {
+				event := new(GuardUpdateSidechainAddr)
+				if err := _Guard.contract.UnpackLog(event, "UpdateSidechainAddr", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// GuardValidatorChangeIterator is returned from FilterValidatorChange and is used to iterate over the raw logs and unpacked data for ValidatorChange events raised by the Guard contract.
+type GuardValidatorChangeIterator struct {
+	Event *GuardValidatorChange // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *GuardValidatorChangeIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(GuardValidatorChange)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(GuardValidatorChange)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *GuardValidatorChangeIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *GuardValidatorChangeIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// GuardValidatorChange represents a ValidatorChange event raised by the Guard contract.
+type GuardValidatorChange struct {
+	EthAddr    common.Address
+	ChangeType uint8
+	Raw        types.Log // Blockchain specific contextual infos
+}
+
+// FilterValidatorChange is a free log retrieval operation binding the contract event 0x63f783ba869265648de5e70add96be9f4914e3bde064fdc19fd7e6a8ebf2f46c.
+//
+// Solidity: event ValidatorChange(address indexed ethAddr, uint8 indexed changeType)
+func (_Guard *GuardFilterer) FilterValidatorChange(opts *bind.FilterOpts, ethAddr []common.Address, changeType []uint8) (*GuardValidatorChangeIterator, error) {
+
+	var ethAddrRule []interface{}
+	for _, ethAddrItem := range ethAddr {
+		ethAddrRule = append(ethAddrRule, ethAddrItem)
+	}
+	var changeTypeRule []interface{}
+	for _, changeTypeItem := range changeType {
+		changeTypeRule = append(changeTypeRule, changeTypeItem)
+	}
+
+	logs, sub, err := _Guard.contract.FilterLogs(opts, "ValidatorChange", ethAddrRule, changeTypeRule)
+	if err != nil {
+		return nil, err
+	}
+	return &GuardValidatorChangeIterator{contract: _Guard.contract, event: "ValidatorChange", logs: logs, sub: sub}, nil
+}
+
+// WatchValidatorChange is a free log subscription operation binding the contract event 0x63f783ba869265648de5e70add96be9f4914e3bde064fdc19fd7e6a8ebf2f46c.
+//
+// Solidity: event ValidatorChange(address indexed ethAddr, uint8 indexed changeType)
+func (_Guard *GuardFilterer) WatchValidatorChange(opts *bind.WatchOpts, sink chan<- *GuardValidatorChange, ethAddr []common.Address, changeType []uint8) (event.Subscription, error) {
+
+	var ethAddrRule []interface{}
+	for _, ethAddrItem := range ethAddr {
+		ethAddrRule = append(ethAddrRule, ethAddrItem)
+	}
+	var changeTypeRule []interface{}
+	for _, changeTypeItem := range changeType {
+		changeTypeRule = append(changeTypeRule, changeTypeItem)
+	}
+
+	logs, sub, err := _Guard.contract.WatchLogs(opts, "ValidatorChange", ethAddrRule, changeTypeRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(GuardValidatorChange)
+				if err := _Guard.contract.UnpackLog(event, "ValidatorChange", log); err != nil {
 					return err
 				}
 				event.Raw = log
