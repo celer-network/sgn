@@ -14,7 +14,7 @@ func (m *EthMonitor) processQueue() {
 	}
 
 	for m.intendSettleQueue.Len() != 0 {
-		m.handleIntendSettle(m.intendSettleQueue.PopFront().(*mainchain.CelerLedgerIntendSettle))
+		m.processIntendSettle(m.intendSettleQueue.PopFront().(*mainchain.CelerLedgerIntendSettle))
 	}
 }
 
