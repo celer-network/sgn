@@ -35,7 +35,7 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 			return Request{}, errors.New("peerFrom is not valid address")
 		}
 
-		request = NewRequest(simplexPaymentChannel.ChannelId, seqNums[peerFromIndex].Uint64(), peerAddresses, peerFromIndex)
+		request = NewRequest(seqNums[peerFromIndex].Uint64(), peerAddresses, peerFromIndex)
 	}
 
 	return request, nil

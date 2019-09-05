@@ -10,4 +10,5 @@ const (
 
 var (
 	PullerKey = []byte{0x01} // Prefix for puller
+	PusherKey = []byte{0x02} // Prefix for pusher
 )

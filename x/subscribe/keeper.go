@@ -3,25 +3,29 @@ package subscribe
 import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	storeKey     sdk.StoreKey // Unexposed key to access store from sdk.Context
-	cdc          *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient    *mainchain.EthClient
-	globalKeeper global.Keeper
+	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
+	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
+	ethClient       *mainchain.EthClient
+	globalKeeper    global.Keeper
+	validatorKeeper validator.Keeper
 }
 
 // NewKeeper creates new instances of the subscribe Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient, globalKeeper global.Keeper) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
+	globalKeeper global.Keeper, validatorKeeper validator.Keeper) Keeper {
 	return Keeper{
-		storeKey:     storeKey,
-		cdc:          cdc,
-		ethClient:    ethClient,
-		globalKeeper: globalKeeper,
+		storeKey:        storeKey,
+		cdc:             cdc,
+		ethClient:       ethClient,
+		globalKeeper:    globalKeeper,
+		validatorKeeper: validatorKeeper,
 	}
 }
 

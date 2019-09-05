@@ -27,3 +27,13 @@ func queryPuller(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 	return res, nil
 }
+
+func queryPusher(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	pusher := keeper.GetPusher(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, pusher)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
+}

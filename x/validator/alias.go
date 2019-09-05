@@ -10,18 +10,23 @@ const (
 	RouterKey   = types.RouterKey
 	StoreKey    = types.StoreKey
 	QueryPuller = types.QueryPuller
+	QueryPusher = types.QueryPusher
 )
 
 var (
 	NewMsgSyncValidator = types.NewMsgSyncValidator
-	ModuleCdc            = types.ModuleCdc
-	RegisterCodec        = types.RegisterCodec
-	PullerKey            = types.PullerKey
-	NewPuller            = types.NewPuller
-	CLIQueryPuller       = cli.QueryPuller
+	ModuleCdc           = types.ModuleCdc
+	RegisterCodec       = types.RegisterCodec
+	PullerKey           = types.PullerKey
+	PusherKey           = types.PusherKey
+	NewPuller           = types.NewPuller
+	NewPusher           = types.NewPusher
+	CLIQueryPuller      = cli.QueryPuller
+	CLIQueryPusher      = cli.QueryPusher
 )
 
 type (
-	Puller            = types.Puller
+	Puller           = types.Puller
+	Pusher           = types.Pusher
 	MsgSyncValidator = types.MsgSyncValidator
 )
