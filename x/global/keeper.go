@@ -1,12 +1,11 @@
 package global
 
 import (
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-const confirmationCount = 5
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -41,11 +40,11 @@ func (k Keeper) GetLatestBlock(ctx sdk.Context) Block {
 func (k Keeper) GetSecureBlockNum(ctx sdk.Context) uint64 {
 	latestBlock := k.GetLatestBlock(ctx)
 
-	if latestBlock.Number < confirmationCount {
+	if latestBlock.Number < common.ConfirmationCount {
 		return 0
 	}
 
-	return latestBlock.Number - confirmationCount
+	return latestBlock.Number - common.ConfirmationCount
 }
 
 // Sync the lastest Block metadata

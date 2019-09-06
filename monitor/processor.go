@@ -3,13 +3,44 @@ package monitor
 import (
 	"log"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe"
 )
 
 func (m *EthMonitor) processQueue() {
-	pusher := m.getPusher()
-	if !pusher.ValidatorAddr.Equals(m.transactor.Key.GetAddress()) {
+	m.processEventQueue()
+	m.processIntendSettleQueue()
+}
+
+func (m *EthMonitor) processEventQueue() {
+	latestBlock, err := m.getLatestBlock()
+	if err != nil {
+		log.Printf("Query latestBlock err", err)
+		return
+	}
+
+	for m.eventQueue.Len() > 0 {
+		e := m.eventQueue.Front().(Event)
+		if latestBlock.Number < e.log.BlockNumber+common.ConfirmationCount {
+			return
+		}
+
+		switch event := e.event.(type) {
+		case *mainchain.GuardDelegate:
+			m.handleDelegate(event)
+		case *mainchain.GuardValidatorChange:
+			m.handleValidatorChange(event)
+		case *mainchain.GuardIntendWithdraw:
+			m.handleIntendWithdraw(event)
+		case *mainchain.CelerLedgerIntendSettle:
+			m.handleIntendSettle(event)
+		}
+	}
+}
+
+func (m *EthMonitor) processIntendSettleQueue() {
+	if !m.isPusher() {
 		return
 	}
 
@@ -21,7 +52,7 @@ func (m *EthMonitor) processQueue() {
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Printf("Process intend settle", intendSettle.ChannelId)
 	channelId := intendSettle.ChannelId[:]
-	request, err := subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, channelId)
+	request, err := m.getRequest(channelId)
 	if err != nil {
 		log.Printf("Query request err", err)
 		return

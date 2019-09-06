@@ -14,19 +14,21 @@ const (
 )
 
 var (
-	NewMsgSyncValidator = types.NewMsgSyncValidator
-	ModuleCdc           = types.ModuleCdc
-	RegisterCodec       = types.RegisterCodec
-	PullerKey           = types.PullerKey
-	PusherKey           = types.PusherKey
-	NewPuller           = types.NewPuller
-	NewPusher           = types.NewPusher
-	CLIQueryPuller      = cli.QueryPuller
-	CLIQueryPusher      = cli.QueryPusher
+	NewMsgClaimValidator = types.NewMsgClaimValidator
+	NewMsgSyncValidator  = types.NewMsgSyncValidator
+	ModuleCdc            = types.ModuleCdc
+	RegisterCodec        = types.RegisterCodec
+	PullerKey            = types.PullerKey
+	PusherKey            = types.PusherKey
+	NewPuller            = types.NewPuller
+	NewPusher            = types.NewPusher
+	CLIQueryPuller       = cli.QueryPuller
+	CLIQueryPusher       = cli.QueryPusher
 )
 
 type (
-	Puller           = types.Puller
-	Pusher           = types.Pusher
-	MsgSyncValidator = types.MsgSyncValidator
+	Puller            = types.Puller
+	Pusher            = types.Pusher
+	MsgClaimValidator = types.MsgClaimValidator
+	MsgSyncValidator  = types.MsgSyncValidator
 )
