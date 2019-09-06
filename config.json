@@ -1,7 +1,7 @@
 {
   "eth": {
     "ws": "wss://ropsten.infura.io/ws",
-    "guardAddress": "0x8151caefe449eaeffa9c464085e792449d0afc7f",
+    "guardAddress": "0xcda7e726f7761c75715eca0a4713b53ab0b66fd4",
     "ledgerAddress": "0x1baed8e1166410c1494a107f091cfebb50d491e3",
     "keystore": "./keys/client.json",
     "passphrase": ""

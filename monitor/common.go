@@ -3,6 +3,7 @@ package monitor
 import (
 	"log"
 
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 )
@@ -29,4 +30,8 @@ func (m *EthMonitor) isPusher() bool {
 
 func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
 	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, channelId)
+}
+
+func (m *EthMonitor) getLatestBlock() (global.Block, error) {
+	return global.CLIQueryLatestBlock(m.cdc, m.transactor.CliCtx, global.StoreKey)
 }

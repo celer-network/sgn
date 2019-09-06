@@ -32,16 +32,25 @@ func GetCmdLatestBlock(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
-			res, _, err := cliCtx.Query(route)
+			block, err := QueryLatestBlock(cdc, cliCtx, queryRoute)
 			if err != nil {
-				fmt.Printf("query error", err)
-				return nil
+				return err
 			}
 
-			var out types.Block
-			cdc.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintOutput(out)
+			return cliCtx.PrintOutput(block)
 		},
 	}
+}
+
+// Query latest block
+func QueryLatestBlock(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (block types.Block, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
+	res, _, err := cliCtx.Query(route)
+	if err != nil {
+		fmt.Printf("query error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(res, &block)
+	return
 }

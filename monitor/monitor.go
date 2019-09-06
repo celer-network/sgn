@@ -17,6 +17,7 @@ type EthMonitor struct {
 	transactor        *utils.Transactor
 	cdc               *codec.Codec
 	intendSettleQueue deque.Deque
+	eventQueue        deque.Deque
 	pubkey            string
 	isValidator       bool
 }
@@ -71,7 +72,7 @@ func (m *EthMonitor) monitorDelegate() {
 		case err := <-sub.Err():
 			log.Printf("WatchDelegate err", err)
 		case delegate := <-delegateChan:
-			m.handleDelegate(delegate)
+			m.eventQueue.PushBack(NewEvent(delegate, delegate.Raw))
 		}
 	}
 }
@@ -90,7 +91,7 @@ func (m *EthMonitor) monitorValidatorChange() {
 		case err := <-sub.Err():
 			log.Printf("WatchValidatorChange err", err)
 		case validatorChange := <-validatorChangeChan:
-			m.handleValidatorChange(validatorChange)
+			m.eventQueue.PushBack(NewEvent(validatorChange, validatorChange.Raw))
 		}
 	}
 }
@@ -109,7 +110,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 		case err := <-sub.Err():
 			log.Printf("WatchIntendWithdraw err", err)
 		case intendWithdraw := <-intendWithdrawChan:
-			m.handleIntendWithdraw(intendWithdraw)
+			m.eventQueue.PushBack(NewEvent(intendWithdraw, intendWithdraw.Raw))
 		}
 	}
 }
@@ -128,7 +129,7 @@ func (m *EthMonitor) monitorIntendSettle() {
 		case err := <-sub.Err():
 			log.Printf("WatchIntendSettle err", err)
 		case intendSettle := <-intendSettleChan:
-			m.handleIntendSettle(intendSettle)
+			m.eventQueue.PushBack(NewEvent(intendSettle, intendSettle.Raw))
 		}
 	}
 }
