@@ -8,7 +8,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/utils"
-	"github.com/celer-network/sgn/x/bridge"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -54,7 +53,6 @@ var (
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
-		bridge.AppModule{},
 		global.AppModule{},
 		subscribe.AppModule{},
 		validator.AppModuleBasic{},
@@ -108,7 +106,6 @@ type sgnApp struct {
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
-	bridgeKeeper    bridge.Keeper
 	subscribeKeeper subscribe.Keeper
 	validatorKeeper validator.Keeper
 
@@ -156,7 +153,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
-		keyBridge:    sdk.NewKVStoreKey(bridge.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
@@ -237,11 +233,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		ethClient,
 	)
 
-	app.bridgeKeeper = bridge.NewKeeper(
-		app.keyBridge,
-		app.cdc,
-	)
-
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyValidator,
 		app.cdc,
@@ -268,7 +259,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
-		bridge.NewAppModule(app.bridgeKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
@@ -286,7 +276,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		slashing.ModuleName,
 		genutil.ModuleName,
 		global.ModuleName,
-		bridge.ModuleName,
 		subscribe.ModuleName,
 		validator.ModuleName,
 	)
