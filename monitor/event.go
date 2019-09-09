@@ -1,6 +1,8 @@
 package monitor
 
 import (
+	"log"
+
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -9,9 +11,11 @@ type Event struct {
 	log   types.Log
 }
 
-func NewEvent(event interface{}, log types.Log) Event {
+func NewEvent(event interface{}, l types.Log) Event {
+	log.Printf("New event", event)
+
 	return Event{
 		event: event,
-		log:   log,
+		log:   l,
 	}
 }

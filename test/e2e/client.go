@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/celer-network/sgn/chain"
 
@@ -63,12 +64,7 @@ func setupTransactor() {
 
 func sendSubscribeTx() {
 	msg := subscribe.NewMsgSubscribe(ethClient.Address.String(), transactor.Key.GetAddress())
-	res, err := transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println(res)
+	transactor.BroadcastTx(msg)
 }
 
 func sendRequestGuardTx() {
@@ -87,18 +83,20 @@ func sendRequestGuardTx() {
 		log.Fatal(err)
 	}
 
+	sig, err := mainchain.SignMessage(ethClient.PrivateKey, simplexPaymentChannelBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	signedSimplexStateBytes, err := proto.Marshal(&chain.SignedSimplexState{
 		SimplexState: simplexPaymentChannelBytes,
+		Sigs:         [][]byte{sig, sig},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	msg := subscribe.NewMsgRequestGuard(ethClient.Address.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
-	res, err := transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println(res)
+	transactor.BroadcastTx(msg)
+	time.Sleep(2 * time.Second)
 }

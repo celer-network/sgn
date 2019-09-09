@@ -18,11 +18,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	}
 
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
-	_, err := m.transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Printf("SyncBlock err", err)
-		return
-	}
+	m.transactor.BroadcastTx(msg)
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
@@ -51,7 +47,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 }
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
-	log.Printf("New validator update", validatorChange.EthAddr)
+	log.Printf("New validator change", validatorChange.EthAddr, validatorChange.ChangeType)
 	doSync := m.isPuller()
 
 	if validatorChange.EthAddr.String() == m.ethClient.Address.String() {
@@ -100,19 +96,14 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 }
 
 func (m *EthMonitor) claimValidator() {
+	log.Printf("ClaimValidator")
 	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, m.transactor.Key.GetAddress())
-	_, err := m.transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Printf("ClaimValidator err", err)
-		return
-	}
+	m.transactor.BroadcastTx(msg)
+
 }
 
 func (m *EthMonitor) syncValidator(address ethcommon.Address) {
+	log.Printf("SyncValidator", address.String())
 	msg := validator.NewMsgSyncValidator(address.String(), m.transactor.Key.GetAddress())
-	_, err := m.transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Printf("SyncValidator err", err)
-		return
-	}
+	m.transactor.BroadcastTx(msg)
 }

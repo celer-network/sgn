@@ -93,7 +93,6 @@ type sgnApp struct {
 	keyParams    *sdk.KVStoreKey
 	keySlashing  *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
-	keyBridge    *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
 
@@ -308,7 +307,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keySlashing,
 		app.keyParams,
 		app.keyGlobal,
-		app.keyBridge,
 		app.keySubscribe,
 		app.keyValidator,
 	)

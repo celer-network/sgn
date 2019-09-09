@@ -1,6 +1,7 @@
 package mainchain
 
 import (
+	"crypto/ecdsa"
 	"io/ioutil"
 	"strings"
 
@@ -12,11 +13,12 @@ import (
 )
 
 type EthClient struct {
-	Address ethcommon.Address
-	Client  *ethclient.Client
-	Guard   *Guard
-	Ledger  *CelerLedger
-	Auth    *bind.TransactOpts
+	PrivateKey *ecdsa.PrivateKey
+	Address    ethcommon.Address
+	Client     *ethclient.Client
+	Guard      *Guard
+	Ledger     *CelerLedger
+	Auth       *bind.TransactOpts
 }
 
 // Get a new eth client
@@ -64,6 +66,7 @@ func (ethClient *EthClient) setupAuth(ks, passphrase string) error {
 		return err
 	}
 
+	ethClient.PrivateKey = key.PrivateKey
 	ethClient.Address = key.Address
 	ethClient.Auth = auth
 	return nil
