@@ -6,6 +6,9 @@ import (
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (m *EthMonitor) isPuller() bool {
@@ -34,4 +37,10 @@ func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
 
 func (m *EthMonitor) getLatestBlock() (global.Block, error) {
 	return global.CLIQueryLatestBlock(m.cdc, m.transactor.CliCtx, global.StoreKey)
+}
+
+// Get account info
+func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
+	accGetter := types.NewAccountRetriever(m.transactor.CliCtx)
+	return accGetter.GetAccount(addr)
 }

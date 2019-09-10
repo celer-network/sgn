@@ -7,6 +7,49 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
+// MsgInitializeCandidate defines a SetEthAddress message
+type MsgInitializeCandidate struct {
+	EthAddress string         `json:"ethAddress"`
+	Sender     sdk.AccAddress `json:"sender"`
+}
+
+// NewMsgInitializeCandidate is a constructor function for MsgInitializeCandidate
+func NewMsgInitializeCandidate(ethAddress string, sender sdk.AccAddress) MsgInitializeCandidate {
+	return MsgInitializeCandidate{
+		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		Sender:     sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgInitializeCandidate) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgInitializeCandidate) Type() string { return "initialize_candidate" }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgInitializeCandidate) ValidateBasic() sdk.Error {
+	if msg.EthAddress == "" {
+		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgInitializeCandidate) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgInitializeCandidate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
 // MsgClaimValidator defines a SetEthAddress message
 type MsgClaimValidator struct {
 	EthAddress string         `json:"ethAddress"`

@@ -237,6 +237,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.cdc,
 		ethClient,
 		app.globalKeeper,
+		app.accountKeeper,
 		app.stakingKeeper,
 	)
 
