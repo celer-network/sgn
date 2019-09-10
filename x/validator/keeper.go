@@ -5,6 +5,7 @@ import (
 	"github.com/celer-network/sgn/x/global"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
@@ -13,18 +14,21 @@ type Keeper struct {
 	storeKey      sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc           *codec.Codec // The wire codec for binary encoding/decoding.
 	ethClient     *mainchain.EthClient
-	stakingKeeper staking.Keeper
 	globalKeeper  global.Keeper
+	accountKeeper auth.AccountKeeper
+	stakingKeeper staking.Keeper
 }
 
 // NewKeeper creates new instances of the validator Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient, globalKeeper global.Keeper, stakingKeeper staking.Keeper) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
+	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		ethClient:     ethClient,
-		stakingKeeper: stakingKeeper,
 		globalKeeper:  globalKeeper,
+		accountKeeper: accountKeeper,
+		stakingKeeper: stakingKeeper,
 	}
 }
 

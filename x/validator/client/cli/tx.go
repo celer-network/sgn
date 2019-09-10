@@ -21,11 +21,32 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	validatorTxCmd.AddCommand(client.PostCommands(
+		GetCmdInitializeCandidate(cdc),
 		GetCmdClaimValidator(cdc),
 		GetCmdSyncValidator(cdc),
 	)...)
 
 	return validatorTxCmd
+}
+
+// GetCmdInitializeCandidate is the CLI command for sending a InitializeCandidate transaction
+func GetCmdInitializeCandidate(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "initialize-candidate [eth-addr]",
+		Short: "initialize candidate for the eth address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			msg := types.NewMsgInitializeCandidate(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 }
 
 // GetCmdClaimValidator is the CLI command for sending a SyncValidator transaction

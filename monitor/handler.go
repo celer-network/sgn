@@ -21,6 +21,11 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	m.transactor.BroadcastTx(msg)
 }
 
+func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
+	log.Printf("New InitializeCandidate", initializeCandidate.Candidate)
+	m.pullerQueue.PushBack(initializeCandidate)
+}
+
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	log.Printf("New delegate", delegate.Candidate)
 	if m.isValidator {
@@ -92,7 +97,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		return
 	}
 
-	m.intendSettleQueue.PushBack(intendSettle)
+	m.pusherQueue.PushBack(intendSettle)
 }
 
 func (m *EthMonitor) claimValidator() {

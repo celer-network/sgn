@@ -14,13 +14,14 @@ import (
 )
 
 type EthMonitor struct {
-	ethClient         *mainchain.EthClient
-	transactor        *utils.Transactor
-	cdc               *codec.Codec
-	intendSettleQueue deque.Deque
-	eventQueue        deque.Deque
-	pubkey            string
-	isValidator       bool
+	ethClient   *mainchain.EthClient
+	transactor  *utils.Transactor
+	cdc         *codec.Codec
+	pusherQueue deque.Deque
+	pullerQueue deque.Deque
+	eventQueue  deque.Deque
+	pubkey      string
+	isValidator bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor, cdc *codec.Codec, pubkey string) {
@@ -38,8 +39,8 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 		isValidator: candiateInfo.IsVldt,
 	}
 
-	// TODO: initiate isValidator value
 	go m.monitorBlockHead()
+	go m.monitorInitializeCandidate()
 	go m.monitorDelegate()
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
@@ -62,6 +63,25 @@ func (m *EthMonitor) monitorBlockHead() {
 		case header := <-headerChan:
 			m.handleNewBlock(header)
 			go m.processQueue()
+		}
+	}
+}
+
+func (m *EthMonitor) monitorInitializeCandidate() {
+	initializeCandiateChan := make(chan *mainchain.GuardInitializeCandidate)
+	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandiateChan, nil, nil)
+	if err != nil {
+		log.Printf("WatchInitializeCandidate err", err)
+		return
+	}
+	defer sub.Unsubscribe()
+
+	for {
+		select {
+		case err := <-sub.Err():
+			log.Printf("WatchInitializeCandidate err", err)
+		case initializeCandiate := <-initializeCandiateChan:
+			m.eventQueue.PushBack(NewEvent(initializeCandiate, initializeCandiate.Raw))
 		}
 	}
 }

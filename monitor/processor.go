@@ -6,11 +6,14 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/validator"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func (m *EthMonitor) processQueue() {
 	m.processEventQueue()
-	m.processIntendSettleQueue()
+	m.processPullerQueue()
+	m.processPusherQueue()
 }
 
 func (m *EthMonitor) processEventQueue() {
@@ -27,6 +30,8 @@ func (m *EthMonitor) processEventQueue() {
 		}
 
 		switch event := e.event.(type) {
+		case *mainchain.GuardInitializeCandidate:
+			m.handleInitializeCandidate(event)
 		case *mainchain.GuardDelegate:
 			m.handleDelegate(event)
 		case *mainchain.GuardValidatorChange:
@@ -41,18 +46,53 @@ func (m *EthMonitor) processEventQueue() {
 	}
 }
 
-func (m *EthMonitor) processIntendSettleQueue() {
+func (m *EthMonitor) processPullerQueue() {
+	if !m.isPuller() {
+		return
+	}
+
+	for m.pullerQueue.Len() != 0 {
+		switch event := m.pullerQueue.PopFront().(type) {
+		case *mainchain.GuardInitializeCandidate:
+			m.processInitializeCandidate(event)
+		}
+	}
+}
+
+func (m *EthMonitor) processPusherQueue() {
 	if !m.isPusher() {
 		return
 	}
 
-	for m.intendSettleQueue.Len() != 0 {
-		m.processIntendSettle(m.intendSettleQueue.PopFront().(*mainchain.CelerLedgerIntendSettle))
+	for m.pusherQueue.Len() != 0 {
+		switch event := m.pusherQueue.PopFront().(type) {
+		case *mainchain.CelerLedgerIntendSettle:
+			m.processIntendSettle(event)
+		}
 	}
 }
 
+func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
+	log.Printf("Process InitializeCandidate", initializeCandidate.Candidate)
+
+	candidateInfo, err := m.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, initializeCandidate.Candidate)
+	if err != nil {
+		log.Printf("Query candidate info err", err)
+		return
+	}
+
+	_, err = m.getAccount(candidateInfo.SidechainAddr)
+	if err == nil {
+		log.Printf("Skip initilization for existing account")
+		return
+	}
+
+	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
+	m.transactor.BroadcastTx(msg)
+}
+
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	log.Printf("Process intend settle", intendSettle.ChannelId)
+	log.Printf("Process IntendSettle", intendSettle.ChannelId)
 	channelId := intendSettle.ChannelId[:]
 	request, err := m.getRequest(channelId)
 	if err != nil {

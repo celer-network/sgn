@@ -14,6 +14,8 @@ import (
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
+		case MsgInitializeCandidate:
+			return handleMsgInitializeCandidate(ctx, keeper, msg)
 		case MsgClaimValidator:
 			return handleMsgClaimValidator(ctx, keeper, msg)
 		case MsgSyncValidator:
@@ -23,6 +25,20 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
+}
+
+// Handle a message to initialize candidate
+func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
+	cp, err := keeper.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{
+		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+	}, ethcommon.HexToAddress(msg.EthAddress))
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
+	}
+
+	accAddress := sdk.AccAddress(cp.SidechainAddr)
+	keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
+	return sdk.Result{}
 }
 
 // Handle a message to claim validator
