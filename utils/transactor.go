@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"log"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -10,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gammazero/deque"
 )
 
 type Transactor struct {
@@ -17,6 +21,7 @@ type Transactor struct {
 	CliCtx     context.CLIContext
 	Key        keys.Info
 	Passphrase string
+	txQueue    deque.Deque
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *codec.Codec) (*Transactor, error) {
@@ -44,24 +49,52 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 		WithTrustNode(true).
 		WithBroadcastMode(flags.BroadcastSync)
 
-	return &Transactor{
+	transactor := &Transactor{
 		TxBuilder:  txBldr,
 		CliCtx:     cliCtx,
 		Key:        key,
 		Passphrase: passphrase,
-	}, nil
+	}
+
+	go transactor.start()
+	return transactor, nil
 }
 
-func (t *Transactor) BroadcastTx(msg sdk.Msg) (sdk.TxResponse, error) {
-	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
-	if err != nil {
-		return sdk.TxResponse{}, err
-	}
+func (t *Transactor) BroadcastTx(msg sdk.Msg) {
+	t.txQueue.PushBack(msg)
+}
 
-	txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, []sdk.Msg{msg})
-	if err != nil {
-		return sdk.TxResponse{}, err
-	}
+func (t *Transactor) start() {
+	for {
+		if t.txQueue.Len() == 0 {
+			time.Sleep(time.Second)
+			continue
+		}
 
-	return t.CliCtx.BroadcastTx(txBytes)
+		var msgs []sdk.Msg
+		for t.txQueue.Len() != 0 {
+			msg := t.txQueue.PopFront().(sdk.Msg)
+			msgs = append(msgs, msg)
+		}
+
+		txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+		if err != nil {
+			log.Printf("Transactor PrepareTxBuilder err", err)
+			continue
+		}
+
+		txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
+		if err != nil {
+			log.Printf("Transactor BuildAndSign err", err)
+			continue
+		}
+
+		tx, err := t.CliCtx.BroadcastTx(txBytes)
+		if err != nil {
+			log.Printf("Transactor BroadcastTx err", err)
+			continue
+		}
+
+		log.Printf("Transactor tx", tx)
+	}
 }

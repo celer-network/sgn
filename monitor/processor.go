@@ -36,6 +36,8 @@ func (m *EthMonitor) processEventQueue() {
 		case *mainchain.CelerLedgerIntendSettle:
 			m.handleIntendSettle(event)
 		}
+
+		m.eventQueue.PopFront()
 	}
 }
 
@@ -71,9 +73,5 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	log.Printf("IntendSettle tx detail", tx)
 
 	msg := subscribe.NewMsgGuardProof(channelId, tx.Hash().Hex(), m.transactor.Key.GetAddress())
-	_, err = m.transactor.BroadcastTx(msg)
-	if err != nil {
-		log.Printf("GuardProof err", err)
-		return
-	}
+	m.transactor.BroadcastTx(msg)
 }

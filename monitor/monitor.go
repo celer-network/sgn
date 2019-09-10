@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/deque"
@@ -23,11 +24,18 @@ type EthMonitor struct {
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor, cdc *codec.Codec, pubkey string) {
+	candiateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
+	if err != nil {
+		log.Fatalf("GetCandidateInfo err", err)
+		return
+	}
+
 	m := EthMonitor{
-		ethClient:  ethClient,
-		transactor: transactor,
-		cdc:        cdc,
-		pubkey:     pubkey,
+		ethClient:   ethClient,
+		transactor:  transactor,
+		cdc:         cdc,
+		pubkey:      pubkey,
+		isValidator: candiateInfo.IsVldt,
 	}
 
 	// TODO: initiate isValidator value
