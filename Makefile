@@ -16,3 +16,11 @@ lint:
 
 test-client:
 	go run ./test/e2e/client.go
+
+copy-test-data:
+	cp -r test/data/.sgn ~/.sgn
+	cp -r test/data/.sgncli ~/.sgncli
+
+copy-test-config:
+	cp test/data/.sgn/config/genesis.json ~/.sgn/config/genesis.json
+	cp test/data/.sgncli/config/config.toml ~/.sgncli/config/config.toml

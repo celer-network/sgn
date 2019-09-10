@@ -1,0 +1,160 @@
+{
+  "genesis_time": "2019-08-21T21:14:18.988548Z",
+  "chain_id": "sgnchain",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    }
+  },
+  "app_hash": "",
+  "app_state": {
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000"
+      }
+    },
+    "genutil": {
+      "gentxs": [
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "validator0",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+                  "validator_address": "cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
+                  "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
+                  "value": {
+                    "denom": "stake",
+                    "amount": "100000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
+                },
+                "signature": "Kku2zUUkSfWs4uteMc8t5tupn/2bi4Imeygo4NU9rKJXexJlpGdEmnwE2WsfjpIMcYyiwXIUVtP6a5ISKUeu1w=="
+              }
+            ],
+            "memo": "77e6d0985e416d64bf70df290b89c63f578c2a83@192.168.0.192:26656"
+          }
+        }
+      ]
+    },
+    "staking": {
+      "params": {
+        "unbonding_time": "1814400000000000",
+        "max_validators": 100,
+        "max_entries": 7,
+        "bond_denom": "stake"
+      },
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": null,
+      "delegations": null,
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
+    },
+    "params": null,
+    "slashing": {
+      "params": {
+        "max_evidence_age": "120000000000",
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600000000000",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      },
+      "signing_infos": {},
+      "missed_blocks": {}
+    },
+    "supply": {
+      "supply": []
+    },
+    "accounts": [
+      {
+        "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+        "coins": [
+          {
+            "denom": "nametoken",
+            "amount": "1000"
+          },
+          {
+            "denom": "stake",
+            "amount": "100000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      }
+    ],
+    "guardianmanager": {},
+    "bank": {
+      "send_enabled": true
+    },
+    "bridge": {},
+    "distribution": {
+      "fee_pool": {
+        "community_pool": []
+      },
+      "community_tax": "0.020000000000000000",
+      "base_proposer_reward": "0.010000000000000000",
+      "bonus_proposer_reward": "0.040000000000000000",
+      "withdraw_addr_enabled": true,
+      "delegator_withdraw_infos": [],
+      "previous_proposer": "",
+      "outstanding_rewards": [],
+      "validator_accumulated_commissions": [],
+      "validator_historical_rewards": [],
+      "validator_current_rewards": [],
+      "delegator_starting_infos": [],
+      "validator_slash_events": []
+    },
+    "subscribe": {}
+  }
+}
