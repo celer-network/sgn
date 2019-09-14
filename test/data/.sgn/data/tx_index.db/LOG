@@ -1,6 +1,0 @@
-=============== Sep 3, 2019 (PDT) ===============
-10:44:33.163886 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-10:44:33.164494 db@open opening
-10:44:33.166403 version@stat F·[] S·0B[] Sc·[]
-10:44:33.166697 db@janitor F·2 G·0
-10:44:33.166718 db@open done T·2.20962ms
