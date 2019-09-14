@@ -77,6 +77,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 			Moniker: msg.EthAddress,
 		}
 		validator = staking.NewValidator(valAddress, pk, description)
+		validator.Status = sdk.Bonded
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
