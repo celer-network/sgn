@@ -37,7 +37,8 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	}
 
 	accAddress := sdk.AccAddress(cp.SidechainAddr)
-	keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
+	account := keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
+	keeper.accountKeeper.SetAccount(ctx, account)
 	return sdk.Result{}
 }
 
@@ -76,6 +77,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 			Moniker: msg.EthAddress,
 		}
 		validator = staking.NewValidator(valAddress, pk, description)
+		validator.Status = sdk.Bonded
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 

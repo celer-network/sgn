@@ -21,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/spf13/viper"
@@ -48,9 +47,7 @@ var (
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
-		distr.AppModuleBasic{},
 		params.AppModuleBasic{},
-		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
 		global.AppModule{},
@@ -60,7 +57,6 @@ var (
 	// account permissions
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
-		distr.ModuleName:          nil,
 		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
 	}
@@ -89,9 +85,7 @@ type sgnApp struct {
 	keyAccount   *sdk.KVStoreKey
 	keySupply    *sdk.KVStoreKey
 	keyStaking   *sdk.KVStoreKey
-	keyDistr     *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
-	keySlashing  *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
@@ -100,8 +94,6 @@ type sgnApp struct {
 	accountKeeper   auth.AccountKeeper
 	bankKeeper      bank.Keeper
 	stakingKeeper   staking.Keeper
-	slashingKeeper  slashing.Keeper
-	distrKeeper     distr.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
@@ -147,10 +139,8 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keySupply:    sdk.NewKVStoreKey(supply.StoreKey),
 		keyStaking:   sdk.NewKVStoreKey(staking.StoreKey),
 		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
-		keyDistr:     sdk.NewKVStoreKey(distr.StoreKey),
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
-		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
@@ -162,8 +152,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
-	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
-	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -199,31 +187,10 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		staking.DefaultCodespace,
 	)
 
-	app.distrKeeper = distr.NewKeeper(
-		app.cdc,
-		app.keyDistr,
-		distrSubspace,
-		&stakingKeeper,
-		app.supplyKeeper,
-		distr.DefaultCodespace,
-		auth.FeeCollectorName,
-		app.ModuleAccountAddrs(),
-	)
-
-	app.slashingKeeper = slashing.NewKeeper(
-		app.cdc,
-		app.keySlashing,
-		&stakingKeeper,
-		slashingSubspace,
-		slashing.DefaultCodespace,
-	)
-
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.stakingKeeper = *stakingKeeper.SetHooks(
-		staking.NewMultiStakingHooks(
-			app.distrKeeper.Hooks(),
-			app.slashingKeeper.Hooks()),
+		staking.NewMultiStakingHooks(),
 	)
 
 	app.globalKeeper = global.NewKeeper(
@@ -255,25 +222,21 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
-		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
+		staking.NewAppModule(app.stakingKeeper, distr.Keeper{}, app.accountKeeper, app.supplyKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
+	app.mm.SetOrderBeginBlockers()
 	app.mm.SetOrderEndBlockers(staking.ModuleName, validator.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
 		genaccounts.ModuleName,
-		distr.ModuleName,
 		staking.ModuleName,
 		auth.ModuleName,
 		bank.ModuleName,
-		slashing.ModuleName,
 		genutil.ModuleName,
 		global.ModuleName,
 		subscribe.ModuleName,
@@ -304,8 +267,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyAccount,
 		app.keySupply,
 		app.keyStaking,
-		app.keyDistr,
-		app.keySlashing,
 		app.keyParams,
 		app.keyGlobal,
 		app.keySubscribe,
