@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2019-09-13T23:10:22.304474Z",
+  "genesis_time": "2019-09-14T01:50:07.125213Z",
   "chain_id": "sgnchain",
   "consensus_params": {
     "block": {
@@ -18,48 +18,19 @@
   },
   "app_hash": "",
   "app_state": {
-    "accounts": [
-      {
-        "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
-        "coins": [
-          {
-            "denom": "nametoken",
-            "amount": "1000"
-          },
-          {
-            "denom": "stake",
-            "amount": "100000000"
-          }
-        ],
-        "sequence_number": "0",
-        "account_number": "0",
-        "original_vesting": [],
-        "delegated_free": [],
-        "delegated_vesting": [],
-        "start_time": "0",
-        "end_time": "0",
-        "module_name": "",
-        "module_permissions": [
-          ""
-        ]
-      }
-    ],
-    "auth": {
-      "params": {
-        "max_memo_characters": "256",
-        "tx_sig_limit": "7",
-        "tx_size_cost_per_byte": "10",
-        "sig_verify_cost_ed25519": "590",
-        "sig_verify_cost_secp256k1": "1000"
-      }
-    },
-    "bank": {
-      "send_enabled": true
-    },
-    "global": {},
-    "validator": {},
-    "params": null,
     "subscribe": {},
+    "slashing": {
+      "params": {
+        "max_evidence_age": "120000000000",
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600000000000",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      },
+      "signing_infos": {},
+      "missed_blocks": {}
+    },
     "genutil": {
       "gentxs": [
         {
@@ -83,7 +54,7 @@
                   "min_self_delegation": "1",
                   "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
                   "validator_address": "cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
-                  "pubkey": "cosmosvalconspub1zcjduepq6rgjg768leh0lq3s097cuzw23xtufsm4upyhdth6x44all3c0w8qs85jhr",
+                  "pubkey": "cosmosvalconspub1zcjduepqskkech94yjsc7hv88vkf3lurfl05tt70laqnlyrpf32nxvg8kdhshqt6qg",
                   "value": {
                     "denom": "stake",
                     "amount": "100000000"
@@ -101,45 +72,53 @@
                   "type": "tendermint/PubKeySecp256k1",
                   "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
                 },
-                "signature": "YJEfjkHXzsT7zeJplHB9Q9sFxzAmD2B2IAsIYeD6Vfs6q7qxLH81yKDSgMrIm0CHjYhy5qV98R+CuZLNaFQzsQ=="
+                "signature": "ZuKFlalCxQT12g8DOpjzAM6aIfUxijUVYQOV2nvtoeM08YFEnX5VRgEJy9BdmvFL76OQh1376B7cJqryTl7t0g=="
               }
             ],
-            "memo": "57fe74d50374f9015cde32237c2ea01032d7d793@192.168.1.58:26656"
+            "memo": "c5d471312c011d186eb10dc9f9fcdccb8094f21a@192.168.1.58:26656"
           }
         }
       ]
     },
-    "slashing": {
-      "params": {
-        "max_evidence_age": "120000000000",
-        "signed_blocks_window": "100",
-        "min_signed_per_window": "0.500000000000000000",
-        "downtime_jail_duration": "600000000000",
-        "slash_fraction_double_sign": "0.050000000000000000",
-        "slash_fraction_downtime": "0.010000000000000000"
-      },
-      "signing_infos": {},
-      "missed_blocks": {}
+    "params": null,
+    "accounts": [
+      {
+        "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+        "coins": [
+          {
+            "denom": "stake",
+            "amount": "100000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      }
+    ],
+    "bank": {
+      "send_enabled": true
     },
+    "global": {},
     "supply": {
       "supply": []
     },
-    "distribution": {
-      "fee_pool": {
-        "community_pool": []
-      },
-      "community_tax": "0.020000000000000000",
-      "base_proposer_reward": "0.010000000000000000",
-      "bonus_proposer_reward": "0.040000000000000000",
-      "withdraw_addr_enabled": true,
-      "delegator_withdraw_infos": [],
-      "previous_proposer": "",
-      "outstanding_rewards": [],
-      "validator_accumulated_commissions": [],
-      "validator_historical_rewards": [],
-      "validator_current_rewards": [],
-      "delegator_starting_infos": [],
-      "validator_slash_events": []
+    "validator": {},
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000"
+      }
     },
     "staking": {
       "params": {
