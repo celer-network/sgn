@@ -21,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/spf13/viper"
@@ -49,7 +48,6 @@ var (
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
 		global.AppModule{},
@@ -88,7 +86,6 @@ type sgnApp struct {
 	keySupply    *sdk.KVStoreKey
 	keyStaking   *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
-	keySlashing  *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
@@ -97,7 +94,6 @@ type sgnApp struct {
 	accountKeeper   auth.AccountKeeper
 	bankKeeper      bank.Keeper
 	stakingKeeper   staking.Keeper
-	slashingKeeper  slashing.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
@@ -145,7 +141,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
-		keySlashing:  sdk.NewKVStoreKey(slashing.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
@@ -157,7 +152,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
-	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -193,19 +187,10 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		staking.DefaultCodespace,
 	)
 
-	app.slashingKeeper = slashing.NewKeeper(
-		app.cdc,
-		app.keySlashing,
-		&stakingKeeper,
-		slashingSubspace,
-		slashing.DefaultCodespace,
-	)
-
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.stakingKeeper = *stakingKeeper.SetHooks(
-		staking.NewMultiStakingHooks(
-			app.slashingKeeper.Hooks()),
+		staking.NewMultiStakingHooks(),
 	)
 
 	app.globalKeeper = global.NewKeeper(
@@ -237,14 +222,13 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, distr.Keeper{}, app.accountKeeper, app.supplyKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers(slashing.ModuleName)
+	app.mm.SetOrderBeginBlockers()
 	app.mm.SetOrderEndBlockers(staking.ModuleName, validator.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
@@ -253,7 +237,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		staking.ModuleName,
 		auth.ModuleName,
 		bank.ModuleName,
-		slashing.ModuleName,
 		genutil.ModuleName,
 		global.ModuleName,
 		subscribe.ModuleName,
@@ -284,7 +267,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.keyAccount,
 		app.keySupply,
 		app.keyStaking,
-		app.keySlashing,
 		app.keyParams,
 		app.keyGlobal,
 		app.keySubscribe,
