@@ -11,6 +11,7 @@ const (
 	StoreKey          = types.StoreKey
 	QuerySubscription = types.QuerySubscription
 	QueryRequest      = types.QueryRequest
+	QueryParameters   = types.QueryParameters
 )
 
 var (

@@ -22,6 +22,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	subscribeQueryCmd.AddCommand(client.GetCommands(
 		GetCmdSubscription(storeKey, cdc),
 		GetCmdRequest(storeKey, cdc),
+		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return subscribeQueryCmd
 }
@@ -96,4 +97,26 @@ func QueryRequest(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string
 
 	cdc.MustUnmarshalJSON(res, &request)
 	return
+}
+
+// GetCmdQueryParams implements the params query command.
+func GetCmdQueryParams(storeName string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "Query the current subscribe parameters information",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", storeName, types.QueryParameters)
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			cdc.MustUnmarshalJSON(bz, &params)
+			return cliCtx.PrintOutput(params)
+		},
+	}
 }
