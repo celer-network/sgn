@@ -6,7 +6,8 @@ import (
 
 const (
 	QuerySubscription = "subscription"
-	QueryRequest     = "request"
+	QueryRequest      = "request"
+	QueryParameters   = "parameters"
 )
 
 type QuerySubscriptionParams struct {

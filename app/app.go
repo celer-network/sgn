@@ -152,6 +152,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
+	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -214,6 +215,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		ethClient,
 		app.globalKeeper,
 		app.validatorKeeper,
+		subscribeSubspace,
 	)
 
 	app.mm = module.NewManager(
