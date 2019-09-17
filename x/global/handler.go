@@ -35,7 +35,7 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Re
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query mainchain header: %s", err)).Result()
 	}
 
-	if math.Abs(float64(msg.BlockNumber-head.Number.Uint64())) > maxBlockInterval {
+	if math.Abs(float64(head.Number.Int64()-int64(msg.BlockNumber))) > maxBlockInterval {
 		return sdk.ErrInternal("Block number is out of bound").Result()
 	}
 
