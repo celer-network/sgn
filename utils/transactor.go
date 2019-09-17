@@ -16,6 +16,8 @@ import (
 	"github.com/gammazero/deque"
 )
 
+const maxTry = 5
+
 type Transactor struct {
 	TxBuilder  types.TxBuilder
 	CliCtx     context.CLIContext
@@ -96,5 +98,14 @@ func (t *Transactor) start() {
 		}
 
 		log.Printf("Transactor tx", tx)
+		for try := 0; try < maxTry; try++ {
+			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
+				log.Printf("No err")
+				break
+			}
+			log.Printf("err", err)
+			time.Sleep(time.Second)
+		}
+
 	}
 }
