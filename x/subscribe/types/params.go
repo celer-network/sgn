@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-// subscribe` params default values
+// subscribe params default values
 const (
 	// Default epoch length based on ethereum block number
 	DefaultEpochLength uint64 = 100
