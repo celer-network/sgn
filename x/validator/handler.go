@@ -81,7 +81,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
-	updateValidatorToken(ctx, keeper, validator, cp.TotalLockedStake)
+	updateValidatorToken(ctx, keeper, validator, cp.TotalStake)
 	return sdk.Result{}
 }
 
@@ -104,7 +104,7 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 		keeper.stakingKeeper.RemoveValidator(ctx, validator.OperatorAddress)
 	}
 
-	updateValidatorToken(ctx, keeper, validator, cp.TotalLockedStake)
+	updateValidatorToken(ctx, keeper, validator, cp.TotalStake)
 	return sdk.Result{}
 }
 

@@ -31,14 +31,14 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to subscribe
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
-	expiration, err := keeper.ethClient.Guard.SubscriptionExpiration(&bind.CallOpts{
+	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, ethcommon.HexToAddress(msg.EthAddress))
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query subscription expiration: %s", err)).Result()
+		return sdk.ErrInternal(fmt.Sprintf("Failed to query subscription desposit: %s", err)).Result()
 	}
 
-	keeper.Subscribe(ctx, msg.EthAddress, expiration.Uint64())
+	keeper.Subscribe(ctx, msg.EthAddress, sdk.NewIntFromBigInt(deposit))
 
 	return sdk.Result{}
 }
@@ -50,9 +50,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
 
-	latestBlk := keeper.globalKeeper.GetLatestBlock(ctx)
-	// TODO: add a safe margin to ensure consistent validation and that guardians have enough time to submit tx
-	if latestBlk.Number > subscription.Expiration {
+	if !subscription.Subscribing {
 		return sdk.ErrInternal("Subscription expired").Result()
 	}
 

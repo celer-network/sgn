@@ -52,8 +52,20 @@ func (k Keeper) SetSubscription(ctx sdk.Context, ethAddress string, subscription
 }
 
 // Sets the entire Subscription metadata for a ethAddress
-func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string, expiration uint64) {
-	k.SetSubscription(ctx, ethAddress, NewSubscription(expiration))
+func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string, deposit sdk.Int) {
+	subscription, found := k.GetSubscription(ctx, ethAddress)
+	if !found {
+		subscription = NewSubscription(deposit)
+	} else {
+		subscription.Deposit = deposit
+	}
+
+	if !subscription.Subscribing {
+		// TODO: charge proper fee
+		subscription.Subscribing = true
+	}
+
+	k.SetSubscription(ctx, ethAddress, subscription)
 }
 
 // Gets the entire Request metadata for a channelId
