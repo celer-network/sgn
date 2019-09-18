@@ -22,10 +22,14 @@ var (
 	RegisterCodec              = types.RegisterCodec
 	NewSubscription            = types.NewSubscription
 	NewRequest                 = types.NewRequest
+	NewEpoch                   = types.NewEpoch
 	NewQuerySubscriptionParams = types.NewQuerySubscriptionParams
 	NewQueryRequestParams      = types.NewQueryRequestParams
 	GetSubscriptionKey         = types.GetSubscriptionKey
 	GetRequestKey              = types.GetRequestKey
+	GetEpochKey                = types.GetEpochKey
+	GetLatestEpochKey          = types.GetLatestEpochKey
+	SubscriptionKey            = types.SubscriptionKey
 	CLIQueryRequest            = cli.QueryRequest
 )
 
@@ -35,6 +39,7 @@ type (
 	MsgGuardProof           = types.MsgGuardProof
 	Subscription            = types.Subscription
 	Request                 = types.Request
+	Epoch                   = types.Epoch
 	QuerySubscriptionParams = types.QuerySubscriptionParams
 	QueryRequestParams      = types.QueryRequestParams
 )

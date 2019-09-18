@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
@@ -14,7 +15,7 @@ const (
 	DefaultEpochLength uint64 = 100
 
 	// Default cost per epoch, 1 CELR token per epoch
-	DefaultCostPerEpoch uint64 = 1000000000000000000
+	DefaultCostPerEpoch int64 = 1000000000000000000
 )
 
 // nolint - Keys for parameter access
@@ -27,12 +28,12 @@ var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for subscribe
 type Params struct {
-	EpochLength  uint64 `json:"max_validators" yaml:"max_validators"` // epoch length based on ethereum block number
-	CostPerEpoch uint64 `json:"cost_per_epoch" yaml:"cost_per_epoch"` // The fee will be charged for subscription per epoch
+	EpochLength  uint64  `json:"maxValidators" yaml:"maxValidators"` // epoch length based on ethereum block number
+	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"`   // The fee will be charged for subscription per epoch
 }
 
 // NewParams creates a new Params instance
-func NewParams(EpochLength, CostPerEpoch uint64) Params {
+func NewParams(EpochLength uint64, CostPerEpoch sdk.Int) Params {
 
 	return Params{
 		EpochLength:  EpochLength,
@@ -58,7 +59,7 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultEpochLength, DefaultCostPerEpoch)
+	return NewParams(DefaultEpochLength, sdk.NewInt(DefaultCostPerEpoch))
 }
 
 // String returns a human readable string representation of the parameters.

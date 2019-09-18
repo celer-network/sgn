@@ -46,26 +46,25 @@ func (k Keeper) GetSubscription(ctx sdk.Context, ethAddress string) (subscriptio
 }
 
 // Sets the entire Subscription metadata for a ethAddress
-func (k Keeper) SetSubscription(ctx sdk.Context, ethAddress string, subscription Subscription) {
+func (k Keeper) SetSubscription(ctx sdk.Context, subscription Subscription) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetSubscriptionKey(ethAddress), k.cdc.MustMarshalBinaryBare(subscription))
+	store.Set(GetSubscriptionKey(subscription.EthAddress), k.cdc.MustMarshalBinaryBare(subscription))
 }
 
-// Sets the entire Subscription metadata for a ethAddress
-func (k Keeper) Subscribe(ctx sdk.Context, ethAddress string, deposit sdk.Int) {
-	subscription, found := k.GetSubscription(ctx, ethAddress)
-	if !found {
-		subscription = NewSubscription(deposit)
-	} else {
-		subscription.Deposit = deposit
-	}
+// IterateSubscriptions iterates over the stored ValidatorSigningInfo
+func (k Keeper) IterateSubscriptions(ctx sdk.Context,
+	handler func(subscription Subscription) (stop bool)) {
 
-	if !subscription.Subscribing {
-		// TODO: charge proper fee
-		subscription.Subscribing = true
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, SubscriptionKey)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var subscription Subscription
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &subscription)
+		if handler(subscription) {
+			break
+		}
 	}
-
-	k.SetSubscription(ctx, ethAddress, subscription)
 }
 
 // Gets the entire Request metadata for a channelId
@@ -86,4 +85,45 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte) (Request, bool) {
 func (k Keeper) SetRequest(ctx sdk.Context, channelId []byte, request Request) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRequestKey(channelId), k.cdc.MustMarshalBinaryBare(request))
+}
+
+// Gets the entire Epoch metadata for a epochId
+func (k Keeper) GetEpoch(ctx sdk.Context, epochId sdk.Int) (epoch Epoch, found bool) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetEpochKey(epochId)) {
+		return epoch, false
+	}
+
+	value := store.Get(GetEpochKey(epochId))
+	k.cdc.MustUnmarshalBinaryBare(value, &epoch)
+	return epoch, true
+}
+
+// Sets the entire Epoch metadata for a epochId
+func (k Keeper) SetEpoch(ctx sdk.Context, epoch Epoch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetEpochKey(epoch.Id), k.cdc.MustMarshalBinaryBare(epoch))
+}
+
+// Gets the entire latest Epoch metadata
+func (k Keeper) GetLatestEpoch(ctx sdk.Context) (epoch Epoch) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetLatestEpochKey()) {
+		epoch = NewEpoch(sdk.NewInt(1), k.globalKeeper.GetLatestBlock(ctx).Number)
+		k.SetLatestEpoch(ctx, epoch)
+		return
+	}
+
+	value := store.Get(GetLatestEpochKey())
+	k.cdc.MustUnmarshalBinaryBare(value, &epoch)
+	return
+}
+
+// Sets the entire LatestEpoch metadata
+func (k Keeper) SetLatestEpoch(ctx sdk.Context, epoch Epoch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetLatestEpochKey(), k.cdc.MustMarshalBinaryBare(epoch))
+	k.SetEpoch(ctx, epoch)
 }

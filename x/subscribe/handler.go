@@ -38,8 +38,27 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query subscription desposit: %s", err)).Result()
 	}
 
-	keeper.Subscribe(ctx, msg.EthAddress, sdk.NewIntFromBigInt(deposit))
+	subscription, found := keeper.GetSubscription(ctx, msg.EthAddress)
+	if !found {
+		subscription = NewSubscription(msg.EthAddress)
+	}
+	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
 
+	if !subscription.Subscribing {
+		latestEpoch := keeper.GetLatestEpoch(ctx)
+		epochLength := keeper.EpochLength(ctx)
+		blockLeft := epochLength - (keeper.globalKeeper.GetLatestBlock(ctx).Number - latestEpoch.BlockNumber)
+		cost := keeper.CostPerEpoch(ctx).Mul(sdk.NewInt(int64(blockLeft))).ToDec().QuoInt64(int64(epochLength)).RoundInt()
+
+		if subscription.Deposit.Sub(subscription.Spend).LT(cost) {
+			return sdk.ErrInternal("Not enough deposit").Result()
+		}
+
+		subscription.Spend = subscription.Spend.Add(cost)
+		subscription.Subscribing = true
+	}
+
+	keeper.SetSubscription(ctx, subscription)
 	return sdk.Result{}
 }
 
