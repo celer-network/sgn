@@ -6,11 +6,11 @@ import (
 
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, keeper Keeper) {
-	latestBlock := keeper.globalKeeper.GetLatestBlock(ctx)
 	latestEpoch := keeper.GetLatestEpoch(ctx)
 	epochLength := keeper.EpochLength(ctx)
+	now := ctx.BlockTime().Unix()
 
-	if latestEpoch.BlockNumber-latestBlock.Number < epochLength {
+	if now-latestEpoch.Timestamp < epochLength {
 		return
 	}
 
@@ -28,7 +28,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		return false
 	})
 
-	newEpoch := NewEpoch(latestEpoch.Id.AddRaw(1), latestBlock.Number)
+	newEpoch := NewEpoch(latestEpoch.Id.AddRaw(1), now)
 	newEpoch.TotalFee = totalFee
 	keeper.SetLatestEpoch(ctx, newEpoch)
 }

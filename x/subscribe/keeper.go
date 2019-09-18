@@ -111,7 +111,7 @@ func (k Keeper) GetLatestEpoch(ctx sdk.Context) (epoch Epoch) {
 	store := ctx.KVStore(k.storeKey)
 
 	if !store.Has(GetLatestEpochKey()) {
-		epoch = NewEpoch(sdk.NewInt(1), k.globalKeeper.GetLatestBlock(ctx).Number)
+		epoch = NewEpoch(sdk.NewInt(1), ctx.BlockTime().Unix())
 		k.SetLatestEpoch(ctx, epoch)
 		return
 	}

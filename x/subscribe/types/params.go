@@ -11,8 +11,8 @@ import (
 
 // subscribe params default values
 const (
-	// Default epoch length based on ethereum block number
-	DefaultEpochLength uint64 = 100
+	// Default epoch length based on seconds
+	DefaultEpochLength int64 = 60
 
 	// Default cost per epoch, 1 CELR token per epoch
 	DefaultCostPerEpoch int64 = 1000000000000000000
@@ -28,12 +28,12 @@ var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for subscribe
 type Params struct {
-	EpochLength  uint64  `json:"maxValidators" yaml:"maxValidators"` // epoch length based on ethereum block number
+	EpochLength  int64   `json:"maxValidators" yaml:"maxValidators"` // epoch length based on seconds
 	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"`   // The fee will be charged for subscription per epoch
 }
 
 // NewParams creates a new Params instance
-func NewParams(EpochLength uint64, CostPerEpoch sdk.Int) Params {
+func NewParams(EpochLength int64, CostPerEpoch sdk.Int) Params {
 
 	return Params{
 		EpochLength:  EpochLength,

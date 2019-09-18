@@ -8,21 +8,21 @@ import (
 )
 
 type Epoch struct {
-	Id          sdk.Int `json:"id"`
-	BlockNumber uint64  `json:"blockNumber"`
-	TotalFee    sdk.Int `json:"totalFee"`
+	Id        sdk.Int `json:"id"`
+	Timestamp int64   `json:"timestamp"`
+	TotalFee  sdk.Int `json:"totalFee"`
 }
 
 // Returns a new Number with the minprice as the price
-func NewEpoch(id sdk.Int, blockNumber uint64) Epoch {
+func NewEpoch(id sdk.Int, timestamp int64) Epoch {
 	return Epoch{
-		Id:          id,
-		BlockNumber: blockNumber,
-		TotalFee:    sdk.NewInt(0),
+		Id:        id,
+		Timestamp: timestamp,
+		TotalFee:  sdk.NewInt(0),
 	}
 }
 
 // implement fmt.Stringer
 func (e Epoch) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Id: %v, BlockNumber: %d, TotalFee: %v`, e.Id, e.BlockNumber, e.TotalFee))
+	return strings.TrimSpace(fmt.Sprintf(`Id: %v, Timestamp: %d, TotalFee: %v`, e.Id, e.Timestamp, e.TotalFee))
 }
