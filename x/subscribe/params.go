@@ -16,14 +16,14 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// EpochLength - Epoch length based on ethereum block number
-func (k Keeper) EpochLength(ctx sdk.Context) (res uint64) {
+// EpochLength - Epoch length based on seconds
+func (k Keeper) EpochLength(ctx sdk.Context) (res int64) {
 	k.paramstore.Get(ctx, types.KeyEpochLength, &res)
 	return
 }
 
 // CostPerEpoch - Cost per epoch
-func (k Keeper) CostPerEpoch(ctx sdk.Context) (res uint64) {
+func (k Keeper) CostPerEpoch(ctx sdk.Context) (res sdk.Int) {
 	k.paramstore.Get(ctx, types.KeyCostPerEpoch, &res)
 	return
 }
