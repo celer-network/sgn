@@ -118,7 +118,7 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 
 	delegator.Stake = sdk.NewIntFromBigInt(di.Stake)
 	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
-	snapshotCandidate(ctx, keeper, msg.CandidateAddress)
+	keeper.SnapshotCandidate(ctx, msg.CandidateAddress)
 
 	return sdk.Result{}
 }
@@ -129,12 +129,4 @@ func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Vali
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 	keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
-}
-
-func snapshotCandidate(ctx sdk.Context, keeper Keeper, candidateAddr string) {
-	latestCandidate := keeper.GetLatestCandidate(ctx, candidateAddr)
-	nextSeq := latestCandidate.Seq.AddRaw(1)
-	newCandidate := NewCandidate(candidateAddr, nextSeq)
-	newCandidate.Delegators = keeper.GetAllDelegators(ctx, candidateAddr)
-	keeper.SetLatestCandidate(ctx, newCandidate)
 }

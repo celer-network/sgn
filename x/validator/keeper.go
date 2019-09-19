@@ -146,3 +146,12 @@ func (k Keeper) SetLatestCandidate(ctx sdk.Context, candidate Candidate) {
 	store.Set(GetLatestCandidateKey(candidate.EthAddress), k.cdc.MustMarshalBinaryBare(candidate))
 	k.SetCandidate(ctx, candidate)
 }
+
+// Take a snapshot of candidate
+func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
+	latestCandidate := k.GetLatestCandidate(ctx, candidateAddr)
+	nextSeq := latestCandidate.Seq.AddRaw(1)
+	newCandidate := NewCandidate(candidateAddr, nextSeq)
+	newCandidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
+	k.SetLatestCandidate(ctx, newCandidate)
+}
