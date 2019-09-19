@@ -27,12 +27,12 @@ func GetDelegatorKey(candidateAddr, delegatorAddr string) []byte {
 	return append(GetDelegatorsKey(candidateAddr), []byte(delegatorAddr)...)
 }
 
-// get latest candidate key from candidate address
+// get latest candidate key for latest candidate with candidateAddr
 func GetLatestCandidateKey(candidateAddr string) []byte {
 	return append(DelegatorKey, []byte(candidateAddr)...)
 }
 
-// get candidate key from candidate address and seq
+// get candidate key for candidate at candidateAddr and seq
 func GetCandidateKey(candidateAddr string, seq sdk.Int) []byte {
 	return append(GetLatestCandidateKey(candidateAddr), seq.BigInt().Bytes()...)
 }
