@@ -11,6 +11,7 @@ const (
 	StoreKey          = types.StoreKey
 	QuerySubscription = types.QuerySubscription
 	QueryRequest      = types.QueryRequest
+	QueryEpoch        = types.QueryEpoch
 	QueryParameters   = types.QueryParameters
 )
 
@@ -25,6 +26,7 @@ var (
 	NewEpoch                   = types.NewEpoch
 	NewQuerySubscriptionParams = types.NewQuerySubscriptionParams
 	NewQueryRequestParams      = types.NewQueryRequestParams
+	NewQueryEpochParams        = types.NewQueryEpochParams
 	GetSubscriptionKey         = types.GetSubscriptionKey
 	GetRequestKey              = types.GetRequestKey
 	GetEpochKey                = types.GetEpochKey
@@ -42,4 +44,5 @@ type (
 	Epoch                   = types.Epoch
 	QuerySubscriptionParams = types.QuerySubscriptionParams
 	QueryRequestParams      = types.QueryRequestParams
+	QueryEpochParams        = types.QueryEpochParams
 )
