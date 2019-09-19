@@ -14,7 +14,6 @@ type Subscription struct {
 	Subscribing bool    `json:"subscribing"`
 }
 
-// Returns a new Number with the minprice as the price
 func NewSubscription(ethAddress string) Subscription {
 	return Subscription{
 		EthAddress:  ethAddress,

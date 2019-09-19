@@ -24,6 +24,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdInitializeCandidate(cdc),
 		GetCmdClaimValidator(cdc),
 		GetCmdSyncValidator(cdc),
+		GetCmdSyncDelegator(cdc),
 	)...)
 
 	return validatorTxCmd
@@ -79,6 +80,26 @@ func GetCmdSyncValidator(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			msg := types.NewMsgSyncValidator(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+// GetCmdSyncDelegator is the CLI command for sending a SyncDelegator transaction
+func GetCmdSyncDelegator(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "sync-delegator [candidate-addr] [delegator-addr]",
+		Short: "sync delegator for the candidate address and delegator address",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			msg := types.NewMsgSyncDelegator(args[0], args[1], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err

@@ -17,12 +17,19 @@ var (
 	NewMsgInitializeCandidate = types.NewMsgInitializeCandidate
 	NewMsgClaimValidator      = types.NewMsgClaimValidator
 	NewMsgSyncValidator       = types.NewMsgSyncValidator
+	NewMsgSyncDelegator       = types.NewMsgSyncDelegator
 	ModuleCdc                 = types.ModuleCdc
 	RegisterCodec             = types.RegisterCodec
 	PullerKey                 = types.PullerKey
 	PusherKey                 = types.PusherKey
+	GetDelegatorKey           = types.GetDelegatorKey
+	GetDelegatorsKey          = types.GetDelegatorsKey
+	GetLatestCandidateKey     = types.GetLatestCandidateKey
+	GetCandidateKey           = types.GetCandidateKey
 	NewPuller                 = types.NewPuller
 	NewPusher                 = types.NewPusher
+	NewDelegator              = types.NewDelegator
+	NewCandidate              = types.NewCandidate
 	CLIQueryPuller            = cli.QueryPuller
 	CLIQueryPusher            = cli.QueryPusher
 )
@@ -30,7 +37,10 @@ var (
 type (
 	Puller                 = types.Puller
 	Pusher                 = types.Pusher
+	Delegator              = types.Delegator
+	Candidate              = types.Candidate
 	MsgInitializeCandidate = types.MsgInitializeCandidate
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator
+	MsgSyncDelegator       = types.MsgSyncDelegator
 )

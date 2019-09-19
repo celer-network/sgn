@@ -71,3 +71,23 @@ func (k Keeper) SetPusher(ctx sdk.Context, pusher Pusher) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(PusherKey, k.cdc.MustMarshalBinaryBare(pusher))
 }
+
+// Gets the entire Delegator metadata for a epochId
+func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string) Delegator {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetDelegatorKey(candidateAddress, delegatorAddress)) {
+		return Delegator{}
+	}
+
+	var delegator Delegator
+	value := store.Get(GetDelegatorKey(candidateAddress, delegatorAddress))
+	k.cdc.MustUnmarshalBinaryBare(value, &delegator)
+	return delegator
+}
+
+// Sets the entire Delegator metadata for a candidateAddress and delegatorAddress
+func (k Keeper) SetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string, delegator Delegator) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetDelegatorKey(candidateAddress, delegatorAddress), k.cdc.MustMarshalBinaryBare(delegator))
+}

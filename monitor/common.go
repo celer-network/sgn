@@ -31,6 +31,10 @@ func (m *EthMonitor) isPusher() bool {
 	return pusher.ValidatorAddr.Equals(m.transactor.Key.GetAddress())
 }
 
+func (m *EthMonitor) isPullerOrOwner(candidate string) bool {
+	return m.isPuller() || candidate == m.ethClient.Address.String()
+}
+
 func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
 	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, channelId)
 }

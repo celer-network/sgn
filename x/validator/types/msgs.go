@@ -7,7 +7,7 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
-// MsgInitializeCandidate defines a SetEthAddress message
+// MsgInitializeCandidate defines a InitializeCandidate message
 type MsgInitializeCandidate struct {
 	EthAddress string         `json:"ethAddress"`
 	Sender     sdk.AccAddress `json:"sender"`
@@ -50,7 +50,7 @@ func (msg MsgInitializeCandidate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-// MsgClaimValidator defines a SetEthAddress message
+// MsgClaimValidator defines a ClaimValidator message
 type MsgClaimValidator struct {
 	EthAddress string         `json:"ethAddress"`
 	PubKey     string         `json:"pubkey"`
@@ -100,7 +100,7 @@ func (msg MsgClaimValidator) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-// MsgSyncValidator defines a SetEthAddress message
+// MsgSyncValidator defines a SyncValidator message
 type MsgSyncValidator struct {
 	EthAddress string         `json:"ethAddress"`
 	Sender     sdk.AccAddress `json:"sender"`
@@ -140,5 +140,54 @@ func (msg MsgSyncValidator) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSyncValidator) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// MsgSyncDelegator defines a SyncDelegator message
+type MsgSyncDelegator struct {
+	CandidateAddress string         `json:"candidateAddress"`
+	DelegatorAddress string         `json:"delegatorAddress"`
+	Sender           sdk.AccAddress `json:"sender"`
+}
+
+// NewMsgSyncDelegator is a constructor function for MsgSyncDelegator
+func NewMsgSyncDelegator(candidateAddress, delegatorAddress string, sender sdk.AccAddress) MsgSyncDelegator {
+	return MsgSyncDelegator{
+		CandidateAddress: ethcommon.HexToAddress(candidateAddress).String(),
+		DelegatorAddress: ethcommon.HexToAddress(delegatorAddress).String(),
+		Sender:           sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgSyncDelegator) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgSyncDelegator) Type() string { return "sync_delegator" }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgSyncDelegator) ValidateBasic() sdk.Error {
+	if msg.CandidateAddress == "" {
+		return sdk.ErrUnknownRequest("CandidateAddress cannot be empty")
+	}
+
+	if msg.DelegatorAddress == "" {
+		return sdk.ErrUnknownRequest("DelegatorAddress cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSyncDelegator) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSyncDelegator) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

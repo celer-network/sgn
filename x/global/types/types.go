@@ -9,7 +9,6 @@ type Block struct {
 	Number uint64 `json:"number"`
 }
 
-// Returns a new Number with the minprice as the price
 func NewBlock(number uint64) Block {
 	return Block{
 		Number: number,
