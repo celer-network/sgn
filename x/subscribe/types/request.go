@@ -13,7 +13,6 @@ type Request struct {
 	TxHash                  string   `json:"txHash"`
 }
 
-// Returns a new Number with the minprice as the price
 func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint) Request {
 	return Request{
 		SeqNum:        seqNum,

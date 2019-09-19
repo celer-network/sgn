@@ -13,7 +13,6 @@ type Epoch struct {
 	TotalFee  sdk.Int `json:"totalFee"`
 }
 
-// Returns a new Number with the minprice as the price
 func NewEpoch(id sdk.Int, timestamp int64) Epoch {
 	return Epoch{
 		Id:        id,

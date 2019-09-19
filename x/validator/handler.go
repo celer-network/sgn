@@ -20,6 +20,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgClaimValidator(ctx, keeper, msg)
 		case MsgSyncValidator:
 			return handleMsgSyncValidator(ctx, keeper, msg)
+		case MsgSyncDelegator:
+			return handleMsgSyncDelegator(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -29,9 +31,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	cp, err := keeper.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, ethcommon.HexToAddress(msg.EthAddress))
+	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
@@ -49,9 +49,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return sdk.ErrInvalidPubKey(err.Error()).Result()
 	}
 
-	cp, err := keeper.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, ethcommon.HexToAddress(msg.EthAddress))
+	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
@@ -87,9 +85,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 // Handle a message to sync validator
 func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
-	cp, err := keeper.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, ethcommon.HexToAddress(msg.EthAddress))
+	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
@@ -100,11 +96,28 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 		return sdk.ErrInternal("Validator does not exist").Result()
 	}
 
-	if !cp.IsVldt {
+	if cp.IsVldt {
+		updateValidatorToken(ctx, keeper, validator, cp.TotalStake)
+	} else {
 		keeper.stakingKeeper.RemoveValidator(ctx, validator.OperatorAddress)
 	}
 
-	updateValidatorToken(ctx, keeper, validator, cp.TotalStake)
+	return sdk.Result{}
+}
+
+// Handle a message to sync delegator
+func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator) sdk.Result {
+	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
+
+	di, err := keeper.ethClient.Guard.GetDelegatorInfo(&bind.CallOpts{
+		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+	}, ethcommon.HexToAddress(msg.CandidateAddress), ethcommon.HexToAddress(msg.DelegatorAddress))
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to query delegator info: %s", err)).Result()
+	}
+
+	delegator.Stake = sdk.NewIntFromBigInt(di.Stake)
+	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
 	return sdk.Result{}
 }
 

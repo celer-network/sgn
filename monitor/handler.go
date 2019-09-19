@@ -31,23 +31,11 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
 	} else {
-		minStake, err := m.ethClient.Guard.GetMinStake(&bind.CallOpts{})
-		if err != nil {
-			log.Printf("GetMinStake err", err)
-			return
-		}
+		m.ethClaimValidator(delegate)
+	}
 
-		if delegate.TotalStake.Uint64() <= minStake.Uint64() {
-			log.Printf("Not enough stake to become validator")
-			return
-		}
-
-		tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
-		if err != nil {
-			log.Printf("ClaimValidator tx err", err)
-			return
-		}
-		log.Printf("ClaimValidator tx detail", tx)
+	if m.isPullerOrOwner(delegate.Candidate.String()) {
+		m.syncDelegator(delegate.Candidate, delegate.Delegator)
 	}
 }
 
@@ -72,14 +60,8 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValid
 
 func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendWithdraw) {
 	log.Printf("New intend withdraw", intendWithdraw.Candidate)
-	// Current puller or validator itself will trigger the sync
-	doSync := m.isPuller()
 
-	if intendWithdraw.Candidate.String() == m.ethClient.Address.String() {
-		doSync = m.isValidator
-	}
-
-	if doSync {
+	if m.isPullerOrOwner(intendWithdraw.Candidate.String()) {
 		m.syncValidator(intendWithdraw.Candidate)
 	}
 }
@@ -100,6 +82,26 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 	m.pusherQueue.PushBack(intendSettle)
 }
 
+func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
+	minStake, err := m.ethClient.Guard.GetMinStake(&bind.CallOpts{})
+	if err != nil {
+		log.Printf("GetMinStake err", err)
+		return
+	}
+
+	if delegate.TotalStake.Uint64() <= minStake.Uint64() {
+		log.Printf("Not enough stake to become validator")
+		return
+	}
+
+	tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
+	if err != nil {
+		log.Printf("ClaimValidator tx err", err)
+		return
+	}
+	log.Printf("ClaimValidator tx detail", tx)
+}
+
 func (m *EthMonitor) claimValidator() {
 	log.Printf("ClaimValidator")
 	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, m.transactor.Key.GetAddress())
@@ -110,5 +112,11 @@ func (m *EthMonitor) claimValidator() {
 func (m *EthMonitor) syncValidator(address ethcommon.Address) {
 	log.Printf("SyncValidator", address.String())
 	msg := validator.NewMsgSyncValidator(address.String(), m.transactor.Key.GetAddress())
+	m.transactor.BroadcastTx(msg)
+}
+
+func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr ethcommon.Address) {
+	log.Printf("SyncDelegator", candidatorAddr.String(), delegatorAddr.String())
+	msg := validator.NewMsgSyncDelegator(candidatorAddr.String(), delegatorAddr.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
