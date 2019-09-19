@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -99,8 +100,45 @@ func QueryRequest(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string
 	return
 }
 
+// GetCmdEpoch queries request info
+func GetCmdEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "epoch [epochId]",
+		Short: "query epoch info by epochId",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			epochId := int64(-1)
+			if len(args) > 0 {
+				id, err := strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
+				if id > 0 {
+					epochId = int64(id)
+				}
+			}
+
+			data, err := cdc.MarshalJSON(types.NewQueryEpochParams(epochId))
+			if err != nil {
+				return err
+			}
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryEpoch)
+			bz, _, err := cliCtx.QueryWithData(route, data)
+			if err != nil {
+				return err
+			}
+
+			var epoch types.Epoch
+			cdc.MustUnmarshalJSON(bz, &epoch)
+			return cliCtx.PrintOutput(epoch)
+		},
+	}
+}
+
 // GetCmdQueryParams implements the params query command.
-func GetCmdQueryParams(storeName string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
@@ -108,7 +146,7 @@ func GetCmdQueryParams(storeName string, cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			route := fmt.Sprintf("custom/%s/%s", storeName, types.QueryParameters)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
 			bz, _, err := cliCtx.QueryWithData(route, nil)
 			if err != nil {
 				return err
