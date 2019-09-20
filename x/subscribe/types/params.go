@@ -28,8 +28,8 @@ var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for subscribe
 type Params struct {
-	EpochLength  int64   `json:"maxValidators" yaml:"maxValidators"` // epoch length based on seconds
-	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"`   // The fee will be charged for subscription per epoch
+	EpochLength  int64   `json:"epochLength" yaml:"epochLength"`   // epoch length based on seconds
+	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"` // The fee will be charged for subscription per epoch
 }
 
 // NewParams creates a new Params instance

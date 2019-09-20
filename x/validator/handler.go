@@ -72,7 +72,8 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 	if !found {
 		description := staking.Description{
-			Moniker: msg.EthAddress,
+			Moniker:  msg.EthAddress,
+			Identity: msg.EthAddress,
 		}
 		validator = staking.NewValidator(valAddress, pk, description)
 		validator.Status = sdk.Bonded
