@@ -11,13 +11,13 @@ const (
 )
 
 var (
-	PullerKey = []byte{0x01} // Prefix for puller
-	PusherKey = []byte{0x02} // Prefix for pusher
+	PullerKey = []byte{0x01} // key for puller
+	PusherKey = []byte{0x02} // key for pusher
 
-	DelegatorKeyPrefix = []byte{0x03} // Prefix for delegator
+	DelegatorKeyPrefix = []byte{0x03} // Prefix key for delegator
 
-	CandidateKeyPrefix         = []byte{0x41} // Prefix for candidate
-	CandidateSnapshotKeyPrefix = []byte{0x42} // Prefix for candidate snapshot
+	CandidateKeyPrefix         = []byte{0x41} // Prefix key for candidate
+	CandidateSnapshotKeyPrefix = []byte{0x42} // Prefix key for candidate snapshot
 )
 
 // get delegators key from candidate address
