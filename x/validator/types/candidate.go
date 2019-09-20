@@ -40,3 +40,7 @@ func NewCandidate(ethAddress string, seq sdk.Int) Candidate {
 func (c Candidate) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, Seq: %v, TotalStake: %v`, c.EthAddress, c.Seq, c.TotalStake))
 }
+
+func (c Candidate) GetSnapshotKey() []byte {
+	return GetCandidateSnapshotKey(c.EthAddress, c.Seq)
+}
