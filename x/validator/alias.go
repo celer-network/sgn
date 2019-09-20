@@ -6,11 +6,13 @@ import (
 )
 
 const (
-	ModuleName  = types.ModuleName
-	RouterKey   = types.RouterKey
-	StoreKey    = types.StoreKey
-	QueryPuller = types.QueryPuller
-	QueryPusher = types.QueryPusher
+	ModuleName     = types.ModuleName
+	RouterKey      = types.RouterKey
+	StoreKey       = types.StoreKey
+	QueryPuller    = types.QueryPuller
+	QueryPusher    = types.QueryPusher
+	QueryDelegator = types.QueryDelegator
+	QueryCandidate = types.QueryCandidate
 )
 
 var (
@@ -24,8 +26,8 @@ var (
 	PusherKey                 = types.PusherKey
 	GetDelegatorKey           = types.GetDelegatorKey
 	GetDelegatorsKey          = types.GetDelegatorsKey
-	GetCandidateKey     = types.GetCandidateKey
-	GetCandidateSnapshotKey           = types.GetCandidateSnapshotKey
+	GetCandidateKey           = types.GetCandidateKey
+	GetCandidateSnapshotKey   = types.GetCandidateSnapshotKey
 	NewPuller                 = types.NewPuller
 	NewPusher                 = types.NewPusher
 	NewDelegator              = types.NewDelegator
@@ -39,6 +41,8 @@ type (
 	Pusher                 = types.Pusher
 	Delegator              = types.Delegator
 	Candidate              = types.Candidate
+	QueryDelegatorParams   = types.QueryDelegatorParams
+	QueryCandidateParams   = types.QueryCandidateParams
 	MsgInitializeCandidate = types.MsgInitializeCandidate
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator

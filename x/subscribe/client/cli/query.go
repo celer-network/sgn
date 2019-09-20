@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -10,6 +9,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+const (
+	flagEpochId = "epochId"
 )
 
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
@@ -102,22 +106,12 @@ func QueryRequest(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string
 
 // GetCmdEpoch queries request info
 func GetCmdEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "epoch [epochId]",
+	cmd := &cobra.Command{
+		Use:   "epoch",
 		Short: "query epoch info by epochId",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			epochId := int64(-1)
-			if len(args) > 0 {
-				id, err := strconv.Atoi(args[0])
-				if err != nil {
-					return err
-				}
-				if id > 0 {
-					epochId = int64(id)
-				}
-			}
-
+			epochId := viper.GetInt64(flagEpochId)
 			data, err := cdc.MarshalJSON(types.NewQueryEpochParams(epochId))
 			if err != nil {
 				return err
@@ -135,6 +129,10 @@ func GetCmdEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			return cliCtx.PrintOutput(epoch)
 		},
 	}
+
+	cmd.Flags().Int64(flagEpochId, 0, "Epoch id")
+
+	return cmd
 }
 
 // GetCmdQueryParams implements the params query command.
