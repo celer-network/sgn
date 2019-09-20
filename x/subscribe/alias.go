@@ -31,7 +31,7 @@ var (
 	GetRequestKey              = types.GetRequestKey
 	GetEpochKey                = types.GetEpochKey
 	GetLatestEpochKey          = types.GetLatestEpochKey
-	SubscriptionKey            = types.SubscriptionKey
+	SubscriptionKeyPrefix            = types.SubscriptionKeyPrefix
 	CLIQueryRequest            = cli.QueryRequest
 )
 
