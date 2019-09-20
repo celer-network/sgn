@@ -72,7 +72,7 @@ func (k Keeper) SetPusher(ctx sdk.Context, pusher Pusher) {
 	store.Set(PusherKey, k.cdc.MustMarshalBinaryBare(pusher))
 }
 
-// Gets the entire Delegator metadata for a epochId
+// Gets the entire Delegator metadata for a candidateAddress and delegatorAddress
 func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string) Delegator {
 	store := ctx.KVStore(k.storeKey)
 
@@ -86,8 +86,72 @@ func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress
 	return delegator
 }
 
+// Get the set of all delegators with no limits
+func (k Keeper) GetAllDelegators(ctx sdk.Context, candidateAddress string) (delegators []Delegator) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, GetDelegatorsKey(candidateAddress))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var delegator Delegator
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &delegator)
+		delegators = append(delegators, delegator)
+	}
+	return delegators
+}
+
 // Sets the entire Delegator metadata for a candidateAddress and delegatorAddress
 func (k Keeper) SetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string, delegator Delegator) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetDelegatorKey(candidateAddress, delegatorAddress), k.cdc.MustMarshalBinaryBare(delegator))
+}
+
+// Gets the entire Candidate metadata
+func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidate Candidate) {
+	store := ctx.KVStore(k.storeKey)
+	candidateKey := GetCandidateKey(candidateAddress)
+
+	if !store.Has(candidateKey) {
+		return
+	}
+
+	value := store.Get(candidateKey)
+	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
+	return
+}
+
+// Sets the Candidate metadata
+func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetCandidateKey(candidate.EthAddress), k.cdc.MustMarshalBinaryBare(candidate))
+	k.SetCandidateSnapshot(ctx, candidate)
+}
+
+// Gets the entire Candidate metadata for a candidateAddress and seq
+func (k Keeper) GetCandidateSnapshot(ctx sdk.Context, candidateAddress string, seq sdk.Int) (candidate Candidate, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	candidateSnapshotKey := GetCandidateSnapshotKey(candidateAddress, seq)
+
+	if !store.Has(candidateSnapshotKey) {
+		return candidate, false
+	}
+
+	value := store.Get(candidateSnapshotKey)
+	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
+	return candidate, true
+}
+
+// Sets the entire Candidate metadata
+func (k Keeper) SetCandidateSnapshot(ctx sdk.Context, candidate Candidate) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetCandidateSnapshotKey(candidate.EthAddress, candidate.Seq), k.cdc.MustMarshalBinaryBare(candidate))
+}
+
+// Take a snapshot of candidate
+func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
+	candidate := k.GetCandidate(ctx, candidateAddr)
+	nextSeq := candidate.Seq.AddRaw(1)
+	newCandidate := NewCandidate(candidateAddr, nextSeq)
+	newCandidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
+	k.SetCandidate(ctx, newCandidate)
 }

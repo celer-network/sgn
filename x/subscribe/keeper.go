@@ -56,7 +56,7 @@ func (k Keeper) IterateSubscriptions(ctx sdk.Context,
 	handler func(subscription Subscription) (stop bool)) {
 
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, SubscriptionKey)
+	iter := sdk.KVStorePrefixIterator(store, SubscriptionKeyPrefix)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var subscription Subscription

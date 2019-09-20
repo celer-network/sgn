@@ -24,8 +24,8 @@ var (
 	PusherKey                 = types.PusherKey
 	GetDelegatorKey           = types.GetDelegatorKey
 	GetDelegatorsKey          = types.GetDelegatorsKey
-	GetLatestCandidateKey     = types.GetLatestCandidateKey
-	GetCandidateKey           = types.GetCandidateKey
+	GetCandidateKey     = types.GetCandidateKey
+	GetCandidateSnapshotKey           = types.GetCandidateSnapshotKey
 	NewPuller                 = types.NewPuller
 	NewPusher                 = types.NewPusher
 	NewDelegator              = types.NewDelegator

@@ -118,6 +118,8 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 
 	delegator.Stake = sdk.NewIntFromBigInt(di.Stake)
 	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
+	keeper.SnapshotCandidate(ctx, msg.CandidateAddress)
+
 	return sdk.Result{}
 }
 
