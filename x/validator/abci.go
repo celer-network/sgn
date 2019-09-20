@@ -16,7 +16,7 @@ func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 
 func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	puller := keeper.GetPuller(ctx)
-	validators := keeper.stakingKeeper.GetBondedValidatorsByPower(ctx)
+	validators := keeper.GetValidators(ctx)
 	vIdx := uint(req.Height) / pullerDuration % uint(len(validators))
 
 	if puller.ValidatorIdx != vIdx || puller.ValidatorAddr.Empty() {
@@ -27,7 +27,7 @@ func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 
 func setPusher(ctx sdk.Context, keeper Keeper) {
 	pusher := keeper.GetPusher(ctx)
-	validators := keeper.stakingKeeper.GetBondedValidatorsByPower(ctx)
+	validators := keeper.GetValidators(ctx)
 	latestBlock := keeper.globalKeeper.GetLatestBlock(ctx)
 	vIdx := uint(latestBlock.Number) / pusherDuration % uint(len(validators))
 

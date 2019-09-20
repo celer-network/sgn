@@ -14,6 +14,13 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		return
 	}
 
+	newEpoch := NewEpoch(latestEpoch.Id.AddRaw(1), now)
+	newEpoch.TotalFee = getTotalFee(ctx, keeper)
+	newEpoch.ValidatorSnapshotKeys = getValidatorSnapshotKeys(ctx, keeper)
+	keeper.SetLatestEpoch(ctx, newEpoch)
+}
+
+func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
 	costPerEpoch := keeper.CostPerEpoch(ctx)
 	totalFee := sdk.ZeroInt()
 	keeper.IterateSubscriptions(ctx, func(subscription Subscription) (stop bool) {
@@ -28,7 +35,17 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		return false
 	})
 
-	newEpoch := NewEpoch(latestEpoch.Id.AddRaw(1), now)
-	newEpoch.TotalFee = totalFee
-	keeper.SetLatestEpoch(ctx, newEpoch)
+	return totalFee
+}
+
+func getValidatorSnapshotKeys(ctx sdk.Context, keeper Keeper) [][]byte {
+	var snapshotKeys [][]byte
+	validators := keeper.validatorKeeper.GetValidators(ctx)
+	for _, validator := range validators {
+		ethAddr := validator.Description.Moniker
+		candidate := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
+		snapshotKeys = append(snapshotKeys, candidate.GetSnapshotKey())
+	}
+
+	return snapshotKeys
 }

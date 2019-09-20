@@ -8,9 +8,10 @@ import (
 )
 
 type Epoch struct {
-	Id        sdk.Int `json:"id"`
-	Timestamp int64   `json:"timestamp"`
-	TotalFee  sdk.Int `json:"totalFee"`
+	Id                    sdk.Int  `json:"id"`
+	Timestamp             int64    `json:"timestamp"`
+	TotalFee              sdk.Int  `json:"totalFee"`
+	ValidatorSnapshotKeys [][]byte `json:"validatorSnapshotKeys"`
 }
 
 func NewEpoch(id sdk.Int, timestamp int64) Epoch {

@@ -32,6 +32,11 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.Eth
 	}
 }
 
+// Gets validators metadata
+func (k Keeper) GetValidators(ctx sdk.Context) []staking.Validator {
+	return k.stakingKeeper.GetBondedValidatorsByPower(ctx)
+}
+
 // Gets the entire Puller metadata
 func (k Keeper) GetPuller(ctx sdk.Context) Puller {
 	store := ctx.KVStore(k.storeKey)
