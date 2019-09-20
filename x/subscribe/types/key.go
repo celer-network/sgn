@@ -13,27 +13,29 @@ const (
 )
 
 var (
-	SubscriptionKey = []byte{0x01} // Prefix for subscription
-	RequestKey      = []byte{0x02} // Prefix for request
-	EpochKey        = []byte{0x03} // Prefix for epoch
+	SubscriptionKeyPrefix = []byte{0x01} // Key prefix for subscription
+	RequestKeyPrefix      = []byte{0x02} // Key prefix for request
+
+	EpochKeyPrefix = []byte{0x31} // Key prefix for epoch
+	LatestEpochKey = []byte{0x32} // Key for latest epoch
 )
 
 // get guardian key from eth address
 func GetSubscriptionKey(ethAddress string) []byte {
-	return append(SubscriptionKey, []byte(ethAddress)...)
+	return append(SubscriptionKeyPrefix, []byte(ethAddress)...)
 }
 
 // get request key from channelID
 func GetRequestKey(channelId []byte) []byte {
-	return append(RequestKey, channelId...)
+	return append(RequestKeyPrefix, channelId...)
 }
 
 // get epoch key from epochId
 func GetEpochKey(epochId sdk.Int) []byte {
-	return append(RequestKey, epochId.BigInt().Bytes()...)
+	return append(EpochKeyPrefix, epochId.BigInt().Bytes()...)
 }
 
 // get latest epoch key
 func GetLatestEpochKey() []byte {
-	return RequestKey
+	return LatestEpochKey
 }

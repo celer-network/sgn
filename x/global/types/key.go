@@ -9,5 +9,5 @@ const (
 )
 
 var (
-	LatestBlockKey = []byte{0x01} // Prefix for lastest block
+	LatestBlockKey = []byte{0x01} // Key for lastest block
 )

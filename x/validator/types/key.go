@@ -14,10 +14,10 @@ var (
 	PullerKey = []byte{0x01} // key for puller
 	PusherKey = []byte{0x02} // key for pusher
 
-	DelegatorKeyPrefix = []byte{0x03} // Prefix key for delegator
+	DelegatorKeyPrefix = []byte{0x03} // Key prefix for delegator
 
-	CandidateKeyPrefix         = []byte{0x41} // Prefix key for candidate
-	CandidateSnapshotKeyPrefix = []byte{0x42} // Prefix key for candidate snapshot
+	CandidateKeyPrefix         = []byte{0x41} // Key prefix for candidate
+	CandidateSnapshotKeyPrefix = []byte{0x42} // Key prefix for candidate snapshot
 )
 
 // get delegators key from candidate address
