@@ -31,8 +31,9 @@ var (
 	GetRequestKey              = types.GetRequestKey
 	GetEpochKey                = types.GetEpochKey
 	GetLatestEpochKey          = types.GetLatestEpochKey
-	SubscriptionKeyPrefix            = types.SubscriptionKeyPrefix
+	SubscriptionKeyPrefix      = types.SubscriptionKeyPrefix
 	CLIQueryRequest            = cli.QueryRequest
+	DefaultParams              = types.DefaultParams
 )
 
 type (
@@ -42,6 +43,7 @@ type (
 	Subscription            = types.Subscription
 	Request                 = types.Request
 	Epoch                   = types.Epoch
+	Params                  = types.Params
 	QuerySubscriptionParams = types.QuerySubscriptionParams
 	QueryRequestParams      = types.QueryRequestParams
 	QueryEpochParams        = types.QueryEpochParams

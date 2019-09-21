@@ -42,7 +42,7 @@ func getValidatorSnapshotKeys(ctx sdk.Context, keeper Keeper) [][]byte {
 	var snapshotKeys [][]byte
 	validators := keeper.validatorKeeper.GetValidators(ctx)
 	for _, validator := range validators {
-		ethAddr := validator.Description.Moniker
+		ethAddr := validator.Description.Identity
 		candidate := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
 		snapshotKeys = append(snapshotKeys, candidate.GetSnapshotKey())
 	}
