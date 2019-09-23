@@ -6,30 +6,24 @@ import (
 )
 
 type GenesisState struct {
-	Params Params `json:"params" yaml:"params"`
 }
 
-func NewGenesisState(params Params) GenesisState {
-	return GenesisState{
-		Params: params,
-	}
+func NewGenesisState() GenesisState {
+	return GenesisState{}
 }
 
 func ValidateGenesis(data GenesisState) error {
-	return data.Params.Validate()
+	return nil
 }
 
 func DefaultGenesisState() GenesisState {
-	return NewGenesisState(DefaultParams())
+	return GenesisState{}
 }
 
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
-	keeper.SetParams(ctx, data.Params)
-
 	return []abci.ValidatorUpdate{}
 }
 
-func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
-	params := keeper.GetParams(ctx)
-	return NewGenesisState(params)
+func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
+	return GenesisState{}
 }
