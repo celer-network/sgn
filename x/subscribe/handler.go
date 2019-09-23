@@ -45,10 +45,10 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
 
 	if !subscription.Subscribing {
-		latestEpoch := keeper.GetLatestEpoch(ctx)
-		epochLength := keeper.EpochLength(ctx)
+		latestEpoch := keeper.globalKeeper.GetLatestEpoch(ctx)
+		epochLength := keeper.globalKeeper.EpochLength(ctx)
 		timeLeft := epochLength - (ctx.BlockTime().Unix() - latestEpoch.Timestamp)
-		cost := keeper.CostPerEpoch(ctx).MulRaw(timeLeft).ToDec().QuoInt64(epochLength).RoundInt()
+		cost := keeper.globalKeeper.CostPerEpoch(ctx).MulRaw(timeLeft).ToDec().QuoInt64(epochLength).RoundInt()
 
 		if subscription.Deposit.Sub(subscription.Spend).LT(cost) {
 			return sdk.ErrInternal("Not enough deposit").Result()

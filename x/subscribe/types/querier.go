@@ -7,8 +7,6 @@ import (
 const (
 	QuerySubscription = "subscription"
 	QueryRequest      = "request"
-	QueryEpoch        = "epoch"
-	QueryParameters   = "parameters"
 )
 
 type QuerySubscriptionParams struct {
@@ -28,15 +26,5 @@ type QueryRequestParams struct {
 func NewQueryRequestParams(channelId []byte) QueryRequestParams {
 	return QueryRequestParams{
 		ChannelId: channelId,
-	}
-}
-
-type QueryEpochParams struct {
-	EpochId int64
-}
-
-func NewQueryEpochParams(epochId int64) QueryEpochParams {
-	return QueryEpochParams{
-		EpochId: epochId,
 	}
 }

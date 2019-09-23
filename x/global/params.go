@@ -1,7 +1,7 @@
-package subscribe
+package global
 
 import (
-	"github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/global/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )

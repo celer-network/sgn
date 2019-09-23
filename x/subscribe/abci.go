@@ -1,27 +1,28 @@
 package subscribe
 
 import (
+	"github.com/celer-network/sgn/x/global"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, keeper Keeper) {
-	latestEpoch := keeper.GetLatestEpoch(ctx)
-	epochLength := keeper.EpochLength(ctx)
+	latestEpoch := keeper.globalKeeper.GetLatestEpoch(ctx)
+	epochLength := keeper.globalKeeper.EpochLength(ctx)
 	now := ctx.BlockTime().Unix()
 
 	if now-latestEpoch.Timestamp < epochLength {
 		return
 	}
 
-	newEpoch := NewEpoch(latestEpoch.Id.AddRaw(1), now)
+	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
 	newEpoch.TotalFee = getTotalFee(ctx, keeper)
 	newEpoch.ValidatorSnapshotKeys = getValidatorSnapshotKeys(ctx, keeper)
-	keeper.SetLatestEpoch(ctx, newEpoch)
+	keeper.globalKeeper.SetLatestEpoch(ctx, newEpoch)
 }
 
 func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
-	costPerEpoch := keeper.CostPerEpoch(ctx)
+	costPerEpoch := keeper.globalKeeper.CostPerEpoch(ctx)
 	totalFee := sdk.ZeroInt()
 	keeper.IterateSubscriptions(ctx, func(subscription Subscription) (stop bool) {
 		subscription.Subscribing = false
