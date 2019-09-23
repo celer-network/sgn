@@ -11,6 +11,7 @@ const (
 	StoreKey          = types.StoreKey
 	QuerySubscription = types.QuerySubscription
 	QueryRequest      = types.QueryRequest
+	QueryParameters   = types.QueryParameters
 )
 
 var (
@@ -26,7 +27,9 @@ var (
 	GetSubscriptionKey         = types.GetSubscriptionKey
 	GetRequestKey              = types.GetRequestKey
 	SubscriptionKeyPrefix      = types.SubscriptionKeyPrefix
+	RequestHanlderIdKey        = types.RequestHanlderIdKey
 	CLIQueryRequest            = cli.QueryRequest
+	DefaultParams              = types.DefaultParams
 )
 
 type (
@@ -35,6 +38,7 @@ type (
 	MsgGuardProof           = types.MsgGuardProof
 	Subscription            = types.Subscription
 	Request                 = types.Request
+	Params                  = types.Params
 	QuerySubscriptionParams = types.QuerySubscriptionParams
 	QueryRequestParams      = types.QueryRequestParams
 )

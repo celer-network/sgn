@@ -11,21 +11,22 @@ import (
 )
 
 func (m *EthMonitor) processQueue() {
-	m.processEventQueue()
 	m.processPullerQueue()
-	m.processPusherQueue()
-}
 
-func (m *EthMonitor) processEventQueue() {
 	latestBlock, err := m.getLatestBlock()
 	if err != nil {
 		log.Printf("Query latestBlock err", err)
 		return
 	}
 
+	m.processEventQueue(latestBlock.Number)
+	m.processPusherQueue(latestBlock.Number)
+}
+
+func (m *EthMonitor) processEventQueue(latestBlockNum uint64) {
 	for m.eventQueue.Len() > 0 {
 		e := m.eventQueue.Front().(Event)
-		if latestBlock.Number < e.log.BlockNumber+common.ConfirmationCount {
+		if latestBlockNum < e.log.BlockNumber+common.ConfirmationCount {
 			return
 		}
 
@@ -59,15 +60,11 @@ func (m *EthMonitor) processPullerQueue() {
 	}
 }
 
-func (m *EthMonitor) processPusherQueue() {
-	if !m.isPusher() {
-		return
-	}
-
-	for m.pusherQueue.Len() != 0 {
+func (m *EthMonitor) processPusherQueue(latestBlockNum uint64) {
+	for pusherLen := m.pusherQueue.Len(); pusherLen > 0; pusherLen-- {
 		switch event := m.pusherQueue.PopFront().(type) {
 		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(event)
+			m.processIntendSettle(event, latestBlockNum)
 		}
 	}
 }
@@ -91,7 +88,7 @@ func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.G
 	m.transactor.BroadcastTx(msg)
 }
 
-func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
 	log.Printf("Process IntendSettle", intendSettle.ChannelId)
 	channelId := intendSettle.ChannelId[:]
 	request, err := m.getRequest(channelId)
@@ -102,6 +99,11 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 
 	if request.TxHash != "" {
 		log.Printf("Request has been fullfilled")
+		return
+	}
+
+	if !m.isRequestHandler(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
+		m.pusherQueue.PushBack(intendSettle)
 		return
 	}
 

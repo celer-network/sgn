@@ -10,7 +10,9 @@ const (
 
 var (
 	SubscriptionKeyPrefix = []byte{0x01} // Key prefix for subscription
-	RequestKeyPrefix      = []byte{0x02} // Key prefix for request
+
+	RequestKeyPrefix    = []byte{0x21} // Key prefix for request
+	RequestHanlderIdKey = []byte{0x22} // Key for request handler id
 )
 
 // get guardian key from eth address

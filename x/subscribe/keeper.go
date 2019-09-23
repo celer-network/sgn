@@ -6,6 +6,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
@@ -15,17 +16,19 @@ type Keeper struct {
 	ethClient       *mainchain.EthClient
 	globalKeeper    global.Keeper
 	validatorKeeper validator.Keeper
+	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the subscribe Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, validatorKeeper validator.Keeper) Keeper {
+	globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
 		ethClient:       ethClient,
 		globalKeeper:    globalKeeper,
 		validatorKeeper: validatorKeeper,
+		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}
 }
 
@@ -82,4 +85,22 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte) (Request, bool) {
 func (k Keeper) SetRequest(ctx sdk.Context, channelId []byte, request Request) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRequestKey(channelId), k.cdc.MustMarshalBinaryBare(request))
+}
+
+// Gets the request handler id
+func (k Keeper) GetRequestHanlderId(ctx sdk.Context) uint8 {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(RequestHanlderIdKey) {
+		return 0
+	}
+
+	value := store.Get(RequestHanlderIdKey)
+	return uint8(value[0])
+}
+
+// Sets the request handler id
+func (k Keeper) SetRequestHanlderId(ctx sdk.Context, request uint8) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(RequestHanlderIdKey, []byte{request})
 }

@@ -11,7 +11,7 @@ const (
 	DefaultParamspace = types.ModuleName
 )
 
-// ParamTable for subscribe module
+// ParamTable for global module
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }

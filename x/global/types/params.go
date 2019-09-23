@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-// subscribe params default values
+// global params default values
 const (
 	// Default epoch length based on seconds
 	DefaultEpochLength int64 = 60
@@ -26,7 +26,7 @@ var (
 
 var _ params.ParamSet = (*Params)(nil)
 
-// Params defines the high level settings for subscribe
+// Params defines the high level settings for global
 type Params struct {
 	EpochLength  int64   `json:"epochLength" yaml:"epochLength"`   // epoch length based on seconds
 	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"` // The fee will be charged for subscription per epoch
@@ -70,7 +70,7 @@ func (p Params) String() string {
 		p.EpochLength, p.CostPerEpoch)
 }
 
-// unmarshal the current subscribe params value from store key or panic
+// unmarshal the current global params value from store key or panic
 func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
 	params, err := UnmarshalParams(cdc, value)
 	if err != nil {
@@ -79,7 +79,7 @@ func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
 	return params
 }
 
-// unmarshal the current subscribe params value from store key
+// unmarshal the current global params value from store key
 func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) {
 	err = cdc.UnmarshalBinaryLengthPrefixed(value, &params)
 	if err != nil {
@@ -91,7 +91,7 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 // validate a set of params
 func (p Params) Validate() error {
 	if p.EpochLength == 0 {
-		return fmt.Errorf("subscribe parameter EpochLength must be a positive integer")
+		return fmt.Errorf("global parameter EpochLength must be a positive integer")
 	}
 	return nil
 }

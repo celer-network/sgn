@@ -35,6 +35,19 @@ func (m *EthMonitor) isPullerOrOwner(candidate string) bool {
 	return m.isPuller() || candidate == m.ethClient.Address.String()
 }
 
+func (m *EthMonitor) isRequestHandler(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
+	requestHanlders := request.RequestHandlers
+	blockNumberDiff := latestBlockNum - eventBlockNumber
+	handlerIndex := uint64(len(requestHanlders)+1) * blockNumberDiff / request.DisputeTimeout
+
+	// All other validators need to guard
+	if handlerIndex >= uint64(len(requestHanlders)) {
+		return true
+	}
+
+	return requestHanlders[handlerIndex].Equals(m.transactor.Key.GetAddress())
+}
+
 func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
 	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, channelId)
 }

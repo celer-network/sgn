@@ -17,6 +17,14 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 	if !found {
 		channelId := [32]byte{}
 		copy(channelId[:], simplexPaymentChannel.ChannelId)
+
+		disputeTimeout, err := keeper.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
+			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+		}, channelId)
+		if err != nil {
+			return Request{}, err
+		}
+
 		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
 			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 		}, channelId)
@@ -26,19 +34,36 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 
 		peerAddresses := []string{addresses[0].String(), addresses[1].String()}
 		peerFromAddress := ethcommon.BytesToAddress(simplexPaymentChannel.PeerFrom).String()
-		var peerFromIndex uint
+		var peerFromIndex uint8
 		if peerAddresses[0] == peerFromAddress {
-			peerFromIndex = 0
+			peerFromIndex = uint8(0)
 		} else if peerAddresses[1] == peerFromAddress {
-			peerFromIndex = 1
+			peerFromIndex = uint8(1)
 		} else {
 			return Request{}, errors.New("peerFrom is not valid address")
 		}
 
-		request = NewRequest(seqNums[peerFromIndex].Uint64(), peerAddresses, peerFromIndex)
+		seqNum := seqNums[peerFromIndex].Uint64()
+		requestHandlers := getRequestHandlers(ctx, keeper)
+		request = NewRequest(seqNum, peerAddresses, peerFromIndex, disputeTimeout.Uint64(), requestHandlers)
 	}
 
 	return request, nil
+}
+
+func getRequestHandlers(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+	validators := keeper.validatorKeeper.GetValidators(ctx)
+	requestHandlerId := keeper.GetRequestHanlderId(ctx)
+	requestHandlerCount := keeper.RequestHandlerCount(ctx)
+	requestHandlers := []sdk.AccAddress{}
+
+	for uint64(len(requestHandlers)) < requestHandlerCount {
+		requestHandlers = append(requestHandlers, sdk.AccAddress(validators[requestHandlerId].OperatorAddress))
+		requestHandlerId = (requestHandlerId + 1) % uint8(len(validators))
+	}
+
+	keeper.SetRequestHanlderId(ctx, requestHandlerId)
+	return requestHandlers
 }
 
 func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
