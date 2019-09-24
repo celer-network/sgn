@@ -12,25 +12,30 @@ import (
 const (
 	// Default request guard count
 	DefaultRequestGuardCount uint64 = 3
+	// Default request limit per epoch
+	DefaultRequestLimit uint64 = 3
 )
 
 // nolint - Keys for parameter access
 var (
 	KeyRequestGuardCount = []byte("RequestGuardCount")
+	KeyRequestLimit      = []byte("RequestLimit")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for subscribe
 type Params struct {
-	RequestGuardCount uint64 `json:"requestGuardCount" yaml:"requestGuardCount"` // epoch length based on seconds
+	RequestGuardCount uint64 `json:"requestGuardCount" yaml:"requestGuardCount"` // request guard count
+	RequestLimit      uint64 `json:"requestLimit" yaml:"requestLimit"`           // request limit per epoch
 }
 
 // NewParams creates a new Params instance
-func NewParams(requestGuardCount uint64) Params {
+func NewParams(requestGuardCount, requestLimit uint64) Params {
 
 	return Params{
 		RequestGuardCount: requestGuardCount,
+		RequestLimit:      requestLimit,
 	}
 }
 
@@ -38,6 +43,7 @@ func NewParams(requestGuardCount uint64) Params {
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		{KeyRequestGuardCount, &p.RequestGuardCount},
+		{KeyRequestLimit, &p.RequestLimit},
 	}
 }
 
@@ -51,14 +57,15 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultRequestGuardCount)
+	return NewParams(DefaultRequestGuardCount, DefaultRequestLimit)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-  RequestGuardCount:    %d`,
-		p.RequestGuardCount)
+  RequestGuardCount:    %d,
+  RequestLimit:    %d`,
+		p.RequestGuardCount, p.RequestLimit)
 }
 
 // unmarshal the current subscribe params value from store key or panic
@@ -83,6 +90,10 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 func (p Params) Validate() error {
 	if p.RequestGuardCount == 0 {
 		return fmt.Errorf("subscribe parameter RequestGuardCount must be a positive integer")
+	}
+
+	if p.RequestLimit == 0 {
+		return fmt.Errorf("subscribe parameter RequestLimit must be a positive integer")
 	}
 	return nil
 }
