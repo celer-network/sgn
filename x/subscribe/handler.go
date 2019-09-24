@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/celer-network/sgn/chain"
-	"github.com/celer-network/sgn/entity"
+	"github.com/celer-network/sgn/proto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/golang/protobuf/proto"
+	protobuf "github.com/golang/protobuf/proto"
 )
 
 // NewHandler returns a handler for "subscribe" type messages.
@@ -73,14 +72,14 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal("Subscription expired").Result()
 	}
 
-	var signedSimplexState chain.SignedSimplexState
-	err := proto.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
+	var signedSimplexState proto.SignedSimplexState
+	err := protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal signedSimplexStateBytes: %s", err)).Result()
 	}
 
-	var simplexPaymentChannel entity.SimplexPaymentChannel
-	err = proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
+	var simplexPaymentChannel proto.SimplexPaymentChannel
+	err = protobuf.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal simplexState: %s", err)).Result()
 	}
