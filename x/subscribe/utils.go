@@ -44,26 +44,26 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 		}
 
 		seqNum := seqNums[peerFromIndex].Uint64()
-		requestHandlers := getRequestHandlers(ctx, keeper)
-		request = NewRequest(seqNum, peerAddresses, peerFromIndex, disputeTimeout.Uint64(), requestHandlers)
+		requestGuards := getRequestGuards(ctx, keeper)
+		request = NewRequest(seqNum, peerAddresses, peerFromIndex, disputeTimeout.Uint64(), requestGuards)
 	}
 
 	return request, nil
 }
 
-func getRequestHandlers(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	validators := keeper.validatorKeeper.GetValidators(ctx)
-	requestHandlerId := keeper.GetRequestHanlderId(ctx)
-	requestHandlerCount := keeper.RequestHandlerCount(ctx)
-	requestHandlers := []sdk.AccAddress{}
+	requestGuardId := keeper.GetRequestHanlderId(ctx)
+	requestGuardCount := keeper.RequestGuardCount(ctx)
+	requestGuards := []sdk.AccAddress{}
 
-	for uint64(len(requestHandlers)) < requestHandlerCount {
-		requestHandlers = append(requestHandlers, sdk.AccAddress(validators[requestHandlerId].OperatorAddress))
-		requestHandlerId = (requestHandlerId + 1) % uint8(len(validators))
+	for uint64(len(requestGuards)) < requestGuardCount {
+		requestGuards = append(requestGuards, sdk.AccAddress(validators[requestGuardId].OperatorAddress))
+		requestGuardId = (requestGuardId + 1) % uint8(len(validators))
 	}
 
-	keeper.SetRequestHanlderId(ctx, requestHandlerId)
-	return requestHandlers
+	keeper.SetRequestHanlderId(ctx, requestGuardId)
+	return requestGuards
 }
 
 func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {

@@ -102,7 +102,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		return
 	}
 
-	if !m.isRequestHandler(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
+	if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
 		m.pusherQueue.PushBack(intendSettle)
 		return
 	}

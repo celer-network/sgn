@@ -11,33 +11,33 @@ import (
 // subscribe params default values
 const (
 	// Default request handler count
-	DefaultRequestHandlerCount uint64 = 3
+	DefaultRequestGuardCount uint64 = 3
 )
 
 // nolint - Keys for parameter access
 var (
-	KeyRequestHandlerCount = []byte("RequestHandlerCount")
+	KeyRequestGuardCount = []byte("RequestGuardCount")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for subscribe
 type Params struct {
-	RequestHandlerCount uint64 `json:"requestHandlerCount" yaml:"requestHandlerCount"` // epoch length based on seconds
+	RequestGuardCount uint64 `json:"requestGuardCount" yaml:"requestGuardCount"` // epoch length based on seconds
 }
 
 // NewParams creates a new Params instance
-func NewParams(requestHandlerCount uint64) Params {
+func NewParams(requestGuardCount uint64) Params {
 
 	return Params{
-		RequestHandlerCount: requestHandlerCount,
+		RequestGuardCount: requestGuardCount,
 	}
 }
 
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeyRequestHandlerCount, &p.RequestHandlerCount},
+		{KeyRequestGuardCount, &p.RequestGuardCount},
 	}
 }
 
@@ -51,14 +51,14 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultRequestHandlerCount)
+	return NewParams(DefaultRequestGuardCount)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-  RequestHandlerCount:    %d`,
-		p.RequestHandlerCount)
+  RequestGuardCount:    %d`,
+		p.RequestGuardCount)
 }
 
 // unmarshal the current subscribe params value from store key or panic
@@ -81,8 +81,8 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
-	if p.RequestHandlerCount == 0 {
-		return fmt.Errorf("subscribe parameter RequestHandlerCount must be a positive integer")
+	if p.RequestGuardCount == 0 {
+		return fmt.Errorf("subscribe parameter RequestGuardCount must be a positive integer")
 	}
 	return nil
 }

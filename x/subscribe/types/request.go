@@ -12,18 +12,18 @@ type Request struct {
 	PeerAddresses           []string         `json:"peerAddresses"`
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
 	DisputeTimeout          uint64           `json:"disputeTimeout"`
-	RequestHandlers         []sdk.AccAddress `json:"requestHandlers"`
+	RequestGuards         []sdk.AccAddress `json:"requestGuards"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	TxHash                  string           `json:"txHash"`
 }
 
-func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestHandlers []sdk.AccAddress) Request {
+func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestGuards []sdk.AccAddress) Request {
 	return Request{
 		SeqNum:          seqNum,
 		PeerAddresses:   peerAddresses,
 		PeerFromIndex:   peerFromIndex,
 		DisputeTimeout:  disputeTimeout,
-		RequestHandlers: requestHandlers,
+		RequestGuards: requestGuards,
 	}
 }
 

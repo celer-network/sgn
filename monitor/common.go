@@ -35,8 +35,8 @@ func (m *EthMonitor) isPullerOrOwner(candidate string) bool {
 	return m.isPuller() || candidate == m.ethClient.Address.String()
 }
 
-func (m *EthMonitor) isRequestHandler(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
-	requestHanlders := request.RequestHandlers
+func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
+	requestHanlders := request.RequestGuards
 	blockNumberDiff := latestBlockNum - eventBlockNumber
 	handlerIndex := uint64(len(requestHanlders)+1) * blockNumberDiff / request.DisputeTimeout
 
