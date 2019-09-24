@@ -52,7 +52,7 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel proto.Simp
 
 func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	validators := keeper.validatorKeeper.GetValidators(ctx)
-	requestGuardId := keeper.GetRequestHanlderId(ctx)
+	requestGuardId := keeper.GetRequestGuardId(ctx)
 	requestGuardCount := keeper.RequestGuardCount(ctx)
 	requestGuards := []sdk.AccAddress{}
 
@@ -61,7 +61,7 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 		requestGuardId = (requestGuardId + 1) % uint8(len(validators))
 	}
 
-	keeper.SetRequestHanlderId(ctx, requestGuardId)
+	keeper.SetRequestGuardId(ctx, requestGuardId)
 	return requestGuards
 }
 

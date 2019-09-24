@@ -27,7 +27,7 @@ var (
 	GetSubscriptionKey         = types.GetSubscriptionKey
 	GetRequestKey              = types.GetRequestKey
 	SubscriptionKeyPrefix      = types.SubscriptionKeyPrefix
-	RequestHanlderIdKey        = types.RequestHanlderIdKey
+	RequestGuardIdKey        = types.RequestGuardIdKey
 	CLIQueryRequest            = cli.QueryRequest
 	DefaultParams              = types.DefaultParams
 )

@@ -87,20 +87,20 @@ func (k Keeper) SetRequest(ctx sdk.Context, channelId []byte, request Request) {
 	store.Set(GetRequestKey(channelId), k.cdc.MustMarshalBinaryBare(request))
 }
 
-// Gets the request handler id
-func (k Keeper) GetRequestHanlderId(ctx sdk.Context) uint8 {
+// Gets the request guard id
+func (k Keeper) GetRequestGuardId(ctx sdk.Context) uint8 {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has(RequestHanlderIdKey) {
+	if !store.Has(RequestGuardIdKey) {
 		return 0
 	}
 
-	value := store.Get(RequestHanlderIdKey)
+	value := store.Get(RequestGuardIdKey)
 	return uint8(value[0])
 }
 
-// Sets the request handler id
-func (k Keeper) SetRequestHanlderId(ctx sdk.Context, request uint8) {
+// Sets the request guard id
+func (k Keeper) SetRequestGuardId(ctx sdk.Context, request uint8) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(RequestHanlderIdKey, []byte{request})
+	store.Set(RequestGuardIdKey, []byte{request})
 }

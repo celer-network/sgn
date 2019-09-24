@@ -16,7 +16,7 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// RequestGuardCount - number of handlers to handle the request
+// RequestGuardCount - number of guards to handle the request
 func (k Keeper) RequestGuardCount(ctx sdk.Context) (res uint64) {
 	k.paramstore.Get(ctx, types.KeyRequestGuardCount, &res)
 	return

@@ -10,7 +10,7 @@ import (
 
 // subscribe params default values
 const (
-	// Default request handler count
+	// Default request guard count
 	DefaultRequestGuardCount uint64 = 3
 )
 
