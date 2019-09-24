@@ -3,7 +3,6 @@ package monitor
 import (
 	"log"
 
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -12,21 +11,20 @@ import (
 
 func (m *EthMonitor) processQueue() {
 	m.processPullerQueue()
+	m.processEventQueue()
+	m.processPusherQueue()
+}
 
-	latestBlock, err := m.getLatestBlock()
+func (m *EthMonitor) processEventQueue() {
+	secureBlockNum, err := m.getSecureBlockNum()
 	if err != nil {
-		log.Printf("Query latestBlock err", err)
+		log.Printf("Query secureBlockNum err", err)
 		return
 	}
 
-	m.processEventQueue(latestBlock.Number)
-	m.processPusherQueue(latestBlock.Number)
-}
-
-func (m *EthMonitor) processEventQueue(latestBlockNum uint64) {
 	for m.eventQueue.Len() > 0 {
 		e := m.eventQueue.Front().(Event)
-		if latestBlockNum < e.log.BlockNumber+common.ConfirmationCount {
+		if secureBlockNum < e.log.BlockNumber {
 			return
 		}
 
@@ -60,11 +58,17 @@ func (m *EthMonitor) processPullerQueue() {
 	}
 }
 
-func (m *EthMonitor) processPusherQueue(latestBlockNum uint64) {
+func (m *EthMonitor) processPusherQueue() {
+	latestBlock, err := m.getLatestBlock()
+	if err != nil {
+		log.Printf("Query latestBlock err", err)
+		return
+	}
+
 	for pusherLen := m.pusherQueue.Len(); pusherLen > 0; pusherLen-- {
 		switch event := m.pusherQueue.PopFront().(type) {
 		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(event, latestBlockNum)
+			m.processIntendSettle(event, latestBlock.Number)
 		}
 	}
 }

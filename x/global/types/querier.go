@@ -1,9 +1,10 @@
 package types
 
 const (
-	QueryLatestBlock = "latestBlock"
-	QueryEpoch       = "epoch"
-	QueryParameters  = "parameters"
+	QueryLatestBlock    = "latestBlock"
+	QuerySecureBlockNum = "secureBlockNum"
+	QueryEpoch          = "epoch"
+	QueryParameters     = "parameters"
 )
 
 type QueryEpochParams struct {

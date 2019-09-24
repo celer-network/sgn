@@ -56,6 +56,10 @@ func (m *EthMonitor) getLatestBlock() (global.Block, error) {
 	return global.CLIQueryLatestBlock(m.cdc, m.transactor.CliCtx, global.StoreKey)
 }
 
+func (m *EthMonitor) getSecureBlockNum() (uint64, error) {
+	return global.CLIQuerySecureBlockNum(m.cdc, m.transactor.CliCtx, global.StoreKey)
+}
+
 // Get account info
 func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 	accGetter := types.NewAccountRetriever(m.transactor.CliCtx)

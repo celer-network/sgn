@@ -22,6 +22,18 @@ func (k Keeper) EpochLength(ctx sdk.Context) (res int64) {
 	return
 }
 
+// MaxBlockDiff - Max block diff accepted when sync block
+func (k Keeper) MaxBlockDiff(ctx sdk.Context) (res int64) {
+	k.paramstore.Get(ctx, types.KeyMaxBlockDiff, &res)
+	return
+}
+
+// ConfirmationCount - Number of blocks to confirm a block is safe
+func (k Keeper) ConfirmationCount(ctx sdk.Context) (res uint64) {
+	k.paramstore.Get(ctx, types.KeyConfirmationCount, &res)
+	return
+}
+
 // CostPerEpoch - Cost per epoch
 func (k Keeper) CostPerEpoch(ctx sdk.Context) (res sdk.Int) {
 	k.paramstore.Get(ctx, types.KeyCostPerEpoch, &res)
@@ -32,6 +44,8 @@ func (k Keeper) CostPerEpoch(ctx sdk.Context) (res sdk.Int) {
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.EpochLength(ctx),
+		k.MaxBlockDiff(ctx),
+		k.ConfirmationCount(ctx),
 		k.CostPerEpoch(ctx),
 	)
 }

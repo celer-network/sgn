@@ -16,28 +16,40 @@ const (
 
 	// Default cost per epoch, 1 CELR token per epoch
 	DefaultCostPerEpoch int64 = 1000000000000000000
+
+	// Default max block diff accepted when sync block
+	DefaultMaxBlockDiff int64 = 2
+
+	// Default number of blocks to confirm a block is safe
+	DefaultConfirmationCount uint64 = 5
 )
 
 // nolint - Keys for parameter access
 var (
-	KeyEpochLength  = []byte("EpochLength")
-	KeyCostPerEpoch = []byte("KeyCostPerEpoch")
+	KeyEpochLength       = []byte("EpochLength")
+	KeyMaxBlockDiff      = []byte("KeyMaxBlockDiff")
+	KeyConfirmationCount = []byte("KeyConfirmationCount")
+	KeyCostPerEpoch      = []byte("KeyCostPerEpoch")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for global
 type Params struct {
-	EpochLength  int64   `json:"epochLength" yaml:"epochLength"`   // epoch length based on seconds
-	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"` // The fee will be charged for subscription per epoch
+	EpochLength       int64   `json:"epochLength" yaml:"epochLength"`             // epoch length based on seconds
+	MaxBlockDiff      int64   `json:"maxBlockDiff" yaml:"maxBlockDiff"`           // Max block diff accepted when sync block
+	ConfirmationCount uint64  `json:"confirmationCount" yaml:"confirmationCount"` // Number of blocks to confirm a block is safe
+	CostPerEpoch      sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"`           // The fee will be charged for subscription per epoch
 }
 
 // NewParams creates a new Params instance
-func NewParams(EpochLength int64, CostPerEpoch sdk.Int) Params {
+func NewParams(epochLength, maxBlockDiff int64, confirmationCount uint64, costPerEpoch sdk.Int) Params {
 
 	return Params{
-		EpochLength:  EpochLength,
-		CostPerEpoch: CostPerEpoch,
+		EpochLength:       epochLength,
+		MaxBlockDiff:      maxBlockDiff,
+		ConfirmationCount: confirmationCount,
+		CostPerEpoch:      costPerEpoch,
 	}
 }
 
@@ -45,6 +57,8 @@ func NewParams(EpochLength int64, CostPerEpoch sdk.Int) Params {
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		{KeyEpochLength, &p.EpochLength},
+		{KeyMaxBlockDiff, &p.MaxBlockDiff},
+		{KeyConfirmationCount, &p.ConfirmationCount},
 		{KeyCostPerEpoch, &p.CostPerEpoch},
 	}
 }
@@ -59,15 +73,17 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultEpochLength, sdk.NewInt(DefaultCostPerEpoch))
+	return NewParams(DefaultEpochLength, DefaultMaxBlockDiff, DefaultConfirmationCount, sdk.NewInt(DefaultCostPerEpoch))
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-  Max Validators:    %d
-  Cost Per Epoch:       %d`,
-		p.EpochLength, p.CostPerEpoch)
+  EpochLength:    %d
+	MaxBlockDiff:   %d
+	ConfirmationCount:   %d
+	CostPerEpoch:   %v`,
+		p.EpochLength, p.MaxBlockDiff, p.ConfirmationCount, p.CostPerEpoch)
 }
 
 // unmarshal the current global params value from store key or panic
@@ -90,8 +106,17 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
-	if p.EpochLength == 0 {
+	if p.EpochLength <= 0 {
 		return fmt.Errorf("global parameter EpochLength must be a positive integer")
 	}
+
+	if p.MaxBlockDiff < 0 {
+		return fmt.Errorf("global parameter EpochLength must be a positive integer")
+	}
+
+	if p.CostPerEpoch.LTE(sdk.NewInt(0)) {
+		return fmt.Errorf("global parameter CostPerEpoch must be a positive integer")
+	}
+
 	return nil
 }
