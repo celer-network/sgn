@@ -25,12 +25,10 @@ func NewQueryDelegatorParams(candidateAddress, delegatorAddress string) QueryDel
 
 type QueryCandidateParams struct {
 	CandidateAddress string
-	Seq              int64
 }
 
-func NewQueryCandidateParams(candidateAddress string, seq int64) QueryCandidateParams {
+func NewQueryCandidateParams(candidateAddress string) QueryCandidateParams {
 	return QueryCandidateParams{
 		CandidateAddress: ethcommon.HexToAddress(candidateAddress).String(),
-		Seq:              seq,
 	}
 }

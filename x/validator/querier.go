@@ -68,17 +68,7 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
 	}
 
-	var candidate Candidate
-	var found bool
-	if params.Seq <= 0 {
-		candidate = keeper.GetCandidate(ctx, params.CandidateAddress)
-	} else {
-		candidate, found = keeper.GetCandidateSnapshot(ctx, params.CandidateAddress, sdk.NewInt(params.Seq))
-		if !found {
-			return nil, sdk.ErrInternal("Could not find corresponding candidate")
-		}
-	}
-
+	candidate := keeper.GetCandidate(ctx, params.CandidateAddress)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))

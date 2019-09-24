@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -17,7 +18,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 
 	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
 	newEpoch.TotalFee = getTotalFee(ctx, keeper)
-	newEpoch.ValidatorSnapshotKeys = getValidatorSnapshotKeys(ctx, keeper)
+	distributeReward(ctx, keeper, newEpoch)
 	keeper.globalKeeper.SetLatestEpoch(ctx, newEpoch)
 }
 
@@ -39,14 +40,24 @@ func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
 	return totalFee
 }
 
-func getValidatorSnapshotKeys(ctx sdk.Context, keeper Keeper) [][]byte {
-	var snapshotKeys [][]byte
+func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 	validators := keeper.validatorKeeper.GetValidators(ctx)
+	totalStake := sdk.NewInt(0)
+	var candidates []validator.Candidate
+
 	for _, validator := range validators {
 		ethAddr := validator.Description.Identity
 		candidate := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
-		snapshotKeys = append(snapshotKeys, candidate.GetSnapshotKey())
+		totalStake = totalStake.Add(candidate.TotalStake)
+		candidates = append(candidates, candidate)
 	}
 
-	return snapshotKeys
+	for _, candidate := range candidates {
+		for _, delegator := range candidate.Delegators {
+			reward := keeper.validatorKeeper.GetReward(ctx, delegator.EthAddress)
+			delegatorFee := epoch.TotalFee.Mul(delegator.Stake).Quo(totalStake)
+			reward.Amount = reward.Amount.Add(delegatorFee)
+			keeper.validatorKeeper.SetReward(ctx, delegator.EthAddress, reward)
+		}
+	}
 }

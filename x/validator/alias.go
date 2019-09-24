@@ -6,13 +6,15 @@ import (
 )
 
 const (
-	ModuleName     = types.ModuleName
-	RouterKey      = types.RouterKey
-	StoreKey       = types.StoreKey
-	QueryPuller    = types.QueryPuller
-	QueryPusher    = types.QueryPusher
-	QueryDelegator = types.QueryDelegator
-	QueryCandidate = types.QueryCandidate
+	ModuleName             = types.ModuleName
+	RouterKey              = types.RouterKey
+	StoreKey               = types.StoreKey
+	QueryPuller            = types.QueryPuller
+	QueryPusher            = types.QueryPusher
+	QueryDelegator         = types.QueryDelegator
+	QueryCandidate         = types.QueryCandidate
+	TypeMsgWithdrawReward  = types.TypeMsgWithdrawReward
+	AttributeKeyEthAddress = types.AttributeKeyEthAddress
 )
 
 var (
@@ -20,6 +22,7 @@ var (
 	NewMsgClaimValidator      = types.NewMsgClaimValidator
 	NewMsgSyncValidator       = types.NewMsgSyncValidator
 	NewMsgSyncDelegator       = types.NewMsgSyncDelegator
+	NewMsgWithdrawReward      = types.NewMsgWithdrawReward
 	ModuleCdc                 = types.ModuleCdc
 	RegisterCodec             = types.RegisterCodec
 	PullerKey                 = types.PullerKey
@@ -27,11 +30,12 @@ var (
 	GetDelegatorKey           = types.GetDelegatorKey
 	GetDelegatorsKey          = types.GetDelegatorsKey
 	GetCandidateKey           = types.GetCandidateKey
-	GetCandidateSnapshotKey   = types.GetCandidateSnapshotKey
+	GetRewardKey              = types.GetRewardKey
 	NewPuller                 = types.NewPuller
 	NewPusher                 = types.NewPusher
 	NewDelegator              = types.NewDelegator
 	NewCandidate              = types.NewCandidate
+	NewReward                 = types.NewReward
 	CLIQueryPuller            = cli.QueryPuller
 	CLIQueryPusher            = cli.QueryPusher
 )
@@ -41,10 +45,12 @@ type (
 	Pusher                 = types.Pusher
 	Delegator              = types.Delegator
 	Candidate              = types.Candidate
+	Reward                 = types.Reward
 	QueryDelegatorParams   = types.QueryDelegatorParams
 	QueryCandidateParams   = types.QueryCandidateParams
 	MsgInitializeCandidate = types.MsgInitializeCandidate
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator
 	MsgSyncDelegator       = types.MsgSyncDelegator
+	MsgWithdrawReward      = types.MsgWithdrawReward
 )

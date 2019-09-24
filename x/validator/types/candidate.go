@@ -8,23 +8,23 @@ import (
 )
 
 type Delegator struct {
-	Stake sdk.Int `json:"stake"`
+	EthAddress string  `json:"ethAddress"`
+	Stake      sdk.Int `json:"stake"`
 }
 
-func NewDelegator(stake sdk.Int) Delegator {
+func NewDelegator(ethAddress string) Delegator {
 	return Delegator{
-		Stake: stake,
+		EthAddress: ethAddress,
 	}
 }
 
 // implement fmt.Stringer
 func (c Delegator) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Stake: %v`, c.Stake))
+	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, Stake: %v`, c.EthAddress, c.Stake))
 }
 
 type Candidate struct {
 	EthAddress string      `json:"ethAddress"`
-	Seq        sdk.Int     `json:"seq"`
 	TotalStake sdk.Int     `json:"totalStake"`
 	Delegators []Delegator `json:"delegators"`
 }
@@ -32,15 +32,10 @@ type Candidate struct {
 func NewCandidate(ethAddress string, seq sdk.Int) Candidate {
 	return Candidate{
 		EthAddress: ethAddress,
-		Seq:        seq,
 	}
 }
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, Seq: %v, TotalStake: %v`, c.EthAddress, c.Seq, c.TotalStake))
-}
-
-func (c Candidate) GetSnapshotKey() []byte {
-	return GetCandidateSnapshotKey(c.EthAddress, c.Seq)
+	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, TotalStake: %v`, c.EthAddress, c.TotalStake))
 }

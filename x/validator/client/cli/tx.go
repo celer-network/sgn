@@ -109,3 +109,23 @@ func GetCmdSyncDelegator(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 }
+
+// GetCmdWithdrawReward is the CLI command for sending a WithdrawReward transaction
+func GetCmdWithdrawReward(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "withdraw-reward [eth-addr]",
+		Short: "withdraw reward for the eth address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			msg := types.NewMsgWithdrawReward(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}

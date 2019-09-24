@@ -22,6 +22,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgSyncValidator(ctx, keeper, msg)
 		case MsgSyncDelegator:
 			return handleMsgSyncDelegator(ctx, keeper, msg)
+		case MsgWithdrawReward:
+			return handleMsgWithdrawReward(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -121,6 +123,19 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
 	keeper.SnapshotCandidate(ctx, msg.CandidateAddress)
 
+	return sdk.Result{}
+}
+
+// Handle a message to withdraw reward
+func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawReward) sdk.Result {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyAction, TypeMsgWithdrawReward),
+			sdk.NewAttribute(sdk.AttributeKeyAction, "withdraw_reward"),
+			sdk.NewAttribute(AttributeKeyEthAddress, msg.EthAddress),
+		),
+	)
 	return sdk.Result{}
 }
 
