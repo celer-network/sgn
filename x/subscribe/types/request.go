@@ -3,21 +3,27 @@ package types
 import (
 	"fmt"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type Request struct {
-	SeqNum                  uint64   `json:"seqNum"`
-	PeerAddresses           []string `json:"peerAddresses"`
-	PeerFromIndex           uint     `json:"peerFromIndex"`
-	SignedSimplexStateBytes []byte   `json:"signedSimplexStateBytes"`
-	TxHash                  string   `json:"txHash"`
+	SeqNum                  uint64           `json:"seqNum"`
+	PeerAddresses           []string         `json:"peerAddresses"`
+	PeerFromIndex           uint8            `json:"peerFromIndex"`
+	DisputeTimeout          uint64           `json:"disputeTimeout"`
+	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
+	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
+	TxHash                  string           `json:"txHash"`
 }
 
-func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint) Request {
+func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestGuards []sdk.AccAddress) Request {
 	return Request{
-		SeqNum:        seqNum,
-		PeerAddresses: peerAddresses,
-		PeerFromIndex: peerFromIndex,
+		SeqNum:         seqNum,
+		PeerAddresses:  peerAddresses,
+		PeerFromIndex:  peerFromIndex,
+		DisputeTimeout: disputeTimeout,
+		RequestGuards:  requestGuards,
 	}
 }
 

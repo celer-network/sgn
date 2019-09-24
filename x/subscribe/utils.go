@@ -16,6 +16,14 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel proto.Simp
 	if !found {
 		channelId := [32]byte{}
 		copy(channelId[:], simplexPaymentChannel.ChannelId)
+
+		disputeTimeout, err := keeper.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
+			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+		}, channelId)
+		if err != nil {
+			return Request{}, err
+		}
+
 		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
 			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 		}, channelId)
@@ -25,19 +33,36 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel proto.Simp
 
 		peerAddresses := []string{addresses[0].String(), addresses[1].String()}
 		peerFromAddress := ethcommon.BytesToAddress(simplexPaymentChannel.PeerFrom).String()
-		var peerFromIndex uint
+		var peerFromIndex uint8
 		if peerAddresses[0] == peerFromAddress {
-			peerFromIndex = 0
+			peerFromIndex = uint8(0)
 		} else if peerAddresses[1] == peerFromAddress {
-			peerFromIndex = 1
+			peerFromIndex = uint8(1)
 		} else {
 			return Request{}, errors.New("peerFrom is not valid address")
 		}
 
-		request = NewRequest(seqNums[peerFromIndex].Uint64(), peerAddresses, peerFromIndex)
+		seqNum := seqNums[peerFromIndex].Uint64()
+		requestGuards := getRequestGuards(ctx, keeper)
+		request = NewRequest(seqNum, peerAddresses, peerFromIndex, disputeTimeout.Uint64(), requestGuards)
 	}
 
 	return request, nil
+}
+
+func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+	validators := keeper.validatorKeeper.GetValidators(ctx)
+	requestGuardId := keeper.GetRequestGuardId(ctx)
+	requestGuardCount := keeper.RequestGuardCount(ctx)
+	requestGuards := []sdk.AccAddress{}
+
+	for uint64(len(requestGuards)) < requestGuardCount {
+		requestGuards = append(requestGuards, sdk.AccAddress(validators[requestGuardId].OperatorAddress))
+		requestGuardId = (requestGuardId + 1) % uint8(len(validators))
+	}
+
+	keeper.SetRequestGuardId(ctx, requestGuardId)
+	return requestGuards
 }
 
 func verifySignedSimplexStateSigs(request Request, signedSimplexState proto.SignedSimplexState) error {

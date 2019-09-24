@@ -5,47 +5,39 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-// global params default values
+// subscribe params default values
 const (
-	// Default epoch length based on seconds
-	DefaultEpochLength int64 = 60
-
-	// Default cost per epoch, 1 CELR token per epoch
-	DefaultCostPerEpoch int64 = 1000000000000000000
+	// Default request guard count
+	DefaultRequestGuardCount uint64 = 3
 )
 
 // nolint - Keys for parameter access
 var (
-	KeyEpochLength  = []byte("EpochLength")
-	KeyCostPerEpoch = []byte("KeyCostPerEpoch")
+	KeyRequestGuardCount = []byte("RequestGuardCount")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
-// Params defines the high level settings for global
+// Params defines the high level settings for subscribe
 type Params struct {
-	EpochLength  int64   `json:"epochLength" yaml:"epochLength"`   // epoch length based on seconds
-	CostPerEpoch sdk.Int `json:"costPerEpoch" yaml:"costPerEpoch"` // The fee will be charged for subscription per epoch
+	RequestGuardCount uint64 `json:"requestGuardCount" yaml:"requestGuardCount"` // epoch length based on seconds
 }
 
 // NewParams creates a new Params instance
-func NewParams(EpochLength int64, CostPerEpoch sdk.Int) Params {
+func NewParams(requestGuardCount uint64) Params {
 
 	return Params{
-		EpochLength:  EpochLength,
-		CostPerEpoch: CostPerEpoch,
+		RequestGuardCount: requestGuardCount,
 	}
 }
 
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeyEpochLength, &p.EpochLength},
-		{KeyCostPerEpoch, &p.CostPerEpoch},
+		{KeyRequestGuardCount, &p.RequestGuardCount},
 	}
 }
 
@@ -59,18 +51,17 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultEpochLength, sdk.NewInt(DefaultCostPerEpoch))
+	return NewParams(DefaultRequestGuardCount)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-  Max Validators:    %d
-  Cost Per Epoch:       %d`,
-		p.EpochLength, p.CostPerEpoch)
+  RequestGuardCount:    %d`,
+		p.RequestGuardCount)
 }
 
-// unmarshal the current global params value from store key or panic
+// unmarshal the current subscribe params value from store key or panic
 func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
 	params, err := UnmarshalParams(cdc, value)
 	if err != nil {
@@ -79,7 +70,7 @@ func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
 	return params
 }
 
-// unmarshal the current global params value from store key
+// unmarshal the current subscribe params value from store key
 func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) {
 	err = cdc.UnmarshalBinaryLengthPrefixed(value, &params)
 	if err != nil {
@@ -90,8 +81,8 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
-	if p.EpochLength == 0 {
-		return fmt.Errorf("global parameter EpochLength must be a positive integer")
+	if p.RequestGuardCount == 0 {
+		return fmt.Errorf("subscribe parameter RequestGuardCount must be a positive integer")
 	}
 	return nil
 }

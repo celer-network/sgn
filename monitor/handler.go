@@ -75,7 +75,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 	}
 
 	if intendSettle.SeqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-		log.Printf("Ignore the intendSettle event due to larger seqNum")
+		log.Printf("Ignore the intendSettle event with a larger seqNum")
 		return
 	}
 
