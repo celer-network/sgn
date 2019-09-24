@@ -26,6 +26,7 @@ func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
 	costPerEpoch := keeper.globalKeeper.CostPerEpoch(ctx)
 	totalFee := sdk.ZeroInt()
 	keeper.IterateSubscriptions(ctx, func(subscription Subscription) (stop bool) {
+		subscription.RequestCount = 0
 		subscription.Subscribing = false
 		if subscription.Deposit.Sub(subscription.Spend).GTE(costPerEpoch) {
 			subscription.Spend = subscription.Spend.Add(costPerEpoch)

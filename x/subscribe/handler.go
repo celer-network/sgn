@@ -72,6 +72,10 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal("Subscription expired").Result()
 	}
 
+	if subscription.RequestCount >= keeper.RequestLimit(ctx) {
+		return sdk.ErrInternal("Hit the request rate limit").Result()
+	}
+
 	var signedSimplexState proto.SignedSimplexState
 	err := protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
