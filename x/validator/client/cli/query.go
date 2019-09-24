@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingCli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -130,8 +129,7 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query candidate info by candidateAddress and seq",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			seq := viper.GetInt64(flagSeq)
-			data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(args[0], seq))
+			data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(args[0]))
 			if err != nil {
 				return err
 			}
@@ -148,8 +146,6 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			return cliCtx.PrintOutput(candidate)
 		},
 	}
-
-	cmd.Flags().Int64(flagSeq, 0, "Candidate snapshot sequence")
 
 	return cmd
 }

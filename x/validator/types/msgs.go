@@ -7,6 +7,14 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
+const (
+	TypeMsgInitializeCandidate = "initialize_candidate"
+	TypeMsgClaimValidator      = "claim_validator"
+	TypeMsgSyncValidator       = "sync_validator"
+	TypeMsgSyncDelegator       = "sync_delegator"
+	TypeMsgWithdrawReward      = "withdraw_reward"
+)
+
 // MsgInitializeCandidate defines a InitializeCandidate message
 type MsgInitializeCandidate struct {
 	EthAddress string         `json:"ethAddress"`
@@ -25,7 +33,7 @@ func NewMsgInitializeCandidate(ethAddress string, sender sdk.AccAddress) MsgInit
 func (msg MsgInitializeCandidate) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgInitializeCandidate) Type() string { return "initialize_candidate" }
+func (msg MsgInitializeCandidate) Type() string { return TypeMsgInitializeCandidate }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgInitializeCandidate) ValidateBasic() sdk.Error {
@@ -70,7 +78,7 @@ func NewMsgClaimValidator(ethAddress string, pubkey string, sender sdk.AccAddres
 func (msg MsgClaimValidator) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgClaimValidator) Type() string { return "claim_validator" }
+func (msg MsgClaimValidator) Type() string { return TypeMsgClaimValidator }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgClaimValidator) ValidateBasic() sdk.Error {
@@ -118,7 +126,7 @@ func NewMsgSyncValidator(ethAddress string, sender sdk.AccAddress) MsgSyncValida
 func (msg MsgSyncValidator) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgSyncValidator) Type() string { return "sync_validator" }
+func (msg MsgSyncValidator) Type() string { return TypeMsgSyncValidator }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgSyncValidator) ValidateBasic() sdk.Error {
@@ -163,7 +171,7 @@ func NewMsgSyncDelegator(candidateAddress, delegatorAddress string, sender sdk.A
 func (msg MsgSyncDelegator) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgSyncDelegator) Type() string { return "sync_delegator" }
+func (msg MsgSyncDelegator) Type() string { return TypeMsgSyncDelegator }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgSyncDelegator) ValidateBasic() sdk.Error {
@@ -189,5 +197,47 @@ func (msg MsgSyncDelegator) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSyncDelegator) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// MsgWithdrawReward defines a SyncValidator message
+type MsgWithdrawReward struct {
+	EthAddress string         `json:"ethAddress"`
+	Sender     sdk.AccAddress `json:"sender"`
+}
+
+func NewMsgWithdrawReward(ethAddress string, sender sdk.AccAddress) MsgWithdrawReward {
+	return MsgWithdrawReward{
+		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		Sender:     sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgWithdrawReward) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgWithdrawReward) Type() string { return TypeMsgWithdrawReward }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgWithdrawReward) ValidateBasic() sdk.Error {
+	if msg.EthAddress == "" {
+		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgWithdrawReward) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgWithdrawReward) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

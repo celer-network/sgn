@@ -82,7 +82,7 @@ func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress
 	store := ctx.KVStore(k.storeKey)
 
 	if !store.Has(GetDelegatorKey(candidateAddress, delegatorAddress)) {
-		return Delegator{}
+		return NewDelegator(delegatorAddress)
 	}
 
 	var delegator Delegator
@@ -129,34 +129,38 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidat
 func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetCandidateKey(candidate.EthAddress), k.cdc.MustMarshalBinaryBare(candidate))
-	k.SetCandidateSnapshot(ctx, candidate)
-}
-
-// Gets the entire Candidate metadata for a candidateAddress and seq
-func (k Keeper) GetCandidateSnapshot(ctx sdk.Context, candidateAddress string, seq sdk.Int) (candidate Candidate, found bool) {
-	store := ctx.KVStore(k.storeKey)
-	candidateSnapshotKey := GetCandidateSnapshotKey(candidateAddress, seq)
-
-	if !store.Has(candidateSnapshotKey) {
-		return candidate, false
-	}
-
-	value := store.Get(candidateSnapshotKey)
-	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
-	return candidate, true
-}
-
-// Sets the entire Candidate metadata
-func (k Keeper) SetCandidateSnapshot(ctx sdk.Context, candidate Candidate) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(GetCandidateSnapshotKey(candidate.EthAddress, candidate.Seq), k.cdc.MustMarshalBinaryBare(candidate))
 }
 
 // Take a snapshot of candidate
 func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
 	candidate := k.GetCandidate(ctx, candidateAddr)
-	nextSeq := candidate.Seq.AddRaw(1)
-	newCandidate := NewCandidate(candidateAddr, nextSeq)
-	newCandidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
-	k.SetCandidate(ctx, newCandidate)
+	candidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
+
+	totalStake := sdk.NewInt(0)
+	for _, delegator := range candidate.Delegators {
+		totalStake = totalStake.Add(delegator.Stake)
+	}
+	candidate.TotalStake = totalStake
+
+	k.SetCandidate(ctx, candidate)
+}
+
+// Gets the entire Reward metadata for ethAddress
+func (k Keeper) GetReward(ctx sdk.Context, ethAddress string) (reward Reward) {
+	store := ctx.KVStore(k.storeKey)
+	rewardKey := GetRewardKey(ethAddress)
+
+	if !store.Has(rewardKey) {
+		return
+	}
+
+	value := store.Get(rewardKey)
+	k.cdc.MustUnmarshalBinaryBare(value, &reward)
+	return
+}
+
+// Sets the Reward metadata for ethAddress
+func (k Keeper) SetReward(ctx sdk.Context, ethAddress string, reward Reward) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetRewardKey(ethAddress), k.cdc.MustMarshalBinaryBare(reward))
 }
