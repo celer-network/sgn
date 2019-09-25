@@ -136,7 +136,7 @@ func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
 	candidate := k.GetCandidate(ctx, candidateAddr)
 	candidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
 
-	totalStake := sdk.NewInt(0)
+	totalStake := sdk. ZeroInt()
 	for _, delegator := range candidate.Delegators {
 		totalStake = totalStake.Add(delegator.Stake)
 	}

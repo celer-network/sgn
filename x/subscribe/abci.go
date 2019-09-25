@@ -43,7 +43,7 @@ func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
 
 func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 	validators := keeper.validatorKeeper.GetValidators(ctx)
-	totalStake := sdk.NewInt(0)
+	totalStake := sdk.ZeroInt()
 	var candidates []validator.Candidate
 
 	for _, validator := range validators {

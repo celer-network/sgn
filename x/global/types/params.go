@@ -114,7 +114,7 @@ func (p Params) Validate() error {
 		return fmt.Errorf("global parameter EpochLength must be a positive integer")
 	}
 
-	if p.CostPerEpoch.LTE(sdk.NewInt(0)) {
+	if p.CostPerEpoch.LTE(sdk. ZeroInt()) {
 		return fmt.Errorf("global parameter CostPerEpoch must be a positive integer")
 	}
 
