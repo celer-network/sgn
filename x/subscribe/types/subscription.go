@@ -18,8 +18,8 @@ type Subscription struct {
 func NewSubscription(ethAddress string) Subscription {
 	return Subscription{
 		EthAddress:   ethAddress,
-		Deposit:      sdk.NewInt(0),
-		Spend:        sdk.NewInt(0),
+		Deposit:      sdk. ZeroInt(),
+		Spend:        sdk. ZeroInt(),
 		Subscribing:  false,
 		RequestCount: 0,
 	}

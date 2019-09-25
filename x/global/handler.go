@@ -3,12 +3,10 @@ package global
 import (
 	"context"
 	"fmt"
-	"math"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-const maxBlockInterval = 2
 
 // NewHandler returns a handler for "global" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
@@ -35,7 +33,8 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Re
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query mainchain header: %s", err)).Result()
 	}
 
-	if math.Abs(float64(head.Number.Int64()-int64(msg.BlockNumber))) > maxBlockInterval {
+	blockDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
+	if blockDiff.CmpAbs(big.NewInt(keeper.MaxBlockDiff(ctx))) > 0 {
 		return sdk.ErrInternal("Block number is out of bound").Result()
 	}
 

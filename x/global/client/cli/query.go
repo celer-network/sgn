@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/binary"
 	"fmt"
 
 	"github.com/celer-network/sgn/x/global/types"
@@ -59,6 +60,19 @@ func QueryLatestBlock(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute st
 	}
 
 	cdc.MustUnmarshalJSON(res, &block)
+	return
+}
+
+// Query secure block number
+func QuerySecureBlockNum(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (secureBlockNum uint64, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
+	res, _, err := cliCtx.Query(route)
+	if err != nil {
+		fmt.Printf("query error", err)
+		return
+	}
+
+	secureBlockNum = binary.LittleEndian.Uint64(res)
 	return
 }
 

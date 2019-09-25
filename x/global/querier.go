@@ -15,6 +15,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case QueryLatestBlock:
 			return queryLatestBlock(ctx, req, keeper)
+		case QuerySecureBlockNum:
+			return querySecureBlockNum(ctx, req, keeper)
 		case QueryEpoch:
 			return queryEpoch(ctx, req, keeper)
 		case QueryParameters:
@@ -33,6 +35,12 @@ func queryLatestBlock(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 
 	}
 
+	return res, nil
+}
+
+func querySecureBlockNum(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	secureBlockNum := keeper.GetSecureBlockNum(ctx)
+	res := sdk.Uint64ToBigEndian(secureBlockNum)
 	return res, nil
 }
 

@@ -1,7 +1,6 @@
 package global
 
 import (
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,12 +41,13 @@ func (k Keeper) GetLatestBlock(ctx sdk.Context) Block {
 // Gets the secure block number
 func (k Keeper) GetSecureBlockNum(ctx sdk.Context) uint64 {
 	latestBlock := k.GetLatestBlock(ctx)
+	confirmationCount := k.ConfirmationCount(ctx)
 
-	if latestBlock.Number < common.ConfirmationCount {
+	if latestBlock.Number < confirmationCount {
 		return 0
 	}
 
-	return latestBlock.Number - common.ConfirmationCount
+	return latestBlock.Number - confirmationCount
 }
 
 // Sync the lastest Block metadata

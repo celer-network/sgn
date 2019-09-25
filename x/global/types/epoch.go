@@ -18,7 +18,7 @@ func NewEpoch(id sdk.Int, timestamp int64) Epoch {
 	return Epoch{
 		Id:        id,
 		Timestamp: timestamp,
-		TotalFee:  sdk.NewInt(0),
+		TotalFee:  sdk. ZeroInt(),
 	}
 }
 
