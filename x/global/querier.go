@@ -1,7 +1,6 @@
 package global
 
 import (
-	"encoding/binary"
 	"fmt"
 
 	"github.com/celer-network/sgn/x/global/types"
@@ -41,8 +40,7 @@ func queryLatestBlock(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 
 func querySecureBlockNum(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	secureBlockNum := keeper.GetSecureBlockNum(ctx)
-	res := make([]byte, 8)
-	binary.LittleEndian.PutUint64(res, secureBlockNum)
+	res := sdk.Uint64ToBigEndian(secureBlockNum)
 	return res, nil
 }
 
