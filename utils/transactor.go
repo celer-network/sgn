@@ -62,10 +62,12 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 	return transactor, nil
 }
 
+// Batch msg into a queue before actual broadcast
 func (t *Transactor) BroadcastTx(msg sdk.Msg) {
 	t.txQueue.PushBack(msg)
 }
 
+// Poll tx queue and send msgs in batch
 func (t *Transactor) start() {
 	for {
 		if t.txQueue.Len() == 0 {
@@ -97,6 +99,7 @@ func (t *Transactor) start() {
 			continue
 		}
 
+		// Make sure the transaction has been mines
 		log.Printf("Transactor tx", tx)
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {

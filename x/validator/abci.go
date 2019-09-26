@@ -14,6 +14,7 @@ func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	setPusher(ctx, keeper)
 }
 
+// Update puller for every pullerDuration
 func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	puller := keeper.GetPuller(ctx)
 	validators := keeper.GetValidators(ctx)
@@ -25,6 +26,7 @@ func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	}
 }
 
+// Update pusher for every pusherDuration
 func setPusher(ctx sdk.Context, keeper Keeper) {
 	pusher := keeper.GetPusher(ctx)
 	validators := keeper.GetValidators(ctx)

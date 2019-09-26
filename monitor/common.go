@@ -35,6 +35,7 @@ func (m *EthMonitor) isPullerOrOwner(candidate string) bool {
 	return m.isPuller() || candidate == m.ethClient.Address.String()
 }
 
+// Is the current node the guard to submit state proof
 func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
 	blockNumberDiff := latestBlockNum - eventBlockNumber

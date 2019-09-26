@@ -43,6 +43,7 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 	}
 	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
 
+	// Calculate partial subscription fee for the rest of epoch
 	if !subscription.Subscribing {
 		latestEpoch := keeper.globalKeeper.GetLatestEpoch(ctx)
 		epochLength := keeper.globalKeeper.EpochLength(ctx)

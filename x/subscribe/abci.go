@@ -22,6 +22,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	keeper.globalKeeper.SetLatestEpoch(ctx, newEpoch)
 }
 
+// Calculate total fee will be collected in current epoch and reset subscription requestcount
 func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
 	costPerEpoch := keeper.globalKeeper.CostPerEpoch(ctx)
 	totalFee := sdk.ZeroInt()
@@ -41,6 +42,7 @@ func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
 	return totalFee
 }
 
+// Calculate reward distribution to each delegator
 func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 	validators := keeper.validatorKeeper.GetValidators(ctx)
 	totalStake := sdk.ZeroInt()
