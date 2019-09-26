@@ -28,14 +28,14 @@ func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.Gu
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	log.Printf("New delegate", delegate.Candidate)
+	if m.isPullerOrOwner(delegate.Candidate.String()) {
+		m.syncDelegator(delegate.Candidate, delegate.Delegator)
+	}
+
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
 	} else {
 		m.ethClaimValidator(delegate)
-	}
-
-	if m.isPullerOrOwner(delegate.Candidate.String()) {
-		m.syncDelegator(delegate.Candidate, delegate.Delegator)
 	}
 }
 

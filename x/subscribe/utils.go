@@ -65,6 +65,7 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	return requestGuards
 }
 
+// Make sure signature match peer addresses for the channel
 func verifySignedSimplexStateSigs(request Request, signedSimplexState proto.SignedSimplexState) error {
 	if len(signedSimplexState.Sigs) != 2 {
 		return errors.New("incorrect sigs count")

@@ -53,6 +53,7 @@ func queryEpoch(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, 
 
 	var epoch Epoch
 
+	// Get the latest epoch if user does not specify the epoch id
 	if params.EpochId <= 0 {
 		epoch = keeper.GetLatestEpoch(ctx)
 	} else {

@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// Wrapper for ethereum Event
 type Event struct {
 	event interface{}
 	log   types.Log

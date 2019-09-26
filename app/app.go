@@ -310,9 +310,11 @@ func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abc
 	}
 	return app.mm.BeginBlock(ctx, req)
 }
+
 func (app *sgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
+
 func (app *sgnApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
 }

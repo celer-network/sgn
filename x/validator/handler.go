@@ -64,6 +64,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return sdk.ErrInternal("Sender has different address recorded on mainchain").Result()
 	}
 
+	// Make sure both val address and pub address have not been used before
 	valAddress := sdk.ValAddress(cp.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
