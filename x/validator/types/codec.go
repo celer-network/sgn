@@ -15,4 +15,5 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgInitializeCandidate{}, "validator/MsgInitializeCandidate", nil)
 	cdc.RegisterConcrete(MsgClaimValidator{}, "validator/MsgClaimValidator", nil)
 	cdc.RegisterConcrete(MsgSyncValidator{}, "validator/MsgSyncValidator", nil)
+	cdc.RegisterConcrete(MsgWithdrawReward{}, "validator/MsgWithdrawReward", nil)
 }

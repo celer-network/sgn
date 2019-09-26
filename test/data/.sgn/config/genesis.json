@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2019-09-14T01:50:07.125213Z",
+  "genesis_time": "2019-09-26T23:06:52.501871Z",
   "chain_id": "sgnchain",
   "consensus_params": {
     "block": {
@@ -18,18 +18,66 @@
   },
   "app_hash": "",
   "app_state": {
-    "subscribe": {},
-    "slashing": {
+    "staking": {
       "params": {
-        "max_evidence_age": "120000000000",
-        "signed_blocks_window": "100",
-        "min_signed_per_window": "0.500000000000000000",
-        "downtime_jail_duration": "600000000000",
-        "slash_fraction_double_sign": "0.050000000000000000",
-        "slash_fraction_downtime": "0.010000000000000000"
+        "unbonding_time": "1814400000000000",
+        "max_validators": 100,
+        "max_entries": 7,
+        "bond_denom": "stake"
       },
-      "signing_infos": {},
-      "missed_blocks": {}
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": null,
+      "delegations": null,
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
+    },
+    "params": null,
+    "subscribe": {
+      "params": {
+        "requestGuardCount": "3",
+        "requestLimit": "3"
+      }
+    },
+    "accounts": [
+      {
+        "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+        "coins": [
+          {
+            "denom": "stake",
+            "amount": "100000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      }
+    ],
+    "global": {
+      "params": {
+        "epochLength": "60",
+        "maxBlockDiff": "2",
+        "confirmationCount": "5",
+        "costPerEpoch": "1000000000000000000"
+      }
+    },
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000"
+      }
     },
     "genutil": {
       "gentxs": [
@@ -54,7 +102,7 @@
                   "min_self_delegation": "1",
                   "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
                   "validator_address": "cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
-                  "pubkey": "cosmosvalconspub1zcjduepqskkech94yjsc7hv88vkf3lurfl05tt70laqnlyrpf32nxvg8kdhshqt6qg",
+                  "pubkey": "cosmosvalconspub1zcjduepqln2zrc9q486tmcft0cfuhcptcyskear3n7vgc4xmlvsudw6lav9smcw9y8",
                   "value": {
                     "denom": "stake",
                     "amount": "100000000"
@@ -72,68 +120,20 @@
                   "type": "tendermint/PubKeySecp256k1",
                   "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
                 },
-                "signature": "ZuKFlalCxQT12g8DOpjzAM6aIfUxijUVYQOV2nvtoeM08YFEnX5VRgEJy9BdmvFL76OQh1376B7cJqryTl7t0g=="
+                "signature": "+oN6fmovPdq1vssbEJeHf2h2fzO4EYN92SXgIE3du388a9rTLNohiBIfMCDoMvNc6FUs25Zk2hZmQ0esGQIfuA=="
               }
             ],
-            "memo": "c5d471312c011d186eb10dc9f9fcdccb8094f21a@192.168.1.58:26656"
+            "memo": "d15470b124ae97071208381cc223d249c9121b53@192.168.1.58:26656"
           }
         }
       ]
     },
-    "params": null,
-    "accounts": [
-      {
-        "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
-        "coins": [
-          {
-            "denom": "stake",
-            "amount": "100000000"
-          }
-        ],
-        "sequence_number": "0",
-        "account_number": "0",
-        "original_vesting": [],
-        "delegated_free": [],
-        "delegated_vesting": [],
-        "start_time": "0",
-        "end_time": "0",
-        "module_name": "",
-        "module_permissions": [
-          ""
-        ]
-      }
-    ],
-    "bank": {
-      "send_enabled": true
-    },
-    "global": {},
+    "validator": {},
     "supply": {
       "supply": []
     },
-    "validator": {},
-    "auth": {
-      "params": {
-        "max_memo_characters": "256",
-        "tx_sig_limit": "7",
-        "tx_size_cost_per_byte": "10",
-        "sig_verify_cost_ed25519": "590",
-        "sig_verify_cost_secp256k1": "1000"
-      }
-    },
-    "staking": {
-      "params": {
-        "unbonding_time": "1814400000000000",
-        "max_validators": 100,
-        "max_entries": 7,
-        "bond_denom": "stake"
-      },
-      "last_total_power": "0",
-      "last_validator_powers": null,
-      "validators": null,
-      "delegations": null,
-      "unbonding_delegations": null,
-      "redelegations": null,
-      "exported": false
+    "bank": {
+      "send_enabled": true
     }
   }
 }

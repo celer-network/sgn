@@ -25,6 +25,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdClaimValidator(cdc),
 		GetCmdSyncValidator(cdc),
 		GetCmdSyncDelegator(cdc),
+		GetCmdWithdrawReward(cdc),
 	)...)
 
 	return validatorTxCmd
