@@ -28,6 +28,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdPuller(storeKey, cdc),
 		GetCmdDelegator(storeKey, cdc),
 		GetCmdCandidate(storeKey, cdc),
+		GetCmdReward(storeKey, cdc),
 		stakingCli.GetCmdQueryValidator(staking.StoreKey, cdc),
 		stakingCli.GetCmdQueryValidators(staking.StoreKey, cdc),
 	)...)
@@ -148,4 +149,35 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// GetCmdReward queries reward info
+func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "reward [ethAddress]",
+		Short: "query reward info",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			reward, err := QueryReward(cdc, cliCtx, queryRoute, args[0])
+			if err != nil {
+				return err
+			}
+
+			return cliCtx.PrintOutput(reward)
+		},
+	}
+}
+
+// Query reward info
+func QueryReward(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, ethAddress string) (reward types.Reward, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryReward)
+	res, _, err := cliCtx.Query(route)
+	if err != nil {
+		fmt.Printf("query reward error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(res, &reward)
+	return
 }

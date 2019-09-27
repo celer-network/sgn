@@ -13,6 +13,7 @@ const (
 	TypeMsgSyncValidator       = "sync_validator"
 	TypeMsgSyncDelegator       = "sync_delegator"
 	TypeMsgWithdrawReward      = "withdraw_reward"
+	TypeMsgSignReward          = "sign_reward"
 )
 
 // MsgInitializeCandidate defines a InitializeCandidate message
@@ -239,5 +240,53 @@ func (msg MsgWithdrawReward) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgWithdrawReward) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// MsgSignReward defines a SyncValidator message
+type MsgSignReward struct {
+	EthAddress string         `json:"ethAddress"`
+	Sig        []byte         `json:"sig"`
+	Sender     sdk.AccAddress `json:"sender"`
+}
+
+func NewMsgSignReward(ethAddress string, sig []byte, sender sdk.AccAddress) MsgSignReward {
+	return MsgSignReward{
+		EthAddress: ethAddress,
+		Sig:        sig,
+		Sender:     sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgSignReward) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgSignReward) Type() string { return TypeMsgSignReward }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgSignReward) ValidateBasic() sdk.Error {
+	if msg.EthAddress == "" {
+		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+	}
+
+	if len(msg.Sig) == 0 {
+		return sdk.ErrUnknownRequest("Sig cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSignReward) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSignReward) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

@@ -24,6 +24,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgSyncDelegator(ctx, keeper, msg)
 		case MsgWithdrawReward:
 			return handleMsgWithdrawReward(ctx, keeper, msg)
+		case MsgSignReward:
+			return handleMsgSignReward(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -129,14 +131,36 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 
 // Handle a message to withdraw reward
 func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawReward) sdk.Result {
+	reward := keeper.GetReward(ctx, msg.EthAddress)
+	if !reward.HasNewReward() {
+		return sdk.ErrInternal("Reward does not exist").Result()
+	}
+
+	reward.InitateWithdraw()
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyAction, TypeMsgWithdrawReward),
-			sdk.NewAttribute(sdk.AttributeKeyAction, "withdraw_reward"),
+			sdk.NewAttribute(sdk.AttributeKeyAction, ActionInitiateWithdraw),
 			sdk.NewAttribute(AttributeKeyEthAddress, msg.EthAddress),
 		),
 	)
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle a message to sign reward
+func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.Result {
+	reward := keeper.GetReward(ctx, msg.EthAddress)
+	if !reward.HasNewReward() {
+		return sdk.ErrInternal("Reward does not exist").Result()
+	}
+
+	err := reward.AddSig(msg.Sig)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to add sig: %s", err)).Result()
+	}
+
 	return sdk.Result{}
 }
 

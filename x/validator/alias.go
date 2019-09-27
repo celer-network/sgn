@@ -13,8 +13,11 @@ const (
 	QueryPusher            = types.QueryPusher
 	QueryDelegator         = types.QueryDelegator
 	QueryCandidate         = types.QueryCandidate
+	QueryReward            = types.QueryReward
 	TypeMsgWithdrawReward  = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress = types.AttributeKeyEthAddress
+	MsgWithdrawRewardName  = types.MsgWithdrawRewardName
+	ActionInitiateWithdraw = types.ActionInitiateWithdraw
 )
 
 var (
@@ -23,6 +26,8 @@ var (
 	NewMsgSyncValidator       = types.NewMsgSyncValidator
 	NewMsgSyncDelegator       = types.NewMsgSyncDelegator
 	NewMsgWithdrawReward      = types.NewMsgWithdrawReward
+	NewMsgSignReward          = types.NewMsgSignReward
+	NewQueryRewardParams      = types.NewQueryRewardParams
 	ModuleCdc                 = types.ModuleCdc
 	RegisterCodec             = types.RegisterCodec
 	PullerKey                 = types.PullerKey
@@ -38,6 +43,7 @@ var (
 	NewReward                 = types.NewReward
 	CLIQueryPuller            = cli.QueryPuller
 	CLIQueryPusher            = cli.QueryPusher
+	CLIQueryReward            = cli.QueryReward
 )
 
 type (
@@ -48,9 +54,11 @@ type (
 	Reward                 = types.Reward
 	QueryDelegatorParams   = types.QueryDelegatorParams
 	QueryCandidateParams   = types.QueryCandidateParams
+	QueryRewardParams      = types.QueryRewardParams
 	MsgInitializeCandidate = types.MsgInitializeCandidate
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator
 	MsgSyncDelegator       = types.MsgSyncDelegator
 	MsgWithdrawReward      = types.MsgWithdrawReward
+	MsgSignReward          = types.MsgSignReward
 )
