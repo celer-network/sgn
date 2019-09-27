@@ -103,10 +103,10 @@ func (t *Transactor) start() {
 		log.Printf("Transactor tx", tx)
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
-				log.Printf("No err")
+				// log.Printf("No err")
 				break
 			}
-			log.Printf("err", err)
+			// log.Printf("err", err)
 			time.Sleep(time.Second)
 		}
 
