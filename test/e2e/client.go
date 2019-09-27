@@ -7,7 +7,8 @@ import (
 	app "github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/subscribe"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -72,7 +73,7 @@ func sendRequestGuardTx() {
 	log.Println(ethcommon.Bytes2Hex(channelId[:]))
 
 	// TODO: currently, only use two same address
-	simplexPaymentChannelBytes, err := protobuf.Marshal(&proto.SimplexPaymentChannel{
+	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    10,
 		ChannelId: channelId[:],
 		PeerFrom:  ethClient.Address.Bytes(),
@@ -86,7 +87,7 @@ func sendRequestGuardTx() {
 		log.Fatal(err)
 	}
 
-	signedSimplexStateBytes, err := protobuf.Marshal(&proto.SignedSimplexState{
+	signedSimplexStateBytes, err := protobuf.Marshal(&chain.SignedSimplexState{
 		SimplexState: simplexPaymentChannelBytes,
 		Sigs:         [][]byte{sig, sig},
 	})

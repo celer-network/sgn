@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/celer-network/sgn/proto"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -79,13 +80,13 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	subscription.RequestCount += 1
 	keeper.SetSubscription(ctx, subscription)
 
-	var signedSimplexState proto.SignedSimplexState
+	var signedSimplexState chain.SignedSimplexState
 	err := protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal signedSimplexStateBytes: %s", err)).Result()
 	}
 
-	var simplexPaymentChannel proto.SimplexPaymentChannel
+	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err = protobuf.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal simplexState: %s", err)).Result()
