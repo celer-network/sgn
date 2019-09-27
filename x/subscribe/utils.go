@@ -5,13 +5,14 @@ import (
 	"math/big"
 
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
-func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel proto.SimplexPaymentChannel) (Request, error) {
+func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
 	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId)
 	if !found {
 		channelId := [32]byte{}
@@ -66,7 +67,7 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 }
 
 // Make sure signature match peer addresses for the channel
-func verifySignedSimplexStateSigs(request Request, signedSimplexState proto.SignedSimplexState) error {
+func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
 	if len(signedSimplexState.Sigs) != 2 {
 		return errors.New("incorrect sigs count")
 	}
