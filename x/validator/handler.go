@@ -151,6 +151,11 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 
 // Handle a message to sign reward
 func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.Result {
+	_, found := keeper.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
+	if !found {
+		return sdk.ErrInternal("Sender is not validator").Result()
+	}
+
 	reward := keeper.GetReward(ctx, msg.EthAddress)
 	if !reward.HasNewReward() {
 		return sdk.ErrInternal("Reward does not exist").Result()

@@ -196,6 +196,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 			}
 
 			for _, tx := range txs.Txs {
+				// Check if the tx has been seen before
 				_, err = m.txMemo.Get(tx.TxHash)
 				if err == nil {
 					hasSeenEvent = true
@@ -210,6 +211,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 				}
 			}
 
+			// Check if it is necessary to query next page
 			if txs.Count >= txsPageLimit && hasSeenEvent {
 				break
 			}

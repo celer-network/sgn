@@ -45,6 +45,7 @@ func (r Reward) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`MiningReward: %v, ServiceReward: %v`, r.MiningReward, r.ServiceReward))
 }
 
+// Check if have new reward added
 func (r Reward) HasNewReward() bool {
 	if len(r.RewardProtoBytes) == 0 {
 		return false
@@ -58,6 +59,7 @@ func (r Reward) HasNewReward() bool {
 	return hasNewServiceReward || hasNewMingingReward
 }
 
+// Initiate the withdraw process
 func (r Reward) InitateWithdraw() {
 	rewardBytes, _ := protobuf.Marshal(&sgn.Reward{
 		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
@@ -68,6 +70,7 @@ func (r Reward) InitateWithdraw() {
 	r.Sigs = []Sig{}
 }
 
+// Add signature to reward sigs
 func (r Reward) AddSig(sig []byte) error {
 	signer, err := mainchain.RecoverSigner(r.RewardProtoBytes, sig)
 	if err != nil {
@@ -84,6 +87,7 @@ func (r Reward) AddSig(sig []byte) error {
 	return nil
 }
 
+// Generate rewardRequest msg
 func (r Reward) GetRewardRequest() []byte {
 	var sigs [][]byte
 	for _, sig := range r.Sigs {
