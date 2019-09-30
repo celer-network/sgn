@@ -89,7 +89,11 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
 	}
 
-	reward := keeper.GetReward(ctx, params.EthAddress)
+	reward, found := keeper.GetReward(ctx, params.EthAddress)
+	if !found {
+		return nil, sdk.ErrInternal("Reward does not exist")
+	}
+
 	res, err := codec.MarshalJSONIndent(keeper.cdc, reward)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))

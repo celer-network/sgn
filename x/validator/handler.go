@@ -163,9 +163,6 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.
 	if !found {
 		return sdk.ErrInternal("Reward does not exist").Result()
 	}
-	if !reward.HasNewReward() {
-		return sdk.ErrInternal("Reward does not exist").Result()
-	}
 
 	signerAddr, err := reward.AddSig(msg.Sig)
 	if err != nil {
