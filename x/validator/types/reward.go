@@ -48,7 +48,7 @@ func (r Reward) String() string {
 // Check if have new reward added
 func (r Reward) HasNewReward() bool {
 	if len(r.RewardProtoBytes) == 0 {
-		return false
+		return true
 	}
 
 	var reward sgn.Reward
@@ -71,20 +71,21 @@ func (r Reward) InitateWithdraw() {
 }
 
 // Add signature to reward sigs
-func (r Reward) AddSig(sig []byte) error {
+func (r Reward) AddSig(sig []byte) (string, error) {
 	signer, err := mainchain.RecoverSigner(r.RewardProtoBytes, sig)
 	if err != nil {
-		return err
+		return "", err
 	}
 
+	signerAddr := signer.String()
 	for _, sig := range r.Sigs {
-		if sig.Signer == signer.String() {
-			return errors.New("repeated signer")
+		if sig.Signer == signerAddr {
+			return "", errors.New("repeated signer")
 		}
 	}
 
-	r.Sigs = append(r.Sigs, NewSig(signer.String(), sig))
-	return nil
+	r.Sigs = append(r.Sigs, NewSig(signerAddr, sig))
+	return signerAddr, nil
 }
 
 // Generate rewardRequest msg

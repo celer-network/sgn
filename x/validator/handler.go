@@ -131,9 +131,12 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 
 // Handle a message to withdraw reward
 func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawReward) sdk.Result {
-	reward := keeper.GetReward(ctx, msg.EthAddress)
-	if !reward.HasNewReward() {
+	reward, found := keeper.GetReward(ctx, msg.EthAddress)
+	if !found {
 		return sdk.ErrInternal("Reward does not exist").Result()
+	}
+	if !reward.HasNewReward() {
+		return sdk.ErrInternal("No new reward").Result()
 	}
 
 	reward.InitateWithdraw()
@@ -151,19 +154,26 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 
 // Handle a message to sign reward
 func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.Result {
-	_, found := keeper.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
+	validator, found := keeper.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
 		return sdk.ErrInternal("Sender is not validator").Result()
 	}
 
-	reward := keeper.GetReward(ctx, msg.EthAddress)
+	reward, found := keeper.GetReward(ctx, msg.EthAddress)
+	if !found {
+		return sdk.ErrInternal("Reward does not exist").Result()
+	}
 	if !reward.HasNewReward() {
 		return sdk.ErrInternal("Reward does not exist").Result()
 	}
 
-	err := reward.AddSig(msg.Sig)
+	signerAddr, err := reward.AddSig(msg.Sig)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to add sig: %s", err)).Result()
+	}
+
+	if signerAddr != validator.Description.Identity {
+		return sdk.ErrInternal("Invalid signer address").Result()
 	}
 
 	return sdk.Result{}

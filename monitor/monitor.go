@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	initiateWithdrawEvent = fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
+	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 )
 
 type EthMonitor struct {
@@ -185,11 +185,9 @@ func (m *EthMonitor) monitorIntendSettle() {
 
 func (m *EthMonitor) monitorWithdrawReward() {
 	for {
-		page := 1
-
-		for {
+		for page := 1; ; page++ {
 			hasSeenEvent := false
-			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{initiateWithdrawEvent}, page, txsPageLimit)
+			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{initiateWithdrawRewardEvent}, page, txsPageLimit)
 			if err != nil {
 				log.Printf("QueryTxsByEvents err", err)
 				return
@@ -212,11 +210,9 @@ func (m *EthMonitor) monitorWithdrawReward() {
 			}
 
 			// Check if it is necessary to query next page
-			if txs.Count >= txsPageLimit && hasSeenEvent {
+			if txs.Count < txsPageLimit || hasSeenEvent {
 				break
 			}
-
-			page += 1
 		}
 
 		time.Sleep(30 * time.Second)
