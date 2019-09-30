@@ -3,7 +3,7 @@ module github.com/celer-network/sgn
 go 1.12
 
 require (
-	github.com/allegro/bigcache v1.2.1 // indirect
+	github.com/allegro/bigcache v1.2.1
 	github.com/aristanetworks/goarista v0.0.0-20190712234253-ed1100a1c015 // indirect
 	github.com/btcsuite/btcd v0.0.0-20190427004231-96897255fd17 // indirect
 	github.com/cosmos/cosmos-sdk v0.37.0

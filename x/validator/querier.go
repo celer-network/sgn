@@ -18,6 +18,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryPusher(ctx, req, keeper)
 		case QueryDelegator:
 			return queryDelegator(ctx, req, keeper)
+		case QueryCandidate:
+			return queryCandidate(ctx, req, keeper)
+		case QueryReward:
+			return queryReward(ctx, req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("Unknown validator query endpoint")
 		}
@@ -70,6 +74,27 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 
 	candidate := keeper.GetCandidate(ctx, params.CandidateAddress)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
+
+	}
+
+	return res, nil
+}
+
+func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params QueryRewardParams
+	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
+	}
+
+	reward, found := keeper.GetReward(ctx, params.EthAddress)
+	if !found {
+		return nil, sdk.ErrInternal("Reward does not exist")
+	}
+
+	res, err := codec.MarshalJSONIndent(keeper.cdc, reward)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
 

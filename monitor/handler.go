@@ -82,6 +82,25 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 	m.pusherQueue.PushBack(intendSettle)
 }
 
+func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
+	log.Printf("New initiate withdraw", ethAddr)
+
+	reward, err := validator.CLIQueryReward(m.cdc, m.transactor.CliCtx, validator.StoreKey, ethAddr)
+	if err != nil {
+		log.Printf("Query reward err", err)
+		return
+	}
+
+	sig, err := m.ethClient.SignMessage(reward.RewardProtoBytes)
+	if err != nil {
+		log.Printf("SignMessage err", err)
+		return
+	}
+
+	msg := validator.NewMsgSignReward(ethAddr, sig, m.transactor.Key.GetAddress())
+	m.transactor.BroadcastTx(msg)
+}
+
 func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 	minStake, err := m.ethClient.Guard.GetMinStake(&bind.CallOpts{})
 	if err != nil {

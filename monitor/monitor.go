@@ -2,15 +2,29 @@ package monitor
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
+	"github.com/allegro/bigcache"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/deque"
+)
+
+const (
+	txsPageLimit = 30
+)
+
+var (
+	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 )
 
 type EthMonitor struct {
@@ -20,21 +34,27 @@ type EthMonitor struct {
 	pusherQueue deque.Deque
 	pullerQueue deque.Deque
 	eventQueue  deque.Deque
+	txMemo      *bigcache.BigCache
 	pubkey      string
 	isValidator bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor, cdc *codec.Codec, pubkey string) {
+	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
+	if err != nil {
+		log.Fatalf("NewBigCache err", err)
+	}
+
 	candiateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
 		log.Fatalf("GetCandidateInfo err", err)
-		return
 	}
 
 	m := EthMonitor{
 		ethClient:   ethClient,
 		transactor:  transactor,
 		cdc:         cdc,
+		txMemo:      txMemo,
 		pubkey:      pubkey,
 		isValidator: candiateInfo.IsVldt,
 	}
@@ -45,6 +65,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
 	go m.monitorIntendSettle()
+	go m.monitorWithdrawReward()
 }
 
 func (m *EthMonitor) monitorBlockHead() {
@@ -159,5 +180,41 @@ func (m *EthMonitor) monitorIntendSettle() {
 		case intendSettle := <-intendSettleChan:
 			m.eventQueue.PushBack(NewEvent(intendSettle, intendSettle.Raw))
 		}
+	}
+}
+
+func (m *EthMonitor) monitorWithdrawReward() {
+	for {
+		for page := 1; ; page++ {
+			hasSeenEvent := false
+			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{initiateWithdrawRewardEvent}, page, txsPageLimit)
+			if err != nil {
+				log.Printf("QueryTxsByEvents err", err)
+				return
+			}
+
+			for _, tx := range txs.Txs {
+				// Check if the tx has been seen before
+				_, err = m.txMemo.Get(tx.TxHash)
+				if err == nil {
+					hasSeenEvent = true
+					continue
+				}
+
+				m.txMemo.Set(tx.TxHash, []byte{1})
+				for _, event := range tx.Events {
+					if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
+						m.handleInitiateWithdrawReward(event.Attributes[1].Value)
+					}
+				}
+			}
+
+			// Check if it is necessary to query next page
+			if txs.PageNumber == txs.PageTotal || hasSeenEvent {
+				break
+			}
+		}
+
+		time.Sleep(30 * time.Second)
 	}
 }

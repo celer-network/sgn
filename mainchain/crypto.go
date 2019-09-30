@@ -7,6 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+func (ethClient *EthClient) SignMessage(data []byte) ([]byte, error) {
+	return crypto.Sign(generatePrefixedHash(data), ethClient.PrivateKey)
+}
+
 func SignMessage(privateKey *ecdsa.PrivateKey, data []byte) ([]byte, error) {
 	sig, err := crypto.Sign(generatePrefixedHash(data), privateKey)
 	if err != nil {

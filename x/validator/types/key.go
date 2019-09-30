@@ -9,6 +9,8 @@ const (
 )
 
 const (
+	ActionInitiateWithdraw = "initate_withdraw"
+
 	AttributeKeyEthAddress = "eth_address"
 )
 
