@@ -71,21 +71,26 @@ func (r Reward) InitateWithdraw() {
 }
 
 // Add signature to reward sigs
-func (r Reward) AddSig(sig []byte) (string, error) {
+func (r Reward) AddSig(sig []byte, expectedSigner string) error {
 	signer, err := mainchain.RecoverSigner(r.RewardProtoBytes, sig)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	signerAddr := signer.String()
+
+	if signerAddr != expectedSigner {
+		return errors.New("invalid signer address")
+	}
+
 	for _, sig := range r.Sigs {
 		if sig.Signer == signerAddr {
-			return "", errors.New("repeated signer")
+			return errors.New("repeated signer")
 		}
 	}
 
 	r.Sigs = append(r.Sigs, NewSig(signerAddr, sig))
-	return signerAddr, nil
+	return nil
 }
 
 // Generate rewardRequest msg

@@ -164,13 +164,9 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.
 		return sdk.ErrInternal("Reward does not exist").Result()
 	}
 
-	signerAddr, err := reward.AddSig(msg.Sig)
+	err := reward.AddSig(msg.Sig, validator.Description.Identity)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to add sig: %s", err)).Result()
-	}
-
-	if signerAddr != validator.Description.Identity {
-		return sdk.ErrInternal("Invalid signer address").Result()
 	}
 
 	return sdk.Result{}
