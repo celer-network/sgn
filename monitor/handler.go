@@ -82,7 +82,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 	m.pusherQueue.PushBack(intendSettle)
 }
 
-func (m *EthMonitor) handleInitiateWithdraw(ethAddr string) {
+func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Printf("New initiate withdraw", ethAddr)
 
 	reward, err := validator.CLIQueryReward(m.cdc, m.transactor.CliCtx, validator.StoreKey, ethAddr)

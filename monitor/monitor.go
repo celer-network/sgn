@@ -204,13 +204,13 @@ func (m *EthMonitor) monitorWithdrawReward() {
 				m.txMemo.Set(tx.TxHash, []byte{1})
 				for _, event := range tx.Events {
 					if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
-						m.handleInitiateWithdraw(event.Attributes[1].Value)
+						m.handleInitiateWithdrawReward(event.Attributes[1].Value)
 					}
 				}
 			}
 
 			// Check if it is necessary to query next page
-			if txs.Count < txsPageLimit || hasSeenEvent {
+			if txs.PageNumber == txs.PageTotal || hasSeenEvent {
 				break
 			}
 		}
