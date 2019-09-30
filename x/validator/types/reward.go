@@ -32,7 +32,7 @@ func (r Sig) String() string {
 type Reward struct {
 	MiningReward     sdk.Int `json:"miningReward"`
 	ServiceReward    sdk.Int `json:"serviceReward"`
-	RewardProtoBytes []byte  `json:"rewardProtoBytes"`
+	RewardProtoBytes []byte  `json:"rewardProtoBytes"` // proto msg for reward snapshot from latest intendWithdraw
 	Sigs             []Sig   `json:"sigs"`
 }
 
