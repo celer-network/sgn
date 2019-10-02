@@ -12,7 +12,7 @@ func GetCandidateInfo(ctx sdk.Context, keeper Keeper, ethAddress string) (struct
 	Initialized   bool
 	MinSelfStake  *big.Int
 	SidechainAddr []byte
-	TotalStake    *big.Int
+	StakingPool   *big.Int
 	IsVldt        bool
 }, error) {
 	return keeper.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{

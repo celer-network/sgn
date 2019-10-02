@@ -51,14 +51,14 @@ func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 	for _, validator := range validators {
 		ethAddr := validator.Description.Identity
 		candidate := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
-		totalStake = totalStake.Add(candidate.TotalStake)
+		totalStake = totalStake.Add(candidate.StakingPool)
 		candidates = append(candidates, candidate)
 	}
 
 	for _, candidate := range candidates {
 		for _, delegator := range candidate.Delegators {
 			reward, _ := keeper.validatorKeeper.GetReward(ctx, delegator.EthAddress)
-			delegatorFee := epoch.TotalFee.Mul(delegator.Stake).Quo(totalStake)
+			delegatorFee := epoch.TotalFee.Mul(delegator.DelegatedStake).Quo(totalStake)
 			reward.ServiceReward = reward.ServiceReward.Add(delegatorFee)
 			keeper.validatorKeeper.SetReward(ctx, delegator.EthAddress, reward)
 		}
