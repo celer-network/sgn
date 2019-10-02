@@ -102,13 +102,13 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 }
 
 func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
-	minStake, err := m.ethClient.Guard.GetMinStake(&bind.CallOpts{})
+	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Printf("GetMinStake err", err)
 		return
 	}
 
-	if delegate.TotalStake.Uint64() <= minStake.Uint64() {
+	if delegate.StakingPool.Uint64() <= minStake.Uint64() {
 		log.Printf("Not enough stake to become validator")
 		return
 	}
