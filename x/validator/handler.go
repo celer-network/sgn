@@ -122,7 +122,7 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query delegator info: %s", err)).Result()
 	}
 
-	delegator.Stake = sdk.NewIntFromBigInt(di.DelegatedStake)
+	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
 	keeper.SnapshotCandidate(ctx, msg.CandidateAddress)
 

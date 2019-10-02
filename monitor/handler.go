@@ -104,7 +104,7 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
-		log.Printf("GetMinStake err", err)
+		log.Printf("GetMinStakingPool err", err)
 		return
 	}
 
