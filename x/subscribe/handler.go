@@ -51,6 +51,7 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 		timeLeft := epochLength - (ctx.BlockTime().Unix() - latestEpoch.Timestamp)
 		cost := keeper.globalKeeper.CostPerEpoch(ctx).MulRaw(timeLeft).ToDec().QuoInt64(epochLength).RoundInt()
 
+		ctx.Logger().Info("cost", cost)
 		if subscription.Deposit.Sub(subscription.Spend).LT(cost) {
 			return sdk.ErrInternal("Not enough deposit").Result()
 		}

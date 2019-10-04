@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2019-09-26T23:06:52.501871Z",
+  "genesis_time": "2019-10-04T16:08:41.452641Z",
   "chain_id": "sgnchain",
   "consensus_params": {
     "block": {
@@ -18,6 +18,9 @@
   },
   "app_hash": "",
   "app_state": {
+    "bank": {
+      "send_enabled": true
+    },
     "staking": {
       "params": {
         "unbonding_time": "1814400000000000",
@@ -33,11 +36,13 @@
       "redelegations": null,
       "exported": false
     },
-    "params": null,
-    "subscribe": {
+    "auth": {
       "params": {
-        "requestGuardCount": "3",
-        "requestLimit": "3"
+        "max_memo_characters": "256",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000"
       }
     },
     "accounts": [
@@ -62,6 +67,15 @@
         ]
       }
     ],
+    "supply": {
+      "supply": []
+    },
+    "subscribe": {
+      "params": {
+        "requestGuardCount": "3",
+        "requestLimit": "3"
+      }
+    },
     "global": {
       "params": {
         "epochLength": "60",
@@ -70,15 +84,8 @@
         "costPerEpoch": "1000000000000000000"
       }
     },
-    "auth": {
-      "params": {
-        "max_memo_characters": "256",
-        "tx_sig_limit": "7",
-        "tx_size_cost_per_byte": "10",
-        "sig_verify_cost_ed25519": "590",
-        "sig_verify_cost_secp256k1": "1000"
-      }
-    },
+    "params": null,
+    "validator": {},
     "genutil": {
       "gentxs": [
         {
@@ -90,7 +97,7 @@
                 "value": {
                   "description": {
                     "moniker": "validator0",
-                    "identity": "",
+                    "identity": "0x1f7402f55e142820ea3812106d0657103fc1709e",
                     "website": "",
                     "details": ""
                   },
@@ -102,7 +109,7 @@
                   "min_self_delegation": "1",
                   "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
                   "validator_address": "cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
-                  "pubkey": "cosmosvalconspub1zcjduepqln2zrc9q486tmcft0cfuhcptcyskear3n7vgc4xmlvsudw6lav9smcw9y8",
+                  "pubkey": "cosmosvalconspub1zcjduepqqs3z3qyp5e74zctnrahpfl9nmzy7xkmwtcplv9y6gmhylzmej6fs3z647z",
                   "value": {
                     "denom": "stake",
                     "amount": "100000000"
@@ -120,20 +127,13 @@
                   "type": "tendermint/PubKeySecp256k1",
                   "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
                 },
-                "signature": "+oN6fmovPdq1vssbEJeHf2h2fzO4EYN92SXgIE3du388a9rTLNohiBIfMCDoMvNc6FUs25Zk2hZmQ0esGQIfuA=="
+                "signature": "gE9wewgjYx0Pyf971oFxILhDx7i9OSh2LtruOrvq4j9MFQisdfC62Wbe0C/gn3uH7C71JUmyc1j/EktgUQ2uAQ=="
               }
             ],
-            "memo": "d15470b124ae97071208381cc223d249c9121b53@192.168.1.58:26656"
+            "memo": "bfdbeabd8e3ad2b80a5a3b68d9f9e76e1ae0cf9a@192.168.0.192:26656"
           }
         }
       ]
-    },
-    "validator": {},
-    "supply": {
-      "supply": []
-    },
-    "bank": {
-      "send_enabled": true
     }
   }
 }

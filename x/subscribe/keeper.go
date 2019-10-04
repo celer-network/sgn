@@ -60,7 +60,7 @@ func (k Keeper) IterateSubscriptions(ctx sdk.Context,
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var subscription Subscription
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &subscription)
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &subscription)
 		if handler(subscription) {
 			break
 		}

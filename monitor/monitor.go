@@ -109,6 +109,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 
 func (m *EthMonitor) monitorDelegate() {
 	delegateChan := make(chan *mainchain.GuardDelegate)
+
 	sub, err := m.ethClient.Guard.WatchDelegate(nil, delegateChan, nil, []ethcommon.Address{m.ethClient.Address})
 	if err != nil {
 		log.Printf("WatchDelegate err", err)
@@ -121,6 +122,7 @@ func (m *EthMonitor) monitorDelegate() {
 		case err := <-sub.Err():
 			log.Printf("WatchDelegate err", err)
 		case delegate := <-delegateChan:
+			log.Printf("WatchDelegate err", delegate)
 			m.eventQueue.PushBack(NewEvent(delegate, delegate.Raw))
 		}
 	}
@@ -190,7 +192,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{initiateWithdrawRewardEvent}, page, txsPageLimit)
 			if err != nil {
 				log.Printf("QueryTxsByEvents err", err)
-				return
+				break
 			}
 
 			for _, tx := range txs.Txs {
@@ -210,7 +212,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 			}
 
 			// Check if it is necessary to query next page
-			if txs.PageNumber == txs.PageTotal || hasSeenEvent {
+			if txs.PageNumber >= txs.PageTotal || hasSeenEvent {
 				break
 			}
 		}

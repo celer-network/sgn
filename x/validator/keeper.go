@@ -112,28 +112,28 @@ func (k Keeper) SetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress
 }
 
 // Gets the entire Candidate metadata
-func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidate Candidate) {
+func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidate Candidate, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	candidateKey := GetCandidateKey(candidateAddress)
 
 	if !store.Has(candidateKey) {
-		return
+		return candidate, false
 	}
 
 	value := store.Get(candidateKey)
 	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
-	return
+	return candidate, true
 }
 
 // Sets the Candidate metadata
-func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
+func (k Keeper) SetCandidate(ctx sdk.Context, candidateAddr string, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetCandidateKey(candidate.EthAddress), k.cdc.MustMarshalBinaryBare(candidate))
+	store.Set(GetCandidateKey(candidateAddr), k.cdc.MustMarshalBinaryBare(candidate))
 }
 
 // Take a snapshot of candidate
 func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
-	candidate := k.GetCandidate(ctx, candidateAddr)
+	candidate, _ := k.GetCandidate(ctx, candidateAddr)
 	candidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
 
 	totalStake := sdk.ZeroInt()
@@ -142,7 +142,7 @@ func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
 	}
 	candidate.StakingPool = totalStake
 
-	k.SetCandidate(ctx, candidate)
+	k.SetCandidate(ctx, candidateAddr, candidate)
 }
 
 // Gets the entire Reward metadata for ethAddress
