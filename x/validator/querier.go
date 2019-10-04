@@ -72,7 +72,11 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
 	}
 
-	candidate := keeper.GetCandidate(ctx, params.CandidateAddress)
+	candidate, found := keeper.GetCandidate(ctx, params.CandidateAddress)
+	if !found {
+		return nil, sdk.ErrInternal("Cannot find candidate")
+	}
+
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))

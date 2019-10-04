@@ -41,8 +41,16 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	}
 
 	accAddress := sdk.AccAddress(cp.SidechainAddr)
-	account := keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
-	keeper.accountKeeper.SetAccount(ctx, account)
+	account := keeper.accountKeeper.GetAccount(ctx, accAddress)
+	if account == nil {
+		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
+		keeper.accountKeeper.SetAccount(ctx, account)
+	}
+
+	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	if !found {
+		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate())
+	}
 	return sdk.Result{}
 }
 

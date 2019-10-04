@@ -128,7 +128,7 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "candidate [candidateAddress]",
-		Short: "query candidate info by candidateAddress and seq",
+		Short: "query candidate info by candidateAddress",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(args[0]))

@@ -16,7 +16,6 @@ const (
 	QueryReward            = types.QueryReward
 	TypeMsgWithdrawReward  = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress = types.AttributeKeyEthAddress
-	MsgWithdrawRewardName  = types.MsgWithdrawRewardName
 	ActionInitiateWithdraw = types.ActionInitiateWithdraw
 )
 

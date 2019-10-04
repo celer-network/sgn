@@ -18,7 +18,10 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 
 	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
 	newEpoch.TotalFee = getTotalFee(ctx, keeper)
-	distributeReward(ctx, keeper, newEpoch)
+
+	if !newEpoch.TotalFee.IsZero() {
+		distributeReward(ctx, keeper, newEpoch)
+	}
 	keeper.globalKeeper.SetLatestEpoch(ctx, newEpoch)
 }
 
@@ -50,9 +53,16 @@ func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 
 	for _, validator := range validators {
 		ethAddr := validator.Description.Identity
-		candidate := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
-		totalStake = totalStake.Add(candidate.StakingPool)
-		candidates = append(candidates, candidate)
+		if ethAddr == "" {
+			ctx.Logger().Error("Miss eth address for validator", validator.OperatorAddress)
+			continue
+		}
+		candidate, found := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
+
+		if found {
+			totalStake = totalStake.Add(candidate.StakingPool)
+			candidates = append(candidates, candidate)
+		}
 	}
 
 	for _, candidate := range candidates {

@@ -6,7 +6,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 func (m *EthMonitor) processQueue() {
@@ -75,18 +74,6 @@ func (m *EthMonitor) processPusherQueue() {
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
 	log.Printf("Process InitializeCandidate", initializeCandidate.Candidate)
-
-	candidateInfo, err := m.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, initializeCandidate.Candidate)
-	if err != nil {
-		log.Printf("Query candidate info err", err)
-		return
-	}
-
-	_, err = m.getAccount(candidateInfo.SidechainAddr)
-	if err == nil {
-		log.Printf("Skip initilization for existing account")
-		return
-	}
 
 	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
