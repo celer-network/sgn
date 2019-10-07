@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
+	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 )
 
 type EthMonitor struct {
@@ -122,7 +122,6 @@ func (m *EthMonitor) monitorDelegate() {
 		case err := <-sub.Err():
 			log.Printf("WatchDelegate err", err)
 		case delegate := <-delegateChan:
-			log.Printf("WatchDelegate err", delegate)
 			m.eventQueue.PushBack(NewEvent(delegate, delegate.Raw))
 		}
 	}

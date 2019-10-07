@@ -72,7 +72,7 @@ func QuerySecureBlockNum(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute
 		return
 	}
 
-	secureBlockNum = binary.LittleEndian.Uint64(res)
+	secureBlockNum = binary.BigEndian.Uint64(res)
 	return
 }
 

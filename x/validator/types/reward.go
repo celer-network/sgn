@@ -37,7 +37,10 @@ type Reward struct {
 }
 
 func NewReward() Reward {
-	return Reward{}
+	return Reward{
+		ServiceReward: sdk.ZeroInt(),
+		MiningReward:  sdk.ZeroInt(),
+	}
 }
 
 // implement fmt.Stringer
@@ -60,7 +63,7 @@ func (r Reward) HasNewReward() bool {
 }
 
 // Initiate the withdraw process
-func (r Reward) InitateWithdraw() {
+func (r *Reward) InitateWithdraw() {
 	rewardBytes, _ := protobuf.Marshal(&sgn.Reward{
 		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
 		CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
@@ -71,7 +74,7 @@ func (r Reward) InitateWithdraw() {
 }
 
 // Add signature to reward sigs
-func (r Reward) AddSig(sig []byte, expectedSigner string) error {
+func (r *Reward) AddSig(sig []byte, expectedSigner string) error {
 	signer, err := mainchain.RecoverSigner(r.RewardProtoBytes, sig)
 	if err != nil {
 		return err
