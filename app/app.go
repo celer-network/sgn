@@ -9,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -95,6 +96,7 @@ type sgnApp struct {
 	bankKeeper      bank.Keeper
 	stakingKeeper   staking.Keeper
 	supplyKeeper    supply.Keeper
+	slashKeeper     slash.Keeper
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
 	subscribeKeeper subscribe.Keeper
