@@ -50,7 +50,7 @@ func setupTransactor() {
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnName),
+		"alice",
 		viper.GetString(flags.FlagSgnPassphrase),
 		cdc,
 	)
