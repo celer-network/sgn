@@ -32,12 +32,17 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.Eth
 	}
 }
 
-// Gets validators metadata
+// Get validators metadata
 func (k Keeper) GetValidators(ctx sdk.Context) []staking.Validator {
 	return k.stakingKeeper.GetBondedValidatorsByPower(ctx)
 }
 
-// Gets the entire Puller metadata
+// Get a validator by consencus address
+func (k Keeper) GetValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAddress) (staking.Validator, bool) {
+	return k.stakingKeeper.GetValidatorByConsAddr(ctx, addr)
+}
+
+// Get the entire Puller metadata
 func (k Keeper) GetPuller(ctx sdk.Context) Puller {
 	store := ctx.KVStore(k.storeKey)
 
@@ -57,7 +62,7 @@ func (k Keeper) SetPuller(ctx sdk.Context, puller Puller) {
 	store.Set(PullerKey, k.cdc.MustMarshalBinaryBare(puller))
 }
 
-// Gets the entire Pusher metadata
+// Get the entire Pusher metadata
 func (k Keeper) GetPusher(ctx sdk.Context) Pusher {
 	store := ctx.KVStore(k.storeKey)
 
@@ -77,7 +82,7 @@ func (k Keeper) SetPusher(ctx sdk.Context, pusher Pusher) {
 	store.Set(PusherKey, k.cdc.MustMarshalBinaryBare(pusher))
 }
 
-// Gets the entire Delegator metadata for a candidateAddress and delegatorAddress
+// Get the entire Delegator metadata for a candidateAddress and delegatorAddress
 func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string) Delegator {
 	store := ctx.KVStore(k.storeKey)
 
@@ -111,7 +116,7 @@ func (k Keeper) SetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress
 	store.Set(GetDelegatorKey(candidateAddress, delegatorAddress), k.cdc.MustMarshalBinaryBare(delegator))
 }
 
-// Gets the entire Candidate metadata
+// Get the entire Candidate metadata
 func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidate Candidate, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	candidateKey := GetCandidateKey(candidateAddress)
@@ -145,7 +150,7 @@ func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
 	k.SetCandidate(ctx, candidateAddr, candidate)
 }
 
-// Gets the entire Reward metadata for ethAddress
+// Get the entire Reward metadata for ethAddress
 func (k Keeper) GetReward(ctx sdk.Context, ethAddress string) (Reward, bool) {
 	store := ctx.KVStore(k.storeKey)
 	rewardKey := GetRewardKey(ethAddress)
