@@ -133,6 +133,7 @@ func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64,
 		"validator %s slashed by %s with slash factor of %s",
 		validator.GetOperator(), slashAmount, slashFactor.String()))
 
+	// TODO: set penalty properly
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeSlash,
