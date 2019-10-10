@@ -30,6 +30,7 @@ func queryPenalty(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
+	// TODO: get penalty properly
 	return []byte{}, nil
 }
 
