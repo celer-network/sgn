@@ -103,7 +103,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 			return
 		}
 
-		// Downtime confirmed: slash and jail the validator
+		// Downtime confirmed: slash the validator
 		logger.Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
 			consAddr, minHeight, k.MinSignedPerWindow(ctx)))
 
@@ -117,9 +117,8 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	k.SetValidatorSigningInfo(ctx, signInfo)
 }
 
-// Slash a validator for an infraction committed at a known height
-// Find the contributing stake at that height and burn the specified slashFactor
-// of it, updating unbonding delegations & redelegations appropriately
+// Slash a validator for an infraction
+// Find the contributing stake and burn the specified slashFactor of it
 func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64, slashFactor sdk.Dec, reason string) {
 	logger := ctx.Logger()
 
@@ -131,7 +130,7 @@ func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64,
 	amount := sdk.TokensFromConsensusPower(power)
 	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
 	logger.Info(fmt.Sprintf(
-		"validator %s slashed by %s slash factor of %s",
+		"validator %s slashed by %s with slash factor of %s",
 		validator.GetOperator(), slashAmount, slashFactor.String()))
 
 	ctx.EventManager().EmitEvent(
