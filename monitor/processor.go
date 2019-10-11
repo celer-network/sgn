@@ -137,11 +137,7 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
 		log.Printf("Punish err", err)
-
-		if !penaltyEvent.retry {
-			penaltyEvent.retry = true
-			m.pusherQueue.PushBack(penaltyEvent)
-		}
+		m.pusherQueue.PushBack(penaltyEvent)
 		return
 	}
 
