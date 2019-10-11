@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -28,12 +29,17 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdPenalty queries penalty info
 func GetCmdPenalty(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "penalty [nounce]",
-		Short: "query penalty info by nounce",
+		Use:   "penalty [nonce]",
+		Short: "query penalty info by nonce",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			nonce, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			penalty, err := QueryPenalty(cdc, cliCtx, queryRoute, args[0])
+			penalty, err := QueryPenalty(cdc, cliCtx, queryRoute, nonce)
 			if err != nil {
 				return err
 			}
@@ -44,8 +50,8 @@ func GetCmdPenalty(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query penalty info
-func QueryPenalty(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, nounce string) (penalty types.Penalty, err error) {
-	data, err := cdc.MarshalJSON(types.NewQueryPenaltyParams(nounce))
+func QueryPenalty(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, nonce uint64) (penalty types.Penalty, err error) {
+	data, err := cdc.MarshalJSON(types.NewQueryPenaltyParams(nonce))
 	if err != nil {
 		return
 	}

@@ -23,9 +23,14 @@ func (k Keeper) SignedBlocksWindow(ctx sdk.Context) (res int64) {
 }
 
 // MinSignedPerWindow - minimum blocks signed per window
-func (k Keeper) MinSignedPerWindow(ctx sdk.Context) (res int64) {
-	k.paramstore.Get(ctx, types.KeyMinSignedPerWindow, &res)
-	return
+func (k Keeper) MinSignedPerWindow(ctx sdk.Context) int64 {
+	var minSignedPerWindow sdk.Dec
+	k.paramspace.Get(ctx, types.KeyMinSignedPerWindow, &minSignedPerWindow)
+	signedBlocksWindow := k.SignedBlocksWindow(ctx)
+
+	// NOTE: RoundInt64 will never panic as minSignedPerWindow is
+	//       less than 1.
+	return minSignedPerWindow.MulInt64(signedBlocksWindow).RoundInt64()
 }
 
 // SlashFractionDoubleSign - number of guards to handle the request

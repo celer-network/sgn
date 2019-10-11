@@ -1,39 +1,21 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
 
-	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/proto/sgn"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
-type Sig struct {
-	Signer string `json:"signer"`
-	Sig    []byte `json:"sig"`
-}
-
-func NewSig(signer string, sig []byte) Sig {
-	return Sig{
-		Signer: signer,
-		Sig:    sig,
-	}
-}
-
-// implement fmt.Stringer
-func (r Sig) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Sig: %x,`, r.Sig))
-}
-
 type Reward struct {
-	MiningReward     sdk.Int `json:"miningReward"`
-	ServiceReward    sdk.Int `json:"serviceReward"`
-	RewardProtoBytes []byte  `json:"rewardProtoBytes"` // proto msg for reward snapshot from latest intendWithdraw
-	Sigs             []Sig   `json:"sigs"`
+	MiningReward     sdk.Int      `json:"miningReward"`
+	ServiceReward    sdk.Int      `json:"serviceReward"`
+	RewardProtoBytes []byte       `json:"rewardProtoBytes"` // proto msg for reward snapshot from latest intendWithdraw
+	Sigs             []common.Sig `json:"sigs"`
 }
 
 func NewReward() Reward {
@@ -70,29 +52,17 @@ func (r *Reward) InitateWithdraw() {
 	})
 
 	r.RewardProtoBytes = rewardBytes
-	r.Sigs = []Sig{}
+	r.Sigs = []common.Sig{}
 }
 
 // Add signature to reward sigs
 func (r *Reward) AddSig(sig []byte, expectedSigner string) error {
-	signer, err := mainchain.RecoverSigner(r.RewardProtoBytes, sig)
+	sigs, err := common.AddSig(r.Sigs, r.RewardProtoBytes, sig, expectedSigner)
 	if err != nil {
 		return err
 	}
 
-	signerAddr := signer.String()
-
-	if signerAddr != expectedSigner {
-		return errors.New("invalid signer address")
-	}
-
-	for _, sig := range r.Sigs {
-		if sig.Signer == signerAddr {
-			return errors.New("repeated signer")
-		}
-	}
-
-	r.Sigs = append(r.Sigs, NewSig(signerAddr, sig))
+	r.Sigs = sigs
 	return nil
 }
 

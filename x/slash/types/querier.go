@@ -1,20 +1,16 @@
 package types
 
-import (
-	ethcommon "github.com/ethereum/go-ethereum/common"
-)
-
 const (
 	QueryPenalty    = "penalty"
 	QueryParameters = "parameters"
 )
 
 type QueryPenaltyParams struct {
-	EthAddress string
+	Nonce uint64
 }
 
-func NewQueryPenaltyParams(addr string) QueryPenaltyParams {
+func NewQueryPenaltyParams(nonce uint64) QueryPenaltyParams {
 	return QueryPenaltyParams{
-		EthAddress: ethcommon.HexToAddress(addr).String(),
+		Nonce: nonce,
 	}
 }

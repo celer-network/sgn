@@ -9,6 +9,7 @@ import (
 	"github.com/allegro/bigcache"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,6 +26,7 @@ const (
 
 var (
 	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
+	penaltyEvent                = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
 type EthMonitor struct {
@@ -185,10 +187,26 @@ func (m *EthMonitor) monitorIntendSettle() {
 }
 
 func (m *EthMonitor) monitorWithdrawReward() {
+	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(event sdk.StringEvent) {
+		if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
+			m.handleInitiateWithdrawReward(event.Attributes[1].Value)
+		}
+	})
+}
+
+func (m *EthMonitor) monitorPenalty() {
+	m.monitorTendermintEvent(penaltyEvent, func(event sdk.StringEvent) {
+		if event.Attributes[0].Value == slash.ActionPenalty {
+			m.handlePenalty(event.Attributes[1].Value)
+		}
+	})
+}
+
+func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event sdk.StringEvent)) {
 	for {
 		for page := 1; ; page++ {
 			hasSeenEvent := false
-			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{initiateWithdrawRewardEvent}, page, txsPageLimit)
+			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{eventTag}, page, txsPageLimit)
 			if err != nil {
 				log.Printf("QueryTxsByEvents err", err)
 				break
@@ -204,9 +222,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 
 				m.txMemo.Set(tx.TxHash, []byte{1})
 				for _, event := range tx.Events {
-					if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
-						m.handleInitiateWithdrawReward(event.Attributes[1].Value)
-					}
+					handleEvent(event)
 				}
 			}
 
