@@ -42,6 +42,11 @@ func (k Keeper) GetValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAddress) (s
 	return k.stakingKeeper.GetValidatorByConsAddr(ctx, addr)
 }
 
+// Get a validator by validator account address
+func (k Keeper) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (staking.Validator, bool) {
+	return k.stakingKeeper.GetValidator(ctx, addr)
+}
+
 // Get the entire Puller metadata
 func (k Keeper) GetPuller(ctx sdk.Context) Puller {
 	store := ctx.KVStore(k.storeKey)

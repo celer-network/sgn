@@ -20,3 +20,14 @@ func NewEvent(event interface{}, l types.Log) Event {
 		log:   l,
 	}
 }
+
+type PenaltyEvent struct {
+	nonce uint64
+	retry bool
+}
+
+func NewPenaltyEvent(nonce uint64) PenaltyEvent {
+	return PenaltyEvent{
+		nonce: nonce,
+	}
+}

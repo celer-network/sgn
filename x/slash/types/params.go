@@ -11,11 +11,11 @@ import (
 
 const (
 	DefaultSignedBlocksWindow = 100
-	DefaultMinSignedPerWindow = 5
 )
 
 // slash params default values
 var (
+	DefaultMinSignedPerWindow      = sdk.NewDecWithPrec(5, 1)
 	DefaultSlashFractionDoubleSign = sdk.NewDec(1).Quo(sdk.NewDec(20))
 	DefaultSlashFractionDowntime   = sdk.NewDec(1).Quo(sdk.NewDec(100))
 )
@@ -33,13 +33,13 @@ var _ params.ParamSet = (*Params)(nil)
 // Params defines the high level settings for slash
 type Params struct {
 	SignedBlocksWindow      int64   `json:"signed_blocks_window" yaml:"signed_blocks_window"`
-	MinSignedPerWindow      int64   `json:"min_signed_per_window" yaml:"min_signed_per_window"`
+	MinSignedPerWindow      sdk.Dec `json:"min_signed_per_window" yaml:"min_signed_per_window"`
 	SlashFractionDoubleSign sdk.Dec `json:"slashFractionDoubleSign" yaml:"slashFractionDoubleSign"`
 	SlashFractionDowntime   sdk.Dec `json:"slashFractionDowntime" yaml:"slashFractionDowntime"`
 }
 
 // NewParams creates a new Params instance
-func NewParams(signedBlocksWindow, minSignedPerWindow int64, slashFractionDoubleSign, slashFractionDowntime sdk.Dec) Params {
+func NewParams(signedBlocksWindow int64, minSignedPerWindow, slashFractionDoubleSign, slashFractionDowntime sdk.Dec) Params {
 	return Params{
 		SignedBlocksWindow:      signedBlocksWindow,
 		MinSignedPerWindow:      minSignedPerWindow,
@@ -75,7 +75,7 @@ func DefaultParams() Params {
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   SignedBlocksWindow:    %d,
-  MinSignedPerWindow:    %d,
+  MinSignedPerWindow:    %s,
   SlashFractionDoubleSign:    %s,
   SlashFractionDowntime:    %s`,
 		p.SignedBlocksWindow, p.MinSignedPerWindow, p.SlashFractionDoubleSign, p.SlashFractionDowntime)
@@ -103,6 +103,14 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 func (p Params) Validate() error {
 	if p.SignedBlocksWindow == 0 {
 		return fmt.Errorf("slash parameter SignedBlocksWindow must be positive")
+	}
+
+	if p.MinSignedPerWindow.IsNegative() {
+		return fmt.Errorf("slash parameter MinSignedPerWindow must be positive")
+	}
+
+	if p.MinSignedPerWindow.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter MinSignedPerWindow must be positive")
 	}
 
 	if p.SlashFractionDoubleSign.IsNegative() {

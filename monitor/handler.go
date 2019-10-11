@@ -5,6 +5,7 @@ import (
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -98,6 +99,25 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	}
 
 	msg := validator.NewMsgSignReward(ethAddr, sig, m.transactor.Key.GetAddress())
+	m.transactor.BroadcastTx(msg)
+}
+
+func (m *EthMonitor) handlePenalty(nonce uint64) {
+	log.Printf("New Penalty", nonce)
+
+	penalty, err := slash.CLIQueryPenalty(m.cdc, m.transactor.CliCtx, slash.StoreKey, nonce)
+	if err != nil {
+		log.Printf("Query penalty err", err)
+		return
+	}
+
+	sig, err := m.ethClient.SignMessage(penalty.PenaltyProtoBytes)
+	if err != nil {
+		log.Printf("SignMessage err", err)
+		return
+	}
+
+	msg := slash.NewMsgSignPenalty(nonce, sig, m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
