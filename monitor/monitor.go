@@ -69,6 +69,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 	go m.monitorIntendWithdraw()
 	go m.monitorIntendSettle()
 	go m.monitorWithdrawReward()
+	go m.monitorSlash()
 }
 
 func (m *EthMonitor) monitorBlockHead() {
@@ -195,7 +196,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 	})
 }
 
-func (m *EthMonitor) monitorPenalty() {
+func (m *EthMonitor) monitorSlash() {
 	m.monitorTendermintEvent(slashEvent, func(event sdk.StringEvent) {
 		if event.Attributes[0].Value == slash.ActionPenalty {
 			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
