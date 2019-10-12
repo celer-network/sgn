@@ -23,7 +23,7 @@ func (k Keeper) SignedBlocksWindow(ctx sdk.Context) (res int64) {
 }
 
 // MinSignedPerWindow - minimum blocks signed per window
-func (k Keeper) MinSignedPerWindow(ctx sdk.Context) (res int64) {
+func (k Keeper) MinSignedPerWindow(ctx sdk.Context) (res sdk.Dec) {
 	k.paramstore.Get(ctx, types.KeyMinSignedPerWindow, &res)
 	return
 }

@@ -1,6 +1,7 @@
 package slash
 
 import (
+	"encoding/binary"
 	"fmt"
 	"time"
 
@@ -94,7 +95,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	}
 
 	minHeight := signInfo.StartHeight + signedBlocksWindow
-	maxMissed := signedBlocksWindow - k.MinSignedPerWindow(ctx)
+	maxMissed := signedBlocksWindow - k.MinSignedPerWindow(ctx).MulInt64(signedBlocksWindow).RoundInt64()
 
 	// if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
@@ -104,8 +105,8 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 		}
 
 		// Downtime confirmed: slash the validator
-		logger.Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
-			consAddr, minHeight, k.MinSignedPerWindow(ctx)))
+		logger.Info(fmt.Sprintf("Validator %s past min height of %d and above max miss threshold of %d",
+			consAddr, minHeight, maxMissed))
 
 		// We need to reset the counter & array so that the validator won't be immediately slashed for downtime upon rebonding.
 		signInfo.MissedBlocksCounter = 0
@@ -133,33 +134,61 @@ func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64,
 		"validator %s slashed by %s with slash factor of %s",
 		validator.GetOperator(), slashAmount, slashFactor.String()))
 
+	candidate, found := k.validatorKeeper.GetCandidate(ctx, validator.Description.Identity)
+	if !found {
+		logger.Error("Cannot find candidate profile for validator", validator.Description.Identity)
+	}
+
+	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), validator.Description.Identity)
+	for _, delegator := range candidate.Delegators {
+		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+		accountAmtPair := NewAccountAmtPair(delegator.EthAddress, penaltyAmt)
+		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+	}
+	penalty.GenerateProtoBytes()
+	k.SetPenalty(ctx, penalty)
+
 	// TODO: set penalty properly
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeSlash,
+			EventTypeSlash,
+			sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
+			sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
 			sdk.NewAttribute(types.AttributeKeyReason, reason),
 		),
 	)
 }
 
-// Gets the entire Penalty metadata for a nounce
-func (k Keeper) GetPenalty(ctx sdk.Context, nounce uint64) (Penalty, bool) {
+// Gets the next Penalty nonce, and increment nonce by 1
+func (k Keeper) GetNextPenaltyNonce(ctx sdk.Context) (nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(PenaltyNonceKey)
 
-	if !store.Has(GetPenaltyKey(nounce)) {
-		return Penalty{}, false
+	if bz != nil {
+		nonce = binary.BigEndian.Uint64(bz)
 	}
 
-	value := store.Get(GetPenaltyKey(nounce))
-	var request Penalty
-	k.cdc.MustUnmarshalBinaryBare(value, &request)
-	return request, true
+	store.Set(PenaltyNonceKey, sdk.Uint64ToBigEndian(nonce+1))
+	return
 }
 
-// Sets the entire Penalty metadata for a nounce
-func (k Keeper) SetPenalty(ctx sdk.Context, nounce uint64, request Penalty) {
+// Gets the entire Penalty metadata for a nonce
+func (k Keeper) GetPenalty(ctx sdk.Context, nonce uint64) (penalty Penalty, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetPenaltyKey(nounce), k.cdc.MustMarshalBinaryBare(request))
+
+	if !store.Has(GetPenaltyKey(nonce)) {
+		return penalty, false
+	}
+
+	value := store.Get(GetPenaltyKey(nonce))
+	k.cdc.MustUnmarshalBinaryBare(value, &penalty)
+	return penalty, true
+}
+
+// Sets the entire Penalty metadata for a nonce
+func (k Keeper) SetPenalty(ctx sdk.Context, penalty Penalty) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetPenaltyKey(penalty.Nonce), k.cdc.MustMarshalBinaryBare(penalty))
 }
 
 // Stored by *validator* address (not operator address)

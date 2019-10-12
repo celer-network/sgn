@@ -30,8 +30,17 @@ func queryPenalty(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	// TODO: get penalty properly
-	return []byte{}, nil
+	penalty, found := keeper.GetPenalty(ctx, params.Nonce)
+	if !found {
+		return nil, sdk.ErrInternal("Penalty does not exist")
+	}
+
+	res, err := codec.MarshalJSONIndent(keeper.cdc, penalty)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
 }
 
 func queryParameters(ctx sdk.Context, k Keeper) ([]byte, sdk.Error) {

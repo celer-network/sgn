@@ -6,12 +6,10 @@ const (
 
 	// StoreKey to be used when creating the KVStore
 	StoreKey = ModuleName
-)
-
-const (
-	ActionInitiateWithdraw = "initate_withdraw"
 
 	AttributeKeyEthAddress = "eth_address"
+
+	ActionInitiateWithdraw = "initate_withdraw"
 )
 
 var (
