@@ -110,7 +110,7 @@ func (p Params) Validate() error {
 	}
 
 	if p.MinSignedPerWindow.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter MinSignedPerWindow must be positive")
+		return fmt.Errorf("slash parameter MinSignedPerWindow must be less or equal than 1")
 	}
 
 	if p.SlashFractionDoubleSign.IsNegative() {

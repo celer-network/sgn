@@ -27,7 +27,7 @@ const (
 
 var (
 	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
-	penaltyEvent                = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
+	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
 type EthMonitor struct {
@@ -196,7 +196,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 }
 
 func (m *EthMonitor) monitorPenalty() {
-	m.monitorTendermintEvent(penaltyEvent, func(event sdk.StringEvent) {
+	m.monitorTendermintEvent(slashEvent, func(event sdk.StringEvent) {
 		if event.Attributes[0].Value == slash.ActionPenalty {
 			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
 			if err != nil {
