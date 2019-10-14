@@ -9,7 +9,7 @@ require (
 	github.com/celer-network/goCeler v0.15.5
 	github.com/cosmos/cosmos-sdk v0.37.0
 	github.com/elastic/gosigar v0.10.5 // indirect
-	github.com/ethereum/go-ethereum v1.9.2
+	github.com/ethereum/go-ethereum v1.9.1
 	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
 	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/mux v1.7.0

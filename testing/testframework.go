@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	log "github.com/celer-network/goCeler/clog"
+	ccommon "github.com/celer-network/goCeler/common"
 	"github.com/celer-network/goCeler/ctype"
 	"github.com/celer-network/goCeler/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -34,7 +35,9 @@ var (
 	// serialized json will be saved as outRootDir/profile.json
 	// tests wish to use a different profile can overrides fields like svrRpc
 	// and keep contract addresses etc
-	// E2eProfile *ccommon.CProfile
+	E2eProfile     *ccommon.CProfile
+	GuardAddr      string
+	Erc20TokenAddr string
 )
 
 var (

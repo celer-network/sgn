@@ -37,7 +37,7 @@ func TestMain(m *testing.M) {
 	// first fund clientAddr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
 	chkErr(err, "fund server")
-	// tf.E2eProfile, tokenAddrErc20 = SetupOnChain(appAddrMap)
+	tf.E2eProfile, tf.GuardAddr, tf.Erc20TokenAddr = SetupOnChain(appAddrMap)
 
 	// // profile.json and profile2.json are multi-server single OSP profiles
 	// // profile2.json is used by StartC2WithoutProxy

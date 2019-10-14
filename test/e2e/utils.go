@@ -40,7 +40,7 @@ var (
 	noProxyProfile string // full file path to profile.json
 	// erc20 token addr hex
 	// map from app type to deployed addr, updated by SetupOnChain
-	// appAddrMap     = make(map[string]ctype.Addr)
+	appAddrMap     = make(map[string]ctype.Addr)
 	tokenAddrErc20 string // set by setupOnchain deploy erc20 contract
 )
 
