@@ -28,15 +28,27 @@ func (k Keeper) MinSignedPerWindow(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// SlashFractionDoubleSign - number of guards to handle the request
+// SlashFractionDoubleSign - fraction of power slashed in case of double sign
 func (k Keeper) SlashFractionDoubleSign(ctx sdk.Context) (res sdk.Dec) {
 	k.paramstore.Get(ctx, types.KeySlashFractionDoubleSign, &res)
 	return
 }
 
-// SlashFractionDowntime - request limit per epoch
+// SlashFractionDowntime - fraction of power slashed for downtime
 func (k Keeper) SlashFractionDowntime(ctx sdk.Context) (res sdk.Dec) {
 	k.paramstore.Get(ctx, types.KeySlashFractionDowntime, &res)
+	return
+}
+
+// SlashFractionGuardFailure - fraction of power slashed for guard failure
+func (k Keeper) SlashFractionGuardFailure(ctx sdk.Context) (res sdk.Dec) {
+	k.paramstore.Get(ctx, types.KeySlashFractionGuardFailure, &res)
+	return
+}
+
+// FallbackGuardReward - fraction of penalty for reward to the guard
+func (k Keeper) FallbackGuardReward(ctx sdk.Context) (res sdk.Dec) {
+	k.paramstore.Get(ctx, types.KeyFallbackGuardReward, &res)
 	return
 }
 
@@ -47,6 +59,8 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.MinSignedPerWindow(ctx),
 		k.SlashFractionDoubleSign(ctx),
 		k.SlashFractionDowntime(ctx),
+		k.SlashFractionGuardFailure(ctx),
+		k.FallbackGuardReward(ctx),
 	)
 }
 

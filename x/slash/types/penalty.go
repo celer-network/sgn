@@ -11,6 +11,11 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
+const (
+	emptyAddr  = "0x0000000000000000000000000000000000000000"
+	expireTime = ^uint64(0)
+)
+
 type AccountAmtPair struct {
 	Account string  `json:"account"`
 	Amount  sdk.Int `json:"amount"`
@@ -23,40 +28,78 @@ func NewAccountAmtPair(account string, amount sdk.Int) AccountAmtPair {
 	}
 }
 
-type Penalty struct {
-	Nonce               uint64           `json:"nonce"`
-	ValidatorAddr       string           `json:"validatorAddr"`
-	PenalizedDelegators []AccountAmtPair `json:"penalizedDelegators"`
-	PenaltyProtoBytes   []byte           `json:"penaltyProtoBytes"`
-	Sigs                []common.Sig     `json:"sigs"`
+type AccountFractionPair struct {
+	Account  string  `json:"account"`
+	Fraction sdk.Dec `json:"percent"`
 }
 
-func NewPenalty(nonce uint64, validatorAddr string) Penalty {
+func NewAccountFractionPair(account string, fraction sdk.Dec) AccountFractionPair {
+	return AccountFractionPair{
+		Account:  account,
+		Fraction: fraction,
+	}
+}
+
+type Penalty struct {
+	Nonce               uint64                `json:"nonce"`
+	ValidatorAddr       string                `json:"validatorAddr"`
+	Reason              string                `json:"reason"`
+	PenalizedDelegators []AccountAmtPair      `json:"penalizedDelegators"`
+	Beneficiaries       []AccountFractionPair `json:"beneficiaries"`
+	PenaltyProtoBytes   []byte                `json:"penaltyProtoBytes"`
+	Sigs                []common.Sig          `json:"sigs"`
+}
+
+func NewPenalty(nonce uint64, reason string, validatorAddr string) Penalty {
 	return Penalty{
 		Nonce:         nonce,
+		Reason:        reason,
 		ValidatorAddr: validatorAddr,
 	}
 }
 
 // implement fmt.Stringer
 func (p Penalty) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d`, p.Nonce))
+	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, Reason: %s`, p.Nonce, p.Reason))
 }
 
 func (p Penalty) GenerateProtoBytes() {
 	var penalizedDelegators []*sgn.AccountAmtPair
+	var beneficiaries []*sgn.AccountAmtPair
+	totalPenalty := sdk.ZeroInt()
+	totalBeneficiary := sdk.ZeroInt()
+
 	for _, penalizedDelegator := range p.PenalizedDelegators {
-		pd := &sgn.AccountAmtPair{
+		totalPenalty = totalPenalty.Add(penalizedDelegator.Amount)
+		penalizedDelegators = append(penalizedDelegators, &sgn.AccountAmtPair{
 			Account: ethcommon.HexToAddress(penalizedDelegator.Account).Bytes(),
 			Amt:     penalizedDelegator.Amount.BigInt().Bytes(),
-		}
-		penalizedDelegators = append(penalizedDelegators, pd)
+		})
+	}
+
+	for _, beneficiary := range p.Beneficiaries {
+		amt := beneficiary.Fraction.MulInt(totalPenalty).TruncateInt()
+		totalBeneficiary = totalBeneficiary.Add(amt)
+		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
+			Account: ethcommon.HexToAddress(beneficiary.Account).Bytes(),
+			Amt:     amt.BigInt().Bytes(),
+		})
+	}
+
+	restPenalty := totalPenalty.Sub(totalBeneficiary)
+	if restPenalty.IsPositive() {
+		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
+			Account: ethcommon.HexToAddress(emptyAddr).Bytes(),
+			Amt:     restPenalty.BigInt().Bytes(),
+		})
 	}
 
 	penaltyBytes, _ := protobuf.Marshal(&sgn.Penalty{
 		Nonce:               p.Nonce,
+		ExpireTime:          expireTime,
 		ValidatorAddress:    ethcommon.HexToAddress(p.ValidatorAddr).Bytes(),
 		PenalizedDelegators: penalizedDelegators,
+		Beneficiaries:       beneficiaries,
 	})
 
 	p.PenaltyProtoBytes = penaltyBytes
