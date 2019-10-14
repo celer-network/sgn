@@ -9,13 +9,28 @@ checkout_pr_merge: &checkout_pr_merge
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12.7
+      - image: circleci/golang:1.12.9
+    resource_class: medium+
     steps:
       - checkout
       - <<: *checkout_pr_merge
       - run: sudo chown -R circleci /go/bin # fix /go/bin permission for later restore
       - restore_cache:
           key: go-cache-{{ checksum "go.sum" }} # use go.mod should also work
+      # - run:
+      #     name: check shadow variable
+      #     command: |
+      #       which shadow || go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow  # modifies go.sum!
+      #       go vet -vettool=$(which shadow) ./...
+      - run:
+          name: fetch geth if not found and run e2e test
+          environment:
+            GETH_VER: geth-linux-amd64-1.9.1-b7b2f60f
+          command: |
+            which geth || { curl -sL https://gethstore.blob.core.windows.net/builds/$GETH_VER.tar.gz | tar -xz --strip 1 $GETH_VER/geth && mv geth /go/bin; }
+            which geth  # ensure geth is in PATH
+            go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e
+          no_output_timeout: 16m
       - run:
           name: make install test
           command: |
