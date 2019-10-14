@@ -26,33 +26,24 @@ func TestMain(m *testing.M) {
 	tf.SetOutRootDir(outRootDir)
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
-	ethProc, err := StartChain()
+	ethProc, err := StartMainchain()
 	chkErr(err, "starting chain")
 
-	// build binaries should take long enough for geth to be fully started
-	err = buildBins(outRootDir)
-	chkErr(err, "build binaries")
+	err = installBins()
+	chkErr(err, "install SGN bins")
 
-	// deploy contracts and fund ethpool etc, also update appAddrMap
+	// set up mainchain: deploy contracts and fund ethpool etc, also update appAddrMap
 	// first fund clientAddr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
 	chkErr(err, "fund server")
-	tf.E2eProfile, tf.GuardAddr, tf.Erc20TokenAddr = SetupOnChain(appAddrMap)
+	tf.E2eProfile, tf.GuardAddr, tf.Erc20TokenAddr = SetupMainchain(appAddrMap)
 
-	// // profile.json and profile2.json are multi-server single OSP profiles
-	// // profile2.json is used by StartC2WithoutProxy
-	// noProxyProfile = outRootDir + "profile.json"
-	// saveProfile(tf.E2eProfile, noProxyProfile)
-	// p2 := *tf.E2eProfile
-	// p2.SvrRPC = s2Addr
-	// saveProfile(&p2, outRootDir+"profile2.json")
-	// // multiosp.json is for osp-to-osp test, 2nd client profile
-	// e2eProfile2 := *tf.E2eProfile
-	// e2eProfile2.SvrETHAddr = client2AddrStr
-	// e2eProfile2.SvrRPC = "localhost:10001"
-	// saveProfile(&e2eProfile2, outRootDir+"multiosp.json")
-
-	//TODO: update rt_config.json and tokens.json
+	// set up sidechain (SGN)
+	fmt.Println("position 0")
+	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
+	fmt.Println("position 4 asd")
+	sleep(10) // wait for sgn to be fully ready
+	chkErr(err, "start sidechain")
 
 	// run all e2e tests
 	ret := m.Run()
@@ -60,10 +51,12 @@ func TestMain(m *testing.M) {
 	if ret == 0 {
 		fmt.Println("All tests passed! 🎉🎉🎉")
 		ethProc.Signal(syscall.SIGTERM)
+		sgnProc.Signal(syscall.SIGTERM)
 		os.RemoveAll(outRootDir)
+		chkErr(removeCmd.Run(), "remove sidechain directory")
 		os.Exit(0)
 	} else {
-		// fmt.Println("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
+		fmt.Println("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
 		os.Exit(ret)
 	}
 }

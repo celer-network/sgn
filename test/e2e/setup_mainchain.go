@@ -3,7 +3,6 @@ package e2e
 import (
 	"context"
 	"flag"
-
 	"math/big"
 
 	"github.com/celer-network/cChannel-eth-go/deploy"
@@ -23,9 +22,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// SetupOnChain deploy contracts, and do setups
+// SetupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20 and set testapp related addr
-func SetupOnChain(appMap map[string]ctype.Addr) (*common.CProfile, string, string) {
+func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, string) {
 	flag.Parse()
 	conn, err := ethclient.Dial(outRootDir + "chaindata/geth.ipc")
 	if err != nil {

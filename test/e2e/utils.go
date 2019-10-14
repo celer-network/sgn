@@ -39,9 +39,9 @@ var (
 	envDir         = "../../testing/env"
 	noProxyProfile string // full file path to profile.json
 	// erc20 token addr hex
-	// map from app type to deployed addr, updated by SetupOnChain
+	// map from app type to deployed addr, updated by SetupMainchain
 	appAddrMap     = make(map[string]ctype.Addr)
-	tokenAddrErc20 string // set by setupOnchain deploy erc20 contract
+	tokenAddrErc20 string // set by SetupMainchain deploy erc20 contract
 )
 
 // toBuild map package subpath to binary file name eg. cmd/sgn -> sgn means build sgn/cmd/sgn and output sgn
@@ -51,7 +51,7 @@ var toBuild = map[string]string{
 }
 
 // start process to handle eth rpc, and fund etherbase and server account
-func StartChain() (*os.Process, error) {
+func StartMainchain() (*os.Process, error) {
 	log.Println("outRootDir", outRootDir, "envDir", envDir)
 	chainDataDir := outRootDir + "chaindata"
 	logFname := outRootDir + "chain.log"
@@ -105,6 +105,38 @@ func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }
 
+func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
+	cmd := exec.Command("make", "copy-test-data")
+	// set cmd.Dir under repo root path
+	cmd.Dir, _ = filepath.Abs("../..")
+	if err := cmd.Run(); err != nil {
+		return nil, nil, err
+	}
+
+	removeCmd := exec.Command("rm", "-rf", "~/.sgn", "~/.sgncli")
+
+	cmd = exec.Command("sgn", "start")
+	cmd.Dir, _ = filepath.Abs("../..")
+	logFname := rootDir + "sgn.log"
+	logF, _ := os.Create(logFname)
+	cmd.Stderr = logF
+	cmd.Stdout = logF
+	if err := cmd.Start(); err != nil {
+		return nil, removeCmd, err
+	}
+
+	fmt.Println("sgn pid:", cmd.Process.Pid)
+	// in case sgn exits with non-zero, exit test early
+	// if sgn is killed by ethProc.Signal, it exits w/ 0
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			fmt.Println("sgn process failed:", err)
+			os.Exit(1)
+		}
+	}()
+	return cmd.Process, removeCmd, nil
+}
+
 // save json as file path
 // func saveProfile(p *common.CProfile, fpath string) {
 // 	b, _ := json.Marshal(p)
@@ -115,16 +147,25 @@ func sleep(second time.Duration) {
 // 	saveProfile(p, fpath)
 // }
 
-func buildBins(rootDir string) error {
-	sgnRepo := "github.com/celer-network/sgn/"
-	for pkg, bin := range toBuild {
-		fmt.Println("Building", pkg, "->", bin)
-		cmd := exec.Command("go", "build", "-o", rootDir+bin, sgnRepo+pkg)
-		cmd.Stderr, _ = os.OpenFile(rootDir+"build.err", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		err := cmd.Run()
-		if err != nil {
-			return err
-		}
+// func buildBins(rootDir string) error {
+// 	sgnRepo := "github.com/celer-network/sgn/"
+// 	for pkg, bin := range toBuild {
+// 		fmt.Println("Building", pkg, "->", bin)
+// 		cmd := exec.Command("go", "build", "-o", rootDir+bin, sgnRepo+pkg)
+// 		cmd.Stderr, _ = os.OpenFile(rootDir+"build.err", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// 		err := cmd.Run()
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
+
+func installBins() error {
+	cmd := exec.Command("make", "install")
+	cmd.Dir, _ = filepath.Abs("../..")
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 	return nil
 }

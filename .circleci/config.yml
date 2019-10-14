@@ -10,7 +10,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.12.9
-    resource_class: medium+
+    resource_class: large
     steps:
       - checkout
       - <<: *checkout_pr_merge
