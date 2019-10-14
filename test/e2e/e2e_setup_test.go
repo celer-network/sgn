@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/celer-network/goCeler/ctype"
 	tf "github.com/celer-network/sgn/testing"
 )
 
@@ -32,10 +33,10 @@ func TestMain(m *testing.M) {
 	err = buildBins(outRootDir)
 	chkErr(err, "build binaries")
 
-	// // deploy contracts and fund ethpool etc, also update appAddrMap
-	// // first fund svrAddr 100 ETH
-	// err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&svrAddr})
-	// chkErr(err, "fund server")
+	// deploy contracts and fund ethpool etc, also update appAddrMap
+	// first fund clientAddr 100 ETH
+	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
+	chkErr(err, "fund server")
 	// tf.E2eProfile, tokenAddrErc20 = SetupOnChain(appAddrMap)
 
 	// // profile.json and profile2.json are multi-server single OSP profiles
@@ -47,7 +48,7 @@ func TestMain(m *testing.M) {
 	// saveProfile(&p2, outRootDir+"profile2.json")
 	// // multiosp.json is for osp-to-osp test, 2nd client profile
 	// e2eProfile2 := *tf.E2eProfile
-	// e2eProfile2.SvrETHAddr = server2AddrStr
+	// e2eProfile2.SvrETHAddr = client2AddrStr
 	// e2eProfile2.SvrRPC = "localhost:10001"
 	// saveProfile(&e2eProfile2, outRootDir+"multiosp.json")
 

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/celer-network/sgn/ctype"
+	"github.com/celer-network/goCeler/ctype"
 	"github.com/ethereum/go-ethereum/ethclient"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 )
@@ -27,7 +27,7 @@ var (
 // used by setup_onchain and tests
 var (
 	etherBaseAddr = ctype.Hex2Addr(etherBaseAddrStr)
-	svrAddr       = ctype.Hex2Addr(serverAddrStr)
+	clientAddr    = ctype.Hex2Addr(clientAddrStr)
 )
 
 // runtime variables, will be initialized by TestMain

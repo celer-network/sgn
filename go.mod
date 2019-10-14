@@ -6,7 +6,7 @@ require (
 	github.com/allegro/bigcache v1.2.1
 	github.com/aristanetworks/goarista v0.0.0-20191008235151-3d92a4ebc52d // indirect
 	github.com/celer-network/cChannel-eth-go v0.12.6
-	github.com/celer-network/goCeler v0.15.5 // indirect
+	github.com/celer-network/goCeler v0.15.5
 	github.com/cosmos/cosmos-sdk v0.37.0
 	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.2
@@ -21,5 +21,4 @@ require (
 	github.com/tendermint/tendermint v0.32.2
 	github.com/tendermint/tm-db v0.1.1
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
 )
