@@ -46,10 +46,10 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, guardAddr, reportAddr sdk.Ac
 		return
 	}
 
-	var beneficiaries []AccountPercentPair
-	beneficiaries = append(beneficiaries, NewAccountPercentPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
+	var beneficiaries []AccountFractionPair
+	beneficiaries = append(beneficiaries, NewAccountFractionPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
 
-	k.Slash(ctx, AttributeValueGuardFailure, guardValidator, guardValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountPercentPair{})
+	k.Slash(ctx, AttributeValueGuardFailure, guardValidator, guardValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountFractionPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -63,7 +63,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	}
 
 	logger.Info(fmt.Sprintf("Confirmed double sign from %s", consAddr))
-	k.Slash(ctx, types.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountPercentPair{})
+	k.Slash(ctx, types.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountFractionPair{})
 }
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
@@ -125,7 +125,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 		signInfo.MissedBlocksCounter = 0
 		signInfo.IndexOffset = 0
 		k.ClearValidatorMissedBlockBitArray(ctx, consAddr)
-		k.Slash(ctx, types.AttributeValueMissingSignature, validator, power, k.SlashFractionDowntime(ctx), []AccountPercentPair{})
+		k.Slash(ctx, types.AttributeValueMissingSignature, validator, power, k.SlashFractionDowntime(ctx), []AccountFractionPair{})
 	}
 
 	k.SetValidatorSigningInfo(ctx, signInfo)
@@ -133,7 +133,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
-func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountPercentPair) {
+func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
 	logger := ctx.Logger()
 
 	if slashFactor.IsNegative() {

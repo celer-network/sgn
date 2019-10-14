@@ -20,7 +20,7 @@ var (
 	ModuleCdc              = types.ModuleCdc
 	RegisterCodec          = types.RegisterCodec
 	NewAccountAmtPair      = types.NewAccountAmtPair
-	NewAccountPercentPair  = types.NewAccountPercentPair
+	NewAccountFractionPair  = types.NewAccountFractionPair
 	NewPenalty             = types.NewPenalty
 	NewQueryPenaltyParams  = types.NewQueryPenaltyParams
 	NewMsgSignPenalty      = types.NewMsgSignPenalty
@@ -35,7 +35,7 @@ var (
 
 type (
 	AccountAmtPair     = types.AccountAmtPair
-	AccountPercentPair = types.AccountPercentPair
+	AccountFractionPair = types.AccountFractionPair
 	Penalty            = types.Penalty
 	Params             = types.Params
 	QueryPenaltyParams = types.QueryPenaltyParams

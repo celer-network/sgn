@@ -131,16 +131,32 @@ func (p Params) Validate() error {
 		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be positive")
 	}
 
+	if p.SlashFractionDoubleSign.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be less or equal than 1")
+	}
+
 	if p.SlashFractionDowntime.IsNegative() {
 		return fmt.Errorf("slash parameter SlashFractionDowntime must be positive")
+	}
+
+	if p.SlashFractionDowntime.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionDowntime must be less or equal than 1")
 	}
 
 	if p.SlashFractionGuardFailure.IsNegative() {
 		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be positive")
 	}
 
+	if p.SlashFractionGuardFailure.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be less or equal than 1")
+	}
+
 	if p.FallbackGuardReward.IsNegative() {
 		return fmt.Errorf("slash parameter FallbackGuardReward must be positive")
+	}
+
+	if p.FallbackGuardReward.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter FallbackGuardReward must be less or equal than 1")
 	}
 
 	return nil

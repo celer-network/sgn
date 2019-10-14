@@ -28,26 +28,26 @@ func NewAccountAmtPair(account string, amount sdk.Int) AccountAmtPair {
 	}
 }
 
-type AccountPercentPair struct {
-	Account string  `json:"account"`
-	Percent sdk.Dec `json:"percent"`
+type AccountFractionPair struct {
+	Account  string  `json:"account"`
+	Fraction sdk.Dec `json:"percent"`
 }
 
-func NewAccountPercentPair(account string, percent sdk.Dec) AccountPercentPair {
-	return AccountPercentPair{
-		Account: account,
-		Percent: percent,
+func NewAccountFractionPair(account string, fraction sdk.Dec) AccountFractionPair {
+	return AccountFractionPair{
+		Account:  account,
+		Fraction: fraction,
 	}
 }
 
 type Penalty struct {
-	Nonce               uint64               `json:"nonce"`
-	ValidatorAddr       string               `json:"validatorAddr"`
-	Reason              string               `json:"reason"`
-	PenalizedDelegators []AccountAmtPair     `json:"penalizedDelegators"`
-	Beneficiaries       []AccountPercentPair `json:"beneficiaries"`
-	PenaltyProtoBytes   []byte               `json:"penaltyProtoBytes"`
-	Sigs                []common.Sig         `json:"sigs"`
+	Nonce               uint64                `json:"nonce"`
+	ValidatorAddr       string                `json:"validatorAddr"`
+	Reason              string                `json:"reason"`
+	PenalizedDelegators []AccountAmtPair      `json:"penalizedDelegators"`
+	Beneficiaries       []AccountFractionPair `json:"beneficiaries"`
+	PenaltyProtoBytes   []byte                `json:"penaltyProtoBytes"`
+	Sigs                []common.Sig          `json:"sigs"`
 }
 
 func NewPenalty(nonce uint64, reason string, validatorAddr string) Penalty {
@@ -78,7 +78,7 @@ func (p Penalty) GenerateProtoBytes() {
 	}
 
 	for _, beneficiary := range p.Beneficiaries {
-		amt := beneficiary.Percent.MulInt(totalPenalty).TruncateInt()
+		amt := beneficiary.Fraction.MulInt(totalPenalty).TruncateInt()
 		totalBeneficiary = totalBeneficiary.Add(amt)
 		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
 			Account: ethcommon.HexToAddress(beneficiary.Account).Bytes(),
