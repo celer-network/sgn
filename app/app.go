@@ -52,6 +52,7 @@ var (
 		supply.AppModuleBasic{},
 
 		global.AppModule{},
+		slash.AppModule{},
 		subscribe.AppModule{},
 		validator.AppModuleBasic{},
 	)
@@ -88,6 +89,7 @@ type sgnApp struct {
 	keyStaking   *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
+	keySlash     *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
 
@@ -96,9 +98,9 @@ type sgnApp struct {
 	bankKeeper      bank.Keeper
 	stakingKeeper   staking.Keeper
 	supplyKeeper    supply.Keeper
-	slashKeeper     slash.Keeper
 	paramsKeeper    params.Keeper
 	globalKeeper    global.Keeper
+	slashKeeper     slash.Keeper
 	subscribeKeeper subscribe.Keeper
 	validatorKeeper validator.Keeper
 
@@ -144,6 +146,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
+		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
@@ -155,6 +158,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	globalSubspace := app.paramsKeeper.Subspace(global.DefaultParamspace)
+	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
 	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
@@ -213,11 +217,19 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		app.stakingKeeper,
 	)
 
+	app.slashKeeper = slash.NewKeeper(
+		app.keySlash,
+		app.cdc,
+		app.validatorKeeper,
+		slashSubspace,
+	)
+
 	app.subscribeKeeper = subscribe.NewKeeper(
 		app.keySubscribe,
 		app.cdc,
 		ethClient,
 		app.globalKeeper,
+		app.slashKeeper,
 		app.validatorKeeper,
 		subscribeSubspace,
 	)

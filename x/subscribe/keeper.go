@@ -3,6 +3,7 @@ package subscribe
 import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,18 +16,20 @@ type Keeper struct {
 	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
 	ethClient       *mainchain.EthClient
 	globalKeeper    global.Keeper
+	slashKeeper     slash.Keeper
 	validatorKeeper validator.Keeper
 	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the subscribe Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
+	globalKeeper global.Keeper, slashKeeper slash.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
 		ethClient:       ethClient,
 		globalKeeper:    globalKeeper,
+		slashKeeper:     slashKeeper,
 		validatorKeeper: validatorKeeper,
 		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}

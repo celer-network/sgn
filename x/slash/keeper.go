@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,23 +18,38 @@ import (
 type Keeper struct {
 	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient       *mainchain.EthClient
-	globalKeeper    global.Keeper
 	validatorKeeper validator.Keeper
 	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the slash Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
-		ethClient:       ethClient,
-		globalKeeper:    globalKeeper,
 		validatorKeeper: validatorKeeper,
 		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}
+}
+
+// HandleGuardFailure handles a validator fails to guard state.
+func (k Keeper) HandleGuardFailure(ctx sdk.Context, guardAddr, reportAddr sdk.AccAddress) {
+	guardValAddr := sdk.ValAddress(guardAddr)
+	guardValidator, found := k.validatorKeeper.GetValidator(ctx, guardValAddr)
+	if !found {
+		return
+	}
+
+	reportValAddr := sdk.ValAddress(reportAddr)
+	reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
+	if !found {
+		return
+	}
+
+	var beneficiaries []AccountPercentPair
+	beneficiaries = append(beneficiaries, NewAccountPercentPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
+
+	k.Slash(ctx, AttributeValueGuardFailure, guardValidator, guardValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountPercentPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -50,7 +63,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	}
 
 	logger.Info(fmt.Sprintf("Confirmed double sign from %s", consAddr))
-	k.Slash(ctx, validator, power, k.SlashFractionDoubleSign(ctx), types.AttributeValueDoubleSign)
+	k.Slash(ctx, types.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountPercentPair{})
 }
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
@@ -112,7 +125,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 		signInfo.MissedBlocksCounter = 0
 		signInfo.IndexOffset = 0
 		k.ClearValidatorMissedBlockBitArray(ctx, consAddr)
-		k.Slash(ctx, validator, power, k.SlashFractionDowntime(ctx), types.AttributeValueMissingSignature)
+		k.Slash(ctx, types.AttributeValueMissingSignature, validator, power, k.SlashFractionDowntime(ctx), []AccountPercentPair{})
 	}
 
 	k.SetValidatorSigningInfo(ctx, signInfo)
@@ -120,7 +133,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
-func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64, slashFactor sdk.Dec, reason string) {
+func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountPercentPair) {
 	logger := ctx.Logger()
 
 	if slashFactor.IsNegative() {
@@ -139,12 +152,14 @@ func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64,
 		logger.Error("Cannot find candidate profile for validator", validator.Description.Identity)
 	}
 
-	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), validator.Description.Identity)
+	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, validator.Description.Identity)
 	for _, delegator := range candidate.Delegators {
 		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
 		accountAmtPair := NewAccountAmtPair(delegator.EthAddress, penaltyAmt)
 		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
 	}
+
+	penalty.Beneficiaries = beneficiaries
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
 

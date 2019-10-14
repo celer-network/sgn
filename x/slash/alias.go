@@ -7,19 +7,21 @@ import (
 )
 
 const (
-	ModuleName        = types.ModuleName
-	RouterKey         = types.RouterKey
-	StoreKey          = types.StoreKey
-	QueryPenalty      = types.QueryPenalty
-	QueryParameters   = types.QueryParameters
-	AttributeKeyNonce = types.AttributeKeyNonce
+	ModuleName                 = types.ModuleName
+	RouterKey                  = types.RouterKey
+	StoreKey                   = types.StoreKey
+	QueryPenalty               = types.QueryPenalty
+	QueryParameters            = types.QueryParameters
+	AttributeKeyNonce          = types.AttributeKeyNonce
+	AttributeValueGuardFailure = types.AttributeValueGuardFailure
 )
 
 var (
 	ModuleCdc              = types.ModuleCdc
 	RegisterCodec          = types.RegisterCodec
-	NewPenalty             = types.NewPenalty
 	NewAccountAmtPair      = types.NewAccountAmtPair
+	NewAccountPercentPair  = types.NewAccountPercentPair
+	NewPenalty             = types.NewPenalty
 	NewQueryPenaltyParams  = types.NewQueryPenaltyParams
 	NewMsgSignPenalty      = types.NewMsgSignPenalty
 	EventTypeSlash         = slashingTypes.EventTypeSlash
@@ -32,6 +34,8 @@ var (
 )
 
 type (
+	AccountAmtPair     = types.AccountAmtPair
+	AccountPercentPair = types.AccountPercentPair
 	Penalty            = types.Penalty
 	Params             = types.Params
 	QueryPenaltyParams = types.QueryPenaltyParams
