@@ -29,6 +29,7 @@ func TestMain(m *testing.M) {
 	ethProc, err := StartMainchain()
 	chkErr(err, "starting chain")
 
+	// install sgn bins
 	err = installBins()
 	chkErr(err, "install SGN bins")
 
@@ -39,21 +40,19 @@ func TestMain(m *testing.M) {
 	tf.E2eProfile, tf.GuardAddr, tf.Erc20TokenAddr = SetupMainchain(appAddrMap)
 
 	// set up sidechain (SGN)
-	fmt.Println("position 0")
 	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
-	fmt.Println("position 4 asd")
 	sleep(10) // wait for sgn to be fully ready
 	chkErr(err, "start sidechain")
 
 	// run all e2e tests
 	ret := m.Run()
 
+	ethProc.Signal(syscall.SIGTERM)
+	sgnProc.Signal(syscall.SIGTERM)
+	os.RemoveAll(outRootDir)
+	chkErr(removeCmd.Run(), "remove sidechain directory")
 	if ret == 0 {
 		fmt.Println("All tests passed! 🎉🎉🎉")
-		ethProc.Signal(syscall.SIGTERM)
-		sgnProc.Signal(syscall.SIGTERM)
-		os.RemoveAll(outRootDir)
-		chkErr(removeCmd.Run(), "remove sidechain directory")
 		os.Exit(0)
 	} else {
 		fmt.Println("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
