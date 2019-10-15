@@ -1,9 +1,9 @@
 package e2e
 
 const (
-	// // outPathPrefix is the path prefix for all output from e2e (incl. chain data, binaries etc)
-	// // the code will append epoch second to this and create the folder
-	// // the folder will be deleted after test ends successfully
+	// outPathPrefix is the path prefix for all output from e2e (incl. chain data, binaries etc)
+	// the code will append epoch second to this and create the folder
+	// the folder will be deleted after test ends successfully
 	outRootDirPrefix = "/tmp/celer_e2e_"
 
 	// etherbase and osp addr/priv key in hex
@@ -16,48 +16,5 @@ const (
 
 	ethGateway = "http://127.0.0.1:8545"
 
-	// try to do some allocation for port: 10xyz are osp,
-	// x is osp 0-based index
-	// yz are osp ports like grpc, adminweb, selfrpc etc
-	sEthAddr = clientAddrStr
-	sPort    = "10000"
-	sSelfRPC = "localhost:10010"
-
-	s2Addr    = "127.0.0.1:10100"
-	s2Port    = "10100"
-	s2SelfRPC = "localhost:10110"
-
 	localhost = "127.0.0.1:"
-
-	stSqlAddr = "postgresql://celer_e2e_test@localhost:26257/celer_e2e_test?sslmode=disable"
-
-	startDbScript    = "./start_db.sh"
-	stopDbScript     = "./stop_db.sh"
-	cockroachDbImage = "cockroachdb/cockroach:v19.1.2"
-
-	sStoreDirPrefix         = "/tmp/sStore"
-	sShadowDir              = "/tmp/sShadowStore"
-	c1StoreDir              = "/tmp/c1Store"
-	c1StoreSettleDisputeDir = "/tmp/c1StoreSettleDispute"
-	c2StoreDir              = "/tmp/c2Store"
-	oracleStoreDir          = "/tmp/oracleStore"
-
-	refillRecord = "/tmp/refillRecord.json"
-
-	logName = "serverlog"
-
-	sendAmt = "1"
-
-	depositAmt         = "5000000000000000000"  // 5 ETH
-	accountBalance     = "50000000000000000000" // 50 ETH
-	initialFreeBalance = "5000000000000000000"
-
-	noProxyWithBlockDelayProfile = "../../testing/profile/no_proxy_with_block_delay.json"
-	c2NoProxyMultiServerProfile  = "../../testing/profile/c2_no_proxy_multi_server.json"
-
-	rtConfig       = "../../testing/profile/rt_config.json"
-	ospOspRtConfig = "../../testing/profile/osp_osp_rt_config.json"
-	tokensConfig   = "../../testing/profile/tokens.json"
-
-	sKeystore = "../../testing/env/keystore/server.json"
 )

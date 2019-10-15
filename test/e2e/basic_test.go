@@ -15,5 +15,5 @@ func TestBasic(t *testing.T) {
 
 	out, err := cmd.Output()
 	assert.Equal(t, err, nil, "The command should run successfully")
-	log.Infoln("Latest block number is", out)
+	log.Infof("Latest block number is %s", out)
 }

@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -18,10 +17,6 @@ import (
 
 const (
 	s2Keystore = "../../testing/env/server2.json"
-)
-
-var (
-	sStoreDir = path.Join(sStoreDirPrefix, sEthAddr)
 )
 
 // used by setup_onchain and tests
@@ -35,9 +30,8 @@ var (
 	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
-	outRootDir     string
-	envDir         = "../../testing/env"
-	noProxyProfile string // full file path to profile.json
+	outRootDir string
+	envDir     = "../../testing/env"
 	// erc20 token addr hex
 	// map from app type to deployed addr, updated by SetupMainchain
 	appAddrMap     = make(map[string]ctype.Addr)
@@ -136,30 +130,6 @@ func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
 	}()
 	return cmd.Process, removeCmd, nil
 }
-
-// save json as file path
-// func saveProfile(p *common.CProfile, fpath string) {
-// 	b, _ := json.Marshal(p)
-// 	ioutil.WriteFile(fpath, b, 0644)
-// }
-
-// func SaveProfile(p *common.CProfile, fpath string) {
-// 	saveProfile(p, fpath)
-// }
-
-// func buildBins(rootDir string) error {
-// 	sgnRepo := "github.com/celer-network/sgn/"
-// 	for pkg, bin := range toBuild {
-// 		fmt.Println("Building", pkg, "->", bin)
-// 		cmd := exec.Command("go", "build", "-o", rootDir+bin, sgnRepo+pkg)
-// 		cmd.Stderr, _ = os.OpenFile(rootDir+"build.err", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 		err := cmd.Run()
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
 
 func installBins() error {
 	cmd := exec.Command("make", "install")
