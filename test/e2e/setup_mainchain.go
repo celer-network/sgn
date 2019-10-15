@@ -8,13 +8,12 @@ import (
 	"github.com/celer-network/cChannel-eth-go/deploy"
 	"github.com/celer-network/cChannel-eth-go/ethpool"
 	"github.com/celer-network/cChannel-eth-go/ledger"
-	"github.com/celer-network/goCeler/chain"
-	log "github.com/celer-network/goCeler/clog"
-	"github.com/celer-network/goCeler/common"
-	"github.com/celer-network/goCeler/ctype"
-	"github.com/celer-network/goCeler/testing/testapp"
-	"github.com/celer-network/goCeler/utils"
+	log "github.com/celer-network/sgn/goceler-copy/clog"
+	"github.com/celer-network/sgn/goceler-copy/common"
+	"github.com/celer-network/sgn/goceler-copy/ctype"
+	"github.com/celer-network/sgn/goceler-copy/utils"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -23,7 +22,7 @@ import (
 )
 
 // SetupMainchain deploy contracts, and do setups
-// return profile, tokenAddrErc20 and set testapp related addr
+// return profile, guardAddr, tokenAddrErc20
 func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, string) {
 	flag.Parse()
 	conn, err := ethclient.Dial(outRootDir + "chaindata/geth.ipc")
@@ -121,43 +120,6 @@ func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, str
 	}
 	utils.WaitMined(ctx, conn, tx, 0)
 	log.Infof("MOON transferFrom approved for celerLedger")
-
-	// Deploy MultiSessionApp contract
-	appAddr, tx, _, err := testapp.DeploySimpleMultiSessionApp(etherBaseAuth, conn, testapp.PlayerNum)
-	if err != nil {
-		log.Fatalf("Failed to deploy SimpleMultiSessionApp contract: %v", err)
-	}
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-	chkTxStatus(receipt.Status, "Deploy SimpleMultiSessionApp "+appAddr.Hex())
-	appMap["SimpleMultiSessionApp"] = appAddr
-
-	// Deploy MultiSessionAppWithOracle contract
-	timeout := new(big.Int).SetUint64(2)
-	appAddr, tx, _, err = testapp.DeploySimpleMultiSessionAppWithOracle(etherBaseAuth, conn, timeout, timeout, testapp.PlayerNum, etherBaseAddr)
-	if err != nil {
-		log.Fatalf("Failed to deploy SimpleMultiSessionAppWithOracle contract: %v", err)
-	}
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-	chkTxStatus(receipt.Status, "Deploy SimpleMultiSessionAppWithOracle "+appAddr.Hex())
-	appMap["SimpleMultiSessionAppWithOracle"] = appAddr
-
-	// Deploy MultiGomoku contract
-	appAddr, tx, _, err = testapp.DeployMultiGomoku(etherBaseAuth, conn, testapp.GomokuMinOffChain, testapp.GomokuMaxOnChain)
-	if err != nil {
-		log.Fatalf("Failed to deploy MultiGomoku contract: %v", err)
-	}
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-	chkTxStatus(receipt.Status, "Deploy MultiGomoku "+appAddr.Hex())
-	appMap["MultiGomoku"] = appAddr
 
 	// Deploy SGN Guard contract
 	blameTimeout := big.NewInt(50)
