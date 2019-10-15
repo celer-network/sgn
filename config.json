@@ -9,7 +9,7 @@
   "sgn": {
     "name": "jack",
     "passphrase": "12341234",
-    "pubkey": "cosmospub1addwnpepqtztqlpedasza7m2nqn4qe5xzphxtdck2k0lw70yqpjuhydetx646dzmzpm",
+    "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
     "chainID": "sgnchain",
     "nodeURI": "tcp://localhost:26657"
   }
