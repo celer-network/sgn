@@ -13,7 +13,6 @@ import (
 	"github.com/celer-network/sgn/goceler-copy/ctype"
 	"github.com/celer-network/sgn/goceler-copy/utils"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -90,7 +89,7 @@ func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, str
 	// Deploy sample ERC20 contract (MOON)
 	initAmt := new(big.Int)
 	initAmt.SetString("500000000000000000000000000000000000000000000", 10)
-	erc20Addr, tx, erc20, err := chain.DeployERC20(etherBaseAuth, conn, initAmt, "Moon", 18, "MOON")
+	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Moon", 18, "MOON")
 	if err != nil {
 		log.Fatalf("Failed to deploy ERC20: %v", err)
 	}
