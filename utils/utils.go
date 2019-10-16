@@ -1,3 +1,5 @@
+// This file is based on github.com/goCeler/utils (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
+
 // Copyright 2018 Celer Network
 
 package utils
@@ -12,8 +14,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/ethereum/go-ethereum"

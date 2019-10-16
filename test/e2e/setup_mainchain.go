@@ -10,7 +10,7 @@ import (
 	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/goceler-copy/utils"
+	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
