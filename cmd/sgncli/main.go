@@ -5,9 +5,9 @@ import (
 	"path"
 
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/gateway"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
@@ -53,7 +53,7 @@ func main() {
 		queryCmd(cdc),
 		txCmd(cdc),
 		client.LineBreak,
-		lcd.ServeCommand(cdc, registerRoutes),
+		gateway.ServeCommand(cdc),
 		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,
@@ -64,11 +64,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func registerRoutes(rs *lcd.RestServer) {
-	client.RegisterRoutes(rs.CliCtx, rs.Mux)
-	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
 func queryCmd(cdc *amino.Codec) *cobra.Command {
