@@ -8,7 +8,7 @@ import (
 	"github.com/celer-network/cChannel-eth-go/deploy"
 	"github.com/celer-network/cChannel-eth-go/ethpool"
 	"github.com/celer-network/cChannel-eth-go/ledger"
-	"github.com/celer-network/sgn/goceler-copy/common"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/goceler-copy/utils"
 	"github.com/celer-network/sgn/mainchain"

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	ccommon "github.com/celer-network/sgn/goceler-copy/common"
+	ccommon "github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/goceler-copy/utils"
 	"github.com/celer-network/sgn/testing/log"

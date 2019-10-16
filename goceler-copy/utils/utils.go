@@ -13,7 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/goceler-copy/common"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/ethereum/go-ethereum"
