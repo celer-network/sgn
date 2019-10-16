@@ -39,7 +39,10 @@ func TestMain(m *testing.M) {
 	chkErr(err, "fund server")
 	tf.E2eProfile, tf.GuardAddr, tf.Erc20TokenAddr = SetupMainchain(appAddrMap)
 
-	// set up sidechain (SGN)
+	// update sgn config
+	UpdateSGNConfig()
+
+	// start sidechain (SGN)
 	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
 	sleep(5) // wait for sgn to be fully ready
 	chkErr(err, "start sidechain")

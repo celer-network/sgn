@@ -14,8 +14,8 @@ import (
 
 	ccommon "github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/utils"
 	"github.com/celer-network/sgn/testing/log"
+	"github.com/celer-network/sgn/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	ethInstance = "http://127.0.0.1:8545"
+	EthInstance = "http://127.0.0.1:8545"
 )
 
 var (
@@ -71,7 +71,7 @@ func KillProcess(process *os.Process) {
 
 func prepareEthClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, common.Address, error) {
-	conn, err := ethclient.Dial(ethInstance)
+	conn, err := ethclient.Dial(EthInstance)
 	if err != nil {
 		return nil, nil, nil, common.Address{}, err
 	}
