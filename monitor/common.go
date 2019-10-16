@@ -50,15 +50,15 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum ui
 }
 
 func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.StoreKey, channelId)
+	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.RouterKey, channelId)
 }
 
 func (m *EthMonitor) getLatestBlock() (global.Block, error) {
-	return global.CLIQueryLatestBlock(m.cdc, m.transactor.CliCtx, global.StoreKey)
+	return global.CLIQueryLatestBlock(m.cdc, m.transactor.CliCtx, global.RouterKey)
 }
 
 func (m *EthMonitor) getSecureBlockNum() (uint64, error) {
-	return global.CLIQuerySecureBlockNum(m.cdc, m.transactor.CliCtx, global.StoreKey)
+	return global.CLIQuerySecureBlockNum(m.cdc, m.transactor.CliCtx, global.RouterKey)
 }
 
 // Get account info

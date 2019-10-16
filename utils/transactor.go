@@ -42,6 +42,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID).
 		WithKeybase(kb)
+
 	cliCtx := client.
 		NewCLIContext().
 		WithCodec(cdc).
