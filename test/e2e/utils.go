@@ -89,6 +89,8 @@ func StartMainchain() (*os.Process, error) {
 }
 
 func UpdateSGNConfig() {
+	log.Println("Updating SGN's config.json")
+
 	viper.SetConfigFile("../../config.json")
 	err := viper.ReadInConfig()
 	if err != nil {
