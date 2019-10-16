@@ -12,10 +12,10 @@ import (
 	"time"
 	"unsafe"
 
-	log "github.com/celer-network/sgn/goceler-copy/clog"
 	"github.com/celer-network/sgn/goceler-copy/common"
 	"github.com/celer-network/sgn/goceler-copy/ctype"
 	"github.com/celer-network/sgn/proto/entity"
+	"github.com/celer-network/sgn/testing/log"
 	"github.com/ethereum/go-ethereum"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"

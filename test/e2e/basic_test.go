@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	log "github.com/celer-network/sgn/goceler-copy/clog"
+	"github.com/celer-network/sgn/testing/log"
 	"github.com/stretchr/testify/assert"
 )
 
