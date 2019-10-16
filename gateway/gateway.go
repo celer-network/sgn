@@ -6,9 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/utils"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/gorilla/mux"
@@ -20,24 +22,41 @@ import (
 
 // RestServer represents the Light Client Rest server
 type RestServer struct {
-	Mux    *mux.Router
-	CliCtx context.CLIContext
+	Mux *mux.Router
 
-	log      log.Logger
-	listener net.Listener
+	transactor *utils.Transactor
+	log        log.Logger
+	listener   net.Listener
 }
 
 // NewRestServer creates a new rest server instance
-func NewRestServer(cdc *codec.Codec) *RestServer {
+func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
+	viper.SetConfigFile("config.json")
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	transactor, err := utils.NewTransactor(
+		app.DefaultCLIHome,
+		viper.GetString(flags.FlagSgnChainID),
+		viper.GetString(flags.FlagSgnNodeURI),
+		viper.GetString(flags.FlagSgnName),
+		viper.GetString(flags.FlagSgnPassphrase),
+		cdc,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	r := mux.NewRouter()
-	cliCtx := context.NewCLIContext().WithCodec(cdc)
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
 	return &RestServer{
-		Mux:    r,
-		CliCtx: cliCtx,
-		log:    logger,
-	}
+		Mux:        r,
+		transactor: transactor,
+		log:        logger,
+	}, nil
 }
 
 // Start starts the rest server
@@ -59,7 +78,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	rs.log.Info(
 		fmt.Sprintf(
 			"Starting application REST service (chain-id: %q)...",
-			viper.GetString(flags.FlagChainID),
+			viper.GetString(sdkFlags.FlagChainID),
 		),
 	)
 
@@ -74,24 +93,28 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 		Use:   "gateway",
 		Short: "Start a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rs := NewRestServer(cdc)
+			rs, err := NewRestServer(cdc)
+			if err != nil {
+				return err
+			}
+
 			registerRoutes(rs)
 
 			// Start the rest server and return error if one exists
 			err = rs.Start(
-				viper.GetString(flags.FlagListenAddr),
-				viper.GetInt(flags.FlagMaxOpenConnections),
-				uint(viper.GetInt(flags.FlagRPCReadTimeout)),
-				uint(viper.GetInt(flags.FlagRPCWriteTimeout)),
+				viper.GetString(sdkFlags.FlagListenAddr),
+				viper.GetInt(sdkFlags.FlagMaxOpenConnections),
+				uint(viper.GetInt(sdkFlags.FlagRPCReadTimeout)),
+				uint(viper.GetInt(sdkFlags.FlagRPCWriteTimeout)),
 			)
 
 			return err
 		},
 	}
 
-	return flags.RegisterRestServerFlags(cmd)
+	return sdkFlags.RegisterRestServerFlags(cmd)
 }
 
 func registerRoutes(rs *RestServer) {
-	client.RegisterRoutes(rs.CliCtx, rs.Mux)
+	client.RegisterRoutes(rs.transactor.CliCtx, rs.Mux)
 }

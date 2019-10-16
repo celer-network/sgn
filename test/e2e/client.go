@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	app "github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
