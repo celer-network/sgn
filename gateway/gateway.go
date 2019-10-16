@@ -32,7 +32,7 @@ type RestServer struct {
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	viper.SetConfigFile("config.json")
-	err := viper.ReadInConfig()
+	err := viper.MergeInConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +85,11 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.log, cfg)
 }
 
+func (rs *RestServer) registerRoutes() {
+	client.RegisterRoutes(rs.transactor.CliCtx, rs.Mux)
+	rs.registerQueryRoutes()
+}
+
 // ServeCommand will start the application REST service as a blocking process. It
 // takes a codec to create a RestServer object and a function to register all
 // necessary routes.
@@ -98,7 +103,7 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			registerRoutes(rs)
+			rs.registerRoutes()
 
 			// Start the rest server and return error if one exists
 			err = rs.Start(
@@ -113,8 +118,4 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 	}
 
 	return sdkFlags.RegisterRestServerFlags(cmd)
-}
-
-func registerRoutes(rs *RestServer) {
-	client.RegisterRoutes(rs.transactor.CliCtx, rs.Mux)
 }

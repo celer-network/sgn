@@ -23,7 +23,7 @@ var (
 
 func main() {
 	viper.SetConfigFile("config.json")
-	err := viper.ReadInConfig()
+	err := viper.MergeInConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
