@@ -1,11 +1,10 @@
 package slash
 
 import (
+	"encoding/binary"
 	"fmt"
 	"time"
 
-	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,23 +18,38 @@ import (
 type Keeper struct {
 	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient       *mainchain.EthClient
-	globalKeeper    global.Keeper
 	validatorKeeper validator.Keeper
 	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the slash Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
-		ethClient:       ethClient,
-		globalKeeper:    globalKeeper,
 		validatorKeeper: validatorKeeper,
 		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}
+}
+
+// HandleGuardFailure handles a validator fails to guard state.
+func (k Keeper) HandleGuardFailure(ctx sdk.Context, guardAddr, reportAddr sdk.AccAddress) {
+	guardValAddr := sdk.ValAddress(guardAddr)
+	guardValidator, found := k.validatorKeeper.GetValidator(ctx, guardValAddr)
+	if !found {
+		return
+	}
+
+	reportValAddr := sdk.ValAddress(reportAddr)
+	reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
+	if !found {
+		return
+	}
+
+	var beneficiaries []AccountFractionPair
+	beneficiaries = append(beneficiaries, NewAccountFractionPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
+
+	k.Slash(ctx, AttributeValueGuardFailure, guardValidator, guardValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountFractionPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -49,7 +63,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	}
 
 	logger.Info(fmt.Sprintf("Confirmed double sign from %s", consAddr))
-	k.Slash(ctx, validator, power, k.SlashFractionDoubleSign(ctx), types.AttributeValueDoubleSign)
+	k.Slash(ctx, types.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountFractionPair{})
 }
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
@@ -94,7 +108,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	}
 
 	minHeight := signInfo.StartHeight + signedBlocksWindow
-	maxMissed := signedBlocksWindow - k.MinSignedPerWindow(ctx)
+	maxMissed := signedBlocksWindow - k.MinSignedPerWindow(ctx).MulInt64(signedBlocksWindow).RoundInt64()
 
 	// if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
@@ -104,14 +118,14 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 		}
 
 		// Downtime confirmed: slash the validator
-		logger.Info(fmt.Sprintf("Validator %s past min height of %d and below signed blocks threshold of %d",
-			consAddr, minHeight, k.MinSignedPerWindow(ctx)))
+		logger.Info(fmt.Sprintf("Validator %s past min height of %d and above max miss threshold of %d",
+			consAddr, minHeight, maxMissed))
 
 		// We need to reset the counter & array so that the validator won't be immediately slashed for downtime upon rebonding.
 		signInfo.MissedBlocksCounter = 0
 		signInfo.IndexOffset = 0
 		k.ClearValidatorMissedBlockBitArray(ctx, consAddr)
-		k.Slash(ctx, validator, power, k.SlashFractionDowntime(ctx), types.AttributeValueMissingSignature)
+		k.Slash(ctx, types.AttributeValueMissingSignature, validator, power, k.SlashFractionDowntime(ctx), []AccountFractionPair{})
 	}
 
 	k.SetValidatorSigningInfo(ctx, signInfo)
@@ -119,7 +133,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
-func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64, slashFactor sdk.Dec, reason string) {
+func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
 	logger := ctx.Logger()
 
 	if slashFactor.IsNegative() {
@@ -133,33 +147,63 @@ func (k Keeper) Slash(ctx sdk.Context, validator staking.Validator, power int64,
 		"validator %s slashed by %s with slash factor of %s",
 		validator.GetOperator(), slashAmount, slashFactor.String()))
 
+	candidate, found := k.validatorKeeper.GetCandidate(ctx, validator.Description.Identity)
+	if !found {
+		logger.Error("Cannot find candidate profile for validator", validator.Description.Identity)
+	}
+
+	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, validator.Description.Identity)
+	for _, delegator := range candidate.Delegators {
+		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+		accountAmtPair := NewAccountAmtPair(delegator.EthAddress, penaltyAmt)
+		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+	}
+
+	penalty.Beneficiaries = beneficiaries
+	penalty.GenerateProtoBytes()
+	k.SetPenalty(ctx, penalty)
+
 	// TODO: set penalty properly
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeSlash,
+			EventTypeSlash,
+			sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
+			sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
 			sdk.NewAttribute(types.AttributeKeyReason, reason),
 		),
 	)
 }
 
-// Gets the entire Penalty metadata for a nounce
-func (k Keeper) GetPenalty(ctx sdk.Context, nounce uint64) (Penalty, bool) {
+// Gets the next Penalty nonce, and increment nonce by 1
+func (k Keeper) GetNextPenaltyNonce(ctx sdk.Context) (nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(PenaltyNonceKey)
 
-	if !store.Has(GetPenaltyKey(nounce)) {
-		return Penalty{}, false
+	if bz != nil {
+		nonce = binary.BigEndian.Uint64(bz)
 	}
 
-	value := store.Get(GetPenaltyKey(nounce))
-	var request Penalty
-	k.cdc.MustUnmarshalBinaryBare(value, &request)
-	return request, true
+	store.Set(PenaltyNonceKey, sdk.Uint64ToBigEndian(nonce+1))
+	return
 }
 
-// Sets the entire Penalty metadata for a nounce
-func (k Keeper) SetPenalty(ctx sdk.Context, nounce uint64, request Penalty) {
+// Gets the entire Penalty metadata for a nonce
+func (k Keeper) GetPenalty(ctx sdk.Context, nonce uint64) (penalty Penalty, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetPenaltyKey(nounce), k.cdc.MustMarshalBinaryBare(request))
+
+	if !store.Has(GetPenaltyKey(nonce)) {
+		return penalty, false
+	}
+
+	value := store.Get(GetPenaltyKey(nonce))
+	k.cdc.MustUnmarshalBinaryBare(value, &penalty)
+	return penalty, true
+}
+
+// Sets the entire Penalty metadata for a nonce
+func (k Keeper) SetPenalty(ctx sdk.Context, penalty Penalty) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetPenaltyKey(penalty.Nonce), k.cdc.MustMarshalBinaryBare(penalty))
 }
 
 // Stored by *validator* address (not operator address)

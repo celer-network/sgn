@@ -116,11 +116,6 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 
 // Handle a message to submit guard proof
 func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.Result {
-	pusher := keeper.validatorKeeper.GetPusher(ctx)
-	if !msg.Sender.Equals(pusher.ValidatorAddr) {
-		return sdk.ErrInternal("Non pusher is not allowed to submit guard proof").Result()
-	}
-
 	request, found := keeper.GetRequest(ctx, msg.ChannelId)
 	if !found {
 		return sdk.ErrInternal("Cannot find request").Result()
@@ -130,5 +125,8 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	request.TxHash = msg.TxHash
 	keeper.SetRequest(ctx, msg.ChannelId, request)
 
+	for _, guard := range request.RequestGuards {
+		keeper.slashKeeper.HandleGuardFailure(ctx, guard, msg.Sender)
+	}
 	return sdk.Result{}
 }

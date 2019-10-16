@@ -11,40 +11,49 @@ import (
 
 const (
 	DefaultSignedBlocksWindow = 100
-	DefaultMinSignedPerWindow = 5
 )
 
 // slash params default values
 var (
-	DefaultSlashFractionDoubleSign = sdk.NewDec(1).Quo(sdk.NewDec(20))
-	DefaultSlashFractionDowntime   = sdk.NewDec(1).Quo(sdk.NewDec(100))
+	DefaultMinSignedPerWindow        = sdk.NewDecWithPrec(5, 1)
+	DefaultSlashFractionDoubleSign   = sdk.NewDec(1).Quo(sdk.NewDec(20))
+	DefaultSlashFractionDowntime     = sdk.NewDec(1).Quo(sdk.NewDec(100))
+	DefaultSlashFractionGuardFailure = sdk.NewDec(1).Quo(sdk.NewDec(100))
+	DefaultFallbackGuardReward       = sdk.NewDec(1).Quo(sdk.NewDec(2))
 )
 
 // nolint - Keys for parameter access
 var (
-	KeySignedBlocksWindow      = []byte("SignedBlocksWindow")
-	KeyMinSignedPerWindow      = []byte("MinSignedPerWindow")
-	KeySlashFractionDoubleSign = []byte("SlashFractionDoubleSign")
-	KeySlashFractionDowntime   = []byte("SlashFractionDowntime")
+	KeySignedBlocksWindow        = []byte("SignedBlocksWindow")
+	KeyMinSignedPerWindow        = []byte("MinSignedPerWindow")
+	KeySlashFractionDoubleSign   = []byte("SlashFractionDoubleSign")
+	KeySlashFractionDowntime     = []byte("SlashFractionDowntime")
+	KeySlashFractionGuardFailure = []byte("SlashFractionGuardFailure")
+	KeyFallbackGuardReward       = []byte("FallbackGuardReward")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for slash
 type Params struct {
-	SignedBlocksWindow      int64   `json:"signed_blocks_window" yaml:"signed_blocks_window"`
-	MinSignedPerWindow      int64   `json:"min_signed_per_window" yaml:"min_signed_per_window"`
-	SlashFractionDoubleSign sdk.Dec `json:"slashFractionDoubleSign" yaml:"slashFractionDoubleSign"`
-	SlashFractionDowntime   sdk.Dec `json:"slashFractionDowntime" yaml:"slashFractionDowntime"`
+	SignedBlocksWindow        int64   `json:"signed_blocks_window" yaml:"signed_blocks_window"`
+	MinSignedPerWindow        sdk.Dec `json:"min_signed_per_window" yaml:"min_signed_per_window"`
+	SlashFractionDoubleSign   sdk.Dec `json:"slashFractionDoubleSign" yaml:"slashFractionDoubleSign"`
+	SlashFractionDowntime     sdk.Dec `json:"slashFractionDowntime" yaml:"slashFractionDowntime"`
+	SlashFractionGuardFailure sdk.Dec `json:"slashFractionGuardFailure" yaml:"slashFractionGuardFailure"`
+	FallbackGuardReward       sdk.Dec `json:"fallbackGuardReward" yaml:"fallbackGuardReward"`
 }
 
 // NewParams creates a new Params instance
-func NewParams(signedBlocksWindow, minSignedPerWindow int64, slashFractionDoubleSign, slashFractionDowntime sdk.Dec) Params {
+func NewParams(signedBlocksWindow int64, minSignedPerWindow,
+	slashFractionDoubleSign, slashFractionDowntime, slashFractionGuardFailure, fallbackGuardReward sdk.Dec) Params {
 	return Params{
-		SignedBlocksWindow:      signedBlocksWindow,
-		MinSignedPerWindow:      minSignedPerWindow,
-		SlashFractionDoubleSign: slashFractionDoubleSign,
-		SlashFractionDowntime:   slashFractionDowntime,
+		SignedBlocksWindow:        signedBlocksWindow,
+		MinSignedPerWindow:        minSignedPerWindow,
+		SlashFractionDoubleSign:   slashFractionDoubleSign,
+		SlashFractionDowntime:     slashFractionDowntime,
+		SlashFractionGuardFailure: slashFractionGuardFailure,
+		FallbackGuardReward:       fallbackGuardReward,
 	}
 }
 
@@ -55,6 +64,8 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		{KeyMinSignedPerWindow, &p.MinSignedPerWindow},
 		{KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign},
 		{KeySlashFractionDowntime, &p.SlashFractionDowntime},
+		{KeySlashFractionGuardFailure, &p.SlashFractionGuardFailure},
+		{KeyFallbackGuardReward, &p.FallbackGuardReward},
 	}
 }
 
@@ -68,17 +79,20 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultSignedBlocksWindow, DefaultMinSignedPerWindow, DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime)
+	return NewParams(DefaultSignedBlocksWindow, DefaultMinSignedPerWindow, DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultSlashFractionGuardFailure, DefaultFallbackGuardReward)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   SignedBlocksWindow:    %d,
-  MinSignedPerWindow:    %d,
+  MinSignedPerWindow:    %s,
   SlashFractionDoubleSign:    %s,
-  SlashFractionDowntime:    %s`,
-		p.SignedBlocksWindow, p.MinSignedPerWindow, p.SlashFractionDoubleSign, p.SlashFractionDowntime)
+	SlashFractionDowntime:    %s
+	SlashFractionGuardFailure:    %s
+	FallbackGuardReward:    %s`,
+		p.SignedBlocksWindow, p.MinSignedPerWindow,
+		p.SlashFractionDoubleSign, p.SlashFractionDowntime, p.SlashFractionGuardFailure, p.FallbackGuardReward)
 }
 
 // unmarshal the current slash params value from store key or panic
@@ -105,12 +119,45 @@ func (p Params) Validate() error {
 		return fmt.Errorf("slash parameter SignedBlocksWindow must be positive")
 	}
 
+	if p.MinSignedPerWindow.IsNegative() {
+		return fmt.Errorf("slash parameter MinSignedPerWindow must be positive")
+	}
+
+	if p.MinSignedPerWindow.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter MinSignedPerWindow must be less or equal than 1")
+	}
+
 	if p.SlashFractionDoubleSign.IsNegative() {
 		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be positive")
+	}
+
+	if p.SlashFractionDoubleSign.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be less or equal than 1")
 	}
 
 	if p.SlashFractionDowntime.IsNegative() {
 		return fmt.Errorf("slash parameter SlashFractionDowntime must be positive")
 	}
+
+	if p.SlashFractionDowntime.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionDowntime must be less or equal than 1")
+	}
+
+	if p.SlashFractionGuardFailure.IsNegative() {
+		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be positive")
+	}
+
+	if p.SlashFractionGuardFailure.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be less or equal than 1")
+	}
+
+	if p.FallbackGuardReward.IsNegative() {
+		return fmt.Errorf("slash parameter FallbackGuardReward must be positive")
+	}
+
+	if p.FallbackGuardReward.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter FallbackGuardReward must be less or equal than 1")
+	}
+
 	return nil
 }
