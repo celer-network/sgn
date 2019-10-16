@@ -1,3 +1,5 @@
+// This file is based on github.com/goCeler/ctype (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
+
 // Copyright 2018-2019 Celer Network
 
 // util package to handle various types and hex string, bytes etc

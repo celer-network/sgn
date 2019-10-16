@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/celer-network/sgn/goceler-copy/ctype"
+	"github.com/celer-network/sgn/ctype"
 	tf "github.com/celer-network/sgn/testing"
 )
 

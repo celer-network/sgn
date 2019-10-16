@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	ccommon "github.com/celer-network/sgn/goceler-copy/common"
-	"github.com/celer-network/sgn/goceler-copy/ctype"
+	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/goceler-copy/utils"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
