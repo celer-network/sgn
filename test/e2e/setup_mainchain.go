@@ -42,11 +42,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	channelAddrBundle := deploy.DeployAll(etherBaseAuth, conn, ctx, 0)
 
 	// Disable channel deposit limit
-	header, err := conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	ledgerContract, err := ledger.NewCelerLedger(channelAddrBundle.CelerLedgerAddr, conn)
 	if err != nil {
 		log.Fatal(err)
@@ -62,11 +58,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkTxStatus(receipt.Status, "Disable balance limit")
 
 	// Deposit into EthPool (used for openChannel)
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	ethPoolContract, err := ethpool.NewEthPool(channelAddrBundle.EthPoolAddr, conn)
 	if err != nil {
 		log.Fatal(err)
@@ -86,11 +78,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkTxStatus(receipt.Status, "Deposit to ethpool")
 
 	// Approve transferFrom of eth from ethpool for celerLedger
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	tx, err = ethPoolContract.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, amt)
 	if err != nil {
 		log.Fatalf("Failed to approve transferFrom of ETH for celerLedger: %v", err)
@@ -102,11 +90,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkTxStatus(receipt.Status, "Approve ethpool for ledger")
 
 	// Deploy sample ERC20 contract (MOON)
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	initAmt := new(big.Int)
 	initAmt.SetString("500000000000000000000000000000000000000000000", 10)
 	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Moon", 18, "MOON")
@@ -120,11 +104,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkTxStatus(receipt.Status, "Deploy ERC20 "+erc20Addr.Hex())
 
 	// Transfer ERC20 to etherbase and client
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	moonAmt := new(big.Int)
 	moonAmt.SetString("500000000000000000000000000000", 10)
 	addrs := []ethcommon.Address{etherBaseAddr, clientAddr}
@@ -138,11 +118,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	log.Infof("Sent MOON to etherbase and client")
 
 	// Approve transferFrom of MOON for celerLedger
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	tx, err = erc20.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, moonAmt)
 	if err != nil {
 		log.Fatalf("Failed to approve transferFrom of MOON for celerLedger: %v", err)
@@ -151,11 +127,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	log.Infof("MOON transferFrom approved for celerLedger")
 
 	// Deploy SGN Guard contract
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	blameTimeout := big.NewInt(50)
 	minValidatorNum := big.NewInt(1)
 	minStakingPool := big.NewInt(100)
@@ -171,11 +143,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkTxStatus(receipt.Status, "Deploy Guard "+guardAddr.Hex())
 
 	// Deposit into EthPool client2 (used for openChannel)
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	client2Addr := ctype.Hex2Addr(client2AddrStr)
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client2Addr})
 	if err != nil {
@@ -198,11 +166,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkTxStatus(receipt.Status, "Deposit to ethpool client2")
 
 	// Approve transferFrom of eth from ethpool for celerLedger
-	header, err = conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Infoln("Latest block number on mainchain: ", header.Number)
+	logBlkNum(conn)
 	tx, err = ethPoolContract.Approve(client2Auth, channelAddrBundle.CelerLedgerAddr, amt)
 	if err != nil {
 		log.Fatalf("Failed to approve client2 transferFrom of ETH for celerLedger: %v", err)
@@ -239,4 +203,12 @@ func chkTxStatus(s uint64, txname string) {
 		log.Fatal(txname + " tx failed")
 	}
 	log.Info(txname + " tx success")
+}
+
+func logBlkNum(conn *ethclient.Client) {
+	header, err := conn.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infoln("Latest block number on mainchain: ", header.Number)
 }
