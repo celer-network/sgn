@@ -131,25 +131,35 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query candidate info by candidateAddress",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(args[0]))
-			if err != nil {
-				return err
-			}
-
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
-			bz, _, err := cliCtx.QueryWithData(route, data)
+			candidate, err := QueryReward(cdc, cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}
 
-			var candidate types.Candidate
-			cdc.MustUnmarshalJSON(bz, &candidate)
 			return cliCtx.PrintOutput(candidate)
 		},
 	}
 
 	return cmd
+}
+
+// Query candidate info
+func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, ethAddress string) (candidate types.Candidate, err error) {
+	data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
+	if err != nil {
+		return
+	}
+
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
+	res, _, err := cliCtx.QueryWithData(route, data)
+	if err != nil {
+		fmt.Printf("query candidate error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(res, &candidate)
+	return
 }
 
 // GetCmdReward queries reward info
