@@ -25,9 +25,7 @@ import (
 func SetupMainchain() (*common.CProfile, string, string) {
 	flag.Parse()
 	conn, err := ethclient.Dial(outRootDir + "chaindata/geth.ipc")
-	if err != nil {
-		log.Fatalf("Failed to connect to the Ethereum: %v", err)
-	}
+	chkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
 	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
 	price := big.NewInt(2e9) // 2Gwei
@@ -44,49 +42,33 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	// Disable channel deposit limit
 	logBlkNum(conn)
 	ledgerContract, err := ledger.NewCelerLedger(channelAddrBundle.CelerLedgerAddr, conn)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "failed to NewCelerLedger")
 	tx, err := ledgerContract.DisableBalanceLimits(etherBaseAuth)
-	if err != nil {
-		log.Fatalf("Failed disable channel deposit limits: %v", err)
-	}
+	chkErr(err, "failed disable channel deposit limits")
 	receipt, err := utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	chkTxStatus(receipt.Status, "Disable balance limit")
 
 	// Deposit into EthPool (used for openChannel)
 	logBlkNum(conn)
 	ethPoolContract, err := ethpool.NewEthPool(channelAddrBundle.EthPoolAddr, conn)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "failed to NewEthPool")
 	amt := new(big.Int)
 	amt.SetString("1000000000000000000000000", 10) // 1000000 ETH
 	etherBaseAuth.Value = amt
 	tx, err = ethPoolContract.Deposit(etherBaseAuth, clientAddr)
-	if err != nil {
-		log.Fatalf("Failed to deposit into ethpool: %v", err)
-	}
+	chkErr(err, "failed to deposit into ethpool")
 	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	etherBaseAuth.Value = big.NewInt(0)
 	chkTxStatus(receipt.Status, "Deposit to ethpool")
 
 	// Approve transferFrom of eth from ethpool for celerLedger
 	logBlkNum(conn)
 	tx, err = ethPoolContract.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, amt)
-	if err != nil {
-		log.Fatalf("Failed to approve transferFrom of ETH for celerLedger: %v", err)
-	}
+	chkErr(err, "failed to approve transferFrom of ETH for celerLedger")
 	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	chkTxStatus(receipt.Status, "Approve ethpool for ledger")
 
 	// Deploy sample ERC20 contract (MOON)
@@ -94,13 +76,9 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	initAmt := new(big.Int)
 	initAmt.SetString("500000000000000000000000000000000000000000000", 10)
 	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Moon", 18, "MOON")
-	if err != nil {
-		log.Fatalf("Failed to deploy ERC20: %v", err)
-	}
+	chkErr(err, "failed to deploy ERC20")
 	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	chkTxStatus(receipt.Status, "Deploy ERC20 "+erc20Addr.Hex())
 
 	// Transfer ERC20 to etherbase and client
@@ -110,9 +88,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	addrs := []ethcommon.Address{etherBaseAddr, clientAddr}
 	for _, addr := range addrs {
 		tx, err = erc20.Transfer(etherBaseAuth, addr, moonAmt)
-		if err != nil {
-			log.Fatalf("Failed to send MOON: %v", err)
-		}
+		chkErr(err, "failed to send MOON")
 		utils.WaitMined(ctx, conn, tx, 0)
 	}
 	log.Infof("Sent MOON to etherbase and client")
@@ -120,9 +96,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	// Approve transferFrom of MOON for celerLedger
 	logBlkNum(conn)
 	tx, err = erc20.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, moonAmt)
-	if err != nil {
-		log.Fatalf("Failed to approve transferFrom of MOON for celerLedger: %v", err)
-	}
+	chkErr(err, "failed to approve transferFrom of MOON for celerLedger")
 	utils.WaitMined(ctx, conn, tx, 0)
 	log.Infof("MOON transferFrom approved for celerLedger")
 
@@ -133,48 +107,34 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	minStakingPool := big.NewInt(100)
 	sidechainGoLiveTimeout := big.NewInt(0)
 	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, erc20Addr, blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout)
-	if err != nil {
-		log.Fatalf("Failed to deploy Guard contract: %v", err)
-	}
+	chkErr(err, "failed to deploy Guard contract")
 	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	chkTxStatus(receipt.Status, "Deploy Guard "+guardAddr.Hex())
 
 	// Deposit into EthPool client2 (used for openChannel)
 	logBlkNum(conn)
 	client2Addr := ctype.Hex2Addr(client2AddrStr)
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client2Addr})
-	if err != nil {
-		log.Fatalln("Failed to fund client 2", err)
-	}
+	chkErr(err, "failed to fund client 2")
 	client2PrivKey, _ := crypto.HexToECDSA(client2Priv)
 	client2Auth := bind.NewKeyedTransactor(client2PrivKey)
 	client2Auth.GasPrice = price
 	amt.SetString("1000000000000000000000000", 10) // 1000000 ETH
 	etherBaseAuth.Value = amt
 	tx, err = ethPoolContract.Deposit(etherBaseAuth, client2Addr)
-	if err != nil {
-		log.Fatalf("Failed to deposit client2 into ethpool: %v", err)
-	}
+	chkErr(err, "failed to deposit client2 into ethpool")
 	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	etherBaseAuth.Value = big.NewInt(0)
 	chkTxStatus(receipt.Status, "Deposit to ethpool client2")
 
 	// Approve transferFrom of eth from ethpool for celerLedger
 	logBlkNum(conn)
 	tx, err = ethPoolContract.Approve(client2Auth, channelAddrBundle.CelerLedgerAddr, amt)
-	if err != nil {
-		log.Fatalf("Failed to approve client2 transferFrom of ETH for celerLedger: %v", err)
-	}
+	chkErr(err, "failed to approve client2 transferFrom of ETH for celerLedger")
 	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "WaitMined error")
 	chkTxStatus(receipt.Status, "Approve ethpool for ledger, client2")
 
 	// output json file
@@ -207,8 +167,6 @@ func chkTxStatus(s uint64, txname string) {
 
 func logBlkNum(conn *ethclient.Client) {
 	header, err := conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	chkErr(err, "failed to get HeaderByNumber")
 	log.Infoln("Latest block number on mainchain: ", header.Number)
 }
