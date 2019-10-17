@@ -13,8 +13,6 @@ import (
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/flags"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/ethereum/go-ethereum/ethclient"
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
 )
 
@@ -36,12 +34,6 @@ var (
 	appAddrMap     = make(map[string]ctype.Addr)
 	tokenAddrErc20 string // set by SetupMainchain deploy erc20 contract
 )
-
-// toBuild map package subpath to binary file name eg. cmd/sgn -> sgn means build sgn/cmd/sgn and output sgn
-var toBuild = map[string]string{
-	"cmd/sgn":    "sgn",
-	"cmd/sgncli": "sgncli",
-}
 
 // start process to handle eth rpc, and fund etherbase and server account
 func StartMainchain() (*os.Process, error) {
@@ -99,20 +91,11 @@ func UpdateSGNConfig() {
 	viper.WriteConfig()
 }
 
-// todo: remove addr arg
-func getEthClient(addr string) (*ethclient.Client, error) {
-	ws, err := ethrpc.Dial(ethGateway)
-	if err != nil {
-		return nil, err
-	}
-	conn := ethclient.NewClient(ws)
-	return conn, nil
-}
-
 func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }
 
+// StartSidechainDefault starts sgn sidechain with the data in test/data
 func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
 	cmd := exec.Command("make", "copy-test-data")
 	// set cmd.Dir under repo root path

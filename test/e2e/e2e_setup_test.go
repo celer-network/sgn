@@ -45,8 +45,8 @@ func TestMain(m *testing.M) {
 	// start sidechain (SGN)
 	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
 	chkErr(err, "start sidechain")
-	fmt.Println("Sleep for 120 seconds to let sgn be fully ready")
-	sleep(120) // wait for sgn to be fully ready
+	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
+	sleep(20) // wait for sgn to be fully ready
 
 	// run all e2e tests
 	ret := m.Run()

@@ -15,6 +15,4 @@ const (
 	client2Priv      = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
 
 	ethGateway = "http://127.0.0.1:8545"
-
-	localhost = "127.0.0.1:"
 )
