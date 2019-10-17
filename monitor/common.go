@@ -22,7 +22,7 @@ func (m *EthMonitor) isPuller() bool {
 }
 
 func (m *EthMonitor) isPusher() bool {
-	pusher, err := validator.CLIQueryPuller(m.cdc, m.transactor.CliCtx, validator.StoreKey)
+	pusher, err := validator.CLIQueryPusher(m.cdc, m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Printf("Get pusher err", err)
 		return false
