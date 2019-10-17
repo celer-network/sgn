@@ -23,7 +23,7 @@ type Transactor struct {
 	CliCtx     context.CLIContext
 	Key        keys.Info
 	Passphrase string
-	txQueue    deque.Deque
+	msgQueue   deque.Deque
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *codec.Codec) (*Transactor, error) {
@@ -65,20 +65,20 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 
 // Batch msg into a queue before actual broadcast
 func (t *Transactor) BroadcastTx(msg sdk.Msg) {
-	t.txQueue.PushBack(msg)
+	t.msgQueue.PushBack(msg)
 }
 
 // Poll tx queue and send msgs in batch
 func (t *Transactor) start() {
 	for {
-		if t.txQueue.Len() == 0 {
+		if t.msgQueue.Len() == 0 {
 			time.Sleep(time.Second)
 			continue
 		}
 
 		var msgs []sdk.Msg
-		for t.txQueue.Len() != 0 {
-			msg := t.txQueue.PopFront().(sdk.Msg)
+		for t.msgQueue.Len() != 0 {
+			msg := t.msgQueue.PopFront().(sdk.Msg)
 			msgs = append(msgs, msg)
 		}
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/celer-network/sgn/x/subscribe/client/cli"
-	"github.com/celer-network/sgn/x/subscribe/client/rest"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,7 +48,6 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // Register rest routes
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	rest.RegisterRoutes(ctx, rtr)
 }
 
 // Get the root query command of this module
