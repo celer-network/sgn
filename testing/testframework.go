@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	ccommon "github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
@@ -154,4 +155,30 @@ func fundAccount(amount string, recipients []*common.Address) error {
 
 func FundAddr(amt string, recipients []*common.Address) error {
 	return fundAccount(amt, recipients)
+}
+
+func AdvanceBlock() error {
+	return fundAccount("0", []*common.Address{&common.Address{}})
+}
+
+func AdvanceBlocks(blockCount uint64) error {
+	var i uint64
+	for i = 0; i < blockCount; i++ {
+		AdvanceBlock()
+		time.Sleep(100 * time.Millisecond)
+	}
+	return nil
+}
+
+func AdvanceBlocksUntilDone(done chan bool) {
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-done:
+			ticker.Stop()
+			return
+		case <-ticker.C:
+			AdvanceBlock()
+		}
+	}
 }
