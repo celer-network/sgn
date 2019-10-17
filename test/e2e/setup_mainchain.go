@@ -22,7 +22,7 @@ import (
 
 // SetupMainchain deploy contracts, and do setups
 // return profile, guardAddr, tokenAddrErc20
-func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, string) {
+func SetupMainchain() (*common.CProfile, string, string) {
 	flag.Parse()
 	conn, err := ethclient.Dial(outRootDir + "chaindata/geth.ipc")
 	if err != nil {
@@ -169,7 +169,6 @@ func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, str
 		log.Fatal(err)
 	}
 	chkTxStatus(receipt.Status, "Deploy Guard "+guardAddr.Hex())
-	appMap["Guard"] = guardAddr
 
 	// Deposit into EthPool client2 (used for openChannel)
 	header, err = conn.HeaderByNumber(context.Background(), nil)
@@ -217,7 +216,7 @@ func SetupMainchain(appMap map[string]ctype.Addr) (*common.CProfile, string, str
 	// output json file
 	p := &common.CProfile{
 		// hardcoded values
-		ETHInstance:     ethGateway,
+		ETHInstance:     tf.EthInstance,
 		SvrETHAddr:      clientAddrStr,
 		SvrRPC:          "localhost:10000",
 		ChainId:         883,

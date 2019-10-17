@@ -18,12 +18,12 @@ import (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	// mkdir out root
+	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())
 	err := os.MkdirAll(outRootDir, os.ModePerm)
 	chkErr(err, "creating root dir")
 	fmt.Println("Using folder:", outRootDir)
 	// set testing pkg level path
-	tf.SetOutRootDir(outRootDir)
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
 	ethProc, err := StartMainchain()
@@ -33,11 +33,11 @@ func TestMain(m *testing.M) {
 	err = installBins()
 	chkErr(err, "install SGN bins")
 
-	// set up mainchain: deploy contracts and fund ethpool etc, also update appAddrMap
+	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund clientAddr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
 	chkErr(err, "fund server")
-	tf.E2eProfile, tf.GuardAddr, tf.Erc20TokenAddr = SetupMainchain(appAddrMap)
+	E2eProfile, GuardAddr, Erc20TokenAddr = SetupMainchain()
 
 	// update sgn config
 	UpdateSGNConfig()

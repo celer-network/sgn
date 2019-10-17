@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
+	ccommon "github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/flags"
-	tf "github.com/celer-network/sgn/testing"
 	"github.com/spf13/viper"
 )
 
@@ -27,12 +27,11 @@ var (
 	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
-	outRootDir string
-	envDir     = "../../testing/env"
-	// erc20 token addr hex
-	// map from app type to deployed addr, updated by SetupMainchain
-	appAddrMap     = make(map[string]ctype.Addr)
-	tokenAddrErc20 string // set by SetupMainchain deploy erc20 contract
+	outRootDir     string
+	envDir         = "../../testing/env"
+	E2eProfile     *ccommon.CProfile
+	GuardAddr      string
+	Erc20TokenAddr string
 )
 
 // start process to handle eth rpc, and fund etherbase and server account
@@ -86,8 +85,8 @@ func UpdateSGNConfig() {
 		log.Fatal(err)
 	}
 	viper.Set(flags.FlagEthWS, "ws://127.0.0.1:8546")
-	viper.Set(flags.FlagEthGuardAddress, tf.GuardAddr)
-	viper.Set(flags.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
+	viper.Set(flags.FlagEthGuardAddress, GuardAddr)
+	viper.Set(flags.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
 	viper.WriteConfig()
 }
 
@@ -142,12 +141,4 @@ func chkErr(e error, msg string) {
 		fmt.Println("Err:", msg, e)
 		os.Exit(1)
 	}
-}
-
-func SetEnvDir(dir string) {
-	envDir = dir
-}
-
-func SetOutRootDir(dir string) {
-	outRootDir = dir
 }

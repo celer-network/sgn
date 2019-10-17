@@ -13,6 +13,4 @@ const (
 	clientPriv       = "a7c9fa8bcd45a86fdb5f30fecf88337f20185b0c526088f2b8e0f726cad12857"
 	client2AddrStr   = "ba756d65a1a03f07d205749f35e2406e4a8522ad"
 	client2Priv      = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
-
-	ethGateway = "http://127.0.0.1:8545"
 )

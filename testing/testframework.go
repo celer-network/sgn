@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	ccommon "github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/utils"
@@ -29,29 +28,11 @@ const (
 
 var (
 	pendingNonceLock sync.Mutex
-	// e2eProfile after deploy contracts, with hardcoded ethgw etc
-	// serialized json will be saved as outRootDir/profile.json
-	// tests wish to use a different profile can overrides fields like svrRpc
-	// and keep contract addresses etc
-	E2eProfile     *ccommon.CProfile
-	GuardAddr      string
-	Erc20TokenAddr string
+	etherBaseKs      string
 )
 
-var (
-	// to be set by test/e2e
-	outRootDir  string
-	envDir      = "../../testing/env"
+func SetEnvDir(envDir string) {
 	etherBaseKs = envDir + "/keystore/etherbase.json"
-)
-
-func SetEnvDir(dir string) {
-	envDir = dir
-	etherBaseKs = envDir + "/keystore/etherbase.json"
-}
-
-func SetOutRootDir(dir string) {
-	outRootDir = dir
 }
 
 func StartProcess(name string, args ...string) *os.Process {
