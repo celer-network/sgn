@@ -144,10 +144,6 @@ func chkErr(e error, msg string) {
 	}
 }
 
-func CheckError(e error, msg string) {
-	chkErr(e, msg)
-}
-
 func SetEnvDir(dir string) {
 	envDir = dir
 }
