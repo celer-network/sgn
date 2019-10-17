@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 
 	// start sidechain (SGN)
 	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
-	sleep(15) // wait for sgn to be fully ready
+	sleep(10) // wait for sgn to be fully ready
 	chkErr(err, "start sidechain")
 
 	// run all e2e tests
