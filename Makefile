@@ -21,6 +21,9 @@ copy-test-data:
 	cp -r test/data/.sgn ~/.sgn
 	cp -r test/data/.sgncli ~/.sgncli
 
+remove-test-data:
+	rm -rf ~/.sgn ~/.sgncli
+
 copy-test-config:
 	cp test/data/.sgn/config/genesis.json ~/.sgn/config/genesis.json
 	cp test/data/.sgncli/config/config.toml ~/.sgncli/config/config.toml
