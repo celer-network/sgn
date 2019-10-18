@@ -96,7 +96,7 @@ func sleep(second time.Duration) {
 
 // StartSidechainDefault starts sgn sidechain with the data in test/data
 func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
-	cmd := exec.Command("make", "copy-test-data")
+	cmd := exec.Command("make", "update-test-data")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../..")
 	if err := cmd.Run(); err != nil {

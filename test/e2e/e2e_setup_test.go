@@ -48,6 +48,10 @@ func TestMain(m *testing.M) {
 	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
 	sleep(20) // wait for sgn to be fully ready
 
+	// setup sidechain
+	tf.SetupEthClient()
+	tf.SetupTransactor()
+
 	// run all e2e tests
 	ret := m.Run()
 
