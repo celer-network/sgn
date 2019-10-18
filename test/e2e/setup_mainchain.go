@@ -16,6 +16,7 @@ import (
 	"github.com/celer-network/sgn/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -45,9 +46,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	chkErr(err, "failed to NewCelerLedger")
 	tx, err := ledgerContract.DisableBalanceLimits(etherBaseAuth)
 	chkErr(err, "failed disable channel deposit limits")
-	receipt, err := utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
-	chkTxStatus(receipt.Status, "Disable balance limit")
+	waitMinedWithChk(ctx, conn, tx, 0, "Disable balance limit")
 
 	// Deposit into EthPool (used for openChannel)
 	logBlkNum(conn)
@@ -58,18 +57,14 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	etherBaseAuth.Value = amt
 	tx, err = ethPoolContract.Deposit(etherBaseAuth, clientAddr)
 	chkErr(err, "failed to deposit into ethpool")
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
+	waitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool")
 	etherBaseAuth.Value = big.NewInt(0)
-	chkTxStatus(receipt.Status, "Deposit to ethpool")
 
 	// Approve transferFrom of eth from ethpool for celerLedger
 	logBlkNum(conn)
 	tx, err = ethPoolContract.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, amt)
 	chkErr(err, "failed to approve transferFrom of ETH for celerLedger")
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
-	chkTxStatus(receipt.Status, "Approve ethpool for ledger")
+	waitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger")
 
 	// Deploy sample ERC20 contract (MOON)
 	logBlkNum(conn)
@@ -77,9 +72,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	initAmt.SetString("500000000000000000000000000000000000000000000", 10)
 	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Moon", 18, "MOON")
 	chkErr(err, "failed to deploy ERC20")
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
-	chkTxStatus(receipt.Status, "Deploy ERC20 "+erc20Addr.Hex())
+	waitMinedWithChk(ctx, conn, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
 	// Transfer ERC20 to etherbase and client
 	logBlkNum(conn)
@@ -108,9 +101,7 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	sidechainGoLiveTimeout := big.NewInt(0)
 	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, erc20Addr, blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout)
 	chkErr(err, "failed to deploy Guard contract")
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
-	chkTxStatus(receipt.Status, "Deploy Guard "+guardAddr.Hex())
+	waitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
 	// Deposit into EthPool client2 (used for openChannel)
 	logBlkNum(conn)
@@ -124,18 +115,14 @@ func SetupMainchain() (*common.CProfile, string, string) {
 	etherBaseAuth.Value = amt
 	tx, err = ethPoolContract.Deposit(etherBaseAuth, client2Addr)
 	chkErr(err, "failed to deposit client2 into ethpool")
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
+	waitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool client2")
 	etherBaseAuth.Value = big.NewInt(0)
-	chkTxStatus(receipt.Status, "Deposit to ethpool client2")
 
 	// Approve transferFrom of eth from ethpool for celerLedger
 	logBlkNum(conn)
 	tx, err = ethPoolContract.Approve(client2Auth, channelAddrBundle.CelerLedgerAddr, amt)
 	chkErr(err, "failed to approve client2 transferFrom of ETH for celerLedger")
-	receipt, err = utils.WaitMined(ctx, conn, tx, 0)
-	chkErr(err, "WaitMined error")
-	chkTxStatus(receipt.Status, "Approve ethpool for ledger, client2")
+	waitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger, client2")
 
 	// output json file
 	p := &common.CProfile{
@@ -169,4 +156,11 @@ func logBlkNum(conn *ethclient.Client) {
 	header, err := conn.HeaderByNumber(context.Background(), nil)
 	chkErr(err, "failed to get HeaderByNumber")
 	log.Infoln("Latest block number on mainchain: ", header.Number)
+}
+
+func waitMinedWithChk(ctx context.Context, conn *ethclient.Client,
+	tx *ethtypes.Transaction, blockDelay uint64, txname string) {
+	receipt, err := utils.WaitMined(ctx, conn, tx, blockDelay)
+	chkErr(err, "WaitMined error")
+	chkTxStatus(receipt.Status, txname)
 }
