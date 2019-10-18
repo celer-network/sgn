@@ -75,11 +75,6 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		msg := subscribe.NewMsgSubscribe(req.EthAddr, rs.transactor.CliCtx.GetFromAddress())
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		writeGenerateStdTxResponse(w, rs.transactor, msg)
 	}
 }
@@ -93,11 +88,6 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		signedSimplexStateBytes := ethcommon.Hex2Bytes(req.SignedSimplexStateBytes)
 		msg := subscribe.NewMsgRequestGuard(req.EthAddr, signedSimplexStateBytes, rs.transactor.CliCtx.GetFromAddress())
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		writeGenerateStdTxResponse(w, rs.transactor, msg)
 	}
 }
@@ -110,11 +100,6 @@ func postInitializeCandidateHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		msg := validator.NewMsgInitializeCandidate(req.EthAddr, rs.transactor.CliCtx.GetFromAddress())
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		writeGenerateStdTxResponse(w, rs.transactor, msg)
 	}
 }
@@ -127,11 +112,6 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		msg := validator.NewMsgSyncDelegator(req.CandidateAddress, req.DelegatorAddress, rs.transactor.CliCtx.GetFromAddress())
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		writeGenerateStdTxResponse(w, rs.transactor, msg)
 	}
 }
@@ -144,16 +124,16 @@ func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		msg := validator.NewMsgWithdrawReward(req.EthAddr, rs.transactor.CliCtx.GetFromAddress())
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		writeGenerateStdTxResponse(w, rs.transactor, msg)
 	}
 }
 
 func writeGenerateStdTxResponse(w http.ResponseWriter, transactor *utils.Transactor, msg sdk.Msg) {
+	if err := msg.ValidateBasic(); err != nil {
+		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	transactor.BroadcastTx(msg)
 
 	w.Header().Set("Content-Type", "text/plain")

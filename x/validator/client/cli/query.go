@@ -132,7 +132,7 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			candidate, err := QueryReward(cdc, cliCtx, queryRoute, args[0])
+			candidate, err := QueryCandidate(cdc, cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}
