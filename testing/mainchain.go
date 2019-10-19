@@ -12,12 +12,15 @@ import (
 	"time"
 
 	"github.com/celer-network/sgn/ctype"
+	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -27,10 +30,34 @@ const (
 var (
 	pendingNonceLock sync.Mutex
 	etherBaseKs      string
+	EthClient        *mainchain.EthClient
 )
+
+func GetLatestBlkNum(conn *ethclient.Client) (*big.Int, error) {
+	header, err := conn.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return header.Number, nil
+}
 
 func SetEnvDir(envDir string) {
 	etherBaseKs = envDir + "/keystore/etherbase.json"
+}
+
+func SetupEthClient() {
+	ec, err := mainchain.NewEthClient(
+		viper.GetString(flags.FlagEthWS),
+		viper.GetString(flags.FlagEthGuardAddress),
+		viper.GetString(flags.FlagEthLedgerAddress),
+		viper.GetString(flags.FlagEthKeystore),
+		viper.GetString(flags.FlagEthPassphrase),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	EthClient = ec
 }
 
 func prepareEthClient() (
