@@ -21,22 +21,22 @@ func TestMain(m *testing.M) {
 	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())
 	err := os.MkdirAll(outRootDir, os.ModePerm)
-	chkErr(err, "creating root dir")
+	tf.ChkErr(err, "creating root dir")
 	fmt.Println("Using folder:", outRootDir)
 	// set testing pkg level path
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
 	ethProc, err := StartMainchain()
-	chkErr(err, "starting chain")
+	tf.ChkErr(err, "starting chain")
 
 	// install sgn bins
 	err = installBins()
-	chkErr(err, "install SGN bins")
+	tf.ChkErr(err, "install SGN bins")
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund clientAddr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
-	chkErr(err, "fund server")
+	tf.ChkErr(err, "fund server")
 	E2eProfile, GuardAddr, Erc20TokenAddr = SetupMainchain()
 
 	// update sgn config
@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 
 	// start sidechain (SGN)
 	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
-	chkErr(err, "start sidechain")
+	tf.ChkErr(err, "start sidechain")
 	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
 	sleep(20) // wait for sgn to be fully ready
 
@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 	ethProc.Signal(syscall.SIGTERM)
 	sgnProc.Signal(syscall.SIGTERM)
 	os.RemoveAll(outRootDir)
-	chkErr(removeCmd.Run(), "remove sidechain directory")
+	tf.ChkErr(removeCmd.Run(), "remove sidechain directory")
 	if ret == 0 {
 		fmt.Println("All tests passed! 🎉🎉🎉")
 		os.Exit(0)

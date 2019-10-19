@@ -135,10 +135,3 @@ func installBins() error {
 	}
 	return nil
 }
-
-func chkErr(e error, msg string) {
-	if e != nil {
-		fmt.Println("Err:", msg, e)
-		os.Exit(1)
-	}
-}

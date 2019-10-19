@@ -32,7 +32,7 @@ func TestBasic(t *testing.T) {
 	if err != nil {
 		os.Exit(1)
 	}
-	log.Infof("Block number after is %d", blkNumMain)
+	log.Infof("Latest block number on mainchain is %d", blkNumMain)
 
 	assert.Equal(t, err, nil, "The command should run successfully")
 	diff := new(big.Int).Sub(blkNumMain, blkNumSGN)

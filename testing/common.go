@@ -3,9 +3,10 @@
 package testing
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/celer-network/sgn/testing/log"
 )
 
 func StartProcess(name string, args ...string) *os.Process {
@@ -14,7 +15,7 @@ func StartProcess(name string, args ...string) *os.Process {
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
 	if err != nil {
-		fmt.Println(err)
+		log.Infoln(err)
 	}
 	return cmd.Process
 }
