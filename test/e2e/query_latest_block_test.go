@@ -1,55 +1,21 @@
 package e2e
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"os"
 	"testing"
 
-	"github.com/celer-network/sgn/ctype"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
 func setUpQueryLatestBlock() []tf.Killable {
-	// TODO: duplicate code in SetupMainchain(), need to put these in a function
-	ctx := context.Background()
-	conn, err := ethclient.Dial(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
-
-	// deploy guard contract
-	tf.LogBlkNum(conn)
-	blameTimeout := big.NewInt(50)
-	minValidatorNum := big.NewInt(1)
-	minStakingPool := big.NewInt(100)
-	sidechainGoLiveTimeout := big.NewInt(0)
-	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(Erc20TokenAddr), blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout)
-
-	// update SGN config
-	UpdateSGNConfig()
-
-	// start sgn sidechain
-	sgnProc, err := StartSidechainDefault(outRootDir)
-	tf.ChkErr(err, "start sidechain")
-	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
-	sleep(20) // wait for sgn to be fully ready
-
-	tf.SetupEthClient()
-	tf.SetupTransactor()
-
-	return []tf.Killable{sgnProc}
+	return setupNewSGNEnv()
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {

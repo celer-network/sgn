@@ -3,8 +3,9 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,11 @@ import (
 	ccommon "github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/flags"
+	tf "github.com/celer-network/sgn/testing"
+	"github.com/celer-network/sgn/testing/log"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 )
 
@@ -36,7 +42,7 @@ var (
 
 // start process to handle eth rpc, and fund etherbase and server account
 func StartMainchain() (*os.Process, error) {
-	log.Println("outRootDir", outRootDir, "envDir", envDir)
+	log.Infoln("outRootDir", outRootDir, "envDir", envDir)
 	chainDataDir := outRootDir + "chaindata"
 	logFname := outRootDir + "chain.log"
 	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
@@ -77,7 +83,7 @@ func StartMainchain() (*os.Process, error) {
 }
 
 func UpdateSGNConfig() {
-	log.Println("Updating SGN's config.json")
+	log.Infoln("Updating SGN's config.json")
 
 	viper.SetConfigFile("../../config.json")
 	err := viper.ReadInConfig()
@@ -132,4 +138,38 @@ func installBins() error {
 		return err
 	}
 	return nil
+}
+
+func setupNewSGNEnv() []tf.Killable {
+	// TODO: duplicate code in SetupMainchain(), need to put these in a function
+	ctx := context.Background()
+	conn, err := ethclient.Dial(tf.EthInstance)
+	tf.ChkErr(err, "failed to connect to the Ethereum")
+	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
+	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
+	price := big.NewInt(2e9) // 2Gwei
+	etherBaseAuth.GasPrice = price
+	etherBaseAuth.GasLimit = 7000000
+
+	// deploy guard contract
+	tf.LogBlkNum(conn)
+	blameTimeout := big.NewInt(50)
+	minValidatorNum := big.NewInt(1)
+	minStakingPool := big.NewInt(100)
+	sidechainGoLiveTimeout := big.NewInt(0)
+	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(Erc20TokenAddr), blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout)
+
+	// update SGN config
+	UpdateSGNConfig()
+
+	// start sgn sidechain
+	sgnProc, err := StartSidechainDefault(outRootDir)
+	tf.ChkErr(err, "start sidechain")
+	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
+	sleep(20) // wait for sgn to be fully ready
+
+	tf.SetupEthClient()
+	tf.SetupTransactor()
+
+	return []tf.Killable{sgnProc}
 }
