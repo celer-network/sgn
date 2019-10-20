@@ -95,15 +95,13 @@ func sleep(second time.Duration) {
 }
 
 // StartSidechainDefault starts sgn sidechain with the data in test/data
-func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
+func StartSidechainDefault(rootDir string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../..")
 	if err := cmd.Run(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	removeCmd := exec.Command("rm", "-rf", "~/.sgn", "~/.sgncli")
 
 	cmd = exec.Command("sgn", "start")
 	cmd.Dir, _ = filepath.Abs("../..")
@@ -112,7 +110,7 @@ func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
 	cmd.Stderr = logF
 	cmd.Stdout = logF
 	if err := cmd.Start(); err != nil {
-		return nil, removeCmd, err
+		return nil, err
 	}
 
 	fmt.Println("sgn pid:", cmd.Process.Pid)
@@ -124,7 +122,7 @@ func StartSidechainDefault(rootDir string) (*os.Process, *exec.Cmd, error) {
 			os.Exit(1)
 		}
 	}()
-	return cmd.Process, removeCmd, nil
+	return cmd.Process, nil
 }
 
 func installBins() error {

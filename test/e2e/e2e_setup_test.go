@@ -37,28 +37,13 @@ func TestMain(m *testing.M) {
 	// first fund clientAddr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
 	tf.ChkErr(err, "fund server")
-	E2eProfile, GuardAddr, Erc20TokenAddr = SetupMainchain()
-
-	// update sgn config
-	UpdateSGNConfig()
-
-	// start sidechain (SGN)
-	sgnProc, removeCmd, err := StartSidechainDefault(outRootDir)
-	tf.ChkErr(err, "start sidechain")
-	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
-	sleep(20) // wait for sgn to be fully ready
-
-	// setup sidechain
-	tf.SetupEthClient()
-	tf.SetupTransactor()
+	E2eProfile, Erc20TokenAddr = SetupMainchain()
 
 	// run all e2e tests
 	ret := m.Run()
 
 	ethProc.Signal(syscall.SIGTERM)
-	sgnProc.Signal(syscall.SIGTERM)
 	os.RemoveAll(outRootDir)
-	tf.ChkErr(removeCmd.Run(), "remove sidechain directory")
 	if ret == 0 {
 		fmt.Println("All tests passed! 🎉🎉🎉")
 		os.Exit(0)

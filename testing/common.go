@@ -9,6 +9,17 @@ import (
 	"github.com/celer-network/sgn/testing/log"
 )
 
+// Killable is object that has Kill() func
+type Killable interface {
+	Kill() error
+}
+
+func TearDown(tokill []Killable) {
+	for _, p := range tokill {
+		p.Kill()
+	}
+}
+
 func StartProcess(name string, args ...string) *os.Process {
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
