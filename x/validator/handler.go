@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -35,12 +36,12 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candiateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
 
-	accAddress := sdk.AccAddress(cp.SidechainAddr)
+	accAddress := sdk.AccAddress(candiateInfo.SidechainAddr)
 	account := keeper.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
 		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
@@ -62,21 +63,21 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return sdk.ErrInvalidPubKey(err.Error()).Result()
 	}
 
-	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candiateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
 
-	if !cp.IsVldt {
+	if !mainchain.IsBonded(candiateInfo) {
 		return sdk.ErrInternal("Candidate is not in validator set").Result()
 	}
 
-	if !sdk.AccAddress(cp.SidechainAddr).Equals(msg.Sender) {
+	if !sdk.AccAddress(candiateInfo.SidechainAddr).Equals(msg.Sender) {
 		return sdk.ErrInternal("Sender has different address recorded on mainchain").Result()
 	}
 
 	// Make sure both val address and pub address have not been used before
-	valAddress := sdk.ValAddress(cp.SidechainAddr)
+	valAddress := sdk.ValAddress(candiateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
 	if found != f {
@@ -93,29 +94,30 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	}
 
 	validator.Status = sdk.Bonded
-	updateValidatorToken(ctx, keeper, validator, cp.StakingPool)
+	updateValidatorToken(ctx, keeper, validator, candiateInfo.StakingPool)
 
 	return sdk.Result{}
 }
 
 // Handle a message to sync validator
 func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
-	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candiateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
 
-	valAddress := sdk.ValAddress(cp.SidechainAddr)
+	valAddress := sdk.ValAddress(candiateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		return sdk.ErrInternal("Validator does not exist").Result()
 	}
 
-	if !cp.IsVldt {
-		validator.Status = sdk.Unbonded
+	updateValidatorToken(ctx, keeper, validator, candiateInfo.StakingPool)
+	if !mainchain.IsBonded(candiateInfo) {
+		validator.Status = mainchain.ParseStatus(candiateInfo)
+		keeper.stakingKeeper.SetValidator(ctx, validator)
+		keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
 	}
-
-	updateValidatorToken(ctx, keeper, validator, cp.StakingPool)
 
 	return sdk.Result{}
 }
