@@ -70,11 +70,9 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	if !found {
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
-
 	if !subscription.Subscribing {
 		return sdk.ErrInternal("Subscription expired").Result()
 	}
-
 	if subscription.RequestCount >= keeper.RequestLimit(ctx) {
 		return sdk.ErrInternal("Hit the request rate limit").Result()
 	}
@@ -97,7 +95,6 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to get request: %s", err)).Result()
 	}
-
 	if simplexPaymentChannel.SeqNum < request.SeqNum {
 		return sdk.ErrInternal("Seq Num must be larger than previous request").Result()
 	}
@@ -125,8 +122,10 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	request.TxHash = msg.TxHash
 	keeper.SetRequest(ctx, msg.ChannelId, request)
 
-	for _, guard := range request.RequestGuards {
-		keeper.slashKeeper.HandleGuardFailure(ctx, guard, msg.Sender)
-	}
+	// TODO: punish corresponding guard correctly
+	// for _, guard := range request.RequestGuards {
+	// 	keeper.slashKeeper.HandleGuardFailure(ctx, msg.Sender, guard)
+	// }
+
 	return sdk.Result{}
 }

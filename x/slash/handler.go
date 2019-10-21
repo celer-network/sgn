@@ -25,6 +25,9 @@ func handleMsgSignPenalty(ctx sdk.Context, keeper Keeper, msg MsgSignPenalty) sd
 	if !found {
 		return sdk.ErrInternal("Sender is not validator").Result()
 	}
+	if validator.Status != sdk.Bonded {
+		return sdk.ErrInternal("Validator is not bonded").Result()
+	}
 
 	penalty, found := keeper.GetPenalty(ctx, msg.Nonce)
 	if !found {

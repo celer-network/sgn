@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/allegro/bigcache v1.2.1
-	github.com/aristanetworks/goarista v0.0.0-20191008235151-3d92a4ebc52d // indirect
+	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
 	github.com/celer-network/cChannel-eth-go v0.12.6
 	github.com/cosmos/cosmos-sdk v0.37.0
 	github.com/deckarep/golang-set v1.7.1 // indirect
@@ -36,5 +36,6 @@ require (
 	github.com/tendermint/tm-db v0.1.1
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
+	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
 	google.golang.org/grpc v1.23.1
 )

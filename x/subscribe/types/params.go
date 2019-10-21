@@ -48,7 +48,6 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 }
 
 // Equal returns a boolean determining if two Param types are identical.
-// TODO: This is slower than comparing struct fields directly
 func (p Params) Equal(p2 Params) bool {
 	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
 	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
