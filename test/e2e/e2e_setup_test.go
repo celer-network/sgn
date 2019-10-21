@@ -34,8 +34,8 @@ func TestMain(m *testing.M) {
 	tf.ChkErr(err, "install SGN bins")
 
 	// set up mainchain: deploy contracts and fund ethpool etc
-	// first fund clientAddr 100 ETH
-	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&clientAddr})
+	// first fund client0Addr 100 ETH
+	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
 	E2eProfile, Erc20TokenAddr = SetupMainchain()
 

@@ -25,7 +25,8 @@ import (
 // used by setup_onchain and tests
 var (
 	etherBaseAddr = ctype.Hex2Addr(etherBaseAddrStr)
-	clientAddr    = ctype.Hex2Addr(clientAddrStr)
+	client0Addr   = ctype.Hex2Addr(client0AddrStr)
+	client1Addr   = ctype.Hex2Addr(client1AddrStr)
 )
 
 // runtime variables, will be initialized by TestMain

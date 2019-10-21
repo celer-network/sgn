@@ -30,9 +30,9 @@ func SetupMainchain() (*common.CProfile, string) {
 	etherBaseAuth.GasPrice = price
 	etherBaseAuth.GasLimit = 7000000
 
-	clientPrivKey, _ := crypto.HexToECDSA(clientPriv)
-	clientAuth := bind.NewKeyedTransactor(clientPrivKey)
-	clientAuth.GasPrice = price
+	client0PrivKey, _ := crypto.HexToECDSA(client0Priv)
+	client0Auth := bind.NewKeyedTransactor(client0PrivKey)
+	client0Auth.GasPrice = price
 
 	ctx := context.Background()
 	channelAddrBundle := deploy.DeployAll(etherBaseAuth, conn, ctx, 0)
@@ -52,14 +52,14 @@ func SetupMainchain() (*common.CProfile, string) {
 	amt := new(big.Int)
 	amt.SetString("1000000000000000000000000", 10) // 1000000 ETH
 	etherBaseAuth.Value = amt
-	tx, err = ethPoolContract.Deposit(etherBaseAuth, clientAddr)
+	tx, err = ethPoolContract.Deposit(etherBaseAuth, client0Addr)
 	tf.ChkErr(err, "failed to deposit into ethpool")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool")
 	etherBaseAuth.Value = big.NewInt(0)
 
 	// Approve transferFrom of eth from ethpool for celerLedger
 	tf.LogBlkNum(conn)
-	tx, err = ethPoolContract.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, amt)
+	tx, err = ethPoolContract.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, amt)
 	tf.ChkErr(err, "failed to approve transferFrom of ETH for celerLedger")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger")
 
@@ -71,51 +71,50 @@ func SetupMainchain() (*common.CProfile, string) {
 	tf.ChkErr(err, "failed to deploy ERC20")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
-	// Transfer ERC20 to etherbase and client
+	// Transfer ERC20 to etherbase and client0
 	tf.LogBlkNum(conn)
 	moonAmt := new(big.Int)
 	moonAmt.SetString("500000000000000000000000000000", 10)
-	addrs := []ethcommon.Address{etherBaseAddr, clientAddr}
+	addrs := []ethcommon.Address{etherBaseAddr, client0Addr}
 	for _, addr := range addrs {
 		tx, err = erc20.Transfer(etherBaseAuth, addr, moonAmt)
 		tf.ChkErr(err, "failed to send MOON")
 		utils.WaitMined(ctx, conn, tx, 0)
 	}
-	log.Infof("Sent MOON to etherbase and client")
+	log.Infof("Sent MOON to etherbase and client0")
 
 	// Approve transferFrom of MOON for celerLedger
 	tf.LogBlkNum(conn)
-	tx, err = erc20.Approve(clientAuth, channelAddrBundle.CelerLedgerAddr, moonAmt)
+	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, moonAmt)
 	tf.ChkErr(err, "failed to approve transferFrom of MOON for celerLedger")
 	utils.WaitMined(ctx, conn, tx, 0)
 	log.Infof("MOON transferFrom approved for celerLedger")
 
-	// Deposit into EthPool client2 (used for openChannel)
+	// Deposit into EthPool client1 (used for openChannel)
 	tf.LogBlkNum(conn)
-	client2Addr := ctype.Hex2Addr(client2AddrStr)
-	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client2Addr})
-	tf.ChkErr(err, "failed to fund client 2")
-	client2PrivKey, _ := crypto.HexToECDSA(client2Priv)
-	client2Auth := bind.NewKeyedTransactor(client2PrivKey)
-	client2Auth.GasPrice = price
+	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client1Addr})
+	tf.ChkErr(err, "failed to fund client 1")
+	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
+	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
+	client1Auth.GasPrice = price
 	amt.SetString("1000000000000000000000000", 10) // 1000000 ETH
 	etherBaseAuth.Value = amt
-	tx, err = ethPoolContract.Deposit(etherBaseAuth, client2Addr)
-	tf.ChkErr(err, "failed to deposit client2 into ethpool")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool client2")
+	tx, err = ethPoolContract.Deposit(etherBaseAuth, client1Addr)
+	tf.ChkErr(err, "failed to deposit client1 into ethpool")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool client1")
 	etherBaseAuth.Value = big.NewInt(0)
 
 	// Approve transferFrom of eth from ethpool for celerLedger
 	tf.LogBlkNum(conn)
-	tx, err = ethPoolContract.Approve(client2Auth, channelAddrBundle.CelerLedgerAddr, amt)
-	tf.ChkErr(err, "failed to approve client2 transferFrom of ETH for celerLedger")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger, client2")
+	tx, err = ethPoolContract.Approve(client1Auth, channelAddrBundle.CelerLedgerAddr, amt)
+	tf.ChkErr(err, "failed to approve client1 transferFrom of ETH for celerLedger")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger, client1")
 
 	// output json file
 	p := &common.CProfile{
 		// hardcoded values
 		ETHInstance:     tf.EthInstance,
-		SvrETHAddr:      clientAddrStr,
+		SvrETHAddr:      client0AddrStr,
 		SvrRPC:          "localhost:10000",
 		ChainId:         883,
 		PollingInterval: 1,

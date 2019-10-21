@@ -3,7 +3,9 @@
   "crypto": {
     "cipher": "aes-128-ctr",
     "ciphertext": "e03809b87670eb862d06449e54300178057636d6d665221d333c1ea179db5abc",
-    "cipherparams": { "iv": "df5ab1015958a7dc2cc7d841f659f6ab" },
+    "cipherparams": {
+      "iv": "df5ab1015958a7dc2cc7d841f659f6ab"
+    },
     "kdf": "scrypt",
     "kdfparams": {
       "dklen": 32,
