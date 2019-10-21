@@ -64,7 +64,6 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 }
 
 // Equal returns a boolean determining if two Param types are identical.
-// TODO: This is slower than comparing struct fields directly
 func (p Params) Equal(p2 Params) bool {
 	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
 	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
@@ -114,7 +113,7 @@ func (p Params) Validate() error {
 		return fmt.Errorf("global parameter EpochLength must be a positive integer")
 	}
 
-	if p.CostPerEpoch.LTE(sdk. ZeroInt()) {
+	if p.CostPerEpoch.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("global parameter CostPerEpoch must be a positive integer")
 	}
 

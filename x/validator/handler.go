@@ -51,6 +51,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	if !found {
 		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate())
 	}
+
 	return sdk.Result{}
 }
 
@@ -78,7 +79,6 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	valAddress := sdk.ValAddress(cp.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
-
 	if found != f {
 		return sdk.ErrInternal("Invalid sender address or public key").Result()
 	}
@@ -89,11 +89,12 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 			Identity: msg.EthAddress,
 		}
 		validator = staking.NewValidator(valAddress, pk, description)
-		validator.Status = sdk.Bonded
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
+	validator.Status = sdk.Bonded
 	updateValidatorToken(ctx, keeper, validator, cp.StakingPool)
+
 	return sdk.Result{}
 }
 
@@ -110,11 +111,11 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 		return sdk.ErrInternal("Validator does not exist").Result()
 	}
 
-	if cp.IsVldt {
-		updateValidatorToken(ctx, keeper, validator, cp.StakingPool)
-	} else {
-		keeper.stakingKeeper.RemoveValidator(ctx, validator.OperatorAddress)
+	if !cp.IsVldt {
+		validator.Status = sdk.Unbonded
 	}
+
+	updateValidatorToken(ctx, keeper, validator, cp.StakingPool)
 
 	return sdk.Result{}
 }
@@ -122,7 +123,6 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 // Handle a message to sync delegator
 func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator) sdk.Result {
 	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
-
 	di, err := keeper.ethClient.Guard.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, ethcommon.HexToAddress(msg.CandidateAddress), ethcommon.HexToAddress(msg.DelegatorAddress))
@@ -166,6 +166,9 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
 		return sdk.ErrInternal("Sender is not validator").Result()
+	}
+	if validator.Status != sdk.Bonded {
+		return sdk.ErrInternal("Validator is not bonded").Result()
 	}
 
 	reward, found := keeper.GetReward(ctx, msg.EthAddress)

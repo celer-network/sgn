@@ -33,23 +33,25 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validato
 }
 
 // HandleGuardFailure handles a validator fails to guard state.
-func (k Keeper) HandleGuardFailure(ctx sdk.Context, guardAddr, reportAddr sdk.AccAddress) {
-	guardValAddr := sdk.ValAddress(guardAddr)
-	guardValidator, found := k.validatorKeeper.GetValidator(ctx, guardValAddr)
-	if !found {
-		return
-	}
-
+func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.AccAddress) {
+	logger := ctx.Logger()
 	reportValAddr := sdk.ValAddress(reportAddr)
 	reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
 	if !found {
+		logger.Info(fmt.Sprintf("Cannot find report validator %s", reportValAddr))
+		return
+	}
+
+	failedValAddr := sdk.ValAddress(failedAddr)
+	failedValidator, found := k.validatorKeeper.GetValidator(ctx, failedValAddr)
+	if !found {
+		logger.Info(fmt.Sprintf("Cannot find failed validator %s", failedValAddr))
 		return
 	}
 
 	var beneficiaries []AccountFractionPair
 	beneficiaries = append(beneficiaries, NewAccountFractionPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
-
-	k.Slash(ctx, AttributeValueGuardFailure, guardValidator, guardValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountFractionPair{})
+	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountFractionPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -59,6 +61,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
+		logger.Info(fmt.Sprintf("Cannot find validator %s", consAddr))
 		return
 	}
 
@@ -71,11 +74,17 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	logger := ctx.Logger()
 	height := ctx.BlockHeight()
 	consAddr := sdk.ConsAddress(addr)
+	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
+	if !found {
+		logger.Info(fmt.Sprintf("Cannot find validator %s", consAddr))
+		return
+	}
+
 	signInfo, found := k.GetValidatorSigningInfo(ctx, consAddr)
 	if !found {
 		signInfo = types.NewValidatorSigningInfo(
 			consAddr,
-			ctx.BlockHeight(),
+			height,
 			0,
 			time.Unix(0, 0),
 			false,
@@ -112,11 +121,6 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 	// if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
-		validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
-		if !found {
-			return
-		}
-
 		// Downtime confirmed: slash the validator
 		logger.Info(fmt.Sprintf("Validator %s past min height of %d and above max miss threshold of %d",
 			consAddr, minHeight, maxMissed))
@@ -163,7 +167,6 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validato
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
 
-	// TODO: set penalty properly
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			EventTypeSlash,
@@ -178,7 +181,6 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validato
 func (k Keeper) GetNextPenaltyNonce(ctx sdk.Context) (nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(PenaltyNonceKey)
-
 	if bz != nil {
 		nonce = binary.BigEndian.Uint64(bz)
 	}
@@ -190,7 +192,6 @@ func (k Keeper) GetNextPenaltyNonce(ctx sdk.Context) (nonce uint64) {
 // Gets the entire Penalty metadata for a nonce
 func (k Keeper) GetPenalty(ctx sdk.Context, nonce uint64) (penalty Penalty, found bool) {
 	store := ctx.KVStore(k.storeKey)
-
 	if !store.Has(GetPenaltyKey(nonce)) {
 		return penalty, false
 	}
@@ -214,6 +215,7 @@ func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress
 		found = false
 		return
 	}
+
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &info)
 	found = true
 	return
@@ -235,6 +237,7 @@ func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.Con
 		missed = false
 		return
 	}
+
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &missed)
 	return
 }
