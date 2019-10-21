@@ -130,9 +130,16 @@ func SetupMainchain() (*common.CProfile, string) {
 	return p, ctype.Addr2Hex(erc20Addr)
 }
 
-func DeployGuardContract(ctx context.Context, auth *bind.TransactOpts, conn *ethclient.Client, erc20Addr ethcommon.Address,
-	blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout *big.Int) string {
-	guardAddr, tx, _, err := mainchain.DeployGuard(auth, conn, erc20Addr, blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout)
+func DeployGuardContract(ctx context.Context, auth *bind.TransactOpts, conn *ethclient.Client, erc20Addr ethcommon.Address, sgnParams *SGNParams) string {
+	if sgnParams == nil {
+		sgnParams = &SGNParams{
+			blameTimeout:           big.NewInt(50),
+			minValidatorNum:        big.NewInt(1),
+			minStakingPool:         big.NewInt(100),
+			sidechainGoLiveTimeout: big.NewInt(0),
+		}
+	}
+	guardAddr, tx, _, err := mainchain.DeployGuard(auth, conn, erc20Addr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
 	tf.ChkErr(err, "failed to deploy Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
 

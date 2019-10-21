@@ -22,6 +22,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+type SGNParams struct {
+	blameTimeout           *big.Int
+	minValidatorNum        *big.Int
+	minStakingPool         *big.Int
+	sidechainGoLiveTimeout *big.Int
+}
+
 // used by setup_onchain and tests
 var (
 	etherBaseAddr = ctype.Hex2Addr(etherBaseAddrStr)
@@ -141,7 +148,7 @@ func installBins() error {
 	return nil
 }
 
-func setupNewSGNEnv() []tf.Killable {
+func setupNewSGNEnv(sgnParams *SGNParams) []tf.Killable {
 	// TODO: duplicate code in SetupMainchain(), need to put these in a function
 	ctx := context.Background()
 	conn, err := ethclient.Dial(tf.EthInstance)
@@ -154,11 +161,8 @@ func setupNewSGNEnv() []tf.Killable {
 
 	// deploy guard contract
 	tf.LogBlkNum(conn)
-	blameTimeout := big.NewInt(50)
-	minValidatorNum := big.NewInt(1)
-	minStakingPool := big.NewInt(100)
-	sidechainGoLiveTimeout := big.NewInt(0)
-	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(Erc20TokenAddr), blameTimeout, minValidatorNum, minStakingPool, sidechainGoLiveTimeout)
+	// when sgnParams is nil, use default params defined in DeployGuardContract()
+	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(Erc20TokenAddr), sgnParams)
 
 	// update SGN config
 	UpdateSGNConfig()

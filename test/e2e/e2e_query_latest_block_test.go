@@ -15,7 +15,7 @@ import (
 )
 
 func setUpQueryLatestBlock() []tf.Killable {
-	return setupNewSGNEnv()
+	return setupNewSGNEnv(nil)
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
