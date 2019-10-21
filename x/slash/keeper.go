@@ -38,14 +38,14 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.A
 	reportValAddr := sdk.ValAddress(reportAddr)
 	reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
 	if !found {
-		logger.Info(fmt.Sprintf("Cannot find report validator %s", reportValAddr))
+		logger.Error(fmt.Sprintf("Cannot find report validator %s", reportValAddr))
 		return
 	}
 
 	failedValAddr := sdk.ValAddress(failedAddr)
 	failedValidator, found := k.validatorKeeper.GetValidator(ctx, failedValAddr)
 	if !found {
-		logger.Info(fmt.Sprintf("Cannot find failed validator %s", failedValAddr))
+		logger.Error(fmt.Sprintf("Cannot find failed validator %s", failedValAddr))
 		return
 	}
 
@@ -61,7 +61,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
-		logger.Info(fmt.Sprintf("Cannot find validator %s", consAddr))
+		logger.Error(fmt.Sprintf("Cannot find validator %s", consAddr))
 		return
 	}
 
@@ -76,7 +76,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
-		logger.Info(fmt.Sprintf("Cannot find validator %s", consAddr))
+		logger.Error(fmt.Sprintf("Cannot find validator %s", consAddr))
 		return
 	}
 
