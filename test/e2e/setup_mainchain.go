@@ -63,32 +63,32 @@ func SetupMainchain() (*common.CProfile, string) {
 	tf.ChkErr(err, "failed to approve transferFrom of ETH for celerLedger")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger")
 
-	// Deploy sample ERC20 contract (MOON)
+	// Deploy sample ERC20 contract (CELR)
 	tf.LogBlkNum(conn)
 	initAmt := new(big.Int)
 	initAmt.SetString("500000000000000000000000000000000000000000000", 10)
-	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Moon", 18, "MOON")
+	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Celer", 18, "CELR")
 	tf.ChkErr(err, "failed to deploy ERC20")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
 	// Transfer ERC20 to etherbase and client0
 	tf.LogBlkNum(conn)
-	moonAmt := new(big.Int)
-	moonAmt.SetString("500000000000000000000000000000", 10)
+	celrAmt := new(big.Int)
+	celrAmt.SetString("500000000000000000000000000000", 10)
 	addrs := []ethcommon.Address{etherBaseAddr, client0Addr}
 	for _, addr := range addrs {
-		tx, err = erc20.Transfer(etherBaseAuth, addr, moonAmt)
-		tf.ChkErr(err, "failed to send MOON")
+		tx, err = erc20.Transfer(etherBaseAuth, addr, celrAmt)
+		tf.ChkErr(err, "failed to send CELR")
 		utils.WaitMined(ctx, conn, tx, 0)
 	}
-	log.Infof("Sent MOON to etherbase and client0")
+	log.Infof("Sent CELR to etherbase and client0")
 
-	// Approve transferFrom of MOON for celerLedger
+	// Approve transferFrom of CELR for celerLedger
 	tf.LogBlkNum(conn)
-	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, moonAmt)
-	tf.ChkErr(err, "failed to approve transferFrom of MOON for celerLedger")
+	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, celrAmt)
+	tf.ChkErr(err, "failed to approve transferFrom of CELR for celerLedger")
 	utils.WaitMined(ctx, conn, tx, 0)
-	log.Infof("MOON transferFrom approved for celerLedger")
+	log.Infof("CELR transferFrom approved for celerLedger")
 
 	// Deposit into EthPool client1 (used for openChannel)
 	// tf.LogBlkNum(conn)

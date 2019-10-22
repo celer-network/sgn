@@ -40,11 +40,11 @@ var (
 	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
-	outRootDir     string
-	envDir         = "../../testing/env"
-	E2eProfile     *ccommon.CProfile
-	GuardAddr      string
-	Erc20TokenAddr string
+	outRootDir    string
+	envDir        = "../../testing/env"
+	E2eProfile    *ccommon.CProfile
+	GuardAddr     string
+	MockCelerAddr string
 )
 
 // start process to handle eth rpc, and fund etherbase and server account
@@ -166,7 +166,7 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	// deploy guard contract
 	tf.LogBlkNum(conn)
 	// when sgnParams is nil, use default params defined in DeployGuardContract()
-	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(Erc20TokenAddr), sgnParams)
+	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(MockCelerAddr), sgnParams)
 
 	// update SGN config
 	UpdateSGNConfig()

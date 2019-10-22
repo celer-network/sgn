@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/celer-network/sgn/ctype"
+	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/validator"
@@ -21,7 +23,7 @@ func setUpValidator() []tf.Killable {
 		sidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
-	sleepWithLog(40, "sgn syncing")
+	sleepWithLog(20, "sgn being ready")
 
 	return res
 }
@@ -49,23 +51,56 @@ func validatorTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	// ledgerContract := tf.EthClient.Ledger
+	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
+	tf.ChkErr(err, "NewERC20 error")
 
 	transactor := tf.Transactor
 	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
 	tf.ChkErr(err, "Parse SGN address error")
 
-	// Call initializeCandidate on guard contract
+	// Call initializeCandidate on guard contract using the validator eth address
+	log.Info("Call initializeCandidate on guard contract using the validator eth address")
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
 	tf.ChkErr(err, "failed to InitializeCandidate")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	sleepWithLog(60, "sgn syncing")
+	sleepWithLog(60, "sgn syncing InitializeCandidate event on mainchain")
 
-	// query sgn about the validator candidate
+	// Query sgn about the validator candidate
+	log.Info("Query sgn about the validator candidate")
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infoln("query sgn about the validator candidate:", candidate)
+	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes := "StakingPool: 0" // defined in Candidate.String()
 	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	// Call delegate on guard contract to delegate stake to the validator eth address
+	log.Info("Call delegate on guard contract to delegate stake to the validator eth address")
+	amt := new(big.Int)
+	amt.SetString("100", 10)
+	tx, err = celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
+	tf.ChkErr(err, "failed to approve CELR to Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+	tx, err = guardContract.Delegate(auth, ethAddress, amt)
+	tf.ChkErr(err, "failed to call delegate of Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
+	sleepWithLog(60, "sgn syncing Delegate event on mainchain")
+
+	// Query sgn about the delegator to check if it has correct stakes
+	log.Info("Query sgn about the delegator to check if it has correct stakes")
+	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infoln("Query sgn about the validator delegator:", delegator)
+	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
+	assert.Equal(t, delegator.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	// query sgn about the candidate to check if it has correct stakes
+
+	// onchain claim validator
+
+	// query sgn about the validator to check if it has correct stakes
+
 }
