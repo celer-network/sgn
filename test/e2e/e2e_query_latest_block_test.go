@@ -31,11 +31,8 @@ func TestE2EQueryLatestBlock(t *testing.T) {
 }
 
 func queryLatestBlockTest(t *testing.T) {
-	t.Parallel()
-	queryLatestBlock(t)
-}
+	// t.Parallel()
 
-func queryLatestBlock(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test queryLatestBlock ===========================")
 

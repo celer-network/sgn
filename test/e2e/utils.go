@@ -136,8 +136,8 @@ func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
 	// if sgn is killed by ethProc.Signal, it exits w/ 0
 	go func() {
 		if err := cmd.Wait(); err != nil {
-			log.Errorln("sgn process failed:", err)
-			os.Exit(1)
+			log.Errorf("sgn process for [%s] failed: %v", testName, err)
+			// os.Exit(1) // sgn is expected to be killed after each test case
 		}
 	}()
 	return cmd.Process, nil
