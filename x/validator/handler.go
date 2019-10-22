@@ -35,6 +35,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
+	logger := ctx.Logger()
 	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
@@ -45,11 +46,13 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	if account == nil {
 		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
 		keeper.accountKeeper.SetAccount(ctx, account)
+		logger.Info("Candidate account not found. Created a new account.")
 	}
 
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate())
+		logger.Info("Candidate not found. Created a new candidate.")
 	}
 	return sdk.Result{}
 }

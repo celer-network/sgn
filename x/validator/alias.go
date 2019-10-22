@@ -43,6 +43,7 @@ var (
 	CLIQueryPuller            = cli.QueryPuller
 	CLIQueryPusher            = cli.QueryPusher
 	CLIQueryReward            = cli.QueryReward
+	CLIQueryCandidate         = cli.QueryCandidate
 )
 
 type (

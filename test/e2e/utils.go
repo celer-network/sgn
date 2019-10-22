@@ -109,7 +109,7 @@ func sleep(second time.Duration) {
 }
 
 // StartSidechainDefault starts sgn sidechain with the data in test/data
-func StartSidechainDefault(rootDir string) (*os.Process, error) {
+func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../..")
@@ -119,7 +119,7 @@ func StartSidechainDefault(rootDir string) (*os.Process, error) {
 
 	cmd = exec.Command("sgn", "start")
 	cmd.Dir, _ = filepath.Abs("../..")
-	logFname := rootDir + "sgn.log"
+	logFname := rootDir + "sgn_" + testName + ".log"
 	logF, _ := os.Create(logFname)
 	cmd.Stderr = logF
 	cmd.Stdout = logF
@@ -148,7 +148,7 @@ func installBins() error {
 	return nil
 }
 
-func setupNewSGNEnv(sgnParams *SGNParams) []tf.Killable {
+func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	// TODO: duplicate code in SetupMainchain(), need to put these in a function
 	ctx := context.Background()
 	conn, err := ethclient.Dial(tf.EthInstance)
@@ -168,10 +168,8 @@ func setupNewSGNEnv(sgnParams *SGNParams) []tf.Killable {
 	UpdateSGNConfig()
 
 	// start sgn sidechain
-	sgnProc, err := StartSidechainDefault(outRootDir)
+	sgnProc, err := StartSidechainDefault(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
-	fmt.Println("Sleep for 20 seconds to let sgn be fully ready")
-	sleep(20) // wait for sgn to be fully ready
 
 	tf.SetupEthClient()
 	tf.SetupTransactor()

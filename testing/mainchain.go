@@ -50,7 +50,8 @@ func SetupEthClient() {
 		viper.GetString(flags.FlagEthWS),
 		viper.GetString(flags.FlagEthGuardAddress),
 		viper.GetString(flags.FlagEthLedgerAddress),
-		viper.GetString(flags.FlagEthKeystore),
+		// viper.GetString(flags.FlagEthKeystore),
+		"../../test/keys/client0.json", // relative path is different in tests
 		viper.GetString(flags.FlagEthPassphrase),
 	)
 	if err != nil {

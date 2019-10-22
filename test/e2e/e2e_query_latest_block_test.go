@@ -15,7 +15,11 @@ import (
 )
 
 func setUpQueryLatestBlock() []tf.Killable {
-	return setupNewSGNEnv(nil)
+	res := setupNewSGNEnv(nil, "query_latest_block")
+	log.Infoln("Sleep for 20 seconds to let sgn be fully ready")
+	sleep(20) // wait for sgn to be fully ready
+
+	return res
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
@@ -51,7 +55,7 @@ func queryLatestBlock(t *testing.T) {
 
 	blkNumMain, err := tf.GetLatestBlkNum(conn)
 	if err != nil {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	log.Infof("Latest block number on mainchain is %d", blkNumMain)
 

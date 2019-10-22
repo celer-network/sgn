@@ -43,9 +43,9 @@ func TestMain(m *testing.M) {
 	ret := m.Run()
 
 	ethProc.Signal(syscall.SIGTERM)
-	os.RemoveAll(outRootDir)
 	if ret == 0 {
 		fmt.Println("All tests passed! 🎉🎉🎉")
+		os.RemoveAll(outRootDir)
 		os.Exit(0)
 	} else {
 		fmt.Println("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
