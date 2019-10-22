@@ -58,7 +58,7 @@ func validatorTest(t *testing.T) {
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
 	tf.ChkErr(err, "failed to InitializeCandidate")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	sleepWithLog(40, "sgn syncing")
+	sleepWithLog(60, "sgn syncing")
 
 	// query sgn about the validator candidate
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
