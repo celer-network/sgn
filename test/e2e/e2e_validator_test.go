@@ -97,7 +97,15 @@ func validatorTest(t *testing.T) {
 	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
 	assert.Equal(t, delegator.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	// query sgn about the candidate to check if it has correct stakes
+	// Query sgn about the candidate to check if it has correct stakes
+	log.Info("Query sgn about the validator candidate")
+	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infoln("Query sgn about the validator candidate:", candidate)
+	expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
+	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// onchain claim validator
 
