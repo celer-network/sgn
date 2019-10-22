@@ -105,8 +105,9 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 		select {
 		case err := <-sub.Err():
 			log.Printf("WatchInitializeCandidate err", err)
-		case initializeCandiate := <-initializeCandiateChan:
-			m.eventQueue.PushBack(NewEvent(initializeCandiate, initializeCandiate.Raw))
+		case initializeCandidate := <-initializeCandidateChan:
+			log.Printf("monitor and push back new initializeCandidate event")
+			m.eventQueue.PushBack(NewEvent(initializeCandidate, initializeCandidate.Raw))
 		}
 	}
 }

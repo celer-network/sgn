@@ -15,6 +15,7 @@ type Killable interface {
 }
 
 func TearDown(tokill []Killable) {
+	log.Info("Tear down Killables ing...")
 	for _, p := range tokill {
 		p.Kill()
 	}

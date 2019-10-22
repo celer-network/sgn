@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"os"
 	"os/exec"
@@ -78,12 +77,12 @@ func StartMainchain() (*os.Process, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	fmt.Println("geth pid:", cmd.Process.Pid)
+	log.Infoln("geth pid:", cmd.Process.Pid)
 	// in case geth exits with non-zero, exit test early
 	// if geth is killed by ethProc.Signal, it exits w/ 0
 	go func() {
 		if err := cmd.Wait(); err != nil {
-			fmt.Println("geth process failed:", err)
+			log.Errorln("geth process failed:", err)
 			os.Exit(1)
 		}
 	}()
@@ -108,6 +107,11 @@ func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }
 
+func sleepWithLog(second time.Duration, waitFor string) {
+	log.Infof("Sleep %d seconds for %s", second, waitFor)
+	time.Sleep(second * time.Second)
+}
+
 // StartSidechainDefault starts sgn sidechain with the data in test/data
 func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
@@ -127,13 +131,13 @@ func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
 		return nil, err
 	}
 
-	fmt.Println("sgn pid:", cmd.Process.Pid)
+	log.Infoln("sgn pid:", cmd.Process.Pid)
 	// in case sgn exits with non-zero, exit test early
 	// if sgn is killed by ethProc.Signal, it exits w/ 0
 	go func() {
 		if err := cmd.Wait(); err != nil {
-			fmt.Println("sgn process failed:", err)
 			os.Exit(1)
+			log.Errorln("sgn process failed:", err)
 		}
 	}()
 	return cmd.Process, nil
@@ -148,7 +152,7 @@ func installBins() error {
 	return nil
 }
 
-func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
+func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Signalable {
 	// TODO: duplicate code in SetupMainchain(), need to put these in a function
 	ctx := context.Background()
 	conn, err := ethclient.Dial(tf.EthInstance)
@@ -174,5 +178,5 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	tf.SetupEthClient()
 	tf.SetupTransactor()
 
-	return []tf.Killable{sgnProc}
+	return []tf.Signalable{sgnProc}
 }

@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func setUpValidator() []tf.Killable {
@@ -19,8 +21,7 @@ func setUpValidator() []tf.Killable {
 		sidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
-	log.Info("Sleep 40 seconds for sgn syncing")
-	sleep(40)
+	sleepWithLog(40, "sgn syncing")
 
 	return res
 }
@@ -56,13 +57,14 @@ func validatorTest(t *testing.T) {
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
 	tf.ChkErr(err, "failed to InitializeCandidate")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	log.Info("Sleep 40 seconds for sgn syncing")
-	sleep(40)
+	sleepWithLog(40, "sgn syncing")
 
 	// query sgn about the validator candidate
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infoln("query sgn about the validator candidate", candidate)
+	log.Infoln("query sgn about the validator candidate:", candidate)
+	expectedRes := "StakingPool: 0" // defined in Candidate.String()
+	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }

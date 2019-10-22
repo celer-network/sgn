@@ -16,8 +16,7 @@ import (
 
 func setUpQueryLatestBlock() []tf.Killable {
 	res := setupNewSGNEnv(nil, "query_latest_block")
-	log.Infoln("Sleep for 20 seconds to let sgn be fully ready")
-	sleep(20) // wait for sgn to be fully ready
+	sleepWithLog(20, "sgn syncing")
 
 	return res
 }
