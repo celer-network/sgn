@@ -152,7 +152,7 @@ func installBins() error {
 	return nil
 }
 
-func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Signalable {
+func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	// TODO: duplicate code in SetupMainchain(), need to put these in a function
 	ctx := context.Background()
 	conn, err := ethclient.Dial(tf.EthInstance)
@@ -178,5 +178,5 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Signalable {
 	tf.SetupEthClient()
 	tf.SetupTransactor()
 
-	return []tf.Signalable{sgnProc}
+	return []tf.Killable{sgnProc}
 }
