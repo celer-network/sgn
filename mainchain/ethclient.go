@@ -2,9 +2,7 @@ package mainchain
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 	"io/ioutil"
-	"path/filepath"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -48,8 +46,6 @@ func NewEthClient(ws, guardAddress, ledgerAddress, ks, passphrase string) (*EthC
 		Ledger: ledger,
 	}
 	err = ethClient.setupAuth(ks, passphrase)
-	path, _ := filepath.Abs(".")
-	fmt.Print(path)
 	if err != nil {
 		return nil, err
 	}

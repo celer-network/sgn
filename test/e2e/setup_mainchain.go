@@ -22,7 +22,7 @@ import (
 // SetupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
 func SetupMainchain() (*common.CProfile, string) {
-	conn, err := ethclient.Dial(outRootDir + "chaindata/geth.ipc")
+	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
 	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)

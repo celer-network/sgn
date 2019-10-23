@@ -45,6 +45,7 @@ var (
 	CLIQueryReward            = cli.QueryReward
 	CLIQueryCandidate         = cli.QueryCandidate
 	CLIQueryDelegator         = cli.QueryDelegator
+	CLIQueryValidators        = cli.QueryValidators
 )
 
 type (

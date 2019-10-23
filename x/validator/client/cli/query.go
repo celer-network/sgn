@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingCli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
+	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 )
 
@@ -165,6 +166,19 @@ func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, eth
 	}
 
 	cdc.MustUnmarshalJSON(bz, &candidate)
+	return
+}
+
+// QueryValidators is an interface for convenience to query validators in staking module
+func QueryValidators(cdc *codec.Codec, cliCtx context.CLIContext, storeName string) (validators stakingTypes.Validators, err error) {
+	resKVs, _, err := cliCtx.QuerySubspace(stakingTypes.ValidatorsKey, storeName)
+	if err != nil {
+		return
+	}
+
+	for _, kv := range resKVs {
+		validators = append(validators, stakingTypes.MustUnmarshalValidator(cdc, kv.Value))
+	}
 	return
 }
 

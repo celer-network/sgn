@@ -50,8 +50,8 @@ var (
 // start process to handle eth rpc, and fund etherbase and server account
 func StartMainchain() (*os.Process, error) {
 	log.Infoln("outRootDir", outRootDir, "envDir", envDir)
-	chainDataDir := outRootDir + "chaindata"
-	logFname := outRootDir + "chain.log"
+	chainDataDir := outRootDir + "mainchaindata"
+	logFname := outRootDir + "mainchain.log"
 	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
 		return nil, err
 	}

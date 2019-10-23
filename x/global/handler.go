@@ -23,6 +23,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to sync block
 func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Result {
+	fmt.Sprintln("Handling MsgSyncBlock with block number of", msg.BlockNumber)
+
 	lastestBlock := keeper.GetLatestBlock(ctx)
 	if msg.BlockNumber < lastestBlock.Number {
 		return sdk.ErrInternal("Block number is smaller than current latest block").Result()
