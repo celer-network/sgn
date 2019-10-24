@@ -43,7 +43,7 @@ func setPusher(ctx sdk.Context, keeper Keeper) {
 
 func resetRateLimit(ctx sdk.Context, keeper Keeper) {
 	// reset everyday at 0am
-	if ctx.BlockTime().Second() != 0 {
+	if ctx.BlockTime().Hour() != 0 {
 		return
 	}
 
