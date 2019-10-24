@@ -240,7 +240,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 	)
 
 	app.cronKeeper = cron.NewKeeper(
-		app.keyGlobal,
+		app.keyCron,
 		app.cdc,
 		app.bankKeeper,
 		app.validatorKeeper,

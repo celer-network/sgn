@@ -33,7 +33,6 @@ func (k Keeper) GetLatestBlock(ctx sdk.Context) (lastestBlock Block) {
 		return
 	}
 
-	ctx.Logger().Info("bz", bz)
 	k.cdc.MustUnmarshalBinaryBare(bz, &lastestBlock)
 	return lastestBlock
 }
