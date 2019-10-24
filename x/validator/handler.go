@@ -50,7 +50,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
-		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate())
+		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
 	}
 
 	return sdk.Result{}

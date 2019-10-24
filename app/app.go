@@ -109,7 +109,7 @@ type sgnApp struct {
 }
 
 // NewSgnApp is a constructor function for sgnApp
-func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
+func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
 	viper.SetConfigFile("config.json")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -131,7 +131,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 	cdc := MakeCodec()
 
 	// BaseApp handles interactions with Tendermint through the ABCI protocol
-	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc))
+	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 
 	// Here you initialize your application with the store keys it requires
 	var app = &sgnApp{
@@ -214,6 +214,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB) *sgnApp {
 		ethClient,
 		app.globalKeeper,
 		app.accountKeeper,
+		app.bankKeeper,
 		app.stakingKeeper,
 	)
 
@@ -369,6 +370,7 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		viper.GetString(flags.FlagSgnNodeURI),
 		viper.GetString(flags.FlagSgnName),
 		viper.GetString(flags.FlagSgnPassphrase),
+		viper.GetString(flags.FlagSgnGasPrice),
 		app.cdc,
 	)
 

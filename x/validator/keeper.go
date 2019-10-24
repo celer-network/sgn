@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
@@ -16,18 +17,20 @@ type Keeper struct {
 	ethClient     *mainchain.EthClient
 	globalKeeper  global.Keeper
 	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
 	stakingKeeper staking.Keeper
 }
 
 // NewKeeper creates new instances of the validator Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper) Keeper {
+	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, stakingKeeper staking.Keeper) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		ethClient:     ethClient,
 		globalKeeper:  globalKeeper,
 		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
 	}
 }
@@ -133,6 +136,20 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidat
 	value := store.Get(candidateKey)
 	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
 	return candidate, true
+}
+
+// Get the set of all candidates with no limits
+func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, CandidateKeyPrefix)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var candidate Candidate
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &candidate)
+		candidates = append(candidates, candidate)
+	}
+	return candidates
 }
 
 // Sets the Candidate metadata

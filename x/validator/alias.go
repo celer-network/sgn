@@ -31,6 +31,7 @@ var (
 	RegisterCodec             = types.RegisterCodec
 	PullerKey                 = types.PullerKey
 	PusherKey                 = types.PusherKey
+	CandidateKeyPrefix        = types.CandidateKeyPrefix
 	GetDelegatorKey           = types.GetDelegatorKey
 	GetDelegatorsKey          = types.GetDelegatorsKey
 	GetCandidateKey           = types.GetCandidateKey

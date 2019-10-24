@@ -24,15 +24,18 @@ func (c Delegator) String() string {
 }
 
 type Candidate struct {
-	StakingPool sdk.Int     `json:"stakingPool"`
-	Delegators  []Delegator `json:"delegators"`
+	Operator    sdk.AccAddress `json:"operator"`
+	StakingPool sdk.Int        `json:"stakingPool"`
+	Delegators  []Delegator    `json:"delegators"`
 }
 
-func NewCandidate() Candidate {
-	return Candidate{}
+func NewCandidate(operator sdk.AccAddress) Candidate {
+	return Candidate{
+		Operator: operator,
+	}
 }
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`StakingPool: %v`, c.StakingPool))
+	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, StakingPool: %v`, c.Operator, c.StakingPool))
 }
