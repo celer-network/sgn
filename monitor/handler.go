@@ -13,7 +13,7 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Printf("New block", header.Number)
+	log.Printf("Push MsgSyncBlock with block number: %d to Transactor's msgQueue for broadcast.", header.Number)
 	if !m.isPuller() {
 		return
 	}
@@ -23,7 +23,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Printf("New InitializeCandidate", initializeCandidate.Candidate)
+	log.Printf("Push initializeCandidate event to pullerQueue: %+v", initializeCandidate)
 	m.pullerQueue.PushBack(initializeCandidate)
 }
 

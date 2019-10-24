@@ -96,7 +96,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
 	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
 	if err != nil {
-		log.Printf("WatchInitializeCandidate err", err)
+		log.Println("WatchInitializeCandidate err: ", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -104,10 +104,10 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchInitializeCandidate err", err)
+			log.Println("WatchInitializeCandidate err: ", err)
 		case initializeCandidate := <-initializeCandidateChan:
-			log.Printf("monitor and push back new initializeCandidate event")
 			m.eventQueue.PushBack(NewEvent(initializeCandidate, initializeCandidate.Raw))
+			log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
 		}
 	}
 }

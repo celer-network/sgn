@@ -36,6 +36,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
 	logger := ctx.Logger()
+	logger.Info("Handling a message to initialize candidate")
+
 	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()

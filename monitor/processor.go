@@ -79,7 +79,7 @@ func (m *EthMonitor) processPusherQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Printf("Broadcast MsgInitializeCandidate", initializeCandidate.Candidate)
+	log.Printf("Push MsgInitializeCandidate of %s to Transactor's msgQueue for broadcast", initializeCandidate.Candidate.String())
 
 	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)

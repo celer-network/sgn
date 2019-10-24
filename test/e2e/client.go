@@ -47,7 +47,7 @@ func main() {
 func setupTransactor() {
 	cdc := app.MakeCodec()
 	t, err := utils.NewTransactor(
-		app.DefaultCLIHome,
+		app.DefaultCLIHome, // "$HOME/.sgncli"
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
 		"alice",
