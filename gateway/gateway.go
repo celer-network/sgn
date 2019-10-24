@@ -43,6 +43,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		viper.GetString(flags.FlagSgnNodeURI),
 		viper.GetString(flags.FlagSgnName),
 		viper.GetString(flags.FlagSgnPassphrase),
+		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
 	if err != nil {

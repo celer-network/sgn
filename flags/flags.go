@@ -12,4 +12,5 @@ const (
 	FlagSgnPubKey     = "sgn.pubkey"
 	FlagSgnChainID    = "sgn.chainID"
 	FlagSgnNodeURI    = "sgn.nodeURI"
+	FlagSgnGasPrice   = "sgn.gasPrice"
 )
