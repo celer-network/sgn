@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
@@ -17,20 +16,18 @@ type Keeper struct {
 	ethClient     *mainchain.EthClient
 	globalKeeper  global.Keeper
 	accountKeeper auth.AccountKeeper
-	bankKeeper    bank.Keeper
 	stakingKeeper staking.Keeper
 }
 
 // NewKeeper creates new instances of the validator Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, stakingKeeper staking.Keeper) Keeper {
+	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		ethClient:     ethClient,
 		globalKeeper:  globalKeeper,
 		accountKeeper: accountKeeper,
-		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
 	}
 }

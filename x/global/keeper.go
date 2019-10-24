@@ -26,14 +26,14 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.Eth
 }
 
 // Gets the lastest Block metadata
-func (k Keeper) GetLatestBlock(ctx sdk.Context) Block {
+func (k Keeper) GetLatestBlock(ctx sdk.Context) (lastestBlock Block) {
 	store := ctx.KVStore(k.storeKey)
-	if !store.Has(LatestBlockKey) {
-		return Block{}
+	bz := store.Get(LatestBlockKey)
+	if bz == nil {
+		return
 	}
 
-	var lastestBlock Block
-	bz := store.Get(LatestBlockKey)
+	ctx.Logger().Info("bz", bz)
 	k.cdc.MustUnmarshalBinaryBare(bz, &lastestBlock)
 	return lastestBlock
 }

@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"github.com/celer-network/sgn/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -13,7 +12,6 @@ const pusherDuration = 10
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	setPuller(ctx, req, keeper)
 	setPusher(ctx, keeper)
-	resetRateLimit(ctx, keeper)
 }
 
 // Update puller for every pullerDuration
@@ -38,20 +36,5 @@ func setPusher(ctx sdk.Context, keeper Keeper) {
 	if pusher.ValidatorIdx != vIdx || pusher.ValidatorAddr.Empty() {
 		pusher = NewPusher(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
 		keeper.SetPusher(ctx, pusher)
-	}
-}
-
-func resetRateLimit(ctx sdk.Context, keeper Keeper) {
-	// reset everyday at 0am
-	if ctx.BlockTime().Hour() != 0 {
-		return
-	}
-
-	candidates := keeper.GetAllCandidates(ctx)
-
-	for _, candidate := range candidates {
-		// NOTE: make sure sendEnable is false
-		keeper.bankKeeper.SetCoins(ctx, candidate.Operator,
-			sdk.NewCoins(sdk.NewCoin(common.StakeName, candidate.StakingPool.QuoRaw(common.StakeDec))))
 	}
 }

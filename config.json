@@ -12,6 +12,6 @@
     "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
     "chainID": "sgnchain",
     "nodeURI": "tcp://localhost:26657",
-    "gasPrice": "0.0001stake"
+    "gasPrice": ""
   }
 }

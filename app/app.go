@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
@@ -51,6 +52,7 @@ var (
 		params.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
+		cron.AppModule{},
 		global.AppModule{},
 		slash.AppModule{},
 		subscribe.AppModule{},
@@ -88,6 +90,7 @@ type sgnApp struct {
 	keySupply    *sdk.KVStoreKey
 	keyStaking   *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
+	keyCron      *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
@@ -99,6 +102,7 @@ type sgnApp struct {
 	stakingKeeper   staking.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
+	cronKeeper      cron.Keeper
 	globalKeeper    global.Keeper
 	slashKeeper     slash.Keeper
 	subscribeKeeper subscribe.Keeper
@@ -145,6 +149,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
+		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
@@ -214,7 +219,6 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 		ethClient,
 		app.globalKeeper,
 		app.accountKeeper,
-		app.bankKeeper,
 		app.stakingKeeper,
 	)
 
@@ -235,6 +239,13 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 		subscribeSubspace,
 	)
 
+	app.cronKeeper = cron.NewKeeper(
+		app.keyGlobal,
+		app.cdc,
+		app.bankKeeper,
+		app.validatorKeeper,
+	)
+
 	app.mm = module.NewManager(
 		genaccounts.NewAppModule(app.accountKeeper),
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
@@ -242,13 +253,14 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		staking.NewAppModule(app.stakingKeeper, distr.Keeper{}, app.accountKeeper, app.supplyKeeper),
+		cron.NewAppModule(app.cronKeeper, app.bankKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers()
-	app.mm.SetOrderEndBlockers(staking.ModuleName, subscribe.ModuleName, validator.ModuleName)
+	app.mm.SetOrderEndBlockers(staking.ModuleName, subscribe.ModuleName, validator.ModuleName, cron.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
@@ -257,6 +269,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 		auth.ModuleName,
 		bank.ModuleName,
 		genutil.ModuleName,
+		cron.ModuleName,
 		global.ModuleName,
 		subscribe.ModuleName,
 		validator.ModuleName,
@@ -287,6 +300,7 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 		app.keySupply,
 		app.keyStaking,
 		app.keyParams,
+		app.keyCron,
 		app.keyGlobal,
 		app.keySubscribe,
 		app.keyValidator,
