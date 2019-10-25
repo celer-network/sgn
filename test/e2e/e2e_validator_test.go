@@ -63,8 +63,8 @@ func validatorTest(t *testing.T) {
 	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
 	tf.ChkErr(err, "failed to InitializeCandidate")
-	tf.WaitMinedWithChk(ctx, conn, tx, 2, "InitializeCandidate")
-	sleepWithLog(60, "sgn syncing InitializeCandidate event on mainchain")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
+	sleepWithLog(30, "sgn syncing InitializeCandidate event on mainchain")
 
 	// Query sgn about the validator candidate
 	log.Info("Query sgn about the validator candidate...")
@@ -82,11 +82,11 @@ func validatorTest(t *testing.T) {
 	amt.SetString("100", 10)
 	tx, err = celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
 	tf.ChkErr(err, "failed to approve CELR to Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 2, "Approve CELR to Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Delegate(auth, ethAddress, amt)
 	tf.ChkErr(err, "failed to call delegate of Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 2, "Delegate to validator")
-	sleepWithLog(60, "sgn syncing Delegate event on mainchain")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
+	sleepWithLog(30, "sgn syncing Delegate event on mainchain")
 
 	// Query sgn about the delegator to check if it has correct stakes
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
@@ -109,7 +109,7 @@ func validatorTest(t *testing.T) {
 	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn about the validator to check if it has correct stakes
-	sleepWithLog(60, "wait for validator to claimValidator and sgn sync ValidatorChange event")
+	sleepWithLog(30, "wait for validator to claimValidator and sgn sync ValidatorChange event")
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
 	validators, err := validator.CLIQueryValidators(transactor.CliCtx.Codec, transactor.CliCtx, staking.RouterKey)
 	if err != nil {
