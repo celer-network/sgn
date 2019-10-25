@@ -8,24 +8,20 @@ import (
 )
 
 type Subscription struct {
-	EthAddress   string  `json:"ethAddress"`
-	Deposit      sdk.Int `json:"deposit"`
-	Spend        sdk.Int `json:"spend"`
-	Subscribing  bool    `json:"subscribing"`
-	RequestCount uint64  `json:"requestCount"`
+	EthAddress string  `json:"ethAddress"`
+	Deposit    sdk.Int `json:"deposit"`
+	Spend      sdk.Int `json:"spend"`
 }
 
 func NewSubscription(ethAddress string) Subscription {
 	return Subscription{
-		EthAddress:   ethAddress,
-		Deposit:      sdk. ZeroInt(),
-		Spend:        sdk. ZeroInt(),
-		Subscribing:  false,
-		RequestCount: 0,
+		EthAddress: ethAddress,
+		Deposit:    sdk.ZeroInt(),
+		Spend:      sdk.ZeroInt(),
 	}
 }
 
 // implement fmt.Stringer
 func (s Subscription) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Deposit: %v, Spend: %v, Subscribing: %b, RequestCount: %d`, s.Deposit, s.Spend, s.Subscribing, s.RequestCount))
+	return strings.TrimSpace(fmt.Sprintf(`Deposit: %v, Spend: %v`, s.Deposit, s.Spend))
 }

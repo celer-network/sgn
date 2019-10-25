@@ -43,23 +43,6 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 		subscription = NewSubscription(msg.EthAddress)
 	}
 	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
-
-	// Calculate partial subscription fee for the rest of epoch
-	if !subscription.Subscribing {
-		latestEpoch := keeper.globalKeeper.GetLatestEpoch(ctx)
-		epochLength := keeper.globalKeeper.EpochLength(ctx)
-		timeLeft := epochLength - (ctx.BlockTime().Unix() - latestEpoch.Timestamp)
-		cost := keeper.globalKeeper.CostPerEpoch(ctx).MulRaw(timeLeft).ToDec().QuoInt64(epochLength).RoundInt()
-
-		ctx.Logger().Info("cost", cost)
-		if subscription.Deposit.Sub(subscription.Spend).LT(cost) {
-			return sdk.ErrInternal("Not enough deposit").Result()
-		}
-
-		subscription.Spend = subscription.Spend.Add(cost)
-		subscription.Subscribing = true
-	}
-
 	keeper.SetSubscription(ctx, subscription)
 	return sdk.Result{}
 }
@@ -70,13 +53,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	if !found {
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
-	if !subscription.Subscribing {
-		return sdk.ErrInternal("Subscription expired").Result()
-	}
-	if subscription.RequestCount >= keeper.RequestLimit(ctx) {
-		return sdk.ErrInternal("Hit the request rate limit").Result()
-	}
-	subscription.RequestCount += 1
+
 	keeper.SetSubscription(ctx, subscription)
 
 	var signedSimplexState chain.SignedSimplexState
