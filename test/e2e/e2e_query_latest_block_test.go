@@ -57,5 +57,5 @@ func queryLatestBlockTest(t *testing.T) {
 
 	assert.Equal(t, err, nil, "The command should run successfully")
 	diff := new(big.Int).Sub(blkNumMain, blkNumSGN)
-	assert.GreaterOrEqual(t, big.NewInt(5).Cmp(diff), 0, "blkNumMain should be greater than or equal to blkNumSGN")
+	assert.GreaterOrEqual(t, big.NewInt(maxBlockDiff).Cmp(diff), 0, "blkNumMain should be greater than or equal to blkNumSGN")
 }

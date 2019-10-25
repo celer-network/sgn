@@ -14,4 +14,6 @@ const (
 	client0SGNAddrStr = "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp"
 	client1AddrStr    = "ba756d65a1a03f07d205749f35e2406e4a8522ad"
 	client1Priv       = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
+
+	maxBlockDiff = 5 // defined in sidechain's genesis file
 )
