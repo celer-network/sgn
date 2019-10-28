@@ -61,6 +61,9 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 
 // Handle a message to claim validator
 func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator) sdk.Result {
+	logger := ctx.Logger()
+	logger.Info(fmt.Sprintf("Handling MsgClaimValidator. %+v", msg))
+
 	pk, err := sdk.GetConsPubKeyBech32(msg.PubKey)
 	if err != nil {
 		return sdk.ErrInvalidPubKey(err.Error()).Result()
@@ -104,6 +107,9 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 // Handle a message to sync validator
 func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
+	logger := ctx.Logger()
+	logger.Info(fmt.Sprintf("Handling MsgSyncValidator. %+v", msg))
+
 	cp, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
