@@ -34,19 +34,12 @@ func (k Keeper) ConfirmationCount(ctx sdk.Context) (res uint64) {
 	return
 }
 
-// CostPerEpoch - Cost per epoch
-func (k Keeper) CostPerEpoch(ctx sdk.Context) (res sdk.Int) {
-	k.paramstore.Get(ctx, types.KeyCostPerEpoch, &res)
-	return
-}
-
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.EpochLength(ctx),
 		k.MaxBlockDiff(ctx),
 		k.ConfirmationCount(ctx),
-		k.CostPerEpoch(ctx),
 	)
 }
 

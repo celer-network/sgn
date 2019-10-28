@@ -5,37 +5,41 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // subscribe params default values
 const (
-	// Default request guard count
+	// Default number of guards for guarding request
 	DefaultRequestGuardCount uint64 = 3
-	// Default request limit per epoch
-	DefaultRequestLimit uint64 = 3
+)
+
+var (
+	// Default cost per request
+	DefaultRequestCost = sdk.NewInt(1000000000000000000)
 )
 
 // nolint - Keys for parameter access
 var (
 	KeyRequestGuardCount = []byte("RequestGuardCount")
-	KeyRequestLimit      = []byte("RequestLimit")
+	KeyRequestCost       = []byte("RequestCost")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for subscribe
 type Params struct {
-	RequestGuardCount uint64 `json:"requestGuardCount" yaml:"requestGuardCount"` // request guard count
-	RequestLimit      uint64 `json:"requestLimit" yaml:"requestLimit"`           // request limit per epoch
+	RequestGuardCount uint64  `json:"requestGuardCount" yaml:"requestGuardCount"` // request guard count
+	RequestCost       sdk.Int `json:"requestCost" yaml:"requestCost"`             // request limit per epoch
 }
 
 // NewParams creates a new Params instance
-func NewParams(requestGuardCount, requestLimit uint64) Params {
+func NewParams(requestGuardCount uint64, requestCost sdk.Int) Params {
 
 	return Params{
 		RequestGuardCount: requestGuardCount,
-		RequestLimit:      requestLimit,
+		RequestCost:       requestCost,
 	}
 }
 
@@ -43,7 +47,7 @@ func NewParams(requestGuardCount, requestLimit uint64) Params {
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		{KeyRequestGuardCount, &p.RequestGuardCount},
-		{KeyRequestLimit, &p.RequestLimit},
+		{KeyRequestCost, &p.RequestCost},
 	}
 }
 
@@ -56,15 +60,15 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultRequestGuardCount, DefaultRequestLimit)
+	return NewParams(DefaultRequestGuardCount, DefaultRequestCost)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   RequestGuardCount:    %d,
-  RequestLimit:    %d`,
-		p.RequestGuardCount, p.RequestLimit)
+  RequestCost:    %s`,
+		p.RequestGuardCount, p.RequestCost)
 }
 
 // unmarshal the current subscribe params value from store key or panic
@@ -91,8 +95,8 @@ func (p Params) Validate() error {
 		return fmt.Errorf("subscribe parameter RequestGuardCount must be a positive integer")
 	}
 
-	if p.RequestLimit == 0 {
-		return fmt.Errorf("subscribe parameter RequestLimit must be a positive integer")
+	if !p.RequestCost.IsPositive() {
+		return fmt.Errorf("subscribe parameter RequestCost must be a positive integer")
 	}
 	return nil
 }
