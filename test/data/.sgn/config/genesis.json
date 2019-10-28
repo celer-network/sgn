@@ -19,11 +19,23 @@
   "app_hash": "",
   "app_state": {
     "params": null,
+    "validator": {},
     "subscribe": {
       "params": {
         "requestGuardCount": "3",
         "requestLimit": "3"
       }
+    },
+    "global": {
+      "params": {
+        "epochLength": "60",
+        "maxBlockDiff": "5",
+        "confirmationCount": "5",
+        "costPerEpoch": "1000000000000000000"
+      }
+    },
+    "bank": {
+      "send_enabled": true
     },
     "auth": {
       "params": {
@@ -32,15 +44,6 @@
         "tx_size_cost_per_byte": "10",
         "sig_verify_cost_ed25519": "590",
         "sig_verify_cost_secp256k1": "1000"
-      }
-    },
-    "validator": {},
-    "global": {
-      "params": {
-        "epochLength": "60",
-        "maxBlockDiff": "5",
-        "confirmationCount": "5",
-        "costPerEpoch": "1000000000000000000"
       }
     },
     "genutil": {
@@ -107,15 +110,32 @@
       "redelegations": null,
       "exported": false
     },
-    "bank": {
-      "send_enabled": true
-    },
     "supply": {
       "supply": []
     },
     "accounts": [
       {
         "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+        "coins": [
+          {
+            "denom": "stake",
+            "amount": "100000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      },
+      {
+        "address": "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
         "coins": [
           {
             "denom": "stake",

@@ -19,7 +19,7 @@ func SetupTransactor() {
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
-		"jack",
+		"alice", // use a different account from sgn's transactor
 		viper.GetString(flags.FlagSgnPassphrase),
 		cdc,
 	)
