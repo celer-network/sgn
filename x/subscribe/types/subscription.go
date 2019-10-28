@@ -18,8 +18,8 @@ type Subscription struct {
 func NewSubscription(ethAddress string) Subscription {
 	return Subscription{
 		EthAddress:   ethAddress,
-		Deposit:      sdk. ZeroInt(),
-		Spend:        sdk. ZeroInt(),
+		Deposit:      sdk.ZeroInt(),
+		Spend:        sdk.ZeroInt(),
 		Subscribing:  false,
 		RequestCount: 0,
 	}
@@ -27,5 +27,5 @@ func NewSubscription(ethAddress string) Subscription {
 
 // implement fmt.Stringer
 func (s Subscription) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Deposit: %v, Spend: %v, Subscribing: %b, RequestCount: %d`, s.Deposit, s.Spend, s.Subscribing, s.RequestCount))
+	return strings.TrimSpace(fmt.Sprintf(`Deposit: %v, Spend: %v, Subscribing: %t, RequestCount: %d`, s.Deposit, s.Spend, s.Subscribing, s.RequestCount))
 }

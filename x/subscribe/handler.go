@@ -31,6 +31,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to subscribe
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
+	logger := ctx.Logger()
+
 	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, ethcommon.HexToAddress(msg.EthAddress))
@@ -51,8 +53,9 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 		timeLeft := epochLength - (ctx.BlockTime().Unix() - latestEpoch.Timestamp)
 		cost := keeper.globalKeeper.CostPerEpoch(ctx).MulRaw(timeLeft).ToDec().QuoInt64(epochLength).RoundInt()
 
-		ctx.Logger().Info("cost", cost)
+		logger.Info("Sbuscribe cost", "cost", cost)
 		if subscription.Deposit.Sub(subscription.Spend).LT(cost) {
+			logger.Error("deposit info", "subscription.Deposit", subscription.Deposit, "subscription.Spend", subscription.Spend, "cost", cost)
 			return sdk.ErrInternal("Not enough deposit").Result()
 		}
 
