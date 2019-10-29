@@ -90,26 +90,6 @@ func SetupMainchain() (*common.CProfile, string) {
 	utils.WaitMined(ctx, conn, tx, 0)
 	log.Infof("CELR transferFrom approved for celerLedger")
 
-	// Deposit into EthPool client1 (used for openChannel)
-	// tf.LogBlkNum(conn)
-	// err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client1Addr})
-	// tf.ChkErr(err, "failed to fund client 1")
-	// client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
-	// client1Auth := bind.NewKeyedTransactor(client1PrivKey)
-	// client1Auth.GasPrice = price
-	// amt.SetString("1000000000000000000000000", 10) // 1000000 ETH
-	// etherBaseAuth.Value = amt
-	// tx, err = ethPoolContract.Deposit(etherBaseAuth, client1Addr)
-	// tf.ChkErr(err, "failed to deposit client1 into ethpool")
-	// tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool client1")
-	// etherBaseAuth.Value = big.NewInt(0)
-
-	// Approve transferFrom of eth from ethpool for celerLedger
-	// tf.LogBlkNum(conn)
-	// tx, err = ethPoolContract.Approve(client1Auth, channelAddrBundle.CelerLedgerAddr, amt)
-	// tf.ChkErr(err, "failed to approve client1 transferFrom of ETH for celerLedger")
-	// tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger, client1")
-
 	// output json file
 	p := &common.CProfile{
 		// hardcoded values
