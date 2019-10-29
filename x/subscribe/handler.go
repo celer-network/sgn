@@ -69,6 +69,8 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 
 // Handle a message to request guard
 func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
+	logger := ctx.Logger()
+
 	subscription, found := keeper.GetSubscription(ctx, msg.EthAddress)
 	if !found {
 		return sdk.ErrInternal("Cannot find subscription").Result()
@@ -113,6 +115,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	request.SeqNum = simplexPaymentChannel.SeqNum
 	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
 	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
+	logger.Info("Set request", "channelId", simplexPaymentChannel.ChannelId, "request seqNum", request.SeqNum)
 
 	return sdk.Result{}
 }

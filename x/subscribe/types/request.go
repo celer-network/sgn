@@ -29,6 +29,6 @@ func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disp
 
 // implement fmt.Stringer
 func (r Request) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %x, PeerFromIndex: %d, SignedSimplexStateBytes: %x, TxHash: %s`,
+	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %s, PeerFromIndex: %d, SignedSimplexStateBytes: %x, TxHash: %s`,
 		r.SeqNum, r.PeerAddresses, r.PeerFromIndex, r.SignedSimplexStateBytes, r.TxHash))
 }
