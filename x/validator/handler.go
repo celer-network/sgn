@@ -54,7 +54,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
-    keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
+		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
 		logger.Info("Candidate not found. Created a new candidate.")
 	}
 

@@ -107,10 +107,8 @@ func (t *Transactor) start() {
 		log.Printf("Transactor broadcasted tx: %+v", tx)
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
-				// log.Println("No err")
 				break
 			}
-			// log.Printf("err: %v", err)
 			time.Sleep(time.Second)
 		}
 
