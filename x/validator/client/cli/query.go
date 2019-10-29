@@ -161,7 +161,7 @@ func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, eth
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
 	bz, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query error", err)
+		fmt.Println("query candidate error", err)
 		return
 	}
 
@@ -179,24 +179,6 @@ func QueryValidators(cdc *codec.Codec, cliCtx context.CLIContext, storeName stri
 	for _, kv := range resKVs {
 		validators = append(validators, stakingTypes.MustUnmarshalValidator(cdc, kv.Value))
 	}
-	return
-}
-
-// Query candidate info
-func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, ethAddress string) (candidate types.Candidate, err error) {
-	data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
-	if err != nil {
-		return
-	}
-
-	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
-	res, _, err := cliCtx.QueryWithData(route, data)
-	if err != nil {
-		fmt.Printf("query candidate error", err)
-		return
-	}
-
-	cdc.MustUnmarshalJSON(res, &candidate)
 	return
 }
 

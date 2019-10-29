@@ -39,12 +39,12 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	logger := ctx.Logger()
 	logger.Info("Handling a message to initialize candidate")
 
-	candiateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candidateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
 
-	accAddress := sdk.AccAddress(candiateInfo.SidechainAddr)
+	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
 	account := keeper.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
 		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
@@ -71,21 +71,21 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return sdk.ErrInvalidPubKey(err.Error()).Result()
 	}
 
-	candiateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candidateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
 
-	if !mainchain.IsBonded(candiateInfo) {
+	if !mainchain.IsBonded(candidateInfo) {
 		return sdk.ErrInternal("Candidate is not in validator set").Result()
 	}
 
-	if !sdk.AccAddress(candiateInfo.SidechainAddr).Equals(msg.Sender) {
+	if !sdk.AccAddress(candidateInfo.SidechainAddr).Equals(msg.Sender) {
 		return sdk.ErrInternal("Sender has different address recorded on mainchain").Result()
 	}
 
 	// Make sure both val address and pub address have not been used before
-	valAddress := sdk.ValAddress(candiateInfo.SidechainAddr)
+	valAddress := sdk.ValAddress(candidateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
 	if found != f {
@@ -102,7 +102,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	}
 
 	validator.Status = sdk.Bonded
-	updateValidatorToken(ctx, keeper, validator, candiateInfo.StakingPool)
+	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
 
 	return sdk.Result{}
 }
@@ -112,20 +112,20 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 	logger := ctx.Logger()
 	logger.Info(fmt.Sprintf("Handling MsgSyncValidator. %+v", msg))
 
-	candiateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candidateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
 
-	valAddress := sdk.ValAddress(candiateInfo.SidechainAddr)
+	valAddress := sdk.ValAddress(candidateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		return sdk.ErrInternal("Validator does not exist").Result()
 	}
 
-	updateValidatorToken(ctx, keeper, validator, candiateInfo.StakingPool)
-	if !mainchain.IsBonded(candiateInfo) {
-		validator.Status = mainchain.ParseStatus(candiateInfo)
+	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
+	if !mainchain.IsBonded(candidateInfo) {
+		validator.Status = mainchain.ParseStatus(candidateInfo)
 		keeper.stakingKeeper.SetValidator(ctx, validator)
 		keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
 	}

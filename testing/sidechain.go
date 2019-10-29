@@ -21,6 +21,7 @@ func SetupTransactor() {
 		viper.GetString(flags.FlagSgnNodeURI),
 		"alice", // use a different account from sgn's transactor
 		viper.GetString(flags.FlagSgnPassphrase),
+		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
 	if err != nil {
