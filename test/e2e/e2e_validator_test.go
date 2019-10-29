@@ -73,7 +73,7 @@ func validatorTest(t *testing.T) {
 		log.Fatal(err)
 	}
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes := "StakingPool: 0" // defined in Candidate.String()
+	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Call delegate on guard contract to delegate stake to the validator eth address
@@ -105,7 +105,7 @@ func validatorTest(t *testing.T) {
 		log.Fatal(err)
 	}
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
+	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, amt) // defined in Candidate.String()
 	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn about the validator to check if it has correct stakes
