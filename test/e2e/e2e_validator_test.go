@@ -116,6 +116,7 @@ func validatorTest(t *testing.T) {
 		log.Fatal(err)
 	}
 	log.Infoln("Query sgn about the validators:", validators)
+	// TODO: use a better way to assert/check the validity of the lengthy query results.
 	// expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
 	// assert.Equal(t, validators.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }

@@ -3,7 +3,9 @@ package e2e
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/celer-network/sgn/ctype"
@@ -16,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
+	"github.com/stretchr/testify/assert"
 )
 
 func setUpSubscribe() []tf.Killable {
@@ -86,9 +89,8 @@ func subscribeTest(t *testing.T) {
 	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
-	// TODO: add expectedRes check after merging the change of pay per use
-	// expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
-	// assert.Equal(t, delegator.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
+	assert.Equal(t, subscription.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn to check if epoch has correct fee
 	// TODO: add this test after merging the change of pay per use
@@ -130,8 +132,8 @@ func subscribeTest(t *testing.T) {
 	request, err := subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	// expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
-	// assert.Equal(t, delegator.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	expectedSubRes := fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	assert.Contains(t, strings.ToLower(request.String()), strings.ToLower(expectedSubRes))
 
 	// Call intendSettle on ledger contract
 	log.Info("Call intendSettle on ledger contract...")
@@ -150,8 +152,8 @@ func subscribeTest(t *testing.T) {
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	// expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
-	// assert.Equal(t, delegator.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	expectedSubRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	assert.Contains(t, strings.ToLower(request.String()), strings.ToLower(expectedSubRes))
 }
 
 func prepareChannelInitializer() *entity.PaymentChannelInitializer {
