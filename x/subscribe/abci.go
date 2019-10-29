@@ -16,33 +16,12 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		return
 	}
 
-	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
-	newEpoch.TotalFee = getTotalFee(ctx, keeper)
-
-	if !newEpoch.TotalFee.IsZero() {
-		distributeReward(ctx, keeper, newEpoch)
+	if latestEpoch.TotalFee.IsPositive() {
+		distributeReward(ctx, keeper, latestEpoch)
 	}
+
+	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
 	keeper.globalKeeper.SetLatestEpoch(ctx, newEpoch)
-}
-
-// Calculate total fee will be collected in current epoch and reset subscription requestcount
-func getTotalFee(ctx sdk.Context, keeper Keeper) sdk.Int {
-	costPerEpoch := keeper.globalKeeper.CostPerEpoch(ctx)
-	totalFee := sdk.ZeroInt()
-	keeper.IterateSubscriptions(ctx, func(subscription Subscription) (stop bool) {
-		subscription.RequestCount = 0
-		subscription.Subscribing = false
-		if subscription.Deposit.Sub(subscription.Spend).GTE(costPerEpoch) {
-			subscription.Spend = subscription.Spend.Add(costPerEpoch)
-			totalFee = totalFee.Add(costPerEpoch)
-			subscription.Subscribing = true
-		}
-
-		keeper.SetSubscription(ctx, subscription)
-		return false
-	})
-
-	return totalFee
 }
 
 // Calculate reward distribution to each delegator

@@ -43,6 +43,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		viper.GetString(flags.FlagSgnNodeURI),
 		viper.GetString(flags.FlagSgnName),
 		viper.GetString(flags.FlagSgnPassphrase),
+		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
 	if err != nil {
@@ -88,6 +89,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 func (rs *RestServer) registerRoutes() {
 	client.RegisterRoutes(rs.transactor.CliCtx, rs.Mux)
 	rs.registerQueryRoutes()
+	rs.registerTxRoutes()
 }
 
 // ServeCommand will start the application REST service as a blocking process. It

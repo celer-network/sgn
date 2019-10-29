@@ -45,24 +45,6 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 		subscription = NewSubscription(msg.EthAddress)
 	}
 	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
-
-	// Calculate partial subscription fee for the rest of epoch
-	if !subscription.Subscribing {
-		latestEpoch := keeper.globalKeeper.GetLatestEpoch(ctx)
-		epochLength := keeper.globalKeeper.EpochLength(ctx)
-		timeLeft := epochLength - (ctx.BlockTime().Unix() - latestEpoch.Timestamp)
-		cost := keeper.globalKeeper.CostPerEpoch(ctx).MulRaw(timeLeft).ToDec().QuoInt64(epochLength).RoundInt()
-
-		logger.Info("Sbuscribe cost", "cost", cost)
-		if subscription.Deposit.Sub(subscription.Spend).LT(cost) {
-			logger.Error("deposit info", "subscription.Deposit", subscription.Deposit, "subscription.Spend", subscription.Spend, "cost", cost)
-			return sdk.ErrInternal("Not enough deposit").Result()
-		}
-
-		subscription.Spend = subscription.Spend.Add(cost)
-		subscription.Subscribing = true
-	}
-
 	keeper.SetSubscription(ctx, subscription)
 	return sdk.Result{}
 }
@@ -76,14 +58,6 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
 
-	if !subscription.Subscribing {
-		return sdk.ErrInternal("Subscription expired").Result()
-	}
-
-	if subscription.RequestCount >= keeper.RequestLimit(ctx) {
-		return sdk.ErrInternal("Hit the request rate limit").Result()
-	}
-	subscription.RequestCount += 1
 	keeper.SetSubscription(ctx, subscription)
 
 	var signedSimplexState chain.SignedSimplexState
@@ -102,7 +76,6 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to get request: %s", err)).Result()
 	}
-
 	if simplexPaymentChannel.SeqNum < request.SeqNum {
 		return sdk.ErrInternal("Seq Num must be larger than previous request").Result()
 	}
@@ -131,8 +104,10 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	request.TxHash = msg.TxHash
 	keeper.SetRequest(ctx, msg.ChannelId, request)
 
-	for _, guard := range request.RequestGuards {
-		keeper.slashKeeper.HandleGuardFailure(ctx, guard, msg.Sender)
-	}
+	// TODO: punish corresponding guard correctly
+	// for _, guard := range request.RequestGuards {
+	// 	keeper.slashKeeper.HandleGuardFailure(ctx, msg.Sender, guard)
+	// }
+
 	return sdk.Result{}
 }

@@ -1,6 +1,8 @@
 package subscribe
 
 import (
+	"errors"
+
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
@@ -68,6 +70,28 @@ func (k Keeper) IterateSubscriptions(ctx sdk.Context,
 			break
 		}
 	}
+}
+
+// Charge the fee for request
+func (k Keeper) ChargeRequestFee(ctx sdk.Context, ethAddr string) error {
+	subscription, found := k.GetSubscription(ctx, ethAddr)
+	if !found {
+		return errors.New("Cannot find subscription")
+	}
+
+	requestCost := k.RequestCost(ctx)
+	if subscription.Spend.Add(requestCost).GT(subscription.Deposit) {
+		return errors.New("Do not have enough balance to pay fee")
+	}
+
+	subscription.Spend = subscription.Spend.Add(k.RequestCost(ctx))
+	k.SetSubscription(ctx, subscription)
+
+	latestEpoch := k.globalKeeper.GetLatestEpoch(ctx)
+	latestEpoch.TotalFee = latestEpoch.TotalFee.Add(requestCost)
+	k.globalKeeper.SetLatestEpoch(ctx, latestEpoch)
+
+	return nil
 }
 
 // Gets the entire Request metadata for a channelId

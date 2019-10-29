@@ -23,16 +23,21 @@ func (c Delegator) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, DelegatedStake: %v`, c.EthAddress, c.DelegatedStake))
 }
 
+// operator will be used for running validator node, and transactor will be used for running gateway
 type Candidate struct {
-	StakingPool sdk.Int     `json:"stakingPool"`
-	Delegators  []Delegator `json:"delegators"`
+	Operator    sdk.AccAddress `json:"operator"`
+	Transactor  sdk.AccAddress `json:"transactor"`
+	StakingPool sdk.Int        `json:"stakingPool"`
+	Delegators  []Delegator    `json:"delegators"`
 }
 
-func NewCandidate() Candidate {
-	return Candidate{}
+func NewCandidate(operator sdk.AccAddress) Candidate {
+	return Candidate{
+		Operator: operator,
+	}
 }
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`StakingPool: %v`, c.StakingPool))
+	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, StakingPool: %v`, c.Operator, c.StakingPool))
 }

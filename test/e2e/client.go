@@ -52,6 +52,7 @@ func setupTransactor() {
 		viper.GetString(flags.FlagSgnNodeURI),
 		"alice",
 		viper.GetString(flags.FlagSgnPassphrase),
+		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
 	if err != nil {

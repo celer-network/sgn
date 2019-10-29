@@ -31,6 +31,7 @@ var (
 	RegisterCodec             = types.RegisterCodec
 	PullerKey                 = types.PullerKey
 	PusherKey                 = types.PusherKey
+	CandidateKeyPrefix        = types.CandidateKeyPrefix
 	GetDelegatorKey           = types.GetDelegatorKey
 	GetDelegatorsKey          = types.GetDelegatorsKey
 	GetCandidateKey           = types.GetCandidateKey
@@ -42,6 +43,7 @@ var (
 	NewReward                 = types.NewReward
 	CLIQueryPuller            = cli.QueryPuller
 	CLIQueryPusher            = cli.QueryPusher
+	CLIQueryCandidate         = cli.QueryCandidate
 	CLIQueryReward            = cli.QueryReward
 	CLIQueryCandidate         = cli.QueryCandidate
 	CLIQueryDelegator         = cli.QueryDelegator

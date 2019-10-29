@@ -182,6 +182,24 @@ func QueryValidators(cdc *codec.Codec, cliCtx context.CLIContext, storeName stri
 	return
 }
 
+// Query candidate info
+func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, ethAddress string) (candidate types.Candidate, err error) {
+	data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
+	if err != nil {
+		return
+	}
+
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
+	res, _, err := cliCtx.QueryWithData(route, data)
+	if err != nil {
+		fmt.Printf("query candidate error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(res, &candidate)
+	return
+}
+
 // GetCmdReward queries reward info
 func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{

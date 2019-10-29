@@ -22,9 +22,9 @@ func (k Keeper) RequestGuardCount(ctx sdk.Context) (res uint64) {
 	return
 }
 
-// RequestLimit - request limit per epoch
-func (k Keeper) RequestLimit(ctx sdk.Context) (res uint64) {
-	k.paramstore.Get(ctx, types.KeyRequestLimit, &res)
+// RequestCost - cost per request
+func (k Keeper) RequestCost(ctx sdk.Context) (res sdk.Int) {
+	k.paramstore.Get(ctx, types.KeyRequestCost, &res)
 	return
 }
 
@@ -32,7 +32,7 @@ func (k Keeper) RequestLimit(ctx sdk.Context) (res uint64) {
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.RequestGuardCount(ctx),
-		k.RequestLimit(ctx),
+		k.RequestCost(ctx),
 	)
 }
 

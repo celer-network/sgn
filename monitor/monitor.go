@@ -60,6 +60,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 		txMemo:      txMemo,
 		pubkey:      pubkey,
 		isValidator: candidateInfo.IsVldt,
+		isValidator: mainchain.IsBonded(candiateInfo),
 	}
 
 	go m.monitorBlockHead()

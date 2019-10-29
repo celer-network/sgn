@@ -135,6 +135,20 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidat
 	return candidate, true
 }
 
+// Get the set of all candidates with no limits
+func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, CandidateKeyPrefix)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var candidate Candidate
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &candidate)
+		candidates = append(candidates, candidate)
+	}
+	return candidates
+}
+
 // Sets the Candidate metadata
 func (k Keeper) SetCandidate(ctx sdk.Context, candidateAddr string, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)

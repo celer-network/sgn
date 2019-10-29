@@ -26,7 +26,7 @@ type Transactor struct {
 	msgQueue   deque.Deque
 }
 
-func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *codec.Codec) (*Transactor, error) {
+func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
 	kb, err := client.NewKeyBaseFromDir(cliHome)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,8 @@ func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase string, cdc *c
 		NewTxBuilderFromCLI().
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID).
-		WithKeybase(kb)
+		WithKeybase(kb).
+		WithGasPrices(gasPrice)
 
 	cliCtx := client.
 		NewCLIContext().
