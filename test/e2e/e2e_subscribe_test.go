@@ -62,12 +62,10 @@ func subscribeTest(t *testing.T) {
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
 	transactor := tf.Transactor
-	// sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
 	tf.ChkErr(err, "Parse SGN address error")
 
 	// Call subscribe on guard contract
 	log.Info("Call subscribe on guard contract...")
-	// TODO: use a separate subscriber address. Now still use the same address of validator
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
 	tx, err := celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
@@ -100,7 +98,6 @@ func subscribeTest(t *testing.T) {
 
 	// Call openChannelMockSet on ledger contract
 	log.Info("Call openChannel on ledger contract...")
-	// copy(channelId[:], []byte{1})
 	paymentChannelInitializerBytes, err := protobuf.Marshal(prepareChannelInitializer())
 	tf.ChkErr(err, "failed to get paymentChannelInitializerBytes")
 	sig0, err := mainchain.SignMessage(tf.EthClient.PrivateKey, paymentChannelInitializerBytes)
@@ -117,20 +114,8 @@ func subscribeTest(t *testing.T) {
 	tx, err = ledgerContract.OpenChannel(auth, requestBytes)
 	tf.ChkErr(err, "failed to OpenChannel")
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
-	// channelId := [32]byte{}
 	channelId := <-channelIdChan
-	log.Info("channel ID:", "channelId", channelId)
-	// log.Info("Call openChannelMockSet on ledger contract...")
-	// tx, err = ledgerContract.OpenChannelMockSet(auth,
-	// 	channelId,
-	// 	big.NewInt(100),
-	// 	ctype.Hex2Addr(MockCelerAddr),
-	// 	big.NewInt(2),
-	// 	[2]ctype.Addr{ethAddress, ctype.Hex2Addr(client1AddrStr)},
-	// 	[2]*big.Int{big.NewInt(100), big.NewInt(100)},
-	// )
-	// tf.ChkErr(err, "failed to OpenChannel")
-	// tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
+	log.Info("channel ID: ", ctype.Bytes2Hex(channelId[:]))
 
 	// Submit state proof to sgn
 	signedSimplexStateProto := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
