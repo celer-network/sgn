@@ -1,9 +1,6 @@
 package e2e
 
 import (
-	"encoding/json"
-	"fmt"
-	"math/big"
 	"os"
 	"testing"
 
@@ -41,13 +38,9 @@ func queryLatestBlockTest(t *testing.T) {
 		os.Exit(1)
 	}
 
-	route := fmt.Sprintf("custom/%s/%s", global.ModuleName, global.QueryLatestBlock)
-	resJson, _, err := tf.Transactor.CliCtx.Query(route)
-	var result map[string]interface{}
-	json.Unmarshal(resJson, &result)
-	blkNumSGN := new(big.Int)
-	blkNumSGN, _ = blkNumSGN.SetString(result["number"].(string), 10)
-	log.Infof("Latest block number on SGN is %d", blkNumSGN)
+	blockSGN, err := global.CLIQueryLatestBlock(tf.Transactor.CliCtx.Codec, tf.Transactor.CliCtx, global.RouterKey)
+	tf.ChkErr(err, "failed to query latest synced block on sgn")
+	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
 	blkNumMain, err := tf.GetLatestBlkNum(conn)
 	if err != nil {
@@ -55,7 +48,5 @@ func queryLatestBlockTest(t *testing.T) {
 	}
 	log.Infof("Latest block number on mainchain is %d", blkNumMain)
 
-	assert.Equal(t, err, nil, "The command should run successfully")
-	diff := new(big.Int).Sub(blkNumMain, blkNumSGN)
-	assert.GreaterOrEqual(t, big.NewInt(maxBlockDiff).Cmp(diff), 0, "blkNumMain should be greater than or equal to blkNumSGN")
+	assert.GreaterOrEqual(t, blkNumMain.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
 }
