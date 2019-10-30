@@ -15,7 +15,6 @@ import (
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/testing/log"
-	"github.com/celer-network/sgn/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -72,7 +71,7 @@ func prepareEthClient() (
 	if err != nil {
 		return nil, nil, nil, common.Address{}, err
 	}
-	etherBaseAddrStr, err := utils.GetAddressFromKeystore(etherBaseKsBytes)
+	etherBaseAddrStr, err := GetAddressFromKeystore(etherBaseKsBytes)
 	if err != nil {
 		return nil, nil, nil, common.Address{}, err
 	}
