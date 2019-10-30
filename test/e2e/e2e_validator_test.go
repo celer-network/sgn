@@ -74,7 +74,7 @@ func validatorTest(t *testing.T) {
 	}
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
-	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Call delegate on guard contract to delegate stake to the validator eth address
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
@@ -96,7 +96,7 @@ func validatorTest(t *testing.T) {
 	}
 	log.Infoln("Query sgn about the validator delegator:", delegator)
 	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
-	assert.Equal(t, delegator.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, delegator.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn about the candidate to check if it has correct stakes
 	log.Info("Query sgn about the validator candidate...")
@@ -106,7 +106,7 @@ func validatorTest(t *testing.T) {
 	}
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, amt) // defined in Candidate.String()
-	assert.Equal(t, candidate.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn about the validator to check if it has correct stakes
 	sleepWithLog(30, "wait for validator to claimValidator and sgn sync ValidatorChange event")
@@ -118,5 +118,5 @@ func validatorTest(t *testing.T) {
 	log.Infoln("Query sgn about the validators:", validators)
 	// TODO: use a better way to assert/check the validity of the lengthy query results.
 	// expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
-	// assert.Equal(t, validators.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	// assert.Equal(t, expectedRes, validators.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }
