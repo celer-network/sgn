@@ -5,10 +5,12 @@ import (
 	"math/big"
 
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	protobuf "github.com/golang/protobuf/proto"
 )
 
 func (m *EthMonitor) processQueue() {
@@ -79,7 +81,7 @@ func (m *EthMonitor) processPusherQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Printf("Process InitializeCandidate", initializeCandidate.Candidate)
+	log.Printf("Push MsgInitializeCandidate of %s to Transactor's msgQueue for broadcast", initializeCandidate.Candidate.String())
 
 	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
@@ -104,7 +106,20 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		return
 	}
 
-	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, request.SignedSimplexStateBytes)
+	var signedSimplexState chain.SignedSimplexState
+	err = protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+	if err != nil {
+		log.Print("Unmarshal SignedSimplexState error: ", err)
+		return
+	}
+	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+		SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
+	})
+	if err != nil {
+		log.Print("Marshal signedSimplexStateArrayBytes error: ", err)
+		return
+	}
+	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
 	if err != nil {
 		log.Printf("intendSettle err", err)
 		return

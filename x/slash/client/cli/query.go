@@ -59,7 +59,7 @@ func QueryPenalty(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPenalty)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Printf("query error", err)
+		fmt.Println("query error", err)
 		return
 	}
 

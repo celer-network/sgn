@@ -48,7 +48,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 		log.Fatalf("NewBigCache err", err)
 	}
 
-	candiateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
+	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
 		log.Fatalf("GetCandidateInfo err", err)
 	}
@@ -59,7 +59,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *utils.Transactor,
 		cdc:         cdc,
 		txMemo:      txMemo,
 		pubkey:      pubkey,
-		isValidator: mainchain.IsBonded(candiateInfo),
+		isValidator: mainchain.IsBonded(candidateInfo),
 	}
 
 	go m.monitorBlockHead()
@@ -93,10 +93,10 @@ func (m *EthMonitor) monitorBlockHead() {
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
-	initializeCandiateChan := make(chan *mainchain.GuardInitializeCandidate)
-	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandiateChan, nil, nil)
+	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
+	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
 	if err != nil {
-		log.Printf("WatchInitializeCandidate err", err)
+		log.Println("WatchInitializeCandidate err: ", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -104,9 +104,10 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchInitializeCandidate err", err)
-		case initializeCandiate := <-initializeCandiateChan:
-			m.eventQueue.PushBack(NewEvent(initializeCandiate, initializeCandiate.Raw))
+			log.Println("WatchInitializeCandidate err: ", err)
+		case initializeCandidate := <-initializeCandidateChan:
+			m.eventQueue.PushBack(NewEvent(initializeCandidate, initializeCandidate.Raw))
+			log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
 		}
 	}
 }

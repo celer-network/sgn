@@ -13,6 +13,8 @@ import (
 )
 
 func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
+	logger := ctx.Logger()
+
 	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId)
 	if !found {
 		channelId := [32]byte{}
@@ -40,6 +42,7 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 		} else if peerAddresses[1] == peerFromAddress {
 			peerFromIndex = uint8(1)
 		} else {
+			logger.Error("peerFrom is neither peerAddresses[0] nor peerAddresses[1]", "peerFrom", peerFromAddress, "peerAddresses[0]", peerAddresses[0], "peerAddresses[1]", peerAddresses[1], "channelId", channelId)
 			return Request{}, errors.New("peerFrom is not valid address")
 		}
 

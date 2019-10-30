@@ -23,6 +23,9 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to sync block
 func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Result {
+	logger := ctx.Logger()
+	logger.Info("Handling a message to sync block number of", msg.BlockNumber)
+
 	lastestBlock := keeper.GetLatestBlock(ctx)
 	if msg.BlockNumber < lastestBlock.Number {
 		return sdk.ErrInternal("Block number is smaller than current latest block").Result()

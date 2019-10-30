@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingCli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
+	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 )
 
@@ -59,7 +60,7 @@ func QueryPuller(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string)
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPuller)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Printf("query puller error", err)
+		fmt.Println("query puller error", err)
 		return
 	}
 
@@ -90,7 +91,7 @@ func QueryPusher(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string)
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Printf("query pusher error", err)
+		fmt.Println("query pusher error", err)
 		return
 	}
 
@@ -105,28 +106,37 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query delegator info by candidateAddress and delegatorAddress",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			data, err := cdc.MarshalJSON(types.NewQueryDelegatorParams(args[0], args[1]))
-			if err != nil {
-				return err
-			}
-
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDelegator)
-			bz, _, err := cliCtx.QueryWithData(route, data)
+			delegator, err := QueryDelegator(cdc, cliCtx, queryRoute, args[0], args[1])
 			if err != nil {
 				return err
 			}
 
-			var delegator types.Delegator
-			cdc.MustUnmarshalJSON(bz, &delegator)
 			return cliCtx.PrintOutput(delegator)
 		},
 	}
 }
 
+func QueryDelegator(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, candidateAddress, delegatorAddress string) (delegator types.Delegator, err error) {
+	data, err := cdc.MarshalJSON(types.NewQueryDelegatorParams(candidateAddress, delegatorAddress))
+	if err != nil {
+		return
+	}
+
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDelegator)
+	bz, _, err := cliCtx.QueryWithData(route, data)
+	if err != nil {
+		fmt.Println("query error", err)
+		return
+	}
+
+	cdc.MustUnmarshalJSON(bz, &delegator)
+	return
+}
+
 // GetCmdCandidate queries request info
 func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "candidate [candidateAddress]",
 		Short: "query candidate info by candidateAddress",
 		Args:  cobra.ExactArgs(1),
@@ -140,25 +150,35 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			return cliCtx.PrintOutput(candidate)
 		},
 	}
-
-	return cmd
 }
 
-// Query candidate info
-func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, ethAddress string) (candidate types.Candidate, err error) {
+func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, ethAddress string) (candidate types.Candidate, err error) {
 	data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
 	if err != nil {
 		return
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
-	res, _, err := cliCtx.QueryWithData(route, data)
+	bz, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Printf("query candidate error", err)
+		fmt.Println("query candidate error", err)
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &candidate)
+	cdc.MustUnmarshalJSON(bz, &candidate)
+	return
+}
+
+// QueryValidators is an interface for convenience to query validators in staking module
+func QueryValidators(cdc *codec.Codec, cliCtx context.CLIContext, storeName string) (validators stakingTypes.Validators, err error) {
+	resKVs, _, err := cliCtx.QuerySubspace(stakingTypes.ValidatorsKey, storeName)
+	if err != nil {
+		return
+	}
+
+	for _, kv := range resKVs {
+		validators = append(validators, stakingTypes.MustUnmarshalValidator(cdc, kv.Value))
+	}
 	return
 }
 
@@ -190,7 +210,7 @@ func QueryReward(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string,
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryReward)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Printf("query reward error", err)
+		fmt.Println("query reward error", err)
 		return
 	}
 

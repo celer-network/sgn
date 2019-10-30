@@ -13,6 +13,7 @@ func init() {
 	logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 }
 
+// TODO: adjust to tendermint logger's key-value style
 func Debug(v ...interface{}) {
 	logger.Debug(fmt.Sprint(v...))
 }

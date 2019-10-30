@@ -77,38 +77,38 @@ func (t *Transactor) start() {
 			continue
 		}
 
+		log.Printf("Packing %d messages in batch for broadcast", t.msgQueue.Len())
 		var msgs []sdk.Msg
 		for t.msgQueue.Len() != 0 {
 			msg := t.msgQueue.PopFront().(sdk.Msg)
+			log.Printf("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
 			msgs = append(msgs, msg)
 		}
 
 		txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 		if err != nil {
-			log.Printf("Transactor PrepareTxBuilder err", err)
+			log.Printf("Transactor PrepareTxBuilder err: %v", err)
 			continue
 		}
 
 		txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
 		if err != nil {
-			log.Printf("Transactor BuildAndSign err", err)
+			log.Printf("Transactor BuildAndSign err: %v", err)
 			continue
 		}
 
 		tx, err := t.CliCtx.BroadcastTx(txBytes)
 		if err != nil {
-			log.Printf("Transactor BroadcastTx err", err)
+			log.Printf("Transactor BroadcastTx err: %v", err)
 			continue
 		}
 
 		// Make sure the transaction has been mines
-		log.Printf("Transactor tx", tx)
+		log.Printf("Transactor broadcasted tx: %+v", tx)
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
-				// log.Printf("No err")
 				break
 			}
-			// log.Printf("err", err)
 			time.Sleep(time.Second)
 		}
 
