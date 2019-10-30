@@ -9,7 +9,6 @@ import (
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/flags"
-	"github.com/celer-network/sgn/utils"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,9 +24,9 @@ import (
 type RestServer struct {
 	Mux *mux.Router
 
-	transactor *utils.Transactor
-	log        log.Logger
-	listener   net.Listener
+	transactorPool *common.TransactorPool
+	log            log.Logger
+	listener       net.Listener
 }
 
 // NewRestServer creates a new rest server instance
@@ -38,7 +37,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	transactor, err := common.TransactorPool(
+	transactorPool, err := common.NewTransactorPool(
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
@@ -55,9 +54,9 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
 	return &RestServer{
-		Mux:        r,
-		transactor: transactor,
-		log:        logger,
+		Mux:            r,
+		transactorPool: transactorPool,
+		log:            logger,
 	}, nil
 }
 
@@ -88,7 +87,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 }
 
 func (rs *RestServer) registerRoutes() {
-	client.RegisterRoutes(rs.transactor.CliCtx, rs.Mux)
+	client.RegisterRoutes(rs.transactorPool.GetTransactor().CliCtx, rs.Mux)
 	rs.registerQueryRoutes()
 	rs.registerTxRoutes()
 }
