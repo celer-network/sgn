@@ -20,8 +20,13 @@ func resetRateLimit(ctx sdk.Context, keeper Keeper) {
 	candidates := keeper.validatorKeeper.GetAllCandidates(ctx)
 
 	for _, candidate := range candidates {
+		totalAccounts := int64(len(candidate.Transactors) + 1)
+		quota := sdk.NewCoins(sdk.NewCoin(common.StakeName, candidate.StakingPool.QuoRaw(common.StakeDec).QuoRaw(totalAccounts)))
 		// NOTE: make sure sendEnable is false
-		keeper.bankKeeper.SetCoins(ctx, candidate.Operator,
-			sdk.NewCoins(sdk.NewCoin(common.StakeName, candidate.StakingPool.QuoRaw(common.StakeDec))))
+		keeper.bankKeeper.SetCoins(ctx, candidate.Operator, quota)
+
+		for _, transactor := range candidate.Transactors {
+			keeper.bankKeeper.SetCoins(ctx, transactor, quota)
+		}
 	}
 }

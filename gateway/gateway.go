@@ -41,7 +41,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnName),
+		viper.GetString(flags.FlagSgnOperator),
 		viper.GetString(flags.FlagSgnPassphrase),
 		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,

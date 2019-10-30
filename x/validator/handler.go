@@ -76,6 +76,11 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return sdk.ErrInternal("Sender has different address recorded on mainchain").Result()
 	}
 
+	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	if !found {
+		return sdk.ErrInternal("Candidate does not exist").Result()
+	}
+
 	// Make sure both val address and pub address have not been used before
 	valAddress := sdk.ValAddress(candiateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
@@ -95,6 +100,9 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 	validator.Status = sdk.Bonded
 	updateValidatorToken(ctx, keeper, validator, candiateInfo.StakingPool)
+
+	candidate.Transactors = msg.Transactors
+	keeper.SetCandidate(ctx, msg.EthAddress, candidate)
 
 	return sdk.Result{}
 }

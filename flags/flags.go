@@ -7,10 +7,11 @@ const (
 	FlagEthKeystore      = "eth.keystore"
 	FlagEthPassphrase    = "eth.passphrase"
 
-	FlagSgnName       = "sgn.name"
-	FlagSgnPassphrase = "sgn.passphrase"
-	FlagSgnPubKey     = "sgn.pubkey"
-	FlagSgnChainID    = "sgn.chainID"
-	FlagSgnNodeURI    = "sgn.nodeURI"
-	FlagSgnGasPrice   = "sgn.gasPrice"
+	FlagSgnOperator    = "sgn.operator"
+	FlagSgnTransactors = "sgn.transactors"
+	FlagSgnPassphrase  = "sgn.passphrase"
+	FlagSgnPubKey      = "sgn.pubkey"
+	FlagSgnChainID     = "sgn.chainID"
+	FlagSgnNodeURI     = "sgn.nodeURI"
+	FlagSgnGasPrice    = "sgn.gasPrice"
 )
