@@ -127,13 +127,14 @@ func subscribeTest(t *testing.T) {
 	transactor.BroadcastTx(msgRequestGuard)
 	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
-	// Query sgn to check if request has correct stateproof data
-	log.Info("Query sgn to check if request has correct stateproof data...")
+	// Query sgn to check if request has correct state proof data
+	log.Info("Query sgn to check if request has correct state proof data...")
 	request, err := subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	expectedSubRes := fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
-	assert.Contains(t, strings.ToLower(request.String()), strings.ToLower(expectedSubRes))
+	// TxHash now should be empty
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TxHash:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	assert.Equal(t, strings.ToLower(request.String()), strings.ToLower(expectedRes), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Call intendSettle on ledger contract
 	log.Info("Call intendSettle on ledger contract...")
@@ -146,14 +147,15 @@ func subscribeTest(t *testing.T) {
 	tf.ChkErr(err, "failed to IntendSettle")
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "IntendSettle")
 
-	// Query sgn to check if validator has submitted the stateproof correctly
-	log.Info("Query sgn to check if validator has submitted the stateproof correctly...")
-	sleepWithLog(20, "sgn submitting stateproof")
+	// Query sgn to check if validator has submitted the state proof correctly
+	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
+	sleepWithLog(20, "sgn submitting state proof")
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	expectedSubRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
-	assert.Contains(t, strings.ToLower(request.String()), strings.ToLower(expectedSubRes))
+	// Containing "TxHash: 0x" means that monitor intendSettle successfully and recorded the tx
+	expectedSubRes := fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TxHash: 0x`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	assert.Contains(t, strings.ToLower(request.String()), strings.ToLower(expectedSubRes), "SGN query result is wrong")
 }
 
 func prepareChannelInitializer() *entity.PaymentChannelInitializer {
