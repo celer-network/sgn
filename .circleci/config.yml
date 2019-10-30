@@ -35,10 +35,6 @@ jobs:
           name: make install test
           command: |
             make install
-      - run:
-          name: build test client
-          command: |
-            go build test/e2e/client.go
       - save_cache:
           key: go-cache-{{ checksum "go.sum" }}
           paths:

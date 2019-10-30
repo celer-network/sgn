@@ -1007,3 +1007,37 @@
 10:44:38.189003 db@open done T·5.340469ms
 10:44:38.189366 db@close closing
 10:44:38.189448 db@close done T·81.276µs
+=============== Oct 28, 2019 (PDT) ===============
+11:41:10.531824 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+11:41:10.533719 version@stat F·[1] S·468B[468B] Sc·[0.25]
+11:41:10.533765 db@open opening
+11:41:10.533853 journal@recovery F·1
+11:41:10.533933 journal@recovery recovering @3705
+11:41:10.534425 version@stat F·[1] S·468B[468B] Sc·[0.25]
+11:41:10.590025 db@janitor F·3 G·0
+11:41:10.590096 db@open done T·56.310464ms
+11:41:10.590188 db@close closing
+11:41:10.590380 db@close done T·186.914µs
+=============== Oct 28, 2019 (PDT) ===============
+11:41:17.786123 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+11:41:17.791826 version@stat F·[1] S·468B[468B] Sc·[0.25]
+11:41:17.791926 db@open opening
+11:41:17.792170 journal@recovery F·1
+11:41:17.794634 journal@recovery recovering @3707
+11:41:17.795083 version@stat F·[1] S·468B[468B] Sc·[0.25]
+11:41:17.842648 db@janitor F·3 G·0
+11:41:17.842738 db@open done T·50.784889ms
+11:41:18.134203 db@close closing
+11:41:18.134542 db@close done T·333.866µs
+=============== Oct 28, 2019 (PDT) ===============
+11:42:55.694508 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+11:42:55.699008 version@stat F·[1] S·468B[468B] Sc·[0.25]
+11:42:55.699069 db@open opening
+11:42:55.699692 journal@recovery F·1
+11:42:55.699819 journal@recovery recovering @3709
+11:42:55.709474 memdb@flush created L0@3711 N·2 S·464B "ali..nfo,v4":"cos..ess,v5"
+11:42:55.709978 version@stat F·[2] S·932B[932B] Sc·[0.50]
+11:42:55.757117 db@janitor F·4 G·0
+11:42:55.757184 db@open done T·58.092096ms
+11:42:55.759160 db@close closing
+11:42:55.759399 db@close done T·236.713µs

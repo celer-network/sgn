@@ -45,7 +45,10 @@ func NewEthClient(ws, guardAddress, ledgerAddress, ks, passphrase string) (*EthC
 		Guard:  guard,
 		Ledger: ledger,
 	}
-	ethClient.setupAuth(ks, passphrase)
+	err = ethClient.setupAuth(ks, passphrase)
+	if err != nil {
+		return nil, err
+	}
 
 	return ethClient, nil
 }

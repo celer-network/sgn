@@ -55,7 +55,7 @@ func QueryLatestBlock(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute st
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Printf("query error", err)
+		fmt.Println("query error", err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func QuerySecureBlockNum(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Printf("query error", err)
+		fmt.Println("query error", err)
 		return
 	}
 

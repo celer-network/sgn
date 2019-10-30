@@ -7,8 +7,8 @@
     "passphrase": ""
   },
   "sgn": {
-    "operator": "jack",
-    "transactos": "",
+    "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+    "transactos": "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
     "passphrase": "12341234",
     "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
     "chainID": "sgnchain",

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/utils"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -37,11 +38,11 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	transactor, err := utils.NewTransactor(
+	transactor, err := common.TransactorPool(
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnOperator),
+		viper.GetString(flags.FlagSgnTransactors),
 		viper.GetString(flags.FlagSgnPassphrase),
 		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
