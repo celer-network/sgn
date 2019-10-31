@@ -98,7 +98,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	}
 
 	if request.TxHash != "" {
-		log.Printf("Request has been fullfilled")
+		log.Printf("Request has been fulfilled")
 		return
 	}
 
