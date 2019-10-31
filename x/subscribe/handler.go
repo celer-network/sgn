@@ -98,11 +98,18 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("Cannot find request").Result()
 	}
 
-	// TODO: need to validate tx hash
-	request.TxHash = msg.TxHash
+	// TODO: validate triggerTxHash
+	// including: emitted contract
+
+	// TODO: validate guardTxHash
+	// including: mainchain tx sender
+
+	// Set tx hashes
+	request.TriggerTxHash = msg.TriggerTxHash
+	request.GuardTxHash = msg.GuardTxHash
 	keeper.SetRequest(ctx, msg.ChannelId, request)
 
-	// TODO: punish corresponding guard correctly
+	// TODO: punish or reward corresponding guard correctly
 	// for _, guard := range request.RequestGuards {
 	// 	keeper.slashKeeper.HandleGuardFailure(ctx, msg.Sender, guard)
 	// }

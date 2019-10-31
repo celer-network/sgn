@@ -100,17 +100,20 @@ func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 
 // MsgGuardProof defines a Subscribe message
 type MsgGuardProof struct {
-	ChannelId []byte         `json:"channelId"`
-	TxHash    string         `json:"txHash"`
-	Sender    sdk.AccAddress `json:"sender"`
+	ChannelId     []byte `json:"channelId"`
+	TriggerTxHash string `json:"triggerTxHash"` // intendSettle tx with lower sequence number
+	GuardTxHash   string `json:"guardTxHash"`   // intendSettle tx to guard user's state proof
+	// TODO: since we don't use Sender in handleMsgGuardProof, it might be safe to remove this
+	Sender sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgGuardProof is a constructor function for MsgGuardProof
-func NewMsgGuardProof(channelId []byte, txHash string, sender sdk.AccAddress) MsgGuardProof {
+func NewMsgGuardProof(channelId []byte, triggerTxHash, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
 	return MsgGuardProof{
-		ChannelId: channelId,
-		TxHash:    txHash,
-		Sender:    sender,
+		ChannelId:     channelId,
+		TriggerTxHash: triggerTxHash,
+		GuardTxHash:   guardTxHash,
+		Sender:        sender,
 	}
 }
 
@@ -126,8 +129,12 @@ func (msg MsgGuardProof) ValidateBasic() sdk.Error {
 		return sdk.ErrUnknownRequest("channelId cannot be empty")
 	}
 
-	if msg.TxHash == "" {
-		return sdk.ErrUnknownRequest("tx hash cannot be empty")
+	if msg.TriggerTxHash == "" {
+		return sdk.ErrUnknownRequest("obsolete tx hash cannot be empty")
+	}
+
+	if msg.GuardTxHash == "" {
+		return sdk.ErrUnknownRequest("guard tx hash cannot be empty")
 	}
 
 	if msg.Sender.Empty() {

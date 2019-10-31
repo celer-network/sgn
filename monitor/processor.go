@@ -128,7 +128,8 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	}
 	log.Printf("IntendSettle tx detail", tx)
 
-	msg := subscribe.NewMsgGuardProof(channelId, tx.Hash().Hex(), m.transactor.Key.GetAddress())
+	triggerTxHash := intendSettle.Raw.TxHash.Hex()
+	msg := subscribe.NewMsgGuardProof(channelId, triggerTxHash, tx.Hash().Hex(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
