@@ -111,6 +111,5 @@ func (t *Transactor) start() {
 			}
 			time.Sleep(time.Second)
 		}
-
 	}
 }
