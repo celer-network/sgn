@@ -40,7 +40,7 @@ func GetCmdLatestBlock(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			block, err := QueryLatestBlock(cdc, cliCtx, queryRoute)
+			block, err := QueryLatestBlock(cliCtx, queryRoute)
 			if err != nil {
 				return err
 			}
@@ -51,7 +51,7 @@ func GetCmdLatestBlock(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query latest block
-func QueryLatestBlock(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (block types.Block, err error) {
+func QueryLatestBlock(cliCtx context.CLIContext, queryRoute string) (block types.Block, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
@@ -59,12 +59,12 @@ func QueryLatestBlock(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute st
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &block)
+	cliCtx.Codec.MustUnmarshalJSON(res, &block)
 	return
 }
 
 // Query secure block number
-func QuerySecureBlockNum(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (secureBlockNum uint64, err error) {
+func QuerySecureBlockNum(cliCtx context.CLIContext, queryRoute string) (secureBlockNum uint64, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {

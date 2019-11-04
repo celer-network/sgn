@@ -143,15 +143,6 @@ func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
 	return cmd.Process, nil
 }
 
-func installBins() error {
-	cmd := exec.Command("make", "install")
-	cmd.Dir, _ = filepath.Abs("../..")
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	// TODO: duplicate code in SetupMainchain(), need to put these in a function
 	ctx := context.Background()

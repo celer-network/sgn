@@ -29,10 +29,6 @@ func TestMain(m *testing.M) {
 	ethProc, err := StartMainchain()
 	tf.ChkErr(err, "starting chain")
 
-	// install sgn bins
-	err = installBins()
-	tf.ChkErr(err, "install SGN bins")
-
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client0Addr})

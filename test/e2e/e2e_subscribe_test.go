@@ -86,7 +86,7 @@ func subscribeTest(t *testing.T) {
 
 	// Query sgn about the subscription info
 	log.Info("Query sgn about the subscription info...")
-	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
+	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
@@ -129,7 +129,7 @@ func subscribeTest(t *testing.T) {
 
 	// Query sgn to check if request has correct state proof data
 	log.Info("Query sgn to check if request has correct state proof data...")
-	request, err := subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	// TxHash now should be empty
@@ -150,7 +150,7 @@ func subscribeTest(t *testing.T) {
 	// Query sgn to check if validator has submitted the state proof correctly
 	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
 	sleepWithLog(20, "sgn submitting state proof")
-	request, err = subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	// Containing "TxHash: 0x" means that monitor intendSettle successfully and recorded the tx
