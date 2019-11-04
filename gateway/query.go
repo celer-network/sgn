@@ -76,7 +76,7 @@ func subscriptionHandlerFn(rs *RestServer) http.HandlerFunc {
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
-		subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, ethAddr)
+		subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddr)
 		postProcessResponse(w, transactor.CliCtx, subscription, err)
 	}
 }
@@ -87,7 +87,7 @@ func guardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 		vars := mux.Vars(r)
 		channelId := ethcommon.Hex2Bytes(vars["channelId"])
 		transactor := rs.transactorPool.GetTransactor()
-		request, err := subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId)
+		request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId)
 		postProcessResponse(w, transactor.CliCtx, request, err)
 	}
 }
@@ -98,7 +98,7 @@ func candidateHandlerFn(rs *RestServer) http.HandlerFunc {
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
-		candidate, err := validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddr)
+		candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddr)
 		postProcessResponse(w, transactor.CliCtx, candidate, err)
 	}
 }
@@ -109,7 +109,7 @@ func rewardHandlerFn(rs *RestServer) http.HandlerFunc {
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
-		reward, err := validator.CLIQueryReward(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddr)
+		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddr)
 		postProcessResponse(w, transactor.CliCtx, reward, err)
 	}
 }
@@ -120,7 +120,7 @@ func rewardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
-		reward, err := validator.CLIQueryReward(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddr)
+		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddr)
 		postProcessResponse(w, transactor.CliCtx, reward.GetRewardRequest(), err)
 	}
 }
