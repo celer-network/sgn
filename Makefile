@@ -14,9 +14,6 @@ lint:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 	go mod verify
 
-test-client:
-	go run ./test/e2e/client.go
-
 copy-test-data:
 	cp -r test/data/.sgn ~/.sgn
 	cp -r test/data/.sgncli ~/.sgncli
