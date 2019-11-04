@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/celer-network/sgn/app"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/spf13/viper"
 )
 
