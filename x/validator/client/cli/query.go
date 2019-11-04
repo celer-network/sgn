@@ -45,7 +45,7 @@ func GetCmdPuller(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			puller, err := QueryPuller(cdc, cliCtx, queryRoute)
+			puller, err := QueryPuller(cliCtx, queryRoute)
 			if err != nil {
 				return err
 			}
@@ -56,7 +56,7 @@ func GetCmdPuller(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query puller info
-func QueryPuller(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (puller types.Puller, err error) {
+func QueryPuller(cliCtx context.CLIContext, queryRoute string) (puller types.Puller, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPuller)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
@@ -64,7 +64,7 @@ func QueryPuller(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string)
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &puller)
+	cliCtx.Codec.MustUnmarshalJSON(res, &puller)
 	return
 }
 
@@ -76,7 +76,7 @@ func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			pusher, err := QueryPusher(cdc, cliCtx, queryRoute)
+			pusher, err := QueryPusher(cliCtx, queryRoute)
 			if err != nil {
 				return err
 			}
@@ -87,7 +87,7 @@ func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query pusher info
-func QueryPusher(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) (pusher types.Pusher, err error) {
+func QueryPusher(cliCtx context.CLIContext, queryRoute string) (pusher types.Pusher, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
@@ -95,7 +95,7 @@ func QueryPusher(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string)
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &pusher)
+	cliCtx.Codec.MustUnmarshalJSON(res, &pusher)
 	return
 }
 
@@ -107,7 +107,7 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			delegator, err := QueryDelegator(cdc, cliCtx, queryRoute, args[0], args[1])
+			delegator, err := QueryDelegator(cliCtx, queryRoute, args[0], args[1])
 			if err != nil {
 				return err
 			}
@@ -117,8 +117,8 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func QueryDelegator(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, candidateAddress, delegatorAddress string) (delegator types.Delegator, err error) {
-	data, err := cdc.MarshalJSON(types.NewQueryDelegatorParams(candidateAddress, delegatorAddress))
+func QueryDelegator(cliCtx context.CLIContext, queryRoute, candidateAddress, delegatorAddress string) (delegator types.Delegator, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryDelegatorParams(candidateAddress, delegatorAddress))
 	if err != nil {
 		return
 	}
@@ -130,7 +130,7 @@ func QueryDelegator(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, can
 		return
 	}
 
-	cdc.MustUnmarshalJSON(bz, &delegator)
+	cliCtx.Codec.MustUnmarshalJSON(bz, &delegator)
 	return
 }
 
@@ -142,7 +142,7 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			candidate, err := QueryCandidate(cdc, cliCtx, queryRoute, args[0])
+			candidate, err := QueryCandidate(cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}
@@ -152,8 +152,8 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, ethAddress string) (candidate types.Candidate, err error) {
-	data, err := cdc.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
+func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (candidate types.Candidate, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
 	if err != nil {
 		return
 	}
@@ -165,19 +165,19 @@ func QueryCandidate(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, eth
 		return
 	}
 
-	cdc.MustUnmarshalJSON(bz, &candidate)
+	cliCtx.Codec.MustUnmarshalJSON(bz, &candidate)
 	return
 }
 
 // QueryValidators is an interface for convenience to query validators in staking module
-func QueryValidators(cdc *codec.Codec, cliCtx context.CLIContext, storeName string) (validators stakingTypes.Validators, err error) {
+func QueryValidators(cliCtx context.CLIContext, storeName string) (validators stakingTypes.Validators, err error) {
 	resKVs, _, err := cliCtx.QuerySubspace(stakingTypes.ValidatorsKey, storeName)
 	if err != nil {
 		return
 	}
 
 	for _, kv := range resKVs {
-		validators = append(validators, stakingTypes.MustUnmarshalValidator(cdc, kv.Value))
+		validators = append(validators, stakingTypes.MustUnmarshalValidator(cliCtx.Codec, kv.Value))
 	}
 	return
 }
@@ -190,7 +190,7 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			reward, err := QueryReward(cdc, cliCtx, queryRoute, args[0])
+			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}
@@ -201,8 +201,8 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query reward info
-func QueryReward(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, ethAddress string) (reward types.Reward, err error) {
-	data, err := cdc.MarshalJSON(types.NewQueryRewardParams(ethAddress))
+func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string) (reward types.Reward, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryRewardParams(ethAddress))
 	if err != nil {
 		return
 	}
@@ -214,7 +214,7 @@ func QueryReward(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string,
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &reward)
+	cliCtx.Codec.MustUnmarshalJSON(res, &reward)
 	return
 }
 
@@ -226,7 +226,7 @@ func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			reward, err := QueryReward(cdc, cliCtx, queryRoute, args[0])
+			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}

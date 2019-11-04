@@ -35,7 +35,7 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			subscription, err := QuerySubscription(cdc, cliCtx, queryRoute, args[0])
+			subscription, err := QuerySubscription(cliCtx, queryRoute, args[0])
 			if err != nil {
 				return err
 			}
@@ -46,8 +46,8 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query subscription info
-func QuerySubscription(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, ethAddress string) (subscription types.Subscription, err error) {
-	data, err := cdc.MarshalJSON(types.NewQuerySubscriptionParams(ethAddress))
+func QuerySubscription(cliCtx context.CLIContext, queryRoute, ethAddress string) (subscription types.Subscription, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQuerySubscriptionParams(ethAddress))
 	if err != nil {
 		return
 	}
@@ -59,7 +59,7 @@ func QuerySubscription(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute, 
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &subscription)
+	cliCtx.Codec.MustUnmarshalJSON(res, &subscription)
 	return
 }
 
@@ -71,7 +71,7 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			request, err := QueryRequest(cdc, cliCtx, queryRoute, ethcommon.Hex2Bytes(args[0]))
+			request, err := QueryRequest(cliCtx, queryRoute, ethcommon.Hex2Bytes(args[0]))
 			if err != nil {
 				return err
 			}
@@ -82,8 +82,8 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query request info
-func QueryRequest(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, channelId []byte) (request types.Request, err error) {
-	data, err := cdc.MarshalJSON(types.NewQueryRequestParams(channelId))
+func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte) (request types.Request, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryRequestParams(channelId))
 	if err != nil {
 		return
 	}
@@ -95,7 +95,7 @@ func QueryRequest(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string
 		return
 	}
 
-	cdc.MustUnmarshalJSON(res, &request)
+	cliCtx.Codec.MustUnmarshalJSON(res, &request)
 	return
 }
 
@@ -115,7 +115,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			var params types.Params
-			cdc.MustUnmarshalJSON(bz, &params)
+			cliCtx.Codec.MustUnmarshalJSON(bz, &params)
 			return cliCtx.PrintOutput(params)
 		},
 	}
