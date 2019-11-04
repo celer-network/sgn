@@ -3,8 +3,8 @@ package monitor
 import (
 	"log"
 
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
@@ -144,7 +144,7 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 
 func (m *EthMonitor) claimValidator() {
 	log.Printf("ClaimValidator")
-	transactors, err := common.ParseTransactorAddrs(m.transactors)
+	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
 	if err != nil {
 		log.Printf("parse transactors err", err)
 		return

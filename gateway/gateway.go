@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/celer-network/sgn/app"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -24,7 +24,7 @@ import (
 type RestServer struct {
 	Mux *mux.Router
 
-	transactorPool *common.TransactorPool
+	transactorPool *transactor.TransactorPool
 	log            log.Logger
 	listener       net.Listener
 }
@@ -37,7 +37,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	transactorPool, err := common.NewTransactorPool(
+	transactorPool, err := transactor.NewTransactorPool(
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),

@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -64,7 +64,7 @@ func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
 		Short: "claim validator for the eth address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
+			transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
 			if err != nil {
 				return err
 			}

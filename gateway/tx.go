@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -133,7 +133,7 @@ func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
-func writeGenerateStdTxResponse(w http.ResponseWriter, transactor *common.Transactor, msg sdk.Msg) {
+func writeGenerateStdTxResponse(w http.ResponseWriter, transactor *transactor.Transactor, msg sdk.Msg) {
 	if err := msg.ValidateBasic(); err != nil {
 		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return

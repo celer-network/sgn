@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	Transactor *common.Transactor
+	Transactor *transactor.Transactor
 )
 
 func SetupTransactor() {
 	cdc := app.MakeCodec()
-	t, err := common.NewTransactor(
+	t, err := transactor.NewTransactor(
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/allegro/bigcache"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -32,7 +32,7 @@ var (
 
 type EthMonitor struct {
 	ethClient   *mainchain.EthClient
-	transactor  *common.Transactor
+	transactor  *transactor.Transactor
 	cdc         *codec.Codec
 	pusherQueue deque.Deque
 	pullerQueue deque.Deque
@@ -43,7 +43,7 @@ type EthMonitor struct {
 	isValidator bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *common.Transactor, cdc *codec.Codec, pubkey string, transactors []string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, cdc *codec.Codec, pubkey string, transactors []string) {
 	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
 	if err != nil {
 		log.Fatalf("NewBigCache err", err)

@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
@@ -378,7 +378,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(ctx sdk.Context) {
-	transactor, err := common.NewTransactor(
+	transactor, err := transactor.NewTransactor(
 		DefaultCLIHome,
 		ctx.ChainID(),
 		viper.GetString(flags.FlagSgnNodeURI),
