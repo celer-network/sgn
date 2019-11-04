@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	ccommon "github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/flags"
 	tf "github.com/celer-network/sgn/testing"
@@ -42,7 +42,7 @@ var (
 	// same var in testframework.go and expose a set api
 	outRootDir    string
 	envDir        = "../../testing/env"
-	E2eProfile    *ccommon.CProfile
+	E2eProfile    *common.CProfile
 	GuardAddr     string
 	MockCelerAddr string
 )

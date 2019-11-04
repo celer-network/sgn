@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
@@ -143,7 +144,13 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 
 func (m *EthMonitor) claimValidator() {
 	log.Printf("ClaimValidator")
-	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, m.transactor.Key.GetAddress())
+	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
+	if err != nil {
+		log.Printf("parse transactors err", err)
+		return
+	}
+
+	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, transactors, m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
-	"github.com/celer-network/sgn/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -79,7 +78,7 @@ func SetupMainchain() (*common.CProfile, string) {
 	for _, addr := range addrs {
 		tx, err = erc20.Transfer(etherBaseAuth, addr, celrAmt)
 		tf.ChkErr(err, "failed to send CELR")
-		utils.WaitMined(ctx, conn, tx, 0)
+		mainchain.WaitMined(ctx, conn, tx, 0)
 	}
 	log.Infof("Sent CELR to etherbase and client0")
 
@@ -87,7 +86,7 @@ func SetupMainchain() (*common.CProfile, string) {
 	tf.LogBlkNum(conn)
 	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, celrAmt)
 	tf.ChkErr(err, "failed to approve transferFrom of CELR for celerLedger")
-	utils.WaitMined(ctx, conn, tx, 0)
+	mainchain.WaitMined(ctx, conn, tx, 0)
 	log.Infof("CELR transferFrom approved for celerLedger")
 
 	// output json file

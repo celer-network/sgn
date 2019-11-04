@@ -1,4 +1,4 @@
-package utils
+package transactor
 
 import (
 	"log"
@@ -26,13 +26,18 @@ type Transactor struct {
 	msgQueue   deque.Deque
 }
 
-func NewTransactor(cliHome, chainID, nodeURI, accName, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
+func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
 	kb, err := client.NewKeyBaseFromDir(cliHome)
 	if err != nil {
 		return nil, err
 	}
 
-	key, err := kb.Get(accName)
+	addr, err := sdk.AccAddressFromBech32(accAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := kb.GetByAddress(addr)
 	if err != nil {
 		return nil, err
 	}
