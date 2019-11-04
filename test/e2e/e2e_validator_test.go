@@ -68,7 +68,7 @@ func validatorTest(t *testing.T) {
 
 	// Query sgn about the validator candidate
 	log.Info("Query sgn about the validator candidate...")
-	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func validatorTest(t *testing.T) {
 
 	// Query sgn about the delegator to check if it has correct stakes
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
-	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
+	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func validatorTest(t *testing.T) {
 
 	// Query sgn about the candidate to check if it has correct stakes
 	log.Info("Query sgn about the validator candidate...")
-	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func validatorTest(t *testing.T) {
 	// Query sgn about the validator to check if it has correct stakes
 	sleepWithLog(30, "wait for validator to claimValidator and sgn sync ValidatorChange event")
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
-	validators, err := validator.CLIQueryValidators(transactor.CliCtx.Codec, transactor.CliCtx, staking.RouterKey)
+	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
 	if err != nil {
 		log.Fatal(err)
 	}

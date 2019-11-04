@@ -38,7 +38,7 @@ func queryLatestBlockTest(t *testing.T) {
 		os.Exit(1)
 	}
 
-	blockSGN, err := global.CLIQueryLatestBlock(tf.Transactor.CliCtx.Codec, tf.Transactor.CliCtx, global.RouterKey)
+	blockSGN, err := global.CLIQueryLatestBlock(tf.Transactor.CliCtx, global.RouterKey)
 	tf.ChkErr(err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
