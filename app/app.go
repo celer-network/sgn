@@ -392,5 +392,5 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		cmn.Exit(err.Error())
 	}
 
-	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetString(flags.FlagSgnTransactors))
+	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
 }

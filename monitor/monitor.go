@@ -39,11 +39,11 @@ type EthMonitor struct {
 	eventQueue  deque.Deque
 	txMemo      *bigcache.BigCache
 	pubkey      string
-	transactors string
+	transactors []string
 	isValidator bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *common.Transactor, cdc *codec.Codec, pubkey, transactors string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, transactor *common.Transactor, cdc *codec.Codec, pubkey string, transactors []string) {
 	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
 	if err != nil {
 		log.Fatalf("NewBigCache err", err)

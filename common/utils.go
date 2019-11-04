@@ -1,13 +1,10 @@
 package common
 
 import (
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func ParseTransactors(tsStr string) (transactors []sdk.AccAddress, err error) {
-	ts := strings.Split(tsStr, ",")
+func ParseTransactorAddrs(ts []string) (transactors []sdk.AccAddress, err error) {
 	for _, t := range ts {
 		transactor, err := sdk.AccAddressFromBech32(t)
 		if err != nil {

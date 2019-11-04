@@ -144,7 +144,7 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 
 func (m *EthMonitor) claimValidator() {
 	log.Printf("ClaimValidator")
-	transactors, err := common.ParseTransactors(m.transactors)
+	transactors, err := common.ParseTransactorAddrs(m.transactors)
 	if err != nil {
 		log.Printf("parse transactors err", err)
 		return

@@ -1,7 +1,6 @@
 package common
 
 import (
-	"strings"
 	"sync/atomic"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,8 +11,7 @@ type TransactorPool struct {
 	index       uint64
 }
 
-func NewTransactorPool(cliHome, chainID, nodeURI, tsStr, passphrase, gasPrice string, cdc *codec.Codec) (*TransactorPool, error) {
-	ts := strings.Split(tsStr, ",")
+func NewTransactorPool(cliHome, chainID, nodeURI, passphrase, gasPrice string, ts []string, cdc *codec.Codec) (*TransactorPool, error) {
 	var transactors []*Transactor
 	for _, t := range ts {
 		transactor, err := NewTransactor(cliHome, chainID, nodeURI, t, passphrase, gasPrice, cdc)
@@ -32,9 +30,9 @@ func NewTransactorPool(cliHome, chainID, nodeURI, tsStr, passphrase, gasPrice st
 	return transactorPool, nil
 }
 
-// Batch msg into a queue before actual broadcast
+// Get a transactor from the pool
 func (t *TransactorPool) GetTransactor() *Transactor {
-	transactor := t.transactors[t.index]
+	transactor := t.transactors[t.index%uint64(len(t.transactors))]
 	atomic.AddUint64(&t.index, 1)
 	return transactor
 }

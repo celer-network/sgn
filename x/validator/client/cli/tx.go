@@ -64,7 +64,7 @@ func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
 		Short: "claim validator for the eth address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			transactors, err := common.ParseTransactors(viper.GetString(flagTransactors))
+			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
 			if err != nil {
 				return err
 			}
@@ -81,7 +81,7 @@ func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flagTransactors, "", "transactors")
+	cmd.Flags().StringArray(flagTransactors, []string{}, "transactors")
 
 	return cmd
 }

@@ -19,7 +19,7 @@ func SetupTransactor() {
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnTransactors),
+		viper.GetStringSlice(flags.FlagSgnTransactors)[0],
 		viper.GetString(flags.FlagSgnPassphrase),
 		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
