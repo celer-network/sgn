@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
-	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -199,18 +198,8 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.Result{}
 	}
 
-	rewardTotalAmt := sdk.ZeroInt() // to refine
-
-	for _, delegator := range rewardCandidate.Delegators {
-		rewardAmt := rewardTotalAmt.Mul(delegator.DelegatedStake).Quo(rewardCandidate.StakingPool)
-		reward, found := keeper.validatorKeeper.GetReward(ctx, delegator.EthAddress)
-		if !found {
-			reward = validator.NewReward()
-		}
-
-		reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
-		keeper.validatorKeeper.SetReward(ctx, delegator.EthAddress, reward)
-	}
+	totalReward := sdk.ZeroInt() // to refine
+	keeper.validatorKeeper.HandleServiceReward(ctx, rewardCandidate, totalReward)
 
 	return sdk.Result{}
 }
