@@ -79,10 +79,10 @@ func gatewayTest(t *testing.T) {
 	}
 	body, err := json.Marshal(msg)
 	tf.ChkErr(err, "failed to marshal json")
-	_, err = http.Post("https://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
+	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
 	tf.ChkErr(err, "failed to post subscribe msg")
 
-	resp, err := http.Get("https://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
+	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
 	tf.ChkErr(err, "failed to get subscription")
 	body, err = ioutil.ReadAll(resp.Body)
 	tf.ChkErr(err, "failed to read http response")
