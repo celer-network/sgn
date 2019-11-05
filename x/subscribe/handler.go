@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
+	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -169,7 +170,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	// all guards before guardIndex will be punished
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
-	if guardIndex >= uint64(len(requestGuards)) {
+	if guardIndex > uint64(len(requestGuards)) {
 		guardIndex = uint64(len(requestGuards))
 	}
 
@@ -180,7 +181,36 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		keeper.slashKeeper.HandleGuardFailure(ctx, msg.Sender, request.RequestGuards[i])
 	}
 
-	// TODO: reward submitter in the last stage (any can submit). How?
+	if guardIndex < uint64(len(requestGuards)) {
+		// some assigned guard did the job. No need for reward
+		return sdk.Result{}
+	}
+
+	// reward the submitter in the final guard stage
+	// TODO: package the following code as a HandleReward function in validator/keeper
+	rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
+	if !found {
+		logger.Info("State proof submitter in the final stage is not a candidate")
+		return sdk.Result{}
+	}
+	_, found = keeper.validatorKeeper.GetValidator(ctx, sdk.ValAddress(rewardCandidate.Operator))
+	if !found {
+		logger.Info("State proof submitter in the final stage is not a validator")
+		return sdk.Result{}
+	}
+
+	rewardTotalAmt := sdk.ZeroInt() // to refine
+
+	for _, delegator := range rewardCandidate.Delegators {
+		rewardAmt := rewardTotalAmt.Mul(delegator.DelegatedStake).Quo(rewardCandidate.StakingPool)
+		reward, found := keeper.validatorKeeper.GetReward(ctx, delegator.EthAddress)
+		if !found {
+			reward = validator.NewReward()
+		}
+
+		reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
+		keeper.validatorKeeper.SetReward(ctx, delegator.EthAddress, reward)
+	}
 
 	return sdk.Result{}
 }
