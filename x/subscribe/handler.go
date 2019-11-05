@@ -110,23 +110,26 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	intendSettleEventSig := mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
 
 	// validate triggerTx
-	log, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Bytes2Cid(msg.ChannelId), ctype.Hex2Hash(msg.TriggerTxHash), intendSettleEventSig)
+	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Bytes2Cid(msg.ChannelId), ctype.Hex2Hash(msg.TriggerTxHash), intendSettleEventSig)
 	if err != nil {
 		logger.Error(err.Error())
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 
-	// record time and calculate the supposed guard of the guard tx
 	// TODO: (issue) need to prevent using an out-of-date triggerTx, namely an old IntendSettle event
 	//     can be done by requiring the triggerTx must be after the time of submitting the request guard?
-	triggerBlkNum := log.BlockNumber
 
-	// TODO: use a function to replace duplicate code
 	// validate guardTx
-	log, err = validateIntendSettle("Guard", keeper.ethClient, ctype.Bytes2Cid(msg.ChannelId), ctype.Hex2Hash(msg.GuardTxHash), intendSettleEventSig)
+	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Bytes2Cid(msg.ChannelId), ctype.Hex2Hash(msg.GuardTxHash), intendSettleEventSig)
 	if err != nil {
 		logger.Error(err.Error())
 		return sdk.ErrInternal(err.Error()).Result()
+	}
+
+	// check block numbers
+	if guardLog.BlockNumber <= triggerLog.BlockNumber {
+		logger.Error("GuardTx's block number is not larger than TriggerTx's block number")
+		return sdk.ErrInternal("GuardTx's block number is not larger than TriggerTx's block number").Result()
 	}
 
 	// check guardIntendSettle sequence number
@@ -136,7 +139,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("Failed to parse CelerLedgerABI").Result()
 	}
 	var guardIntendSettle mainchain.CelerLedgerIntendSettle
-	err = ledgerABI.Unpack(&guardIntendSettle, "IntendSettle", log.Data)
+	err = ledgerABI.Unpack(&guardIntendSettle, "IntendSettle", guardLog.Data)
 	if err != nil {
 		logger.Error("Failed to unpack IntendSettle event", "error", err)
 		return sdk.ErrInternal("Failed to unpack IntendSettle event").Result()
@@ -146,7 +149,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("guardIntendSettle's seqNum is different from triggerIntendSettle's seqNum").Result()
 	}
 
-	// check mainchain tx sender for reward submitter in the last stage
+	// get mainchain tx sender for rewarding guard in the last stage
 	guardTx, _, err := keeper.ethClient.Client.TransactionByHash(context.Background(), ctype.Hex2Hash(msg.GuardTxHash))
 	guardMsg, err := guardTx.AsMessage(ethtypes.NewEIP155Signer(guardTx.ChainId()))
 	if err != nil {
@@ -155,16 +158,15 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	}
 	guardEthAddrStr := ctype.Addr2HexWithPrefix(guardMsg.From())
 
-	// check time
-	guardBlkNum := log.BlockNumber
-	if guardBlkNum <= triggerBlkNum {
-		logger.Error("GuardTx's block number is not larger than TriggerTx's block number")
-		return sdk.ErrInternal("GuardTx's block number is not larger than TriggerTx's block number").Result()
-	}
+	// set tx hashes
+	request.TriggerTxHash = msg.TriggerTxHash
+	request.GuardTxHash = msg.GuardTxHash
+	request.GuardEthAddress = guardEthAddrStr
+	keeper.SetRequest(ctx, msg.ChannelId, request)
 
-	// check supposed guards
+	// get supposed guards
 	requestGuards := request.RequestGuards
-	blockNumberDiff := guardBlkNum - triggerBlkNum
+	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	// all guards before guardIndex will be punished
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 	if guardIndex >= uint64(len(requestGuards)) {
@@ -173,13 +175,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 
 	// TODO: (issue) what if user submits a new stateproof while old state proof being guarded
 
-	// Set tx hashes
-	request.TriggerTxHash = msg.TriggerTxHash
-	request.GuardTxHash = msg.GuardTxHash
-	request.GuardEthAddress = guardEthAddrStr
-	keeper.SetRequest(ctx, msg.ChannelId, request)
-
-	// Punish corresponding guards correctly.
+	// punish corresponding guards
 	for i := uint64(0); i < guardIndex; i++ {
 		keeper.slashKeeper.HandleGuardFailure(ctx, msg.Sender, request.RequestGuards[i])
 	}
