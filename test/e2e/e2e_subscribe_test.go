@@ -56,15 +56,13 @@ func subscribeTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	ledgerContract := tf.EthClient.Ledger
+	transactor := tf.Transactor
 	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
 	tf.ChkErr(err, "NewERC20 error")
 
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
-
-	transactor := tf.Transactor
-	tf.ChkErr(err, "Parse SGN address error")
 
 	// Call subscribe on guard contract
 	log.Info("Call subscribe on guard contract...")

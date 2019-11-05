@@ -109,16 +109,18 @@ func setupMainchain() (*common.CProfile, string) {
 	return p, ctype.Addr2Hex(erc20Addr)
 }
 
-func deployGuardContract(ctx context.Context, auth *bind.TransactOpts, conn *ethclient.Client, erc20Addr ethcommon.Address, sgnParams *SGNParams) string {
-	if sgnParams == nil {
-		sgnParams = &SGNParams{
-			blameTimeout:           big.NewInt(50),
-			minValidatorNum:        big.NewInt(1),
-			minStakingPool:         big.NewInt(100),
-			sidechainGoLiveTimeout: big.NewInt(0),
-		}
-	}
-	guardAddr, tx, _, err := mainchain.DeployGuard(auth, conn, erc20Addr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
+func deployGuardContract(sgnParams *SGNParams) string {
+	conn, err := ethclient.Dial(tf.EthInstance)
+	tf.ChkErr(err, "failed to connect to the Ethereum")
+
+	ctx := context.Background()
+	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
+	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
+	price := big.NewInt(2e9) // 2Gwei
+	etherBaseAuth.GasPrice = price
+	etherBaseAuth.GasLimit = 7000000
+
+	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, ctype.Hex2Addr(MockCelerAddr), sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
 	tf.ChkErr(err, "failed to deploy Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
 

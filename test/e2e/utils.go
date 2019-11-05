@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"context"
 	"math/big"
 	"os"
 	"os/exec"
@@ -15,9 +14,6 @@ import (
 	"github.com/celer-network/sgn/flags"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 )
 
@@ -26,6 +22,7 @@ type SGNParams struct {
 	minValidatorNum        *big.Int
 	minStakingPool         *big.Int
 	sidechainGoLiveTimeout *big.Int
+	startGateway           bool
 }
 
 // used by setup_onchain and tests
@@ -94,9 +91,7 @@ func updateSGNConfig() {
 
 	viper.SetConfigFile("../../config.json")
 	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	tf.ChkErr(err, "failed to read config")
 	viper.Set(flags.FlagEthWS, "ws://127.0.0.1:8546")
 	viper.Set(flags.FlagEthGuardAddress, GuardAddr)
 	viper.Set(flags.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
@@ -123,8 +118,6 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 	}
 
 	log.Infoln("sgn pid:", cmd.Process.Pid)
-	// in case sgn exits with non-zero, exit test early
-	// if sgn is killed by ethProc.Signal, it exits w/ 0
 	go func() {
 		if err := cmd.Wait(); err != nil {
 			log.Errorf("sgn process for [%s] failed: %v", testName, err)
@@ -134,33 +127,53 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 	return cmd.Process, nil
 }
 
+func startGateway(rootDir, testName string) (*os.Process, error) {
+	cmd := exec.Command("sgncli", "gateway")
+	cmd.Dir, _ = filepath.Abs("../..")
+	logFname := rootDir + "gateway_" + testName + ".log"
+	logF, _ := os.Create(logFname)
+	cmd.Stderr = logF
+	cmd.Stdout = logF
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+
+	log.Infoln("gateway pid:", cmd.Process.Pid)
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Errorf("gateway process for [%s] failed: %v", testName, err)
+			// os.Exit(1) // gateway is expected to be killed after each test case
+		}
+	}()
+	return cmd.Process, nil
+}
+
 func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
-	// TODO: duplicate code in setupMainchain(), need to put these in a function
-	ctx := context.Background()
-	conn, err := ethclient.Dial(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
+	if sgnParams == nil {
+		sgnParams = &SGNParams{
+			blameTimeout:           big.NewInt(50),
+			minValidatorNum:        big.NewInt(1),
+			minStakingPool:         big.NewInt(100),
+			sidechainGoLiveTimeout: big.NewInt(0),
+		}
+	}
 
-	// deploy guard contract
-	tf.LogBlkNum(conn)
-	// when sgnParams is nil, use default params defined in deployGuardContract()
-	GuardAddr = deployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(MockCelerAddr), sgnParams)
+	GuardAddr = deployGuardContract(sgnParams)
 
-	// update SGN config
 	updateSGNConfig()
-
-	// start sgn sidechain
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
-
 	tf.SetupEthClient()
 	tf.SetupTransactor()
 
-	return []tf.Killable{sgnProc}
+	killable := []tf.Killable{sgnProc}
+	if sgnParams.startGateway {
+		gatewayProc, err := startGateway(outRootDir, testName)
+		tf.ChkErr(err, "start gateway")
+		killable = append(killable, gatewayProc)
+	}
+
+	return killable
 }
 
 func sleep(second time.Duration) {
