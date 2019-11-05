@@ -186,7 +186,6 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	}
 
 	// reward the submitter in the final guard stage
-	// TODO: package the following code as a HandleReward function in validator/keeper
 	rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
 	if !found {
 		logger.Info("State proof submitter in the final stage is not a candidate")
