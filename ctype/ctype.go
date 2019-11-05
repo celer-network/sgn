@@ -19,6 +19,11 @@ import (
 	ec "github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	TxFailure = 0
+	TxSuccess = 1
+)
+
 var (
 	// ZeroAddr is all 0s
 	ZeroAddr Addr
@@ -36,6 +41,9 @@ type PayIDType = ec.Hash
 // CidType is the type for payment channel ID
 // Note we need to change all cid.Hex() to Cid2Hex() because Hash.Hex() has 0x prefix
 type CidType = ec.Hash
+
+// HashType is the type for ethereum hash type
+type HashType = ec.Hash
 
 // Addr is alias to geth common.Address
 type Addr = ec.Address
@@ -66,12 +74,17 @@ func Bytes2Hex(b []byte) string {
 
 // Hex2Addr accepts hex string with or without 0x prefix and return Addr
 func Hex2Addr(s string) Addr {
-	return ec.BytesToAddress(Hex2Bytes(s))
+	return ec.HexToAddress(s)
 }
 
 // Addr2Hex returns hex without 0x
 func Addr2Hex(a Addr) string {
 	return Bytes2Hex(a[:])
+}
+
+// Addr2HexWithPrefix returns hex with 0x
+func Addr2HexWithPrefix(a Addr) string {
+	return a.Hex()
 }
 
 // Bytes2Addr returns Address from b
@@ -94,5 +107,17 @@ func Cid2Hex(p CidType) string {
 
 // Hex2Cid accepts hex string with or without 0x prefix and return CidType
 func Hex2Cid(s string) CidType {
-	return ec.BytesToHash(Hex2Bytes(s))
+	return ec.HexToHash(s)
+}
+
+// ========== Hash ==========
+
+// Hex2Hash accepts hex string with or without 0x prefix and return HashType
+func Hex2Hash(s string) HashType {
+	return ec.HexToHash(s)
+}
+
+// Bytes2Hash converts bytes to HashType
+func Bytes2Hash(b []byte) HashType {
+	return ec.BytesToHash(b)
 }

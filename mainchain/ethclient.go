@@ -13,16 +13,18 @@ import (
 )
 
 type EthClient struct {
-	PrivateKey *ecdsa.PrivateKey
-	Address    ethcommon.Address
-	Client     *ethclient.Client
-	Guard      *Guard
-	Ledger     *CelerLedger
-	Auth       *bind.TransactOpts
+	PrivateKey    *ecdsa.PrivateKey
+	Address       ethcommon.Address
+	Client        *ethclient.Client
+	GuardAddress  ethcommon.Address
+	Guard         *Guard
+	LedgerAddress ethcommon.Address
+	Ledger        *CelerLedger
+	Auth          *bind.TransactOpts
 }
 
 // Get a new eth client
-func NewEthClient(ws, guardAddress, ledgerAddress, ks, passphrase string) (*EthClient, error) {
+func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
 	rpcClient, err := ethrpc.Dial(ws)
 	if err != nil {
 		return nil, err
@@ -30,20 +32,24 @@ func NewEthClient(ws, guardAddress, ledgerAddress, ks, passphrase string) (*EthC
 
 	client := ethclient.NewClient(rpcClient)
 
-	guard, err := NewGuard(ethcommon.HexToAddress(guardAddress), client)
+	guardAddress := ethcommon.HexToAddress(guardAddrStr)
+	guard, err := NewGuard(guardAddress, client)
 	if err != nil {
 		return nil, err
 	}
 
-	ledger, err := NewCelerLedger(ethcommon.HexToAddress(ledgerAddress), client)
+	ledgerAddress := ethcommon.HexToAddress(ledgerAddrStr)
+	ledger, err := NewCelerLedger(ledgerAddress, client)
 	if err != nil {
 		return nil, err
 	}
 
 	ethClient := &EthClient{
-		Client: client,
-		Guard:  guard,
-		Ledger: ledger,
+		Client:        client,
+		GuardAddress:  guardAddress,
+		Guard:         guard,
+		LedgerAddress: ledgerAddress,
+		Ledger:        ledger,
 	}
 	err = ethClient.setupAuth(ks, passphrase)
 	if err != nil {

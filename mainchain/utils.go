@@ -1,7 +1,9 @@
 package mainchain
 
 import (
+	"github.com/celer-network/sgn/ctype"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func IsBonded(candidateInfo CandidateInfo) bool {
@@ -19,4 +21,9 @@ func ParseStatus(candidateInfo CandidateInfo) sdk.BondStatus {
 	}
 
 	return sdk.Unbonded
+}
+
+// GetEventSignature accepts the string of an event signature and return the hex
+func GetEventSignature(eventSigStr string) ctype.HashType {
+	return crypto.Keccak256Hash([]byte(eventSigStr))
 }
