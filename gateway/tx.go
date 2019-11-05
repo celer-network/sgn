@@ -40,21 +40,17 @@ func (rs *RestServer) registerTxRoutes() {
 }
 
 type (
-	ethAddr struct {
+	SubscribeRequest struct {
 		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
 	}
 
-	SubscribeRequest struct {
-		ethAddr
-	}
-
 	RequestGuardRequest struct {
-		ethAddr
+		EthAddr                 string `json:"ethAddr" yaml:"ethAddr"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
 	}
 
 	InitializeCandidateRequest struct {
-		ethAddr
+		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
 	}
 
 	SyncDelegatorRequest struct {
@@ -63,7 +59,7 @@ type (
 	}
 
 	WithdrawRewardRequest struct {
-		ethAddr
+		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
 	}
 )
 
