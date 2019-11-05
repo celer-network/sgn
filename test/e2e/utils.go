@@ -195,8 +195,8 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 	tf.ChkErr(err, "failed to read http response")
 
 	var responseWithHeight rest.ResponseWithHeight
-	json.Unmarshal(body, &responseWithHeight)
-	// cdc.MustUnmarshalJSON(body, &responseWithHeight)
+	// json.Unmarshal(body, &responseWithHeight)
+	cdc.MustUnmarshalJSON(body, &responseWithHeight)
 
 	log.Infoln("responseWithHeight:", responseWithHeight, body, string(body))
 
