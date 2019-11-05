@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net/http"
 	"testing"
@@ -84,12 +83,10 @@ func gatewayTest(t *testing.T) {
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
 	tf.ChkErr(err, "failed to get subscription")
-	body, err = ioutil.ReadAll(resp.Body)
-	tf.ChkErr(err, "failed to read http response")
-	log.Infoln("Query sgn about the subscription info:", body)
+	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
 
 	var subscription subscribe.Subscription
-	transactor.CliCtx.Codec.MustUnmarshalJSON(body, &subscription)
+	transactor.CliCtx.Codec.MustUnmarshalJSON(result, &subscription)
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
