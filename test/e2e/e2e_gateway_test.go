@@ -80,8 +80,7 @@ func gatewayTest(t *testing.T) {
 	tf.ChkErr(err, "failed to marshal json")
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
 	tf.ChkErr(err, "failed to post subscribe msg")
-
-	sleep(5)
+	sleep(1)
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
 	tf.ChkErr(err, "failed to get subscription")
