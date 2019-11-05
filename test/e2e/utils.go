@@ -48,7 +48,7 @@ var (
 )
 
 // start process to handle eth rpc, and fund etherbase and server account
-func StartMainchain() (*os.Process, error) {
+func startMainchain() (*os.Process, error) {
 	log.Infoln("outRootDir", outRootDir, "envDir", envDir)
 	chainDataDir := outRootDir + "mainchaindata"
 	logFname := outRootDir + "mainchain.log"
@@ -89,7 +89,7 @@ func StartMainchain() (*os.Process, error) {
 	return cmd.Process, nil
 }
 
-func UpdateSGNConfig() {
+func updateSGNConfig() {
 	log.Infoln("Updating SGN's config.json")
 
 	viper.SetConfigFile("../../config.json")
@@ -103,17 +103,8 @@ func UpdateSGNConfig() {
 	viper.WriteConfig()
 }
 
-func sleep(second time.Duration) {
-	time.Sleep(second * time.Second)
-}
-
-func sleepWithLog(second time.Duration, waitFor string) {
-	log.Infof("Sleep %d seconds for %s", second, waitFor)
-	time.Sleep(second * time.Second)
-}
-
-// StartSidechainDefault starts sgn sidechain with the data in test/data
-func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
+// startSidechain starts sgn sidechain with the data in test/data
+func startSidechain(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../..")
@@ -144,7 +135,7 @@ func StartSidechainDefault(rootDir, testName string) (*os.Process, error) {
 }
 
 func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
-	// TODO: duplicate code in SetupMainchain(), need to put these in a function
+	// TODO: duplicate code in setupMainchain(), need to put these in a function
 	ctx := context.Background()
 	conn, err := ethclient.Dial(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
@@ -156,18 +147,27 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 
 	// deploy guard contract
 	tf.LogBlkNum(conn)
-	// when sgnParams is nil, use default params defined in DeployGuardContract()
-	GuardAddr = DeployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(MockCelerAddr), sgnParams)
+	// when sgnParams is nil, use default params defined in deployGuardContract()
+	GuardAddr = deployGuardContract(ctx, etherBaseAuth, conn, ctype.Hex2Addr(MockCelerAddr), sgnParams)
 
 	// update SGN config
-	UpdateSGNConfig()
+	updateSGNConfig()
 
 	// start sgn sidechain
-	sgnProc, err := StartSidechainDefault(outRootDir, testName)
+	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
 
 	tf.SetupEthClient()
 	tf.SetupTransactor()
 
 	return []tf.Killable{sgnProc}
+}
+
+func sleep(second time.Duration) {
+	time.Sleep(second * time.Second)
+}
+
+func sleepWithLog(second time.Duration, waitFor string) {
+	log.Infof("Sleep %d seconds for %s", second, waitFor)
+	sleep(second)
 }

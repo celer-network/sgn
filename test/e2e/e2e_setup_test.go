@@ -26,14 +26,14 @@ func TestMain(m *testing.M) {
 	// set testing pkg level path
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
-	ethProc, err := StartMainchain()
+	ethProc, err := startMainchain()
 	tf.ChkErr(err, "starting chain")
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
-	E2eProfile, MockCelerAddr = SetupMainchain()
+	E2eProfile, MockCelerAddr = setupMainchain()
 
 	// run all e2e tests
 	ret := m.Run()

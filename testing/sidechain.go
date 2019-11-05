@@ -1,8 +1,6 @@
 package testing
 
 import (
-	"log"
-
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/transactor"
@@ -24,9 +22,6 @@ func SetupTransactor() {
 		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ChkErr(err, "setup transactor")
 	Transactor = t
 }

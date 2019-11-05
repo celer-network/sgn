@@ -53,10 +53,7 @@ func SetupEthClient() {
 		"../../test/keys/client0.json", // relative path is different in tests
 		viper.GetString(flags.FlagEthPassphrase),
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ChkErr(err, "setup eth client")
 	EthClient = ec
 }
 
