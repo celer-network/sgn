@@ -51,7 +51,6 @@ func subscribeTest(t *testing.T) {
 	log.Info("======================== Test subscribe ===========================")
 
 	ctx := context.Background()
-
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address

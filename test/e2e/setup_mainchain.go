@@ -18,9 +18,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// SetupMainchain deploy contracts, and do setups
+// setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func SetupMainchain() (*common.CProfile, string) {
+func setupMainchain() (*common.CProfile, string) {
 	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
@@ -109,7 +109,7 @@ func SetupMainchain() (*common.CProfile, string) {
 	return p, ctype.Addr2Hex(erc20Addr)
 }
 
-func DeployGuardContract(ctx context.Context, auth *bind.TransactOpts, conn *ethclient.Client, erc20Addr ethcommon.Address, sgnParams *SGNParams) string {
+func deployGuardContract(ctx context.Context, auth *bind.TransactOpts, conn *ethclient.Client, erc20Addr ethcommon.Address, sgnParams *SGNParams) string {
 	if sgnParams == nil {
 		sgnParams = &SGNParams{
 			blameTimeout:           big.NewInt(50),
