@@ -86,9 +86,11 @@ func gatewayTest(t *testing.T) {
 	tf.ChkErr(err, "failed to get subscription")
 	body, err = ioutil.ReadAll(resp.Body)
 	tf.ChkErr(err, "failed to read http response")
+	log.Infoln("Query sgn about the subscription info:", body)
+
 	var subscription subscribe.Subscription
 	transactor.CliCtx.Codec.MustUnmarshalJSON(body, &subscription)
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
-	assert.Equal(t, subscription.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }

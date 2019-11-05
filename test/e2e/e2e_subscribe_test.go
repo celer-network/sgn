@@ -87,7 +87,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkErr(err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
-	assert.Equal(t, subscription.String(), expectedRes, fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn to check if epoch has correct fee
 	// TODO: add this test after merging the change of pay per use
@@ -131,7 +131,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn about the request info:", request.String())
 	// TxHash now should be empty
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TxHash:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
-	assert.Equal(t, strings.ToLower(request.String()), strings.ToLower(expectedRes), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Call intendSettle on ledger contract
 	log.Info("Call intendSettle on ledger contract...")
