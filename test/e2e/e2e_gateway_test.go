@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpSubscribe() []tf.Killable {
+func setUpGateway() []tf.Killable {
 	p := &SGNParams{
 		blameTimeout:           big.NewInt(10),
 		minValidatorNum:        big.NewInt(0),
@@ -34,8 +34,8 @@ func setUpSubscribe() []tf.Killable {
 	return res
 }
 
-func TestE2ESubscribe(t *testing.T) {
-	toKill := setUpSubscribe()
+func TestE2EGateway(t *testing.T) {
+	toKill := setUpGateway()
 	defer tf.TearDown(toKill)
 
 	t.Run("e2e-gateway", func(t *testing.T) {
@@ -55,7 +55,6 @@ func gatewayTest(t *testing.T) {
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
-	ledgerContract := tf.EthClient.Ledger
 	transactor := tf.Transactor
 	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
 	tf.ChkErr(err, "NewERC20 error")
