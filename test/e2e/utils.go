@@ -197,5 +197,7 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 	var responseWithHeight rest.ResponseWithHeight
 	cdc.MustUnmarshalJSON(body, &responseWithHeight)
 
+	log.Infoln("responseWithHeight:", responseWithHeight)
+
 	return responseWithHeight.Result
 }
