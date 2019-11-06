@@ -77,6 +77,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	}
 
 	// reject guard request if the channel is not Operable
+	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
 	cid := ctype.Bytes2Cid(simplexPaymentChannel.ChannelId)
 	status, err := keeper.ethClient.Ledger.GetChannelStatus(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
