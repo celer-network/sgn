@@ -16,7 +16,6 @@ type Request struct {
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	GuardTxHash             string           `json:"guardTxHash"`
-	GuardEthAddress         string           `json:"guardEthAddress"` // Ethereum address of who really submits user's state proof
 }
 
 func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestGuards []sdk.AccAddress) Request {
@@ -31,6 +30,6 @@ func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disp
 
 // implement fmt.Stringer
 func (r Request) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %s, PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: %s, GuardTxHash: %s, GuardEthAddress: %s`,
-		r.SeqNum, r.PeerAddresses, r.PeerFromIndex, r.SignedSimplexStateBytes, r.TriggerTxHash, r.GuardTxHash, r.GuardEthAddress))
+	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %s, PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: %s, GuardTxHash: %s`,
+		r.SeqNum, r.PeerAddresses, r.PeerFromIndex, r.SignedSimplexStateBytes, r.TriggerTxHash, r.GuardTxHash))
 }

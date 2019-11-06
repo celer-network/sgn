@@ -33,7 +33,7 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validato
 }
 
 // HandleGuardFailure handles a validator fails to guard state.
-func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.AccAddress) {
+func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr sdk.AccAddress) {
 	logger := ctx.Logger()
 
 	failedValAddr := sdk.ValAddress(failedAddr)
@@ -45,8 +45,8 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.A
 
 	var beneficiaries []AccountFractionPair
 	// TODO: need to add address(0) as the miningPool and make sure the total share is 1
-	if !reportAddr.Empty() {
-		reportValAddr := sdk.ValAddress(reportAddr)
+	if !beneficiaryAddr.Empty() {
+		reportValAddr := sdk.ValAddress(beneficiaryAddr)
 		reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
 		if !found {
 			logger.Error(fmt.Sprintf("Cannot find report validator %s", reportValAddr))

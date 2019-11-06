@@ -97,7 +97,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		return
 	}
 
-	if request.TriggerTxHash != "" || request.GuardTxHash != "" || request.GuardEthAddress != "" {
+	if request.TriggerTxHash != "" || request.GuardTxHash != "" {
 		log.Printf("Request has been fulfilled")
 		return
 	}

@@ -134,7 +134,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash: , GuardEthAddress:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Call intendSettle on ledger contract
@@ -154,7 +154,7 @@ func subscribeTest(t *testing.T) {
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[0x%s 0x%s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}, GuardEthAddress:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[0x%s 0x%s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkErr(err, "failed to compile regexp")
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")

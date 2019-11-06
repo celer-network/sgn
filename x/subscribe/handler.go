@@ -157,32 +157,23 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("guardIntendSettle's seqNum is different from triggerIntendSettle's seqNum").Result()
 	}
 
-	// get mainchain tx sender for rewarding guard in the last stage
-	guardTx, _, err := keeper.ethClient.Client.TransactionByHash(context.Background(), ctype.Hex2Hash(msg.GuardTxHash))
-	guardMsg, err := guardTx.AsMessage(ethtypes.NewEIP155Signer(guardTx.ChainId()))
-	if err != nil {
-		logger.Error("Failed to get guardMsg")
-		return sdk.ErrInternal("Failed to get guardMsg").Result()
-	}
-	guardEthAddrStr := ctype.Addr2HexWithPrefix(guardMsg.From())
-
-	// set tx hashes
-	request.TriggerTxHash = msg.TriggerTxHash
-	request.GuardTxHash = msg.GuardTxHash
-	request.GuardEthAddress = guardEthAddrStr
-	keeper.SetRequest(ctx, msg.ChannelId, request)
-
 	// get supposed guards
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
-	// all guards before guardIndex will be punished
 	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
 
-	// punish corresponding guards and reward corresponding validator
 	var rewardValidator sdk.AccAddress
 	if guardIndex < len(requestGuards) {
 		rewardValidator = request.RequestGuards[guardIndex]
 	} else {
+		// get mainchain tx sender in the last stage for rewarding
+		guardTx, _, err := keeper.ethClient.Client.TransactionByHash(context.Background(), ctype.Hex2Hash(msg.GuardTxHash))
+		guardMsg, err := guardTx.AsMessage(ethtypes.NewEIP155Signer(guardTx.ChainId()))
+		if err != nil {
+			logger.Error("Failed to get guardMsg")
+			return sdk.ErrInternal("Failed to get guardMsg").Result()
+		}
+		guardEthAddrStr := ctype.Addr2HexWithPrefix(guardMsg.From())
 		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
 		if found {
 			_, found = getAccAddrIndex(request.RequestGuards, rewardCandidate.Operator)
@@ -193,6 +184,13 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 
 		guardIndex = len(requestGuards)
 	}
+
+	// set tx hashes
+	request.TriggerTxHash = msg.TriggerTxHash
+	request.GuardTxHash = msg.GuardTxHash
+	keeper.SetRequest(ctx, msg.ChannelId, request)
+
+	// punish corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
