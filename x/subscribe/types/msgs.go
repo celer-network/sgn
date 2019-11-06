@@ -100,11 +100,10 @@ func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 
 // MsgGuardProof defines a Subscribe message
 type MsgGuardProof struct {
-	ChannelId     []byte `json:"channelId"`
-	TriggerTxHash string `json:"triggerTxHash"` // intendSettle tx with lower sequence number
-	GuardTxHash   string `json:"guardTxHash"`   // intendSettle tx to guard user's state proof
-	// TODO: since we don't use Sender in handleMsgGuardProof, it might be safe to remove this
-	Sender sdk.AccAddress `json:"sender"`
+	ChannelId     []byte         `json:"channelId"`
+	TriggerTxHash string         `json:"triggerTxHash"` // intendSettle tx with lower sequence number
+	GuardTxHash   string         `json:"guardTxHash"`   // intendSettle tx to guard user's state proof
+	Sender        sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgGuardProof is a constructor function for MsgGuardProof

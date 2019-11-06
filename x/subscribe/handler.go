@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
+	"github.com/celer-network/sgn/x/subscribe/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -107,10 +108,8 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("Cannot find request").Result()
 	}
 
-	intendSettleEventSig := mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
-
 	// validate triggerTx
-	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Bytes2Cid(msg.ChannelId), ctype.Hex2Hash(msg.TriggerTxHash), intendSettleEventSig)
+	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Hex2Hash(msg.TriggerTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		logger.Error(err.Error())
 		return sdk.ErrInternal(err.Error()).Result()
@@ -120,7 +119,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	//     can be done by requiring the triggerTx must be after the time of submitting the request guard?
 
 	// validate guardTx
-	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Bytes2Cid(msg.ChannelId), ctype.Hex2Hash(msg.GuardTxHash), intendSettleEventSig)
+	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Hex2Hash(msg.GuardTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		logger.Error(err.Error())
 		return sdk.ErrInternal(err.Error()).Result()
@@ -168,42 +167,33 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	// all guards before guardIndex will be punished
-	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
-	if guardIndex > uint64(len(requestGuards)) {
-		guardIndex = uint64(len(requestGuards))
+	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+
+	// punish corresponding guards and reward corresponding validator
+	var rewardValidator sdk.AccAddress
+	if guardIndex < len(requestGuards) {
+		rewardValidator = request.RequestGuards[guardIndex]
+	} else {
+		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
+		if found {
+			_, found = getAccAddrIndex(request.RequestGuards, rewardCandidate.Operator)
+			if !found {
+				rewardValidator = rewardCandidate.Operator
+			}
+		}
+
+		guardIndex = len(requestGuards)
+	}
+	for i := 0; i < guardIndex; i++ {
+		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
 
 	// TODO: (issue) what if user submits a new stateproof while old state proof being guarded
 
-	// punish corresponding guards
-	for i := uint64(0); i < guardIndex; i++ {
-		keeper.slashKeeper.HandleGuardFailure(ctx, msg.Sender, request.RequestGuards[i])
-	}
-
-	if guardIndex < uint64(len(requestGuards)) {
-		// some assigned guard did the job. No need for reward
-		return sdk.Result{}
-	}
-
-	// reward the submitter in the final guard stage
-	rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
-	if !found {
-		logger.Info("State proof submitter in the final stage is not a candidate")
-		return sdk.Result{}
-	}
-	_, found = keeper.validatorKeeper.GetValidator(ctx, sdk.ValAddress(rewardCandidate.Operator))
-	if !found {
-		logger.Info("State proof submitter in the final stage is not a validator")
-		return sdk.Result{}
-	}
-
-	totalReward := sdk.ZeroInt() // to refine
-	keeper.validatorKeeper.HandleServiceReward(ctx, rewardCandidate, totalReward)
-
 	return sdk.Result{}
 }
 
-func validateIntendSettle(txType string, ethClient *mainchain.EthClient, cid ctype.CidType, txHash, intendSettleEventSig ctype.HashType) (*ethtypes.Log, error) {
+func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash ctype.HashType, cid ctype.CidType) (*ethtypes.Log, error) {
 	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
 	if err != nil {
 		return &ethtypes.Log{}, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
@@ -218,7 +208,7 @@ func validateIntendSettle(txType string, ethClient *mainchain.EthClient, cid cty
 		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
 	}
 	// check event type
-	if log.Topics[0] != intendSettleEventSig {
+	if log.Topics[0] != types.IntendSettleEventSig {
 		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
 	}
 	// check channel ID

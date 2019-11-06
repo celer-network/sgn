@@ -35,12 +35,6 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validato
 // HandleGuardFailure handles a validator fails to guard state.
 func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.AccAddress) {
 	logger := ctx.Logger()
-	reportValAddr := sdk.ValAddress(reportAddr)
-	reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
-	if !found {
-		logger.Error(fmt.Sprintf("Cannot find report validator %s", reportValAddr))
-		return
-	}
 
 	failedValAddr := sdk.ValAddress(failedAddr)
 	failedValidator, found := k.validatorKeeper.GetValidator(ctx, failedValAddr)
@@ -50,8 +44,18 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.A
 	}
 
 	var beneficiaries []AccountFractionPair
-	beneficiaries = append(beneficiaries, NewAccountFractionPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
-	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountFractionPair{})
+	// TODO: need to add address(0) as the miningPool and make sure the total share is 1
+	if !reportAddr.Empty() {
+		reportValAddr := sdk.ValAddress(reportAddr)
+		reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
+		if !found {
+			logger.Error(fmt.Sprintf("Cannot find report validator %s", reportValAddr))
+			return
+		}
+		beneficiaries = append(beneficiaries, NewAccountFractionPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
+	}
+
+	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), beneficiaries)
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
