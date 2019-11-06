@@ -46,12 +46,10 @@ func validatorTest(t *testing.T) {
 	log.Info("======================== Test validator ===========================")
 
 	ctx := context.Background()
-
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
-	// ledgerContract := tf.EthClient.Ledger
 	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
 	tf.ChkErr(err, "NewERC20 error")
 
@@ -68,18 +66,15 @@ func validatorTest(t *testing.T) {
 
 	// Query sgn about the validator candidate
 	log.Info("Query sgn about the validator candidate...")
-	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
-	if err != nil {
-		log.Fatal(err)
-	}
+	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	tf.ChkErr(err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Call delegate on guard contract to delegate stake to the validator eth address
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	amt := new(big.Int)
-	amt.SetString("100", 10)
+	amt := big.NewInt(100)
 	tx, err = celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
 	tf.ChkErr(err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
@@ -90,20 +85,16 @@ func validatorTest(t *testing.T) {
 
 	// Query sgn about the delegator to check if it has correct stakes
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
-	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
-	if err != nil {
-		log.Fatal(err)
-	}
+	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
+	tf.ChkErr(err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator delegator:", delegator)
 	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
 	assert.Equal(t, expectedRes, delegator.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn about the candidate to check if it has correct stakes
 	log.Info("Query sgn about the validator candidate...")
-	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx.Codec, transactor.CliCtx, validator.RouterKey, ethAddress.String())
-	if err != nil {
-		log.Fatal(err)
-	}
+	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	tf.ChkErr(err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, amt) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
@@ -111,10 +102,8 @@ func validatorTest(t *testing.T) {
 	// Query sgn about the validator to check if it has correct stakes
 	sleepWithLog(30, "wait for validator to claimValidator and sgn sync ValidatorChange event")
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
-	validators, err := validator.CLIQueryValidators(transactor.CliCtx.Codec, transactor.CliCtx, staking.RouterKey)
-	if err != nil {
-		log.Fatal(err)
-	}
+	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	tf.ChkErr(err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:", validators)
 	// TODO: use a better way to assert/check the validity of the lengthy query results.
 	// expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()

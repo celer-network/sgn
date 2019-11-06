@@ -1,32 +1,27 @@
 package testing
 
 import (
-	"log"
-
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/flags"
-	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/spf13/viper"
 )
 
 var (
-	Transactor *utils.Transactor
+	Transactor *transactor.Transactor
 )
 
 func SetupTransactor() {
 	cdc := app.MakeCodec()
-	t, err := utils.NewTransactor(
+	t, err := transactor.NewTransactor(
 		app.DefaultCLIHome,
 		viper.GetString(flags.FlagSgnChainID),
 		viper.GetString(flags.FlagSgnNodeURI),
-		"alice", // use a different account from sgn's transactor
+		viper.GetStringSlice(flags.FlagSgnTransactors)[0],
 		viper.GetString(flags.FlagSgnPassphrase),
 		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	ChkErr(err, "setup transactor")
 	Transactor = t
 }

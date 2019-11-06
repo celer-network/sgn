@@ -39,7 +39,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	logger := ctx.Logger()
 	logger.Info("Handling a message to initialize candidate")
 
-	candidateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
@@ -71,7 +71,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return sdk.ErrInvalidPubKey(err.Error()).Result()
 	}
 
-	candidateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}
@@ -82,6 +82,11 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 	if !sdk.AccAddress(candidateInfo.SidechainAddr).Equals(msg.Sender) {
 		return sdk.ErrInternal("Sender has different address recorded on mainchain").Result()
+	}
+
+	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	if !found {
+		return sdk.ErrInternal("Candidate does not exist").Result()
 	}
 
 	// Make sure both val address and pub address have not been used before
@@ -104,6 +109,9 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	validator.Status = sdk.Bonded
 	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
 
+	candidate.Transactors = msg.Transactors
+	keeper.SetCandidate(ctx, msg.EthAddress, candidate)
+
 	return sdk.Result{}
 }
 
@@ -112,7 +120,7 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 	logger := ctx.Logger()
 	logger.Info(fmt.Sprintf("Handling MsgSyncValidator. %+v", msg))
 
-	candidateInfo, err := GetCandidateInfo(ctx, keeper, msg.EthAddress)
+	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
 	}

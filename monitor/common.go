@@ -12,7 +12,7 @@ import (
 )
 
 func (m *EthMonitor) isPuller() bool {
-	puller, err := validator.CLIQueryPuller(m.cdc, m.transactor.CliCtx, validator.StoreKey)
+	puller, err := validator.CLIQueryPuller(m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Printf("Get puller err", err)
 		return false
@@ -22,7 +22,7 @@ func (m *EthMonitor) isPuller() bool {
 }
 
 func (m *EthMonitor) isPusher() bool {
-	pusher, err := validator.CLIQueryPusher(m.cdc, m.transactor.CliCtx, validator.StoreKey)
+	pusher, err := validator.CLIQueryPusher(m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Printf("Get pusher err", err)
 		return false
@@ -50,15 +50,15 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum ui
 }
 
 func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.cdc, m.transactor.CliCtx, subscribe.RouterKey, channelId)
+	return subscribe.CLIQueryRequest(m.transactor.CliCtx, subscribe.RouterKey, channelId)
 }
 
 func (m *EthMonitor) getLatestBlock() (global.Block, error) {
-	return global.CLIQueryLatestBlock(m.cdc, m.transactor.CliCtx, global.RouterKey)
+	return global.CLIQueryLatestBlock(m.transactor.CliCtx, global.RouterKey)
 }
 
 func (m *EthMonitor) getSecureBlockNum() (uint64, error) {
-	return global.CLIQuerySecureBlockNum(m.cdc, m.transactor.CliCtx, global.RouterKey)
+	return global.CLIQuerySecureBlockNum(m.transactor.CliCtx, global.RouterKey)
 }
 
 // Get account info

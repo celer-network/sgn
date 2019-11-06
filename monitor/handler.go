@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
@@ -87,7 +88,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Printf("New initiate withdraw", ethAddr)
 
-	reward, err := validator.CLIQueryReward(m.cdc, m.transactor.CliCtx, validator.StoreKey, ethAddr)
+	reward, err := validator.CLIQueryReward(m.transactor.CliCtx, validator.StoreKey, ethAddr)
 	if err != nil {
 		log.Printf("Query reward err", err)
 		return
@@ -106,7 +107,7 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 func (m *EthMonitor) handlePenalty(nonce uint64) {
 	log.Printf("New Penalty", nonce)
 
-	penalty, err := slash.CLIQueryPenalty(m.cdc, m.transactor.CliCtx, slash.StoreKey, nonce)
+	penalty, err := slash.CLIQueryPenalty(m.transactor.CliCtx, slash.StoreKey, nonce)
 	if err != nil {
 		log.Printf("Query penalty err", err)
 		return
@@ -144,7 +145,13 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 
 func (m *EthMonitor) claimValidator() {
 	log.Printf("ClaimValidator")
-	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, m.transactor.Key.GetAddress())
+	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
+	if err != nil {
+		log.Printf("parse transactors err", err)
+		return
+	}
+
+	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, transactors, m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 
 }

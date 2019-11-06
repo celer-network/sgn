@@ -52,21 +52,18 @@ func subscribeTest(t *testing.T) {
 	log.Info("======================== Test subscribe ===========================")
 
 	ctx := context.Background()
-
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	ledgerContract := tf.EthClient.Ledger
+	transactor := tf.Transactor
 	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
 	tf.ChkErr(err, "NewERC20 error")
 
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
-
-	transactor := tf.Transactor
-	tf.ChkErr(err, "Parse SGN address error")
 
 	// Call subscribe on guard contract
 	log.Info("Call subscribe on guard contract...")
@@ -87,7 +84,7 @@ func subscribeTest(t *testing.T) {
 
 	// Query sgn about the subscription info
 	log.Info("Query sgn about the subscription info...")
-	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
+	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
@@ -130,7 +127,7 @@ func subscribeTest(t *testing.T) {
 
 	// Query sgn to check if request has correct state proof data
 	log.Info("Query sgn to check if request has correct state proof data...")
-	request, err := subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	// TxHash now should be empty
@@ -151,7 +148,7 @@ func subscribeTest(t *testing.T) {
 	// Query sgn to check if validator has submitted the state proof correctly
 	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
 	sleepWithLog(20, "sgn submitting state proof")
-	request, err = subscribe.CLIQueryRequest(transactor.CliCtx.Codec, transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[0x%s 0x%s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)

@@ -61,17 +61,19 @@ func (msg MsgInitializeCandidate) GetSigners() []sdk.AccAddress {
 
 // MsgClaimValidator defines a ClaimValidator message
 type MsgClaimValidator struct {
-	EthAddress string         `json:"ethAddress"`
-	PubKey     string         `json:"pubkey"`
-	Sender     sdk.AccAddress `json:"sender"`
+	EthAddress  string           `json:"ethAddress"`
+	PubKey      string           `json:"pubkey"`
+	Transactors []sdk.AccAddress `json:"transactors"`
+	Sender      sdk.AccAddress   `json:"sender"`
 }
 
 // NewMsgClaimValidator is a constructor function for MsgClaimValidator
-func NewMsgClaimValidator(ethAddress string, pubkey string, sender sdk.AccAddress) MsgClaimValidator {
+func NewMsgClaimValidator(ethAddress string, pubkey string, transactors []sdk.AccAddress, sender sdk.AccAddress) MsgClaimValidator {
 	return MsgClaimValidator{
-		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
-		PubKey:     pubkey,
-		Sender:     sender,
+		EthAddress:  ethcommon.HexToAddress(ethAddress).String(),
+		PubKey:      pubkey,
+		Transactors: transactors,
+		Sender:      sender,
 	}
 }
 
@@ -94,6 +96,12 @@ func (msg MsgClaimValidator) ValidateBasic() sdk.Error {
 
 	if msg.Sender.Empty() {
 		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	for _, transactor := range msg.Transactors {
+		if transactor.Empty() {
+			return sdk.ErrInvalidAddress(transactor.String())
+		}
 	}
 
 	return nil

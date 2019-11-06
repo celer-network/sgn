@@ -7,7 +7,7 @@ import (
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
-	"github.com/celer-network/sgn/utils"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
@@ -378,11 +378,11 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(ctx sdk.Context) {
-	transactor, err := utils.NewTransactor(
+	transactor, err := transactor.NewTransactor(
 		DefaultCLIHome,
 		ctx.ChainID(),
 		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnName),
+		viper.GetString(flags.FlagSgnOperator),
 		viper.GetString(flags.FlagSgnPassphrase),
 		viper.GetString(flags.FlagSgnGasPrice),
 		app.cdc,
@@ -392,5 +392,5 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		cmn.Exit(err.Error())
 	}
 
-	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey))
+	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
 }
