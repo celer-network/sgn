@@ -28,6 +28,7 @@ func TestMain(m *testing.M) {
 	// if geth exits with non-zero, os.Exit(1)
 	ethProc, err := startMainchain()
 	tf.ChkErr(err, "starting chain")
+	sleep(2)
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
