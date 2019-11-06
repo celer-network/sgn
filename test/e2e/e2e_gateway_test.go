@@ -91,7 +91,7 @@ func gatewayTest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	sleep(2)
+	sleep(3)
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
 	if err != nil {
