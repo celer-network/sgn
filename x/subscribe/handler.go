@@ -126,9 +126,6 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 
-	// TODO: (issue) need to prevent using an out-of-date triggerTx, namely an old IntendSettle event
-	//     can be done by requiring the triggerTx must be after the time of submitting the request guard?
-
 	// validate guardTx
 	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Hex2Hash(msg.GuardTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
@@ -198,8 +195,6 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	for i := 0; i < guardIndex; i++ {
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
-
-	// TODO: (issue) what if user submits a new stateproof while old state proof being guarded
 
 	return sdk.Result{}
 }
