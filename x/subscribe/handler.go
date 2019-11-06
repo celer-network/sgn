@@ -62,7 +62,6 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	if !found {
 		return sdk.ErrInternal("Cannot find subscription").Result()
 	}
-
 	keeper.SetSubscription(ctx, subscription)
 
 	var signedSimplexState chain.SignedSimplexState
@@ -75,6 +74,18 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	err = protobuf.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal simplexState: %s", err)).Result()
+	}
+
+	// reject guard request if the channel is not Operable
+	cid := ctype.Bytes2Cid(simplexPaymentChannel.ChannelId)
+	status, err := keeper.ethClient.Ledger.GetChannelStatus(&bind.CallOpts{
+		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+	}, cid)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to query channel status: %s. Channel ID: %s", err, cid.Hex())).Result()
+	}
+	if status != uint8(1) {
+		return sdk.ErrInternal(fmt.Sprintf("Channel status is not Operable. Channel ID: %s", cid.Hex())).Result()
 	}
 
 	request, err := getRequest(ctx, keeper, simplexPaymentChannel)
