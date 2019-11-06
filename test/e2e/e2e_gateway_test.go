@@ -56,7 +56,7 @@ func gatewayTest(t *testing.T) {
 	guardContract := tf.EthClient.Guard
 	transactor := tf.Transactor
 	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
-	tf.ChkErr(err, "NewERC20 error")
+	assert.NoError(t, err, "NewERC20 error")
 
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
@@ -64,26 +64,25 @@ func gatewayTest(t *testing.T) {
 
 	// Call subscribe on guard contract
 	log.Info("Call subscribe on guard contract...")
-	amt := new(big.Int)
-	amt.SetString("100000000000000000000", 10) // 100 CELR
+	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
 	tx, err := celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
-	tf.ChkErr(err, "failed to approve CELR to Guard contract")
+	assert.NoError(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
-	tf.ChkErr(err, "failed to call subscribe of Guard contract")
+	assert.NoError(t, err, "failed to call subscribe of Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "Subscribe on Guard contract")
 
 	msg := map[string]interface{}{
 		"ethAddr": ethAddress.String(),
 	}
 	body, err := json.Marshal(msg)
-	tf.ChkErr(err, "failed to marshal json")
+	assert.NoError(t, err, "failed to marshal json")
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
-	tf.ChkErr(err, "failed to post subscribe msg")
+	assert.NoError(t, err, "failed to post subscribe msg")
 	sleep(2)
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
-	tf.ChkErr(err, "failed to get subscription")
+	assert.NoError(t, err, "failed to get subscription")
 	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
 
 	var subscription subscribe.Subscription
