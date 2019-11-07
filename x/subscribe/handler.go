@@ -195,24 +195,24 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash ctype.HashType, cid ctype.CidType) (*ethtypes.Log, error) {
 	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
 	if err != nil {
-		return &ethtypes.Log{}, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
+		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
 	}
 	if receipt.Status != mainchain.TxSuccess {
-		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx failed. Error: %w", err)
+		return nil, fmt.Errorf(txType+"Tx failed. Error: %w", err)
 	}
 	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle event is the last one
 
 	// check ledger contract
 	if log.Address != ethClient.LedgerAddress {
-		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
+		return nil, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
 	}
 	// check event type
 	if log.Topics[0] != IntendSettleEventSig {
-		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
+		return nil, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
 	}
 	// check channel ID
 	if log.Topics[1] != cid {
-		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx's channel ID is wrong. Error: %w", err)
+		return nil, fmt.Errorf(txType+"Tx's channel ID is wrong. Error: %w", err)
 	}
 
 	return log, nil
