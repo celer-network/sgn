@@ -121,13 +121,11 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("Cannot find request").Result()
 	}
 
-	// validate triggerTx
 	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Hex2Hash(msg.TriggerTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 
-	// validate guardTx
 	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Hex2Hash(msg.GuardTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return sdk.ErrInternal(err.Error()).Result()
@@ -138,21 +136,11 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("GuardTx's block number is not larger than TriggerTx's block number").Result()
 	}
 
-	// check guardIntendSettle sequence number
-	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
+	err = validateIntendSettleSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
 	if err != nil {
-		return sdk.ErrInternal("Failed to parse CelerLedgerABI").Result()
-	}
-	var guardIntendSettle mainchain.CelerLedgerIntendSettle
-	err = ledgerABI.Unpack(&guardIntendSettle, "IntendSettle", guardLog.Data)
-	if err != nil {
-		return sdk.ErrInternal("Failed to unpack IntendSettle event").Result()
-	}
-	if guardIntendSettle.SeqNums[request.PeerFromIndex].Uint64() != request.SeqNum {
-		return sdk.ErrInternal("guardIntendSettle's seqNum is different from triggerIntendSettle's seqNum").Result()
+		return sdk.ErrInternal(err.Error()).Result()
 	}
 
-	// get supposed guards
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
@@ -216,4 +204,21 @@ func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash 
 	}
 
 	return log, nil
+}
+
+func validateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
+	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
+	if err != nil {
+		return fmt.Errorf("Failed to parse CelerLedgerABI: %w", err)
+	}
+	var intendSettle mainchain.CelerLedgerIntendSettle
+	err = ledgerABI.Unpack(&intendSettle, "IntendSettle", logDate)
+	if err != nil {
+		return fmt.Errorf("Failed to unpack IntendSettle event: %w", err)
+	}
+	if intendSettle.SeqNums[seqNumIndex].Uint64() != expectedNum {
+		return fmt.Errorf("Unexpected seqNum of IntendSettle event. SeqNumIndex: %d, expected: %d, actual: %d", seqNumIndex, expectedNum, intendSettle.SeqNums[seqNumIndex].Uint64())
+	}
+
+	return nil
 }
