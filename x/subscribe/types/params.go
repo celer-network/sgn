@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -14,10 +13,6 @@ import (
 const (
 	// Default number of guards for guarding request
 	DefaultRequestGuardCount uint64 = 3
-)
-
-var (
-	IntendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
 )
 
 var (

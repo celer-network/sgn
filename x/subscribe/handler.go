@@ -19,6 +19,10 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
+var (
+	IntendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+)
+
 // NewHandler returns a handler for "subscribe" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
