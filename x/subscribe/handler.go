@@ -151,6 +151,9 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	} else {
 		// get mainchain tx sender in the last stage for rewarding
 		guardTx, _, err := keeper.ethClient.Client.TransactionByHash(context.Background(), ctype.Hex2Hash(msg.GuardTxHash))
+		if err != nil {
+			return sdk.ErrInternal("Failed to get guardTx").Result()
+		}
 		guardMsg, err := guardTx.AsMessage(ethtypes.NewEIP155Signer(guardTx.ChainId()))
 		if err != nil {
 			return sdk.ErrInternal("Failed to get guardMsg").Result()
