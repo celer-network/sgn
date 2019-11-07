@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	IntendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+	intendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
 )
 
 // NewHandler returns a handler for "subscribe" type messages.
@@ -195,7 +195,7 @@ func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash 
 		return nil, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
 	}
 	// check event type
-	if log.Topics[0] != IntendSettleEventSig {
+	if log.Topics[0] != intendSettleEventSig {
 		return nil, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
 	}
 	// check channel ID
