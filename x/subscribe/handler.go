@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
-	"github.com/celer-network/sgn/x/subscribe/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -117,8 +116,6 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 // Handle a message to submit guard proof
 // Currently only supports that the validator sends out a tx purely for one intendSettle. (not call it via a contract or put multiple calls in one tx)
 func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.Result {
-	logger := ctx.Logger()
-
 	request, found := keeper.GetRequest(ctx, msg.ChannelId)
 	if !found {
 		return sdk.ErrInternal("Cannot find request").Result()
@@ -127,37 +124,31 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	// validate triggerTx
 	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Hex2Hash(msg.TriggerTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
-		logger.Error(err.Error())
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 
 	// validate guardTx
 	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Hex2Hash(msg.GuardTxHash), ctype.Bytes2Cid(msg.ChannelId))
 	if err != nil {
-		logger.Error(err.Error())
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 
 	// check block numbers
 	if guardLog.BlockNumber <= triggerLog.BlockNumber {
-		logger.Error("GuardTx's block number is not larger than TriggerTx's block number")
 		return sdk.ErrInternal("GuardTx's block number is not larger than TriggerTx's block number").Result()
 	}
 
 	// check guardIntendSettle sequence number
 	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
-		logger.Error("Failed to parse CelerLedgerABI", "error", err)
 		return sdk.ErrInternal("Failed to parse CelerLedgerABI").Result()
 	}
 	var guardIntendSettle mainchain.CelerLedgerIntendSettle
 	err = ledgerABI.Unpack(&guardIntendSettle, "IntendSettle", guardLog.Data)
 	if err != nil {
-		logger.Error("Failed to unpack IntendSettle event", "error", err)
 		return sdk.ErrInternal("Failed to unpack IntendSettle event").Result()
 	}
 	if guardIntendSettle.SeqNums[request.PeerFromIndex].Uint64() != request.SeqNum {
-		logger.Error("guardIntendSettle's seqNum is different from triggerIntendSettle's seqNum")
 		return sdk.ErrInternal("guardIntendSettle's seqNum is different from triggerIntendSettle's seqNum").Result()
 	}
 
@@ -174,7 +165,6 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		guardTx, _, err := keeper.ethClient.Client.TransactionByHash(context.Background(), ctype.Hex2Hash(msg.GuardTxHash))
 		guardMsg, err := guardTx.AsMessage(ethtypes.NewEIP155Signer(guardTx.ChainId()))
 		if err != nil {
-			logger.Error("Failed to get guardMsg")
 			return sdk.ErrInternal("Failed to get guardMsg").Result()
 		}
 		guardEthAddrStr := ctype.Addr2HexWithPrefix(guardMsg.From())
@@ -217,7 +207,7 @@ func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash 
 		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
 	}
 	// check event type
-	if log.Topics[0] != types.IntendSettleEventSig {
+	if log.Topics[0] != IntendSettleEventSig {
 		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
 	}
 	// check channel ID
