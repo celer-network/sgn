@@ -88,7 +88,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query channel status: %s. Channel ID: %s", err, cid.Hex())).Result()
 	}
-	if status != uint8(1) {
+	if status != mainchain.OperableChannel {
 		return sdk.ErrInternal(fmt.Sprintf("Channel status is not Operable. Channel ID: %s", cid.Hex())).Result()
 	}
 
@@ -197,7 +197,7 @@ func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash 
 	if err != nil {
 		return &ethtypes.Log{}, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
 	}
-	if receipt.Status != ctype.TxSuccess {
+	if receipt.Status != mainchain.TxSuccess {
 		return &ethtypes.Log{}, fmt.Errorf(txType+"Tx failed. Error: %w", err)
 	}
 	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle event is the last one

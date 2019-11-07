@@ -19,11 +19,6 @@ import (
 	ec "github.com/ethereum/go-ethereum/common"
 )
 
-const (
-	TxFailure = 0
-	TxSuccess = 1
-)
-
 var (
 	// ZeroAddr is all 0s
 	ZeroAddr Addr
