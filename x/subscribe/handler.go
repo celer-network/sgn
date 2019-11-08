@@ -150,15 +150,10 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		rewardValidator = request.RequestGuards[guardIndex]
 	} else {
 		// get mainchain tx sender in the last stage for rewarding
-		guardTx, _, err := keeper.ethClient.Client.TransactionByHash(context.Background(), ctype.Hex2Hash(msg.GuardTxHash))
+		guardEthAddrStr, err := mainchain.GetTxSender(keeper.ethClient.Client, msg.GuardTxHash)
 		if err != nil {
-			return sdk.ErrInternal("Failed to get guardTx").Result()
+			return sdk.ErrInternal(err.Error()).Result()
 		}
-		guardMsg, err := guardTx.AsMessage(ethtypes.NewEIP155Signer(guardTx.ChainId()))
-		if err != nil {
-			return sdk.ErrInternal("Failed to get guardMsg").Result()
-		}
-		guardEthAddrStr := ctype.Addr2HexWithPrefix(guardMsg.From())
 		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
 		if found {
 			_, found = getAccAddrIndex(request.RequestGuards, rewardCandidate.Operator)

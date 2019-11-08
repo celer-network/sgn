@@ -3,6 +3,7 @@ package mainchain
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -102,4 +103,17 @@ func WaitMinedWithTxHash(ctx context.Context, ec *ethclient.Client,
 		case <-queryTicker.C:
 		}
 	}
+}
+
+// GetTxSender returns the sender address (with 0x prefix) of the given transaction
+func GetTxSender(ec *ethclient.Client, txHashStr string) (string, error) {
+	tx, _, err := ec.TransactionByHash(context.Background(), ctype.Hex2Hash(txHashStr))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get tx: %w", err)
+	}
+	msg, err := tx.AsMessage(ethtypes.NewEIP155Signer(tx.ChainId()))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get msg: %w", err)
+	}
+	return ctype.Addr2HexWithPrefix(msg.From()), nil
 }
