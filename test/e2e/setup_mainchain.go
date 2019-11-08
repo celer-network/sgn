@@ -3,6 +3,9 @@ package e2e
 import (
 	"context"
 	"math/big"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/celer-network/cChannel-eth-go/deploy"
 	"github.com/celer-network/cChannel-eth-go/ethpool"
@@ -18,9 +21,51 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+// start process to handle eth rpc, and fund etherbase and server account
+func startMainchain() (*os.Process, error) {
+	log.Infoln("outRootDir", outRootDir, "envDir", envDir)
+	chainDataDir := outRootDir + "mainchaindata"
+	logFname := outRootDir + "mainchain.log"
+	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
+		return nil, err
+	}
+
+	// geth init
+	cmdInit := exec.Command("geth", "--datadir", chainDataDir, "init", envDir+"/mainchain_genesis.json")
+	// set cmd.Dir because relative files are under testing/env
+	cmdInit.Dir, _ = filepath.Abs(envDir)
+	if err := cmdInit.Run(); err != nil {
+		return nil, err
+	}
+	// actually run geth, blocking. set syncmode full to avoid bloom mem cache by fast sync
+	cmd := exec.Command("geth", "--networkid", "883", "--cache", "256", "--nousb", "--syncmode", "full", "--nodiscover", "--maxpeers", "0",
+		"--netrestrict", "127.0.0.1/8", "--datadir", chainDataDir, "--keystore", "keystore", "--targetgaslimit", "8000000",
+		"--ws", "--wsaddr", "localhost", "--wsport", "8546", "--wsapi", "admin,debug,eth,miner,net,personal,shh,txpool,web3",
+		"--mine", "--allow-insecure-unlock", "--unlock", "0", "--password", "empty_password.txt", "--rpc", "--rpccorsdomain", "*",
+		"--rpcaddr", "localhost", "--rpcport", "8545", "--rpcapi", "admin,debug,eth,miner,net,personal,shh,txpool,web3")
+	cmd.Dir = cmdInit.Dir
+
+	logF, _ := os.Create(logFname)
+	cmd.Stderr = logF
+	cmd.Stdout = logF
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	log.Infoln("geth pid:", cmd.Process.Pid)
+	// in case geth exits with non-zero, exit test early
+	// if geth is killed by ethProc.Signal, it exits w/ 0
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Errorln("geth process failed:", err)
+			os.Exit(1)
+		}
+	}()
+	return cmd.Process, nil
+}
+
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func setupMainchain() (*common.CProfile, string) {
+func setupMainchain() (*common.CProfile, ctype.Addr) {
 	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
@@ -106,10 +151,10 @@ func setupMainchain() (*common.CProfile, string) {
 		PayResolverAddr:  ctype.Addr2Hex(channelAddrBundle.PayResolverAddr),
 		PayRegistryAddr:  ctype.Addr2Hex(channelAddrBundle.PayRegistryAddr),
 	}
-	return p, ctype.Addr2Hex(erc20Addr)
+	return p, erc20Addr
 }
 
-func deployGuardContract(sgnParams *SGNParams) string {
+func deployGuardContract(sgnParams *SGNParams) ctype.Addr {
 	conn, err := ethclient.Dial(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 
@@ -120,9 +165,9 @@ func deployGuardContract(sgnParams *SGNParams) string {
 	etherBaseAuth.GasPrice = price
 	etherBaseAuth.GasLimit = 7000000
 
-	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, ctype.Hex2Addr(MockCelerAddr), sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
+	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, mockCelerAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
 	tf.ChkErr(err, "failed to deploy Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
-	return ctype.Addr2Hex(guardAddr)
+	return guardAddr
 }

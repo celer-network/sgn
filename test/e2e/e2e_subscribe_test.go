@@ -16,6 +16,7 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
@@ -58,31 +59,28 @@ func subscribeTest(t *testing.T) {
 	guardContract := tf.EthClient.Guard
 	ledgerContract := tf.EthClient.Ledger
 	transactor := tf.Transactor
-	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
-	tf.ChkErr(err, "NewERC20 error")
-
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
-	// Call subscribe on guard contract
+	initializeCandidate()
+	delegateStake()
+
 	log.Info("Call subscribe on guard contract...")
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
-	tx, err := celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
+	tx, err := celrContract.Approve(auth, guardAddr, amt)
 	tf.ChkErr(err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkErr(err, "failed to call subscribe of Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "Subscribe on Guard contract")
 
-	// Send tx on sidechain to sync mainchain subscription balance
 	log.Info("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.String(), transactor.Key.GetAddress())
 	transactor.BroadcastTx(msgSubscribe)
 	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
-	// Query sgn about the subscription info
 	log.Info("Query sgn about the subscription info...")
 	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query subscription on sgn")
@@ -96,9 +94,79 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	// Call openChannelMockSet on ledger contract
+	channelId := openChannel(client1PrivKey)
+	signedSimplexStateProto := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
+	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
+	tf.ChkErr(err, "failed to get signedSimplexStateBytes")
+	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
+	transactor.BroadcastTx(msgRequestGuard)
+	sleepWithLog(10, "sgn processes request guard")
+
+	log.Info("Query sgn to check if request has correct state proof data...")
+	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	tf.ChkErr(err, "failed to query request on sgn")
+	log.Infoln("Query sgn about the request info:", request.String())
+	// TxHash now should be empty
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	log.Info("Call intendSettle on ledger contract...")
+	signedSimplexStateProto = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
+	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
+	})
+	tf.ChkErr(err, "failed to get signedSimplexStateArrayBytes")
+	tx, err = ledgerContract.IntendSettle(auth, signedSimplexStateArrayBytes)
+	tf.ChkErr(err, "failed to IntendSettle")
+	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "IntendSettle")
+
+	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
+	sleepWithLog(20, "sgn submitting state proof")
+	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	tf.ChkErr(err, "failed to query request on sgn")
+	log.Infoln("Query sgn about the request info:", request.String())
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[0x%s 0x%s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
+	r, err := regexp.Compile(strings.ToLower(rstr))
+	tf.ChkErr(err, "failed to compile regexp")
+	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
+
+	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+	tf.ChkErr(err, "failed to query params on sgn")
+	log.Infoln("Query sgn about the params info:", params.String())
+	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	tf.ChkErr(err, "failed to query reward on sgn")
+	log.Infoln("Query sgn about the reward info:", reward.String())
+}
+
+func openChannel(client1PrivKey *ecdsa.PrivateKey) [32]byte {
 	log.Info("Call openChannel on ledger contract...")
-	paymentChannelInitializerBytes, err := protobuf.Marshal(prepareChannelInitializer())
+	ctx := context.Background()
+	conn := tf.EthClient.Client
+	auth := tf.EthClient.Auth
+	ledgerContract := tf.EthClient.Ledger
+	tokenInfo := &entity.TokenInfo{
+		TokenType:    entity.TokenType_ERC20,
+		TokenAddress: mockCelerAddr.Bytes(),
+	}
+	lowAddrDist := &entity.AccountAmtPair{
+		Account: tf.EthClient.Address[:],
+		Amt:     big.NewInt(0).Bytes(),
+	}
+	highAddrDist := &entity.AccountAmtPair{
+		Account: ctype.Hex2Bytes(client1AddrStr),
+		Amt:     big.NewInt(0).Bytes(),
+	}
+	initializer := &entity.PaymentChannelInitializer{
+		InitDistribution: &entity.TokenDistribution{
+			Token: tokenInfo,
+			Distribution: []*entity.AccountAmtPair{
+				lowAddrDist, highAddrDist,
+			},
+		},
+		OpenDeadline:   1000000,
+		DisputeTimeout: 100,
+	}
+	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
 	tf.ChkErr(err, "failed to get paymentChannelInitializerBytes")
 	sig0, err := mainchain.SignMessage(tf.EthClient.PrivateKey, paymentChannelInitializerBytes)
 	tf.ChkErr(err, "failed to get sig0")
@@ -111,79 +179,13 @@ func subscribeTest(t *testing.T) {
 	tf.ChkErr(err, "failed to get requestBytes")
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(ledgerContract, channelIdChan)
-	tx, err = ledgerContract.OpenChannel(auth, requestBytes)
+	tx, err := ledgerContract.OpenChannel(auth, requestBytes)
 	tf.ChkErr(err, "failed to OpenChannel")
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
 	channelId := <-channelIdChan
 	log.Info("channel ID: ", ctype.Bytes2Hex(channelId[:]))
 
-	// Submit state proof to sgn
-	signedSimplexStateProto := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
-	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
-	tf.ChkErr(err, "failed to get signedSimplexStateBytes")
-	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
-	transactor.BroadcastTx(msgRequestGuard)
-	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
-
-	// Query sgn to check if request has correct state proof data
-	log.Info("Query sgn to check if request has correct state proof data...")
-	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
-	tf.ChkErr(err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
-	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [0x%s 0x%s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
-	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-
-	// Call intendSettle on ledger contract
-	log.Info("Call intendSettle on ledger contract...")
-	signedSimplexStateProto = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
-	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
-		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
-	})
-	tf.ChkErr(err, "failed to get signedSimplexStateArrayBytes")
-	tx, err = ledgerContract.IntendSettle(auth, signedSimplexStateArrayBytes)
-	tf.ChkErr(err, "failed to IntendSettle")
-	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "IntendSettle")
-
-	// Query sgn to check if validator has submitted the state proof correctly
-	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
-	sleepWithLog(20, "sgn submitting state proof")
-	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
-	tf.ChkErr(err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[0x%s 0x%s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, client0AddrStr, client1AddrStr, 0, signedSimplexStateBytes)
-	r, err := regexp.Compile(strings.ToLower(rstr))
-	tf.ChkErr(err, "failed to compile regexp")
-	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
-}
-
-func prepareChannelInitializer() *entity.PaymentChannelInitializer {
-	tokenInfo := &entity.TokenInfo{
-		TokenType:    entity.TokenType_ERC20,
-		TokenAddress: ctype.Hex2Bytes(MockCelerAddr),
-	}
-
-	lowAddrDist := &entity.AccountAmtPair{
-		Account: tf.EthClient.Address[:],
-		Amt:     big.NewInt(0).Bytes(),
-	}
-
-	highAddrDist := &entity.AccountAmtPair{
-		Account: ctype.Hex2Bytes(client1AddrStr),
-		Amt:     big.NewInt(0).Bytes(),
-	}
-
-	initializer := &entity.PaymentChannelInitializer{
-		InitDistribution: &entity.TokenDistribution{
-			Token: tokenInfo,
-			Distribution: []*entity.AccountAmtPair{
-				lowAddrDist, highAddrDist,
-			},
-		},
-		OpenDeadline:   1000000,
-		DisputeTimeout: 100,
-	}
-	return initializer
+	return channelId
 }
 
 func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) *chain.SignedSimplexState {

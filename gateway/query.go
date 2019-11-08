@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/celer-network/sgn/x/global"
@@ -53,9 +52,8 @@ func (rs *RestServer) registerQueryRoutes() {
 // http request handler to query latest block
 func latestBlockHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		route := fmt.Sprintf("custom/%s/%s", global.ModuleName, global.QueryLatestBlock)
 		transactor := rs.transactorPool.GetTransactor()
-		block, _, err := transactor.CliCtx.Query(route)
+		block, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 		postProcessResponse(w, transactor.CliCtx, block, err)
 	}
 }
@@ -63,9 +61,9 @@ func latestBlockHandlerFn(rs *RestServer) http.HandlerFunc {
 // http request handler to query subscribe params
 func subscribeParamsHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		route := fmt.Sprintf("custom/%s/%s", subscribe.ModuleName, subscribe.QueryParameters)
 		transactor := rs.transactorPool.GetTransactor()
-		params, _, err := transactor.CliCtx.Query(route)
+		params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+
 		postProcessResponse(w, transactor.CliCtx, params, err)
 	}
 }
