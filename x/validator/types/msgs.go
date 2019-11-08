@@ -162,8 +162,8 @@ func (msg MsgSyncValidator) GetSigners() []sdk.AccAddress {
 
 // MsgSyncDelegator defines a SyncDelegator message
 type MsgSyncDelegator struct {
-	CandidateAddress string         `json:"candidateAddress"`
-	DelegatorAddress string         `json:"delegatorAddress"`
+	CandidateAddress string         `json:"candidateAddress"` // ETH address with "0x" prefix
+	DelegatorAddress string         `json:"delegatorAddress"` // ETH address with "0x" prefix
 	Sender           sdk.AccAddress `json:"sender"`
 }
 

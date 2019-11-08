@@ -3,14 +3,17 @@ package mainchain
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"time"
 
+	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/testing/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -29,6 +32,11 @@ func ParseStatus(candidateInfo CandidateInfo) sdk.BondStatus {
 	}
 
 	return sdk.Unbonded
+}
+
+// GetEventSignature accepts the string of an event signature and return the hex
+func GetEventSignature(eventSigStr string) ctype.HashType {
+	return crypto.Keccak256Hash([]byte(eventSigStr))
 }
 
 // TODO(mzhou): Remove this once cEnv is cleaned up
@@ -95,4 +103,17 @@ func WaitMinedWithTxHash(ctx context.Context, ec *ethclient.Client,
 		case <-queryTicker.C:
 		}
 	}
+}
+
+// GetTxSender returns the sender address (with 0x prefix) of the given transaction
+func GetTxSender(ec *ethclient.Client, txHashStr string) (string, error) {
+	tx, _, err := ec.TransactionByHash(context.Background(), ctype.Hex2Hash(txHashStr))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get tx: %w", err)
+	}
+	msg, err := tx.AsMessage(ethtypes.NewEIP155Signer(tx.ChainId()))
+	if err != nil {
+		return "", fmt.Errorf("Failed to get msg: %w", err)
+	}
+	return ctype.Addr2HexWithPrefix(msg.From()), nil
 }

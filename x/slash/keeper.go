@@ -33,14 +33,8 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validato
 }
 
 // HandleGuardFailure handles a validator fails to guard state.
-func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.AccAddress) {
+func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr sdk.AccAddress) {
 	logger := ctx.Logger()
-	reportValAddr := sdk.ValAddress(reportAddr)
-	reportValidator, found := k.validatorKeeper.GetValidator(ctx, reportValAddr)
-	if !found {
-		logger.Error(fmt.Sprintf("Cannot find report validator %s", reportValAddr))
-		return
-	}
 
 	failedValAddr := sdk.ValAddress(failedAddr)
 	failedValidator, found := k.validatorKeeper.GetValidator(ctx, failedValAddr)
@@ -50,8 +44,18 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, reportAddr, failedAddr sdk.A
 	}
 
 	var beneficiaries []AccountFractionPair
-	beneficiaries = append(beneficiaries, NewAccountFractionPair(reportValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
-	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), []AccountFractionPair{})
+	// TODO: need to add address(0) as the miningPool and make sure the total share is 1
+	if !beneficiaryAddr.Empty() {
+		beneficiaryValAddr := sdk.ValAddress(beneficiaryAddr)
+		beneficiaryValidator, found := k.validatorKeeper.GetValidator(ctx, beneficiaryValAddr)
+		if !found {
+			logger.Error(fmt.Sprintf("Cannot find beneficiary validator %s", beneficiaryValAddr))
+			return
+		}
+		beneficiaries = append(beneficiaries, NewAccountFractionPair(beneficiaryValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
+	}
+
+	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), beneficiaries)
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -137,7 +141,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
-func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
+func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
 	logger := ctx.Logger()
 
 	if slashFactor.IsNegative() {
@@ -148,15 +152,15 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, validator staking.Validato
 	amount := sdk.TokensFromConsensusPower(power)
 	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
 	logger.Info(fmt.Sprintf(
-		"validator %s slashed by %s with slash factor of %s",
-		validator.GetOperator(), slashAmount, slashFactor.String()))
+		"failed validator %s slashed by %s with slash factor of %s",
+		failedValidator.GetOperator(), slashAmount, slashFactor.String()))
 
-	candidate, found := k.validatorKeeper.GetCandidate(ctx, validator.Description.Identity)
+	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {
-		logger.Error("Cannot find candidate profile for validator", validator.Description.Identity)
+		logger.Error("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
 	}
 
-	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, validator.Description.Identity)
+	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, failedValidator.Description.Identity)
 	for _, delegator := range candidate.Delegators {
 		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
 		accountAmtPair := NewAccountAmtPair(delegator.EthAddress, penaltyAmt)

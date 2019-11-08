@@ -1,5 +1,7 @@
 # SGN
 
+[![CircleCI](https://circleci.com/gh/celer-network/sgn/tree/master.svg?style=svg&circle-token=9b3b58e2a37467bd68e9d5cfffe23b6110cec700)](https://circleci.com/gh/celer-network/sgn/tree/master)
+
 ## Quick Start
 
 ### Setup

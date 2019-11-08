@@ -189,3 +189,17 @@ func (k Keeper) SetReward(ctx sdk.Context, ethAddress string, reward Reward) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRewardKey(ethAddress), k.cdc.MustMarshalBinaryBare(reward))
 }
+
+// HandleServiceReward distributes rewards to a candidate and its delegators
+func (k Keeper) HandleServiceReward(ctx sdk.Context, rewardCandidate Candidate, totalReward sdk.Int) {
+	for _, delegator := range rewardCandidate.Delegators {
+		reward, found := k.GetReward(ctx, delegator.EthAddress)
+		if !found {
+			reward = NewReward()
+		}
+
+		rewardAmt := totalReward.Mul(delegator.DelegatedStake).Quo(rewardCandidate.StakingPool)
+		reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
+		k.SetReward(ctx, delegator.EthAddress, reward)
+	}
+}

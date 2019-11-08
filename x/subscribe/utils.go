@@ -88,3 +88,12 @@ func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 
 	return nil
 }
+
+func getAccAddrIndex(addresses []sdk.AccAddress, targetAddress sdk.AccAddress) (index int, found bool) {
+	for i, v := range addresses {
+		if v.Equals(targetAddress) {
+			return i, true
+		}
+	}
+	return 0, false
+}

@@ -71,6 +71,7 @@ func (m *EthMonitor) processPusherQueue() {
 
 	for pusherLen := m.pusherQueue.Len(); pusherLen > 0; pusherLen-- {
 		switch event := m.pusherQueue.PopFront().(type) {
+		// TODO: also need to monitor and process intendWithdraw event
 		case *mainchain.CelerLedgerIntendSettle:
 			m.processIntendSettle(event, latestBlock.Number)
 		case PenaltyEvent:
@@ -96,8 +97,8 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		return
 	}
 
-	if request.TxHash != "" {
-		log.Printf("Request has been fullfilled")
+	if request.GuardTxHash != "" {
+		log.Printf("Request has been fulfilled")
 		return
 	}
 
@@ -119,6 +120,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		log.Print("Marshal signedSimplexStateArrayBytes error: ", err)
 		return
 	}
+	// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
 	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
 	if err != nil {
 		log.Printf("intendSettle err", err)
@@ -126,7 +128,8 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	}
 	log.Printf("IntendSettle tx detail", tx)
 
-	msg := subscribe.NewMsgGuardProof(channelId, tx.Hash().Hex(), m.transactor.Key.GetAddress())
+	triggerTxHash := intendSettle.Raw.TxHash.Hex()
+	msg := subscribe.NewMsgGuardProof(channelId, triggerTxHash, tx.Hash().Hex(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 

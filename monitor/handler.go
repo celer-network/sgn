@@ -71,6 +71,7 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Printf("New intend settle", intendSettle.ChannelId)
 	request, err := m.getRequest(intendSettle.ChannelId[:])
+	// TODO: a "not found" error should be regarded as a normal situation for not-guarded channels
 	if err != nil {
 		log.Printf("Query request err", err)
 		return
