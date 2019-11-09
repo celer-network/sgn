@@ -16,7 +16,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/subscribe"
-	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
@@ -62,9 +61,6 @@ func subscribeTest(t *testing.T) {
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
-
-	initializeCandidate()
-	delegateStake()
 
 	log.Info("Call subscribe on guard contract...")
 	amt := new(big.Int)
@@ -129,13 +125,6 @@ func subscribeTest(t *testing.T) {
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkErr(err, "failed to compile regexp")
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
-
-	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
-	tf.ChkErr(err, "failed to query params on sgn")
-	log.Infoln("Query sgn about the params info:", params.String())
-	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
-	tf.ChkErr(err, "failed to query reward on sgn")
-	log.Infoln("Query sgn about the reward info:", reward.String())
 }
 
 func openChannel(client1PrivKey *ecdsa.PrivateKey) [32]byte {
