@@ -1,6 +1,1 @@
-{
-    "priv_key": {
-        "type": "tendermint/PrivKeyEd25519",
-        "value": "ft8hTXn/R+HI8qSVhlRBKhK35TX7oqQ2pniIcu08feXTe6d8yP5dWjgbVlptN2ryqH2ie9hBliN2PtXxujiuPA=="
-    }
-}
+{"priv_key":{"type":"tendermint/PrivKeyEd25519","value":"/7jhpFmK0NZ04DczQIsomkXfPIlrJkp3e5pWzQ/8x7BrX8jYzWJpnt38X6qwQ7JjJNxHaJHTBrF+9ntOV8zcAw=="}}
