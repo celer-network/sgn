@@ -42,7 +42,7 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 }
 
 func buildContextWithTimeout() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 10 * time.Second)
 	return ctx
 }
 
