@@ -63,18 +63,18 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 	return nil
 }
 
-func delegateStake(auth *bind.TransactOpts, ethAddress ctype.Addr, amt *big.Int) error {
+func delegateStake(fromAuth *bind.TransactOpts, toEthAddress ctype.Addr, amt *big.Int) error {
 	ctx := buildContextWithTimeout()
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	tx, err := celrContract.Approve(auth, guardAddr, amt)
+	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
 	if err != nil {
 		return err
 	}
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
-	tx, err = guardContract.Delegate(auth, ethAddress, amt)
+	tx, err = guardContract.Delegate(fromAuth, toEthAddress, amt)
 	if err != nil {
 		return err
 	}
