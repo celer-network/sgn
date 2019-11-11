@@ -72,9 +72,6 @@ func subscribeTest(t *testing.T) {
 	amt.SetString("100000000000000000000", 10) // 100 CELR
 	err = delegateStake(auth, ethAddress, amt)
 	tf.ChkErr(err, "failed to delegate stake")
-	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
-	tf.ChkErr(err, "failed to queryCandidate")
-	log.Infoln("Query sgn about the validator candidate:", candidate)
 
 	log.Info("Call subscribe on guard contract...")
 	tx, err := celrContract.Approve(auth, guardAddr, amt)
