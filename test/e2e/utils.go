@@ -3,183 +3,30 @@
 package e2e
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
 	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"time"
+	"context"
+	"math/big"
 
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/spf13/viper"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	protobuf "github.com/golang/protobuf/proto"
 )
 
-type SGNParams struct {
-	blameTimeout           *big.Int
-	minValidatorNum        *big.Int
-	minStakingPool         *big.Int
-	sidechainGoLiveTimeout *big.Int
-	startGateway           bool
-}
-
-// used by setup_onchain and tests
-var (
-	etherBaseAddr = ctype.Hex2Addr(etherBaseAddrStr)
-	client0Addr   = ctype.Hex2Addr(client0AddrStr)
-	client1Addr   = ctype.Hex2Addr(client1AddrStr)
+const (
+	defaultTimeout = 30 * time.Second
 )
-
-// runtime variables, will be initialized by TestMain
-var (
-	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
-	// due to testframework etc in a different testing package, we have to define
-	// same var in testframework.go and expose a set api
-	outRootDir    string
-	envDir        = "../../testing/env"
-	E2eProfile    *common.CProfile
-	GuardAddr     string
-	MockCelerAddr string
-)
-
-// start process to handle eth rpc, and fund etherbase and server account
-func startMainchain() (*os.Process, error) {
-	log.Infoln("outRootDir", outRootDir, "envDir", envDir)
-	chainDataDir := outRootDir + "mainchaindata"
-	logFname := outRootDir + "mainchain.log"
-	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
-		return nil, err
-	}
-
-	// geth init
-	cmdInit := exec.Command("geth", "--datadir", chainDataDir, "init", envDir+"/mainchain_genesis.json")
-	// set cmd.Dir because relative files are under testing/env
-	cmdInit.Dir, _ = filepath.Abs(envDir)
-	if err := cmdInit.Run(); err != nil {
-		return nil, err
-	}
-	// actually run geth, blocking. set syncmode full to avoid bloom mem cache by fast sync
-	cmd := exec.Command("geth", "--networkid", "883", "--cache", "256", "--nousb", "--syncmode", "full", "--nodiscover", "--maxpeers", "0",
-		"--netrestrict", "127.0.0.1/8", "--datadir", chainDataDir, "--keystore", "keystore", "--targetgaslimit", "8000000",
-		"--ws", "--wsaddr", "localhost", "--wsport", "8546", "--wsapi", "admin,debug,eth,miner,net,personal,shh,txpool,web3",
-		"--mine", "--allow-insecure-unlock", "--unlock", "0", "--password", "empty_password.txt", "--rpc", "--rpccorsdomain", "*",
-		"--rpcaddr", "localhost", "--rpcport", "8545", "--rpcapi", "admin,debug,eth,miner,net,personal,shh,txpool,web3")
-	cmd.Dir = cmdInit.Dir
-
-	logF, _ := os.Create(logFname)
-	cmd.Stderr = logF
-	cmd.Stdout = logF
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-	log.Infoln("geth pid:", cmd.Process.Pid)
-	// in case geth exits with non-zero, exit test early
-	// if geth is killed by ethProc.Signal, it exits w/ 0
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Errorln("geth process failed:", err)
-			os.Exit(1)
-		}
-	}()
-	return cmd.Process, nil
-}
-
-func updateSGNConfig() {
-	log.Infoln("Updating SGN's config.json")
-
-	viper.SetConfigFile("../../config.json")
-	err := viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
-	viper.Set(flags.FlagEthWS, "ws://127.0.0.1:8546")
-	viper.Set(flags.FlagEthGuardAddress, GuardAddr)
-	viper.Set(flags.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
-	viper.WriteConfig()
-}
-
-// startSidechain starts sgn sidechain with the data in test/data
-func startSidechain(rootDir, testName string) (*os.Process, error) {
-	cmd := exec.Command("make", "update-test-data")
-	// set cmd.Dir under repo root path
-	cmd.Dir, _ = filepath.Abs("../..")
-	if err := cmd.Run(); err != nil {
-		return nil, err
-	}
-
-	cmd = exec.Command("sgn", "start")
-	cmd.Dir, _ = filepath.Abs("../..")
-	logFname := rootDir + "sgn_" + testName + ".log"
-	logF, _ := os.Create(logFname)
-	cmd.Stderr = logF
-	cmd.Stdout = logF
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	log.Infoln("sgn pid:", cmd.Process.Pid)
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Errorf("sgn process for [%s] failed: %v", testName, err)
-			// os.Exit(1) // sgn is expected to be killed after each test case
-		}
-	}()
-	return cmd.Process, nil
-}
-
-func startGateway(rootDir, testName string) (*os.Process, error) {
-	cmd := exec.Command("sgncli", "gateway")
-	cmd.Dir, _ = filepath.Abs("../..")
-	logFname := rootDir + "gateway_" + testName + ".log"
-	logF, _ := os.Create(logFname)
-	cmd.Stderr = logF
-	cmd.Stdout = logF
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	log.Infoln("gateway pid:", cmd.Process.Pid)
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Errorf("gateway process for [%s] failed: %v", testName, err)
-			// os.Exit(1) // gateway is expected to be killed after each test case
-		}
-	}()
-	return cmd.Process, nil
-}
-
-func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
-	if sgnParams == nil {
-		sgnParams = &SGNParams{
-			blameTimeout:           big.NewInt(50),
-			minValidatorNum:        big.NewInt(1),
-			minStakingPool:         big.NewInt(100),
-			sidechainGoLiveTimeout: big.NewInt(0),
-		}
-	}
-
-	GuardAddr = deployGuardContract(sgnParams)
-
-	updateSGNConfig()
-	sgnProc, err := startSidechain(outRootDir, testName)
-	tf.ChkErr(err, "start sidechain")
-	tf.SetupEthClient()
-	tf.SetupTransactor()
-
-	killable := []tf.Killable{sgnProc}
-	if sgnParams.startGateway {
-		gatewayProc, err := startGateway(outRootDir, testName)
-		tf.ChkErr(err, "start gateway")
-		killable = append(killable, gatewayProc)
-	}
-
-	return killable
-}
 
 func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
@@ -197,4 +44,111 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 	var responseWithHeight rest.ResponseWithHeight
 	cdc.MustUnmarshalJSON(body, &responseWithHeight)
 	return responseWithHeight.Result
+}
+
+func buildContextWithTimeout(timeout time.Duration) context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), timeout)
+	return ctx
+}
+
+func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
+	ctx := buildContextWithTimeout(defaultTimeout)
+	conn := tf.EthClient.Client
+	guardContract := tf.EthClient.Guard
+
+	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
+	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
+	if err != nil {
+		return err
+	}
+
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
+	sleepWithLog(30, "sgn syncing InitializeCandidate event on mainchain")
+	return nil
+}
+
+func delegateStake(fromAuth *bind.TransactOpts, toEthAddress ctype.Addr, amt *big.Int) error {
+	ctx := buildContextWithTimeout(defaultTimeout)
+	conn := tf.EthClient.Client
+	guardContract := tf.EthClient.Guard
+
+	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
+	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
+	if err != nil {
+		return err
+	}
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+	tx, err = guardContract.Delegate(fromAuth, toEthAddress, amt)
+	if err != nil {
+		return err
+	}
+
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
+	sleepWithLog(30, "sgn syncing Delegate event on mainchain")
+	return nil
+}
+
+func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
+	log.Info("Call openChannel on ledger contract...")
+	ctx := buildContextWithTimeout(defaultTimeout)
+	conn := tf.EthClient.Client
+	auth := tf.EthClient.Auth
+	ledgerContract := tf.EthClient.Ledger
+	tokenInfo := &entity.TokenInfo{
+		TokenType:    entity.TokenType_ERC20,
+		TokenAddress: mockCelerAddr.Bytes(),
+	}
+	lowAddrDist := &entity.AccountAmtPair{
+		Account: peer0Addr,
+		Amt:     big.NewInt(0).Bytes(),
+	}
+	highAddrDist := &entity.AccountAmtPair{
+		Account: peer1Addr,
+		Amt:     big.NewInt(0).Bytes(),
+	}
+	initializer := &entity.PaymentChannelInitializer{
+		InitDistribution: &entity.TokenDistribution{
+			Token: tokenInfo,
+			Distribution: []*entity.AccountAmtPair{
+				lowAddrDist, highAddrDist,
+			},
+		},
+		OpenDeadline:   1000000,
+		DisputeTimeout: 100,
+	}
+	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
+	if err != nil {
+		return
+	}
+
+	sig0, err := mainchain.SignMessage(peer0PrivKey, paymentChannelInitializerBytes)
+	if err != nil {
+		return
+	}
+
+	sig1, err := mainchain.SignMessage(peer1PrivKey, paymentChannelInitializerBytes)
+	if err != nil {
+		return
+	}
+
+	requestBytes, err := protobuf.Marshal(&chain.OpenChannelRequest{
+		ChannelInitializer: paymentChannelInitializerBytes,
+		Sigs:               [][]byte{sig0, sig1},
+	})
+	if err != nil {
+		return
+	}
+
+	channelIdChan := make(chan [32]byte)
+	go monitorOpenChannel(ledgerContract, channelIdChan)
+	tx, err := ledgerContract.OpenChannel(auth, requestBytes)
+	if err != nil {
+		return
+	}
+
+	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
+	channelId = <-channelIdChan
+	log.Info("channel ID: ", ctype.Bytes2Hex(channelId[:]))
+
+	return
 }

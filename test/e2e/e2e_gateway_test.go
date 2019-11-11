@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/subscribe"
@@ -55,19 +53,13 @@ func gatewayTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	transactor := tf.Transactor
-	celrContract, err := mainchain.NewERC20(ctype.Hex2Addr(MockCelerAddr), conn)
-	if err != nil {
-		t.Error(err)
-	}
-
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
-	// Call subscribe on guard contract
 	log.Info("Call subscribe on guard contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
-	tx, err := celrContract.Approve(auth, ctype.Hex2Addr(GuardAddr), amt)
+	tx, err := celrContract.Approve(auth, guardAddr, amt)
 	if err != nil {
 		t.Error(err)
 	}
@@ -91,7 +83,7 @@ func gatewayTest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	sleep(3)
+	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
 	if err != nil {

@@ -30,6 +30,7 @@ var (
 	RequestGuardIdKey          = types.RequestGuardIdKey
 	CLIQuerySubscription       = cli.QuerySubscription
 	CLIQueryRequest            = cli.QueryRequest
+	CLIQueryParams             = cli.QueryParams
 	DefaultParams              = types.DefaultParams
 )
 
