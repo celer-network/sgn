@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -90,7 +89,9 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	channelId := openChannel(client1PrivKey)
+	channelId, err := openChannel()
+	tf.ChkErr(err, "failed to open channel")
+
 	signedSimplexStateProto := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkErr(err, "failed to get signedSimplexStateBytes")
@@ -125,56 +126,6 @@ func subscribeTest(t *testing.T) {
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkErr(err, "failed to compile regexp")
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
-}
-
-func openChannel(client1PrivKey *ecdsa.PrivateKey) [32]byte {
-	log.Info("Call openChannel on ledger contract...")
-	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ledgerContract := tf.EthClient.Ledger
-	tokenInfo := &entity.TokenInfo{
-		TokenType:    entity.TokenType_ERC20,
-		TokenAddress: mockCelerAddr.Bytes(),
-	}
-	lowAddrDist := &entity.AccountAmtPair{
-		Account: tf.EthClient.Address[:],
-		Amt:     big.NewInt(0).Bytes(),
-	}
-	highAddrDist := &entity.AccountAmtPair{
-		Account: ctype.Hex2Bytes(client1AddrStr),
-		Amt:     big.NewInt(0).Bytes(),
-	}
-	initializer := &entity.PaymentChannelInitializer{
-		InitDistribution: &entity.TokenDistribution{
-			Token: tokenInfo,
-			Distribution: []*entity.AccountAmtPair{
-				lowAddrDist, highAddrDist,
-			},
-		},
-		OpenDeadline:   1000000,
-		DisputeTimeout: 100,
-	}
-	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
-	tf.ChkErr(err, "failed to get paymentChannelInitializerBytes")
-	sig0, err := mainchain.SignMessage(tf.EthClient.PrivateKey, paymentChannelInitializerBytes)
-	tf.ChkErr(err, "failed to get sig0")
-	sig1, err := mainchain.SignMessage(client1PrivKey, paymentChannelInitializerBytes)
-	tf.ChkErr(err, "failed to get sig1")
-	requestBytes, err := protobuf.Marshal(&chain.OpenChannelRequest{
-		ChannelInitializer: paymentChannelInitializerBytes,
-		Sigs:               [][]byte{sig0, sig1},
-	})
-	tf.ChkErr(err, "failed to get requestBytes")
-	channelIdChan := make(chan [32]byte)
-	go monitorOpenChannel(ledgerContract, channelIdChan)
-	tx, err := ledgerContract.OpenChannel(auth, requestBytes)
-	tf.ChkErr(err, "failed to OpenChannel")
-	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
-	channelId := <-channelIdChan
-	log.Info("channel ID: ", ctype.Bytes2Hex(channelId[:]))
-
-	return channelId
 }
 
 func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) *chain.SignedSimplexState {

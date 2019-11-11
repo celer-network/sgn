@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"testing"
@@ -9,7 +8,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/validator"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,7 +45,9 @@ func validatorTest(t *testing.T) {
 	transactor := tf.Transactor
 	amt := big.NewInt(100)
 
-	initializeCandidate()
+	err := initializeCandidate()
+	tf.ChkErr(err, "failed to initialize candidate")
+
 	log.Info("Query sgn about the validator candidate...")
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to queryCandidate")
@@ -55,7 +55,9 @@ func validatorTest(t *testing.T) {
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	delegateStake()
+	err = delegateStake()
+	tf.ChkErr(err, "failed to delegate stake")
+
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
 	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
 	tf.ChkErr(err, "failed to queryDelegator")
@@ -78,37 +80,4 @@ func validatorTest(t *testing.T) {
 	// TODO: use a better way to assert/check the validity of the lengthy query results.
 	// expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
 	// assert.Equal(t, expectedRes, validators.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-}
-
-func initializeCandidate() {
-	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	guardContract := tf.EthClient.Guard
-	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
-	tf.ChkErr(err, "Parse SGN address error")
-
-	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
-	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
-	tf.ChkErr(err, "failed to InitializeCandidate")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	sleepWithLog(30, "sgn syncing InitializeCandidate event on mainchain")
-}
-
-func delegateStake() {
-	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
-	guardContract := tf.EthClient.Guard
-
-	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	amt := big.NewInt(100)
-	tx, err := celrContract.Approve(auth, guardAddr, amt)
-	tf.ChkErr(err, "failed to approve CELR to Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
-	tx, err = guardContract.Delegate(auth, ethAddress, amt)
-	tf.ChkErr(err, "failed to call delegate of Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
-	sleepWithLog(30, "sgn syncing Delegate event on mainchain")
 }
