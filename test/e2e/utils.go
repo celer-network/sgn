@@ -24,6 +24,10 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
+const (
+	defaultTimeout = 30 * time.Second
+)
+
 func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }
@@ -42,13 +46,13 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 	return responseWithHeight.Result
 }
 
-func buildContextWithTimeout() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), 30 * time.Second)
+func buildContextWithTimeout(timeout time.Duration) context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	return ctx
 }
 
 func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
-	ctx := buildContextWithTimeout()
+	ctx := buildContextWithTimeout(defaultTimeout)
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
 
@@ -64,7 +68,7 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 }
 
 func delegateStake(fromAuth *bind.TransactOpts, toEthAddress ctype.Addr, amt *big.Int) error {
-	ctx := buildContextWithTimeout()
+	ctx := buildContextWithTimeout(defaultTimeout)
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
 
@@ -86,7 +90,7 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress ctype.Addr, amt *bi
 
 func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
 	log.Info("Call openChannel on ledger contract...")
-	ctx := buildContextWithTimeout()
+	ctx := buildContextWithTimeout(defaultTimeout)
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
 	ledgerContract := tf.EthClient.Ledger
