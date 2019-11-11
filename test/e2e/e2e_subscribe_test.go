@@ -128,7 +128,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "IntendSettle")
 
 	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
-	sleepWithLog(20, "sgn submitting state proof")
+	sleepWithLog(60, "sgn submitting state proof")
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
