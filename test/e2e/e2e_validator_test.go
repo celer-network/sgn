@@ -8,6 +8,7 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/validator"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,11 +42,14 @@ func validatorTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test validator ===========================")
 
+	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
 	transactor := tf.Transactor
 	amt := big.NewInt(100)
+	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
+	tf.ChkErr(err, "failed to parse sgn address")
 
-	err := initializeCandidate()
+	err = initializeCandidate(auth, sgnAddr)
 	tf.ChkErr(err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")
@@ -55,7 +59,7 @@ func validatorTest(t *testing.T) {
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	err = delegateStake()
+	err = delegateStake(auth, ethAddress, amt)
 	tf.ChkErr(err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")

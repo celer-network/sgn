@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +20,7 @@ import (
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
@@ -46,15 +47,10 @@ func buildContextWithTimeout() context.Context {
 	return ctx
 }
 
-func initializeCandidate() error {
+func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
 	ctx := buildContextWithTimeout()
 	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
 	guardContract := tf.EthClient.Guard
-	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
-	if err != nil {
-		return err
-	}
 
 	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
@@ -67,15 +63,12 @@ func initializeCandidate() error {
 	return nil
 }
 
-func delegateStake() error {
+func delegateStake(auth *bind.TransactOpts, ethAddress ctype.Addr, amt *big.Int) error {
 	ctx := buildContextWithTimeout()
 	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	amt := big.NewInt(100)
 	tx, err := celrContract.Approve(auth, guardAddr, amt)
 	if err != nil {
 		return err
@@ -91,9 +84,8 @@ func delegateStake() error {
 	return nil
 }
 
-func openChannel() (channelId [32]byte, err error) {
+func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
 	log.Info("Call openChannel on ledger contract...")
-	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	ctx := buildContextWithTimeout()
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
@@ -103,11 +95,11 @@ func openChannel() (channelId [32]byte, err error) {
 		TokenAddress: mockCelerAddr.Bytes(),
 	}
 	lowAddrDist := &entity.AccountAmtPair{
-		Account: tf.EthClient.Address.Bytes(),
+		Account: peer0Addr,
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	highAddrDist := &entity.AccountAmtPair{
-		Account: ctype.Hex2Bytes(client1AddrStr),
+		Account: peer1Addr,
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	initializer := &entity.PaymentChannelInitializer{
@@ -125,12 +117,12 @@ func openChannel() (channelId [32]byte, err error) {
 		return
 	}
 
-	sig0, err := mainchain.SignMessage(tf.EthClient.PrivateKey, paymentChannelInitializerBytes)
+	sig0, err := mainchain.SignMessage(peer0PrivKey, paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
 
-	sig1, err := mainchain.SignMessage(client1PrivKey, paymentChannelInitializerBytes)
+	sig1, err := mainchain.SignMessage(peer1PrivKey, paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}

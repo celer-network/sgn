@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -89,7 +90,7 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	channelId, err := openChannel()
+	channelId, err := openChannel(ethAddress.Bytes(), ctype.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey)
 	tf.ChkErr(err, "failed to open channel")
 
 	signedSimplexStateProto := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
