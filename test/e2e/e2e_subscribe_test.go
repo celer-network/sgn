@@ -145,6 +145,15 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn about the reward info:", reward.String())
 	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, params.RequestCost.String())
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	log.Info("Send tx on sidechain to withdraw reward")
+	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.String(), transactor.Key.GetAddress())
+	transactor.BroadcastTx(msgWithdrawReward)
+	sleepWithLog(10, "sgn withdrawing reward")
+
+	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	tf.ChkErr(err, "failed to query reward on sgn")
+	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
 }
 
 func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) *chain.SignedSimplexState {
