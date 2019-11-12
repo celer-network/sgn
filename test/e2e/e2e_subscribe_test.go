@@ -149,7 +149,7 @@ func subscribeTest(t *testing.T) {
 	log.Info("Send tx on sidechain to withdraw reward")
 	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.String(), transactor.Key.GetAddress())
 	transactor.BroadcastTx(msgWithdrawReward)
-	sleepWithLog(10, "sgn withdrawing reward")
+	sleepWithLog(60, "sgn withdrawing reward")
 
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query reward on sgn")
