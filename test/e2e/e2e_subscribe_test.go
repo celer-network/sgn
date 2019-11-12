@@ -128,7 +128,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "IntendSettle")
 
 	log.Info("Query sgn to check if validator has submitted the state proof correctly...")
-	sleepWithLog(120, "sgn submitting state proof")
+	sleepWithLog(20, "sgn submitting state proof")
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkErr(err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
@@ -143,6 +143,8 @@ func subscribeTest(t *testing.T) {
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
+	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %d`, 0, params.RequestCost)
+	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }
 
 func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) *chain.SignedSimplexState {
