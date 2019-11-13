@@ -154,6 +154,13 @@ func subscribeTest(t *testing.T) {
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
 	tf.ChkErr(err, "failed to query reward on sgn")
 	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
+
+	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
+	tf.ChkErr(err, "failed to redeem reward")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "redeem reward on Guard contract")
+	rsr, err := guardContract.RedeemedServiceReward(&bind.CallOpts{}, ethAddress)
+	tf.ChkErr(err, "failed to query redeemed service reward")
+	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 }
 
 func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) *chain.SignedSimplexState {
