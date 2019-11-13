@@ -61,14 +61,13 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
 	logger := ctx.Logger()
 
-	subscription, found := keeper.GetSubscription(ctx, msg.EthAddress)
-	if !found {
-		return sdk.ErrInternal("Cannot find subscription").Result()
+	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
+	if err != nil {
+		return sdk.ErrInternal(fmt.Sprintf("Failed to charge request fee: %s", err)).Result()
 	}
-	keeper.SetSubscription(ctx, subscription)
 
 	var signedSimplexState chain.SignedSimplexState
-	err := protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
+	err = protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to unmarshal signedSimplexStateBytes: %s", err)).Result()
 	}

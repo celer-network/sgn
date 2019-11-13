@@ -19,7 +19,7 @@
     "cron": {},
     "global": {
       "params": {
-        "epochLength": "60",
+        "epochLength": "10",
         "maxBlockDiff": "5",
         "confirmationCount": "5"
       }

@@ -195,7 +195,7 @@ func (k Keeper) HandleServiceReward(ctx sdk.Context, rewardCandidate Candidate, 
 	for _, delegator := range rewardCandidate.Delegators {
 		reward, found := k.GetReward(ctx, delegator.EthAddress)
 		if !found {
-			reward = NewReward()
+			reward = NewReward(delegator.EthAddress)
 		}
 
 		rewardAmt := totalReward.Mul(delegator.DelegatedStake).Quo(rewardCandidate.StakingPool)

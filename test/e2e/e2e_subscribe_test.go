@@ -16,6 +16,8 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/validator"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
@@ -61,10 +63,17 @@ func subscribeTest(t *testing.T) {
 	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
 	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
+	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
+	tf.ChkErr(err, "failed to parse sgn address")
 
-	log.Info("Call subscribe on guard contract...")
+	err = initializeCandidate(auth, sgnAddr)
+	tf.ChkErr(err, "failed to initialize candidate")
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
+	err = delegateStake(auth, ethAddress, amt)
+	tf.ChkErr(err, "failed to delegate stake")
+
+	log.Info("Call subscribe on guard contract...")
 	tx, err := celrContract.Approve(auth, guardAddr, amt)
 	tf.ChkErr(err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
@@ -127,6 +136,31 @@ func subscribeTest(t *testing.T) {
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkErr(err, "failed to compile regexp")
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
+
+	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+	tf.ChkErr(err, "failed to query params on sgn")
+	log.Infoln("Query sgn about the params info:", params.String())
+	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	tf.ChkErr(err, "failed to query reward on sgn")
+	log.Infoln("Query sgn about the reward info:", reward.String())
+	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, params.RequestCost.String())
+	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	log.Info("Send tx on sidechain to withdraw reward")
+	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.String(), transactor.Key.GetAddress())
+	transactor.BroadcastTx(msgWithdrawReward)
+	sleepWithLog(60, "sgn withdrawing reward")
+
+	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	tf.ChkErr(err, "failed to query reward on sgn")
+	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
+
+	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
+	tf.ChkErr(err, "failed to redeem reward")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "redeem reward on Guard contract")
+	rsr, err := guardContract.RedeemedServiceReward(&bind.CallOpts{}, ethAddress)
+	tf.ChkErr(err, "failed to query redeemed service reward")
+	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 }
 
 func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) *chain.SignedSimplexState {

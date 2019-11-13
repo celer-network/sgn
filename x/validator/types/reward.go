@@ -6,20 +6,23 @@ import (
 	"strings"
 
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/proto/sgn"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
 type Reward struct {
+	Receiver         string       `json:"receiver"`
 	MiningReward     sdk.Int      `json:"miningReward"`
 	ServiceReward    sdk.Int      `json:"serviceReward"`
 	RewardProtoBytes []byte       `json:"rewardProtoBytes"` // proto msg for reward snapshot from latest intendWithdraw
 	Sigs             []common.Sig `json:"sigs"`
 }
 
-func NewReward() Reward {
+func NewReward(receiver string) Reward {
 	return Reward{
+		Receiver:      receiver,
 		ServiceReward: sdk.ZeroInt(),
 		MiningReward:  sdk.ZeroInt(),
 	}
@@ -47,6 +50,7 @@ func (r Reward) HasNewReward() bool {
 // Initiate the withdraw process
 func (r *Reward) InitateWithdraw() {
 	rewardBytes, _ := protobuf.Marshal(&sgn.Reward{
+		Receiver:                ctype.Hex2Bytes(r.Receiver),
 		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
 		CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
 	})
