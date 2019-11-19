@@ -9,44 +9,54 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
 func (m *EthMonitor) processQueue() {
 	m.processPullerQueue()
-	m.processEventQueue()
-	m.processPusherQueue()
+	// m.processEventQueue()
+	// m.processPusherQueue()
 }
 
 func (m *EthMonitor) processEventQueue() {
-	secureBlockNum, err := m.getSecureBlockNum()
-	if err != nil {
-		log.Printf("Query secureBlockNum err", err)
-		return
+	// secureBlockNum, err := m.getSecureBlockNum()
+	// if err != nil {
+	// 	log.Printf("Query secureBlockNum err", err)
+	// 	return
+	// }
+
+	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := Event{}
+		event.MustUnMarshal(iterator.Value())
+		log.Printf("event", event.name, event.log)
 	}
 
-	for m.eventQueue.Len() > 0 {
-		e := m.eventQueue.Front().(Event)
-		if secureBlockNum < e.log.BlockNumber {
-			return
-		}
+	// for m.eventQueue.Len() > 0 {
+	// 	e := m.eventQueue.Front().(Event)
+	// 	if secureBlockNum < e.log.BlockNumber {
+	// 		return
+	// 	}
 
-		switch event := e.event.(type) {
-		case *mainchain.GuardInitializeCandidate:
-			m.handleInitializeCandidate(event)
-		case *mainchain.GuardDelegate:
-			m.handleDelegate(event)
-		case *mainchain.GuardValidatorChange:
-			m.handleValidatorChange(event)
-		case *mainchain.GuardIntendWithdraw:
-			m.handleIntendWithdraw(event)
-		case *mainchain.CelerLedgerIntendSettle:
-			m.handleIntendSettle(event)
-		}
+	// 	switch event := e.event.(type) {
+	// 	case *mainchain.GuardInitializeCandidate:
+	// 		m.handleInitializeCandidate(event)
+	// 	case *mainchain.GuardDelegate:
+	// 		m.handleDelegate(event)
+	// 	case *mainchain.GuardValidatorChange:
+	// 		m.handleValidatorChange(event)
+	// 	case *mainchain.GuardIntendWithdraw:
+	// 		m.handleIntendWithdraw(event)
+	// 	case *mainchain.CelerLedgerIntendSettle:
+	// 		m.handleIntendSettle(event)
+	// 	}
 
-		m.eventQueue.PopFront()
-	}
+	// 	m.eventQueue.PopFront()
+	// }
 }
 
 func (m *EthMonitor) processPullerQueue() {
@@ -146,7 +156,7 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.cdc, m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
+	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
 	if err != nil {
 		log.Printf("QueryPenaltyRequest err", err)
 		return

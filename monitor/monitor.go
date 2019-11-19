@@ -12,13 +12,13 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/deque"
+	dbm "github.com/tendermint/tm-db"
 )
 
 const (
@@ -33,7 +33,7 @@ var (
 type EthMonitor struct {
 	ethClient   *mainchain.EthClient
 	transactor  *transactor.Transactor
-	cdc         *codec.Codec
+	db          *dbm.GoLevelDB
 	pusherQueue deque.Deque
 	pullerQueue deque.Deque
 	eventQueue  deque.Deque
@@ -43,7 +43,7 @@ type EthMonitor struct {
 	isValidator bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, cdc *codec.Codec, pubkey string, transactors []string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, db *dbm.GoLevelDB, pubkey string, transactors []string) {
 	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
 	if err != nil {
 		log.Fatalf("NewBigCache err", err)
@@ -57,7 +57,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 	m := EthMonitor{
 		ethClient:   ethClient,
 		transactor:  transactor,
-		cdc:         cdc,
+		db:          db,
 		txMemo:      txMemo,
 		pubkey:      pubkey,
 		transactors: transactors,
@@ -95,23 +95,24 @@ func (m *EthMonitor) monitorBlockHead() {
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
-	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
-	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
-	if err != nil {
-		log.Println("WatchInitializeCandidate err: ", err)
-		return
-	}
-	defer sub.Unsubscribe()
+	// initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
+	// sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
+	// if err != nil {
+	// 	log.Println("WatchInitializeCandidate err: ", err)
+	// 	return
+	// }
+	// defer sub.Unsubscribe()
 
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Println("WatchInitializeCandidate err: ", err)
-		case initializeCandidate := <-initializeCandidateChan:
-			m.eventQueue.PushBack(NewEvent(initializeCandidate, initializeCandidate.Raw))
-			log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
-		}
-	}
+	// for {
+	// 	select {
+	// 	case err := <-sub.Err():
+	// 		log.Println("WatchInitializeCandidate err: ", err)
+	// 	case initializeCandidate := <-initializeCandidateChan:
+	// 		event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
+	// 		m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
+	// 		log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
+	// 	}
+	// }
 }
 
 func (m *EthMonitor) monitorDelegate() {
@@ -129,7 +130,8 @@ func (m *EthMonitor) monitorDelegate() {
 		case err := <-sub.Err():
 			log.Printf("WatchDelegate err", err)
 		case delegate := <-delegateChan:
-			m.eventQueue.PushBack(NewEvent(delegate, delegate.Raw))
+			event := NewEvent(Delegate, delegate.Raw)
+			m.db.Set(GetEventKey(delegate.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -148,7 +150,8 @@ func (m *EthMonitor) monitorValidatorChange() {
 		case err := <-sub.Err():
 			log.Printf("WatchValidatorChange err", err)
 		case validatorChange := <-validatorChangeChan:
-			m.eventQueue.PushBack(NewEvent(validatorChange, validatorChange.Raw))
+			event := NewEvent(ValidatorChange, validatorChange.Raw)
+			m.db.Set(GetEventKey(validatorChange.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -167,7 +170,8 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 		case err := <-sub.Err():
 			log.Printf("WatchIntendWithdraw err", err)
 		case intendWithdraw := <-intendWithdrawChan:
-			m.eventQueue.PushBack(NewEvent(intendWithdraw, intendWithdraw.Raw))
+			event := NewEvent(IntendWithdraw, intendWithdraw.Raw)
+			m.db.Set(GetEventKey(intendWithdraw.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -186,7 +190,8 @@ func (m *EthMonitor) monitorIntendSettle() {
 		case err := <-sub.Err():
 			log.Printf("WatchIntendSettle err", err)
 		case intendSettle := <-intendSettleChan:
-			m.eventQueue.PushBack(NewEvent(intendSettle, intendSettle.Raw))
+			event := NewEvent(IntendSettle, intendSettle.Raw)
+			m.db.Set(GetEventKey(intendSettle.Raw), event.MustMarshal())
 		}
 	}
 }

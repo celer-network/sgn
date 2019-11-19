@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
@@ -387,10 +388,24 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		viper.GetString(flags.FlagSgnGasPrice),
 		app.cdc,
 	)
-
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
 
-	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
+	db, err := dbm.NewGoLevelDB("monitor", filepath.Join(DefaultNodeHome, "data"))
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	prefix := []byte{0x01}
+	// db.SetSync(append(prefix, []byte{0x01}...), []byte("a"))
+	// db.SetSync(append(prefix, []byte{0x02}...), []byte("0x02"))
+	iterator := db.Iterator(prefix, prefix)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		ctx.Logger().Info(string(iterator.Value()))
+	}
+
+	monitor.NewEthMonitor(ethClient, transactor, db, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
 }
