@@ -1,0 +1,67 @@
+version: '3'
+
+services:
+  sgnnode0:
+    container_name: sgnnode0
+    image: "celer-network/sgnnode"
+    ports:
+      - "26656-26657:26656-26657"
+    environment:
+      - ID=0
+      - LOG=${LOG:-sgn.log}
+    volumes:
+      - ./build:/sgn:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.2
+
+  sgnnode1:
+    container_name: sgnnode1
+    image: "celer-network/sgnnode"
+    ports:
+      - "26659-26660:26656-26657"
+    environment:
+      - ID=1
+      - LOG=${LOG:-sgn.log}
+    volumes:
+      - ./build:/sgn:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.3
+
+  sgnnode2:
+    container_name: sgnnode2
+    image: "celer-network/sgnnode"
+    environment:
+      - ID=2
+      - LOG=${LOG:-sgn.log}
+    ports:
+      - "26661-26662:26656-26657"
+    volumes:
+      - ./build:/sgn:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.4
+
+  sgnnode3:
+    container_name: sgnnode3
+    image: "celer-network/sgnnode"
+    environment:
+      - ID=3
+      - LOG=${LOG:-sgn.log}
+    ports:
+      - "26663-26664:26656-26657"
+    volumes:
+      - ./build:/sgn:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.5
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      -
+        subnet: 192.168.10.0/16
