@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/flags"
@@ -396,10 +397,14 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		viper.GetString(flags.FlagSgnGasPrice),
 		app.cdc,
 	)
-
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
 
-	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
+	db, err := dbm.NewGoLevelDB("monitor", filepath.Join(DefaultNodeHome, "data"))
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	monitor.NewEthMonitor(ethClient, transactor, db, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
 }
