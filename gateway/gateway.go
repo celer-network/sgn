@@ -1,12 +1,12 @@
 package gateway
 
 import (
-	"fmt"
 	"net"
 	"os"
 	"time"
 
 	"github.com/celer-network/sgn/app"
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,17 +16,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/libs/log"
+	tlog "github.com/tendermint/tendermint/libs/log"
 	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
 )
 
 // RestServer represents the Light Client Rest server
 type RestServer struct {
-	Mux *mux.Router
-
+	Mux            *mux.Router
 	transactorPool *transactor.TransactorPool
-	log            log.Logger
 	listener       net.Listener
+	logger         tlog.Logger
 }
 
 // NewRestServer creates a new rest server instance
@@ -51,12 +50,12 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 
 	r := mux.NewRouter()
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
 	return &RestServer{
 		Mux:            r,
 		transactorPool: transactorPool,
-		log:            logger,
+		logger:         logger,
 	}, nil
 }
 
@@ -64,7 +63,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) (err error) {
 	server.TrapSignal(func() {
 		err := rs.listener.Close()
-		rs.log.Error("error closing listener", "err", err)
+		log.Errorln("error closing listener err", err)
 	})
 
 	cfg := rpcserver.DefaultConfig()
@@ -76,14 +75,9 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	if err != nil {
 		return
 	}
-	rs.log.Info(
-		fmt.Sprintf(
-			"Starting application REST service (chain-id: %q)...",
-			viper.GetString(sdkFlags.FlagChainID),
-		),
-	)
+	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 
-	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.log, cfg)
+	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.logger, cfg)
 }
 
 func (rs *RestServer) registerRoutes() {
