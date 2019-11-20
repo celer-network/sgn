@@ -132,7 +132,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		cmn.Exit(err.Error())
 	}
 
-	setLogLevel(viper.GetString(flags.FlagSgnLogLevel))
+	log.SetLevelStr(viper.GetString(flags.FlagSgnLogLevel))
 	if viper.GetBool(flags.FlagSgnLogColor) {
 		log.EnableColor()
 	}
@@ -402,26 +402,4 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 	}
 
 	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
-}
-
-func setLogLevel(level string) {
-	switch level {
-	case "trace":
-		log.SetLevel(log.TraceLevel)
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-	case "info":
-		log.SetLevel(log.InfoLevel)
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-	case "error":
-		log.SetLevel(log.ErrorLevel)
-	case "fatal":
-		log.SetLevel(log.FatalLevel)
-	case "panic":
-		log.SetLevel(log.PanicLevel)
-	default:
-		log.Warn("invalid log level input, set log to InfoLevel by default")
-		log.SetLevel(log.InfoLevel)
-	}
 }

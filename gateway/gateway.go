@@ -49,6 +49,14 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
+	log.SetLevelStr(viper.GetString(flags.FlagSgnLogLevel))
+	if viper.GetBool(flags.FlagSgnLogColor) {
+		log.EnableColor()
+	}
+	if viper.GetBool(flags.FlagSgnLogLongFile) {
+		log.EnableLongFile()
+	}
+
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 

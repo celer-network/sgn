@@ -309,6 +309,28 @@ func EnableLongFile() {
 	std.longfile = true
 }
 
+func SetLevelStr(level string) {
+	switch level {
+	case "trace":
+		SetLevel(TraceLevel)
+	case "debug":
+		SetLevel(DebugLevel)
+	case "info":
+		SetLevel(InfoLevel)
+	case "warn":
+		SetLevel(WarnLevel)
+	case "error":
+		SetLevel(ErrorLevel)
+	case "fatal":
+		SetLevel(FatalLevel)
+	case "panic":
+		SetLevel(PanicLevel)
+	default:
+		Warn("invalid log level input, set log to InfoLevel by default")
+		SetLevel(InfoLevel)
+	}
+}
+
 func SetLevel(level Level) {
 	std.rw.Lock()
 	defer std.rw.Unlock()

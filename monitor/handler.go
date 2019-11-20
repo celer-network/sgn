@@ -29,7 +29,7 @@ func (m *EthMonitor) handleInitializeCandidate(event *mainchain.GuardInitializeC
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
-	log.Infoln("New delegate", delegate.Candidate)
+	log.Infof("New delegate %x", delegate.Candidate)
 	if m.isPullerOrOwner(delegate.Candidate.String()) {
 		m.syncDelegator(delegate.Candidate, delegate.Delegator)
 	}
@@ -42,7 +42,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 }
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
-	log.Infoln("New validator change", validatorChange.EthAddr, validatorChange.ChangeType)
+	log.Infof("New validator change %x, %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	doSync := m.isPuller()
 
 	if validatorChange.EthAddr.String() == m.ethClient.Address.String() {
@@ -61,7 +61,7 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValid
 }
 
 func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendWithdraw) {
-	log.Infoln("New intend withdraw", intendWithdraw.Candidate)
+	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate.String()) {
 		m.syncValidator(intendWithdraw.Candidate)
@@ -69,7 +69,7 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 }
 
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	log.Infoln("New intend settle", intendSettle.ChannelId)
+	log.Infof("New intend settle %x", intendSettle.ChannelId)
 	request, err := m.getRequest(intendSettle.ChannelId[:])
 	// TODO: a "not found" error should be regarded as a normal situation for not-guarded channels
 	if err != nil {
@@ -140,7 +140,7 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Infoln("ClaimValidator tx detail", tx)
+	log.Infof("ClaimValidator tx detail %+v", tx)
 }
 
 func (m *EthMonitor) claimValidator() {

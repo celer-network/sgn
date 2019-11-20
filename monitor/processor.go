@@ -126,7 +126,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		log.Errorln("intendSettle err", err)
 		return
 	}
-	log.Infoln("IntendSettle tx detail", tx)
+	log.Infof("IntendSettle tx detail %+v", tx)
 
 	triggerTxHash := intendSettle.Raw.TxHash.Hex()
 	msg := subscribe.NewMsgGuardProof(channelId, triggerTxHash, tx.Hash().Hex(), m.transactor.Key.GetAddress())
