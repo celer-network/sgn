@@ -25,7 +25,8 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
 	log.Printf("store initializeCandidate event to puller db: %+v", initializeCandidate)
-	m.pullerQueue.PushBack(initializeCandidate)
+	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
+	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
@@ -82,7 +83,8 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		return
 	}
 
-	m.pusherQueue.PushBack(intendSettle)
+	event := NewEvent(IntendSettle, intendSettle.Raw)
+	m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 }
 
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {

@@ -30,6 +30,12 @@ func NewEvent(name EventName, l types.Log) Event {
 	}
 }
 
+func NewEventFromBytes(input []byte) Event {
+	event := Event{}
+	event.MustUnMarshal(input)
+	return event
+}
+
 // Marshal event into json bytes
 func (e Event) MustMarshal() []byte {
 	res, err := json.Marshal(&e)
@@ -61,6 +67,15 @@ func (e Event) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
 		panic(err)
 	}
 
+	switch tmp := res.(type) {
+	case *mainchain.GuardInitializeCandidate:
+		tmp.Raw = e.Log
+		res = tmp
+	case *mainchain.CelerLedgerIntendSettle:
+		tmp.Raw = e.Log
+		res = tmp
+	}
+
 	return
 }
 
@@ -72,4 +87,23 @@ func NewPenaltyEvent(nonce uint64) PenaltyEvent {
 	return PenaltyEvent{
 		nonce: nonce,
 	}
+}
+
+func NewPenaltyEventFromBytes(input []byte) PenaltyEvent {
+	event := PenaltyEvent{}
+	err := json.Unmarshal(input, event)
+	if err != nil {
+		panic(err)
+	}
+	return event
+}
+
+// Marshal event into json bytes
+func (e PenaltyEvent) MustMarshal() []byte {
+	res, err := json.Marshal(&e)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
 }

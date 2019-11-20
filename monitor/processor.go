@@ -15,9 +15,10 @@ import (
 )
 
 func (m *EthMonitor) processQueue() {
-	// m.processPullerQueue()
+	m.processPullerQueue()
 	m.processEventQueue()
-	// m.processPusherQueue()
+	m.processPusherQueue()
+	m.processPenaltyQueue()
 }
 
 func (m *EthMonitor) processEventQueue() {
@@ -31,15 +32,17 @@ func (m *EthMonitor) processEventQueue() {
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		event := Event{}
-		event.MustUnMarshal(iterator.Value())
+		event := NewEventFromBytes(iterator.Value())
 		if secureBlockNum < event.Log.BlockNumber {
 			continue
 		}
 
-		log.Printf("process event", event.Name, event.Log.BlockNumber)
+		log.Printf("process mainchain event", event.Name, event.Log.BlockNumber)
+		m.db.Delete(iterator.Key())
+
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
+			e.Raw = event.Log
 			m.handleInitializeCandidate(e)
 		case *mainchain.GuardDelegate:
 			m.handleDelegate(e)
@@ -50,8 +53,6 @@ func (m *EthMonitor) processEventQueue() {
 		case *mainchain.CelerLedgerIntendSettle:
 			m.handleIntendSettle(e)
 		}
-
-		m.db.Delete(iterator.Key())
 	}
 }
 
@@ -60,10 +61,17 @@ func (m *EthMonitor) processPullerQueue() {
 		return
 	}
 
-	for m.pullerQueue.Len() != 0 {
-		switch event := m.pullerQueue.PopFront().(type) {
+	iterator := m.db.Iterator(PullerKeyPrefix, storetypes.PrefixEndBytes(PullerKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		log.Printf("process puller event", event.Name)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
-			m.processInitializeCandidate(event)
+			m.processInitializeCandidate(e)
 		}
 	}
 }
@@ -75,15 +83,30 @@ func (m *EthMonitor) processPusherQueue() {
 		return
 	}
 
-	for pusherLen := m.pusherQueue.Len(); pusherLen > 0; pusherLen-- {
-		switch event := m.pusherQueue.PopFront().(type) {
-		// TODO: also need to monitor and process intendWithdraw event
-		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(event, latestBlock.Number)
-		case PenaltyEvent:
-			m.processPenalty(event)
+	iterator := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
+	defer iterator.Close()
 
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		log.Printf("process pusher event", event.Name)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.CelerLedgerIntendSettle:
+			m.processIntendSettle(e, latestBlock.Number)
 		}
+	}
+}
+
+func (m *EthMonitor) processPenaltyQueue() {
+	iterator := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewPenaltyEventFromBytes(iterator.Value())
+		log.Printf("process penalty event", event.nonce)
+		m.db.Delete(iterator.Key())
+		m.processPenalty(event)
 	}
 }
 
@@ -109,7 +132,8 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	}
 
 	if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
-		m.pusherQueue.PushBack(intendSettle)
+		event := NewEvent(IntendSettle, intendSettle.Raw)
+		m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 		return
 	}
 
@@ -161,7 +185,7 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
 		log.Printf("Punish err", err)
-		m.pusherQueue.PushBack(penaltyEvent)
+		m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		return
 	}
 

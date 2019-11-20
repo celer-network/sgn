@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -18,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/gammazero/deque"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -35,8 +33,6 @@ type EthMonitor struct {
 	ethClient   *mainchain.EthClient
 	transactor  *transactor.Transactor
 	db          *dbm.GoLevelDB
-	pusherQueue deque.Deque
-	pullerQueue deque.Deque
 	txMemo      *bigcache.BigCache
 	pubkey      string
 	transactors []string
@@ -89,53 +85,30 @@ func (m *EthMonitor) monitorBlockHead() {
 			log.Printf("SubscribeNewHead err", err)
 		case header := <-headerChan:
 			m.handleNewBlock(header)
-			// go m.processQueue()
+			go m.processQueue()
 		}
 	}
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
-	it, err := m.ethClient.Guard.FilterInitializeCandidate(nil, nil, nil)
+	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
+	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
 	if err != nil {
 		log.Println("WatchInitializeCandidate err: ", err)
 		return
 	}
+	defer sub.Unsubscribe()
 
-	defer it.Close()
-
-	for it.Next() {
-		initializeCandidate := it.Event
-		e, _ := json.Marshal(initializeCandidate)
-		var e1 interface{}
-		err = json.Unmarshal(e, &e1)
-		if err != nil {
+	for {
+		select {
+		case err := <-sub.Err():
 			log.Println("WatchInitializeCandidate err: ", err)
-			return
+		case initializeCandidate := <-initializeCandidateChan:
+			event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
+			m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
+			log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
 		}
-		log.Println("event", e1.(mainchain.GuardInitializeCandidate))
-		event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
-		m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
 	}
-	go m.processQueue()
-
-	// initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
-	// sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
-	// if err != nil {
-	// 	log.Println("WatchInitializeCandidate err: ", err)
-	// 	return
-	// }
-	// defer sub.Unsubscribe()
-
-	// for {
-	// 	select {
-	// 	case err := <-sub.Err():
-	// 		log.Println("WatchInitializeCandidate err: ", err)
-	// 	case initializeCandidate := <-initializeCandidateChan:
-	// 		event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
-	// 		m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
-	// 		log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
-	// 	}
-	// }
 }
 
 func (m *EthMonitor) monitorDelegate() {
@@ -239,7 +212,7 @@ func (m *EthMonitor) monitorSlash() {
 			m.handlePenalty(nonce)
 
 			penaltyEvent := NewPenaltyEvent(nonce)
-			m.pusherQueue.PushBack(penaltyEvent)
+			m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		}
 	})
 }
