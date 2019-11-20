@@ -22,10 +22,10 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	m.transactor.BroadcastTx(msg)
 }
 
-func (m *EthMonitor) handleInitializeCandidate(event *mainchain.GuardInitializeCandidate) {
-	log.Infof("Push initializeCandidate event to pullerQueue: candidate %x, min self stake %s, sidechain addr %x",
-		event.Candidate, event.MinSelfStake.String(), event.SidechainAddr)
-	m.pullerQueue.PushBack(event)
+func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
+	log.Infof("store initializeCandidate event to puller db: %+v", initializeCandidate)
+	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
+	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
@@ -82,7 +82,8 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		return
 	}
 
-	m.pusherQueue.PushBack(intendSettle)
+	event := NewEvent(IntendSettle, intendSettle.Raw)
+	m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 }
 
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {

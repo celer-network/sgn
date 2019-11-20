@@ -80,7 +80,7 @@ func GetCmdPenaltyRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			penaltyRequest, err := QueryPenaltyRequest(cdc, cliCtx, queryRoute, nonce)
+			penaltyRequest, err := QueryPenaltyRequest(cliCtx, queryRoute, nonce)
 			if err != nil {
 				return err
 			}
@@ -92,7 +92,7 @@ func GetCmdPenaltyRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query penalty info
-func QueryPenaltyRequest(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string, nonce uint64) (penaltyRequest []byte, err error) {
+func QueryPenaltyRequest(cliCtx context.CLIContext, queryRoute string, nonce uint64) (penaltyRequest []byte, err error) {
 	penalty, err := QueryPenalty(cliCtx, queryRoute, nonce)
 	if err != nil {
 		return

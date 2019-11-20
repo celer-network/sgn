@@ -12,13 +12,12 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/gammazero/deque"
+	dbm "github.com/tendermint/tm-db"
 )
 
 const (
@@ -33,17 +32,14 @@ var (
 type EthMonitor struct {
 	ethClient   *mainchain.EthClient
 	transactor  *transactor.Transactor
-	cdc         *codec.Codec
-	pusherQueue deque.Deque
-	pullerQueue deque.Deque
-	eventQueue  deque.Deque
+	db          *dbm.GoLevelDB
 	txMemo      *bigcache.BigCache
 	pubkey      string
 	transactors []string
 	isValidator bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, cdc *codec.Codec, pubkey string, transactors []string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, db *dbm.GoLevelDB, pubkey string, transactors []string) {
 	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
 	if err != nil {
 		log.Fatalln("NewBigCache err", err)
@@ -57,7 +53,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 	m := EthMonitor{
 		ethClient:   ethClient,
 		transactor:  transactor,
-		cdc:         cdc,
+		db:          db,
 		txMemo:      txMemo,
 		pubkey:      pubkey,
 		transactors: transactors,
@@ -106,11 +102,11 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Errorln("WatchInitializeCandidate err:", err)
-		case event := <-initializeCandidateChan:
-			m.eventQueue.PushBack(NewEvent(event, event.Raw))
-			log.Infof("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: candidate %x, min self stake %s, sidechain addr %x",
-				event.Candidate, event.MinSelfStake.String(), event.SidechainAddr)
+			log.Errorln("WatchInitializeCandidate err: ", err)
+		case initializeCandidate := <-initializeCandidateChan:
+			event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
+			m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
+			log.Infof("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
 		}
 	}
 }
@@ -130,7 +126,8 @@ func (m *EthMonitor) monitorDelegate() {
 		case err := <-sub.Err():
 			log.Errorln("WatchDelegate err", err)
 		case delegate := <-delegateChan:
-			m.eventQueue.PushBack(NewEvent(delegate, delegate.Raw))
+			event := NewEvent(Delegate, delegate.Raw)
+			m.db.Set(GetEventKey(delegate.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -149,7 +146,8 @@ func (m *EthMonitor) monitorValidatorChange() {
 		case err := <-sub.Err():
 			log.Errorln("WatchValidatorChange err", err)
 		case validatorChange := <-validatorChangeChan:
-			m.eventQueue.PushBack(NewEvent(validatorChange, validatorChange.Raw))
+			event := NewEvent(ValidatorChange, validatorChange.Raw)
+			m.db.Set(GetEventKey(validatorChange.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -168,7 +166,8 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 		case err := <-sub.Err():
 			log.Errorln("WatchIntendWithdraw err", err)
 		case intendWithdraw := <-intendWithdrawChan:
-			m.eventQueue.PushBack(NewEvent(intendWithdraw, intendWithdraw.Raw))
+			event := NewEvent(IntendWithdraw, intendWithdraw.Raw)
+			m.db.Set(GetEventKey(intendWithdraw.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -187,7 +186,8 @@ func (m *EthMonitor) monitorIntendSettle() {
 		case err := <-sub.Err():
 			log.Errorln("WatchIntendSettle err", err)
 		case intendSettle := <-intendSettleChan:
-			m.eventQueue.PushBack(NewEvent(intendSettle, intendSettle.Raw))
+			event := NewEvent(IntendSettle, intendSettle.Raw)
+			m.db.Set(GetEventKey(intendSettle.Raw), event.MustMarshal())
 		}
 	}
 }
@@ -212,7 +212,7 @@ func (m *EthMonitor) monitorSlash() {
 			m.handlePenalty(nonce)
 
 			penaltyEvent := NewPenaltyEvent(nonce)
-			m.pusherQueue.PushBack(penaltyEvent)
+			m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		}
 	})
 }

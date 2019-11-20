@@ -9,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	protobuf "github.com/golang/protobuf/proto"
 )
@@ -17,6 +18,7 @@ func (m *EthMonitor) processQueue() {
 	m.processPullerQueue()
 	m.processEventQueue()
 	m.processPusherQueue()
+	m.processPenaltyQueue()
 }
 
 func (m *EthMonitor) processEventQueue() {
@@ -26,26 +28,30 @@ func (m *EthMonitor) processEventQueue() {
 		return
 	}
 
-	for m.eventQueue.Len() > 0 {
-		e := m.eventQueue.Front().(Event)
-		if secureBlockNum < e.log.BlockNumber {
-			return
+	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
 		}
 
-		switch event := e.event.(type) {
+		log.Infoln("process mainchain event", event.Name, event.Log.BlockNumber)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
-			m.handleInitializeCandidate(event)
+			m.handleInitializeCandidate(e)
 		case *mainchain.GuardDelegate:
-			m.handleDelegate(event)
+			m.handleDelegate(e)
 		case *mainchain.GuardValidatorChange:
-			m.handleValidatorChange(event)
+			m.handleValidatorChange(e)
 		case *mainchain.GuardIntendWithdraw:
-			m.handleIntendWithdraw(event)
+			m.handleIntendWithdraw(e)
 		case *mainchain.CelerLedgerIntendSettle:
-			m.handleIntendSettle(event)
+			m.handleIntendSettle(e)
 		}
-
-		m.eventQueue.PopFront()
 	}
 }
 
@@ -54,10 +60,17 @@ func (m *EthMonitor) processPullerQueue() {
 		return
 	}
 
-	for m.pullerQueue.Len() != 0 {
-		switch event := m.pullerQueue.PopFront().(type) {
+	iterator := m.db.Iterator(PullerKeyPrefix, storetypes.PrefixEndBytes(PullerKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		log.Infoln("process puller event", event.Name)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
-			m.processInitializeCandidate(event)
+			m.processInitializeCandidate(e)
 		}
 	}
 }
@@ -69,15 +82,30 @@ func (m *EthMonitor) processPusherQueue() {
 		return
 	}
 
-	for pusherLen := m.pusherQueue.Len(); pusherLen > 0; pusherLen-- {
-		switch event := m.pusherQueue.PopFront().(type) {
-		// TODO: also need to monitor and process intendWithdraw event
-		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(event, latestBlock.Number)
-		case PenaltyEvent:
-			m.processPenalty(event)
+	iterator := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
+	defer iterator.Close()
 
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		log.Infoln("process pusher event", event.Name)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.CelerLedgerIntendSettle:
+			m.processIntendSettle(e, latestBlock.Number)
 		}
+	}
+}
+
+func (m *EthMonitor) processPenaltyQueue() {
+	iterator := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewPenaltyEventFromBytes(iterator.Value())
+		log.Infoln("process penalty event", event.nonce)
+		m.db.Delete(iterator.Key())
+		m.processPenalty(event)
 	}
 }
 
@@ -103,7 +131,8 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	}
 
 	if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
-		m.pusherQueue.PushBack(intendSettle)
+		event := NewEvent(IntendSettle, intendSettle.Raw)
+		m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 		return
 	}
 
@@ -146,7 +175,7 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.cdc, m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
+	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
 	if err != nil {
 		log.Errorln("QueryPenaltyRequest err", err)
 		return
@@ -155,7 +184,7 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
 		log.Errorln("Punish err", err)
-		m.pusherQueue.PushBack(penaltyEvent)
+		m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		return
 	}
 
