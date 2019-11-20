@@ -99,10 +99,7 @@ func NewPenaltyEvent(nonce uint64) PenaltyEvent {
 
 func NewPenaltyEventFromBytes(input []byte) PenaltyEvent {
 	event := PenaltyEvent{}
-	err := json.Unmarshal(input, event)
-	if err != nil {
-		panic(err)
-	}
+	event.MustUnMarshal(input)
 	return event
 }
 
@@ -114,4 +111,12 @@ func (e PenaltyEvent) MustMarshal() []byte {
 	}
 
 	return res
+}
+
+// Unmarshal json bytes to penalty event
+func (e *PenaltyEvent) MustUnMarshal(input []byte) {
+	err := json.Unmarshal(input, e)
+	if err != nil {
+		panic(err)
+	}
 }

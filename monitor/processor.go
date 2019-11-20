@@ -42,7 +42,6 @@ func (m *EthMonitor) processEventQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
-			e.Raw = event.Log
 			m.handleInitializeCandidate(e)
 		case *mainchain.GuardDelegate:
 			m.handleDelegate(e)
