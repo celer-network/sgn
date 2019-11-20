@@ -58,6 +58,10 @@ func TestMain(m *testing.M) {
 	tf.ChkErr(err, "fund server")
 	e2eProfile, mockCelerAddr = setupMainchain()
 
+	// make install sgn and sgncli
+	err = installSgn()
+	tf.ChkErr(err, "installing sgn and sgncli")
+
 	// run all e2e tests
 	ret := m.Run()
 
