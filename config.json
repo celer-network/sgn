@@ -13,9 +13,9 @@
     "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
     "chainID": "sgnchain",
     "nodeURI": "tcp://localhost:26657",
-    "gasPrice": "",
-    "logcolor": true,
-    "loglevel": "debug",
-    "loglongfile": true
-  }
+    "gasPrice": ""
+  },
+  "logcolor": true,
+  "loglevel": "debug",
+  "loglongfile": true
 }
