@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
+	log "github.com/celer-network/sgn/clog"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"

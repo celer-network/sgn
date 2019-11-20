@@ -3,11 +3,11 @@ package monitor
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
 	"github.com/allegro/bigcache"
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
@@ -46,12 +46,12 @@ type EthMonitor struct {
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, cdc *codec.Codec, pubkey string, transactors []string) {
 	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
 	if err != nil {
-		log.Fatalf("NewBigCache err", err)
+		log.Fatalln("NewBigCache err", err)
 	}
 
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
-		log.Fatalf("GetCandidateInfo err", err)
+		log.Fatalln("GetCandidateInfo err", err)
 	}
 
 	m := EthMonitor{
@@ -78,7 +78,7 @@ func (m *EthMonitor) monitorBlockHead() {
 	headerChan := make(chan *types.Header)
 	sub, err := m.ethClient.Client.SubscribeNewHead(context.Background(), headerChan)
 	if err != nil {
-		log.Printf("SubscribeNewHead err", err)
+		log.Errorln("SubscribeNewHead err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -86,7 +86,7 @@ func (m *EthMonitor) monitorBlockHead() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("SubscribeNewHead err", err)
+			log.Errorln("SubscribeNewHead err", err)
 		case header := <-headerChan:
 			m.handleNewBlock(header)
 			go m.processQueue()
@@ -98,7 +98,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
 	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
 	if err != nil {
-		log.Println("WatchInitializeCandidate err: ", err)
+		log.Errorln("WatchInitializeCandidate err:", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -106,10 +106,11 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Println("WatchInitializeCandidate err: ", err)
-		case initializeCandidate := <-initializeCandidateChan:
-			m.eventQueue.PushBack(NewEvent(initializeCandidate, initializeCandidate.Raw))
-			log.Printf("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
+			log.Errorln("WatchInitializeCandidate err:", err)
+		case event := <-initializeCandidateChan:
+			m.eventQueue.PushBack(NewEvent(event, event.Raw))
+			log.Infof("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: candidate %x, min self stake %s, sidechain addr %x",
+				event.Candidate, event.MinSelfStake.String(), event.SidechainAddr)
 		}
 	}
 }
@@ -119,7 +120,7 @@ func (m *EthMonitor) monitorDelegate() {
 
 	sub, err := m.ethClient.Guard.WatchDelegate(nil, delegateChan, nil, []ethcommon.Address{m.ethClient.Address})
 	if err != nil {
-		log.Printf("WatchDelegate err", err)
+		log.Errorln("WatchDelegate err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -127,7 +128,7 @@ func (m *EthMonitor) monitorDelegate() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchDelegate err", err)
+			log.Errorln("WatchDelegate err", err)
 		case delegate := <-delegateChan:
 			m.eventQueue.PushBack(NewEvent(delegate, delegate.Raw))
 		}
@@ -138,7 +139,7 @@ func (m *EthMonitor) monitorValidatorChange() {
 	validatorChangeChan := make(chan *mainchain.GuardValidatorChange)
 	sub, err := m.ethClient.Guard.WatchValidatorChange(nil, validatorChangeChan, nil, nil)
 	if err != nil {
-		log.Printf("WatchValidatorChange err", err)
+		log.Errorln("WatchValidatorChange err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -146,7 +147,7 @@ func (m *EthMonitor) monitorValidatorChange() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchValidatorChange err", err)
+			log.Errorln("WatchValidatorChange err", err)
 		case validatorChange := <-validatorChangeChan:
 			m.eventQueue.PushBack(NewEvent(validatorChange, validatorChange.Raw))
 		}
@@ -157,7 +158,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 	intendWithdrawChan := make(chan *mainchain.GuardIntendWithdraw)
 	sub, err := m.ethClient.Guard.WatchIntendWithdraw(nil, intendWithdrawChan, nil, nil)
 	if err != nil {
-		log.Printf("WatchIntendWithdraw err", err)
+		log.Errorln("WatchIntendWithdraw err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -165,7 +166,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchIntendWithdraw err", err)
+			log.Errorln("WatchIntendWithdraw err", err)
 		case intendWithdraw := <-intendWithdrawChan:
 			m.eventQueue.PushBack(NewEvent(intendWithdraw, intendWithdraw.Raw))
 		}
@@ -176,7 +177,7 @@ func (m *EthMonitor) monitorIntendSettle() {
 	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
 	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, nil)
 	if err != nil {
-		log.Printf("WatchIntendSettle err", err)
+		log.Errorln("WatchIntendSettle err", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -184,7 +185,7 @@ func (m *EthMonitor) monitorIntendSettle() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Printf("WatchIntendSettle err", err)
+			log.Errorln("WatchIntendSettle err", err)
 		case intendSettle := <-intendSettleChan:
 			m.eventQueue.PushBack(NewEvent(intendSettle, intendSettle.Raw))
 		}
@@ -204,7 +205,7 @@ func (m *EthMonitor) monitorSlash() {
 		if event.Attributes[0].Value == slash.ActionPenalty {
 			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
 			if err != nil {
-				log.Printf("Parse penalty nonce error", err)
+				log.Errorln("Parse penalty nonce error", err)
 				return
 			}
 
@@ -222,7 +223,7 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 			hasSeenEvent := false
 			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{eventTag}, page, txsPageLimit)
 			if err != nil {
-				log.Printf("QueryTxsByEvents err", err)
+				log.Errorln("QueryTxsByEvents err", err)
 				break
 			}
 

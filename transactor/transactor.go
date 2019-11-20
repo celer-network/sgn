@@ -1,9 +1,9 @@
 package transactor
 
 import (
-	"log"
 	"time"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -82,34 +82,34 @@ func (t *Transactor) start() {
 			continue
 		}
 
-		log.Printf("Packing %d messages in batch for broadcast", t.msgQueue.Len())
+		log.Infof("Packing %d messages in batch for broadcast", t.msgQueue.Len())
 		var msgs []sdk.Msg
 		for t.msgQueue.Len() != 0 {
 			msg := t.msgQueue.PopFront().(sdk.Msg)
-			log.Printf("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
+			log.Infof("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
 			msgs = append(msgs, msg)
 		}
 
 		txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 		if err != nil {
-			log.Printf("Transactor PrepareTxBuilder err: %v", err)
+			log.Errorln("Transactor PrepareTxBuilder err:", err)
 			continue
 		}
 
 		txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
 		if err != nil {
-			log.Printf("Transactor BuildAndSign err: %v", err)
+			log.Errorln("Transactor BuildAndSign err", err)
 			continue
 		}
 
 		tx, err := t.CliCtx.BroadcastTx(txBytes)
 		if err != nil {
-			log.Printf("Transactor BroadcastTx err: %v", err)
+			log.Errorln("Transactor BroadcastTx err", err)
 			continue
 		}
 
 		// Make sure the transaction has been mines
-		log.Printf("Transactor broadcasted tx: %+v", tx)
+		log.Infoln("Transactor broadcasted tx:", tx)
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
 				break

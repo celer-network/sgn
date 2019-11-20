@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
@@ -39,6 +40,8 @@ var (
 // and teardown. Test specific setup should be done in TestXxx
 func TestMain(m *testing.M) {
 	flag.Parse()
+	log.EnableColor()
+	log.EnableLongFile()
 	// mkdir out root
 	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())

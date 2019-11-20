@@ -1,9 +1,9 @@
 package gateway
 
 import (
-	"log"
 	"net/http"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -139,6 +139,6 @@ func writeGenerateStdTxResponse(w http.ResponseWriter, transactor *transactor.Tr
 
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte("success")); err != nil {
-		log.Printf("could not write response: %v", err)
+		log.Errorln("could not write response:", err)
 	}
 }

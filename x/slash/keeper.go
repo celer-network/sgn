@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,12 +35,10 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validato
 
 // HandleGuardFailure handles a validator fails to guard state.
 func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr sdk.AccAddress) {
-	logger := ctx.Logger()
-
 	failedValAddr := sdk.ValAddress(failedAddr)
 	failedValidator, found := k.validatorKeeper.GetValidator(ctx, failedValAddr)
 	if !found {
-		logger.Error(fmt.Sprintf("Cannot find failed validator %s", failedValAddr))
+		log.Errorf("Cannot find failed validator %s", failedValAddr)
 		return
 	}
 
@@ -49,7 +48,7 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr 
 		beneficiaryValAddr := sdk.ValAddress(beneficiaryAddr)
 		beneficiaryValidator, found := k.validatorKeeper.GetValidator(ctx, beneficiaryValAddr)
 		if !found {
-			logger.Error(fmt.Sprintf("Cannot find beneficiary validator %s", beneficiaryValAddr))
+			log.Errorf("Cannot find beneficiary validator %s", beneficiaryValAddr)
 			return
 		}
 		beneficiaries = append(beneficiaries, NewAccountFractionPair(beneficiaryValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
@@ -61,26 +60,24 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
 // power: power of the double-signing validator at the height of infraction
 func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int64) {
-	logger := ctx.Logger()
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
-		logger.Error(fmt.Sprintf("Cannot find validator %s", consAddr))
+		log.Errorf("Cannot find validator %s", consAddr)
 		return
 	}
 
-	logger.Info(fmt.Sprintf("Confirmed double sign from %s", consAddr))
+	log.Infof("Confirmed double sign from %s", consAddr)
 	k.Slash(ctx, types.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountFractionPair{})
 }
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
 func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, power int64, signed bool) {
-	logger := ctx.Logger()
 	height := ctx.BlockHeight()
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
-		logger.Error(fmt.Sprintf("Cannot find validator %s", consAddr))
+		log.Errorf("Cannot find validator %s", consAddr)
 		return
 	}
 
@@ -126,8 +123,8 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	// if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 		// Downtime confirmed: slash the validator
-		logger.Info(fmt.Sprintf("Validator %s past min height of %d and above max miss threshold of %d",
-			consAddr, minHeight, maxMissed))
+		log.Infof("Validator %s past min height of %d and above max miss threshold of %d",
+			consAddr, minHeight, maxMissed)
 
 		// We need to reset the counter & array so that the validator won't be immediately slashed for downtime upon rebonding.
 		signInfo.MissedBlocksCounter = 0
@@ -142,8 +139,6 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
 func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
-	logger := ctx.Logger()
-
 	if slashFactor.IsNegative() {
 		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashFactor))
 	}
@@ -151,13 +146,12 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	// Amount of slashing = slash slashFactor * power at time of infraction
 	amount := sdk.TokensFromConsensusPower(power)
 	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
-	logger.Info(fmt.Sprintf(
-		"failed validator %s slashed by %s with slash factor of %s",
-		failedValidator.GetOperator(), slashAmount, slashFactor.String()))
+	log.Infof("failed validator %s slashed by %s with slash factor of %s",
+		failedValidator.GetOperator(), slashAmount, slashFactor.String())
 
 	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {
-		logger.Error("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
+		log.Errorln("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
 	}
 
 	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, failedValidator.Description.Identity)

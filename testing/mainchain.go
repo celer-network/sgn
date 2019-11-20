@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/testing/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

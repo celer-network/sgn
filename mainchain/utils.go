@@ -7,8 +7,8 @@ import (
 	"math/big"
 	"time"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/testing/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	ethcommon "github.com/ethereum/go-ethereum/common"

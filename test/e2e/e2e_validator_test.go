@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"testing"
 
+	log "github.com/celer-network/sgn/clog"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
