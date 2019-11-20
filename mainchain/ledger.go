@@ -28,10 +28,10 @@ var (
 )
 
 // CelerLedgerABI is the input ABI used to generate the binding from.
-const CelerLedgerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"tmpChannelId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"tmpChannelIds\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_ethPool\",\"type\":\"address\"},{\"name\":\"_payRegistry\",\"type\":\"address\"},{\"name\":\"_celerWallet\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"tokenType\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"tokenAddress\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"peerAddrs\",\"type\":\"address[2]\"},{\"indexed\":false,\"name\":\"initialDeposits\",\"type\":\"uint256[2]\"}],\"name\":\"OpenChannel\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"peerAddrs\",\"type\":\"address[2]\"},{\"indexed\":false,\"name\":\"deposits\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"withdrawals\",\"type\":\"uint256[2]\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"seqNums\",\"type\":\"uint256[2]\"}],\"name\":\"SnapshotStates\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"seqNums\",\"type\":\"uint256[2]\"}],\"name\":\"IntendSettle\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"payId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"peerFrom\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ClearOnePay\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"settleBalance\",\"type\":\"uint256[2]\"}],\"name\":\"ConfirmSettle\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"}],\"name\":\"ConfirmSettleFail\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"IntendWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"withdrawnAmount\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"recipientChannelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"deposits\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"withdrawals\",\"type\":\"uint256[2]\"}],\"name\":\"ConfirmWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"}],\"name\":\"VetoWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"withdrawnAmount\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"recipientChannelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"deposits\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"withdrawals\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"seqNum\",\"type\":\"uint256\"}],\"name\":\"CooperativeWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"settleBalance\",\"type\":\"uint256[2]\"}],\"name\":\"CooperativeSettle\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_disputeTimeout\",\"type\":\"uint256\"},{\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"name\":\"_tokenType\",\"type\":\"uint256\"},{\"name\":\"_peerAddrs\",\"type\":\"address[2]\"},{\"name\":\"_deposits\",\"type\":\"uint256[2]\"}],\"name\":\"openChannelMockSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_openRequest\",\"type\":\"bytes\"}],\"name\":\"openChannel\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_receiver\",\"type\":\"address\"},{\"name\":\"_transferFromAmount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelIds\",\"type\":\"bytes32[]\"},{\"name\":\"_peerFroms\",\"type\":\"address[]\"},{\"name\":\"_seqNums\",\"type\":\"uint256[]\"},{\"name\":\"_transferOuts\",\"type\":\"uint256[]\"},{\"name\":\"_pendingPayOuts\",\"type\":\"uint256[]\"}],\"name\":\"snapshotStatesMockSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_signedSimplexStateArray\",\"type\":\"bytes\"}],\"name\":\"snapshotStates\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_recipientChannelId\",\"type\":\"bytes32\"},{\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"intendWithdrawMockSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_recipientChannelId\",\"type\":\"bytes32\"}],\"name\":\"intendWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"vetoWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_peerFrom\",\"type\":\"address\"},{\"name\":\"_seqNum\",\"type\":\"uint256\"},{\"name\":\"_transferOut\",\"type\":\"uint256\"},{\"name\":\"_nextPayIdListHash\",\"type\":\"bytes32\"},{\"name\":\"_lastPayResolveDeadline\",\"type\":\"uint256\"},{\"name\":\"_pendingPayOut\",\"type\":\"uint256\"}],\"name\":\"intendSettleMockSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_signedSimplexStateArray\",\"type\":\"bytes\"}],\"name\":\"intendSettle\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_signedSimplexStateArray\",\"type\":\"bytes\"}],\"name\":\"intendSettleRevert\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"confirmSettle\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getSettleFinalizedTime\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTokenContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTokenType\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getChannelStatus\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getCooperativeWithdrawSeqNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTotalBalance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getBalanceMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getChannelMigrationArgs\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getPeersMigrationInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getDisputeTimeout\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getMigratedTo\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getStateSeqNumMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTransferOutMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getNextPayIdListHashMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"bytes32[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getLastPayResolveDeadlineMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getPendingPayOutMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getWithdrawIntent\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelStatus\",\"type\":\"uint256\"}],\"name\":\"getChannelStatusNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getEthPool\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPayRegistry\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCelerWallet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_tokenAddr\",\"type\":\"address\"}],\"name\":\"getBalanceLimit\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getBalanceLimitsEnabled\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const CelerLedgerABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_ethPool\",\"type\":\"address\"},{\"name\":\"_payRegistry\",\"type\":\"address\"},{\"name\":\"_celerWallet\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"tokenType\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"tokenAddress\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"peerAddrs\",\"type\":\"address[2]\"},{\"indexed\":false,\"name\":\"initialDeposits\",\"type\":\"uint256[2]\"}],\"name\":\"OpenChannel\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"peerAddrs\",\"type\":\"address[2]\"},{\"indexed\":false,\"name\":\"deposits\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"withdrawals\",\"type\":\"uint256[2]\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"seqNums\",\"type\":\"uint256[2]\"}],\"name\":\"SnapshotStates\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"seqNums\",\"type\":\"uint256[2]\"}],\"name\":\"IntendSettle\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"payId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"peerFrom\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ClearOnePay\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"settleBalance\",\"type\":\"uint256[2]\"}],\"name\":\"ConfirmSettle\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"}],\"name\":\"ConfirmSettleFail\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"IntendWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"withdrawnAmount\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"recipientChannelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"deposits\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"withdrawals\",\"type\":\"uint256[2]\"}],\"name\":\"ConfirmWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"}],\"name\":\"VetoWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"withdrawnAmount\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"recipientChannelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"deposits\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"withdrawals\",\"type\":\"uint256[2]\"},{\"indexed\":false,\"name\":\"seqNum\",\"type\":\"uint256\"}],\"name\":\"CooperativeWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"settleBalance\",\"type\":\"uint256[2]\"}],\"name\":\"CooperativeSettle\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"newLedgerAddr\",\"type\":\"address\"}],\"name\":\"MigrateChannelTo\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"channelId\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"oldLedgerAddr\",\"type\":\"address\"}],\"name\":\"MigrateChannelFrom\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"name\":\"_tokenAddrs\",\"type\":\"address[]\"},{\"name\":\"_limits\",\"type\":\"uint256[]\"}],\"name\":\"setBalanceLimits\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"disableBalanceLimits\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"enableBalanceLimits\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_openRequest\",\"type\":\"bytes\"}],\"name\":\"openChannel\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_receiver\",\"type\":\"address\"},{\"name\":\"_transferFromAmount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelIds\",\"type\":\"bytes32[]\"},{\"name\":\"_receivers\",\"type\":\"address[]\"},{\"name\":\"_transferFromAmounts\",\"type\":\"uint256[]\"}],\"name\":\"depositInBatch\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_signedSimplexStateArray\",\"type\":\"bytes\"}],\"name\":\"snapshotStates\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_recipientChannelId\",\"type\":\"bytes32\"}],\"name\":\"intendWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"vetoWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_cooperativeWithdrawRequest\",\"type\":\"bytes\"}],\"name\":\"cooperativeWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_signedSimplexStateArray\",\"type\":\"bytes\"}],\"name\":\"intendSettle\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"},{\"name\":\"_peerFrom\",\"type\":\"address\"},{\"name\":\"_payIdList\",\"type\":\"bytes\"}],\"name\":\"clearPays\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"confirmSettle\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_settleRequest\",\"type\":\"bytes\"}],\"name\":\"cooperativeSettle\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_migrationRequest\",\"type\":\"bytes\"}],\"name\":\"migrateChannelTo\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_fromLedgerAddr\",\"type\":\"address\"},{\"name\":\"_migrationRequest\",\"type\":\"bytes\"}],\"name\":\"migrateChannelFrom\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getSettleFinalizedTime\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTokenContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTokenType\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getChannelStatus\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getCooperativeWithdrawSeqNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTotalBalance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getBalanceMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getChannelMigrationArgs\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getPeersMigrationInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getDisputeTimeout\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getMigratedTo\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getStateSeqNumMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getTransferOutMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getNextPayIdListHashMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"bytes32[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getLastPayResolveDeadlineMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getPendingPayOutMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address[2]\"},{\"name\":\"\",\"type\":\"uint256[2]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelId\",\"type\":\"bytes32\"}],\"name\":\"getWithdrawIntent\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_channelStatus\",\"type\":\"uint256\"}],\"name\":\"getChannelStatusNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getEthPool\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPayRegistry\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCelerWallet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_tokenAddr\",\"type\":\"address\"}],\"name\":\"getBalanceLimit\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getBalanceLimitsEnabled\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // CelerLedgerBin is the compiled bytecode used for deploying new contracts.
-const CelerLedgerBin = `0x608060405234801561001057600080fd5b50604051612c15380380612c158339818101604052606081101561003357600080fd5b508051602082015160409092015160018054600160a060020a0319908116600160a060020a03948516178255600280548216958516959095179094556003805490941692909116919091179091556005805460ff19169091179055612b788061009d6000396000f3fe6080604052600436106102295760003560e060020a90048063979a9b5e11610127578063cd3a1be6116100af578063e6322df711610073578063e6322df714610d1f578063e803255714610d49578063ec7c637d14610d99578063eff3417c14610dcc578063f0c73d7014610e2357610229565b8063cd3a1be614610c5a578063d4e3680f14610c84578063d75f960e14610cae578063d927bfc414610cc3578063d954863c14610ced57610229565b8063b962a1d8116100f6578063b962a1d814610afa578063bd480cb714610b0f578063c38a325d14610bcc578063c7ff862514610bf6578063cc0b94b714610c2057610229565b8063979a9b5e146109f05780639f1fad8314610a3e578063a099a39f14610a68578063a979e22914610a7d57610229565b8063312ea2c6116101b55780637e9a7a3e116101795780637e9a7a3e1461079a57806388f41465146107c45780638942ecb2146109055780638f16cef41461093b57806393b7b3ce1461098057610229565b8063312ea2c61461065a5780634102b9a81461066f578063666a6d65146106ec57806369d5dd671461071657806376bff1171461074057610229565b8063255aab59116101fc578063255aab591461053f5780632b559ecc146105695780632e2a5a02146105925780632f0ac304146105d8578063307d6f961461063057610229565b80630165cef81461022e57806309b65d86146102bf578063130d33fe146102fb57806314ff14911461037a575b600080fd5b34801561023a57600080fd5b506102586004803603602081101561025157600080fd5b5035610e4d565b6040518083600260200280838360005b83811015610280578181015183820152602001610268565b5050505090500182600260200280838360005b838110156102ab578181015183820152602001610293565b505050509050019250505060405180910390f35b3480156102cb57600080fd5b506102e9600480360360208110156102e257600080fd5b5035610f22565b60408051918252519081900360200190f35b34801561030757600080fd5b506103786004803603602081101561031e57600080fd5b81019060208101813564010000000081111561033957600080fd5b82018360208201111561034b57600080fd5b8035906020019184600183028401116401000000008311171561036d57600080fd5b509092509050610fcd565b005b34801561038657600080fd5b50610378600480360360a081101561039d57600080fd5b8101906020810181356401000000008111156103b857600080fd5b8201836020820111156103ca57600080fd5b803590602001918460208302840111640100000000831117156103ec57600080fd5b91939092909160208101903564010000000081111561040a57600080fd5b82018360208201111561041c57600080fd5b8035906020019184602083028401116401000000008311171561043e57600080fd5b91939092909160208101903564010000000081111561045c57600080fd5b82018360208201111561046e57600080fd5b8035906020019184602083028401116401000000008311171561049057600080fd5b9193909290916020810190356401000000008111156104ae57600080fd5b8201836020820111156104c057600080fd5b803590602001918460208302840111640100000000831117156104e257600080fd5b91939092909160208101903564010000000081111561050057600080fd5b82018360208201111561051257600080fd5b8035906020019184602083028401116401000000008311171561053457600080fd5b509092509050611048565b34801561054b57600080fd5b506103786004803603602081101561056257600080fd5b503561113d565b34801561057557600080fd5b5061057e6112dd565b604080519115158252519081900360200190f35b34801561059e57600080fd5b506105bc600480360360208110156105b557600080fd5b50356112e7565b60408051600160a060020a039092168252519081900360200190f35b3480156105e457600080fd5b50610602600480360360208110156105fb57600080fd5b503561135f565b604080519485526020850193909352600160a060020a03909116838301526060830152519081900360800190f35b34801561063c57600080fd5b506102e96004803603602081101561065357600080fd5b503561142d565b34801561066657600080fd5b506105bc61143f565b34801561067b57600080fd5b506103786004803603602081101561069257600080fd5b8101906020810181356401000000008111156106ad57600080fd5b8201836020820111156106bf57600080fd5b803590602001918460018302840111640100000000831117156106e157600080fd5b50909250905061144e565b3480156106f857600080fd5b506102586004803603602081101561070f57600080fd5b5035611515565b34801561072257600080fd5b506102e96004803603602081101561073957600080fd5b50356115a1565b34801561074c57600080fd5b5061076a6004803603602081101561076357600080fd5b5035611619565b60408051600160a060020a0390951685526020850193909352838301919091526060830152519081900360800190f35b3480156107a657600080fd5b50610378600480360360208110156107bd57600080fd5b503561169a565b3480156107d057600080fd5b506107ee600480360360208110156107e757600080fd5b5035611859565b6040518087600260200280838360005b838110156108165781810151838201526020016107fe565b5050505090500186600260200280838360005b83811015610841578181015183820152602001610829565b5050505090500185600260200280838360005b8381101561086c578181015183820152602001610854565b5050505090500184600260200280838360005b8381101561089757818101518382015260200161087f565b5050505090500183600260200280838360005b838110156108c25781810151838201526020016108aa565b5050505090500182600260200280838360005b838110156108ed5781810151838201526020016108d5565b50505050905001965050505050505060405180910390f35b34801561091157600080fd5b506103786004803603606081101561092857600080fd5b5080359060208101359060400135611968565b34801561094757600080fd5b506103786004803603608081101561095e57600080fd5b5080359060208101359060408101359060600135600160a060020a03166119c6565b6103786004803603602081101561099657600080fd5b8101906020810181356401000000008111156109b157600080fd5b8201836020820111156109c357600080fd5b803590602001918460018302840111640100000000831117156109e557600080fd5b509092509050611a1d565b3480156109fc57600080fd5b50610a1a60048036036020811015610a1357600080fd5b5035611b43565b60405180826002811115610a2a57fe5b60ff16815260200191505060405180910390f35b348015610a4a57600080fd5b5061025860048036036020811015610a6157600080fd5b5035611bbb565b348015610a7457600080fd5b506105bc611c47565b348015610a8957600080fd5b5061037860048036036020811015610aa057600080fd5b810190602081018135640100000000811115610abb57600080fd5b820183602082011115610acd57600080fd5b80359060200191846001830284011164010000000083111715610aef57600080fd5b509092509050610229565b348015610b0657600080fd5b506102e9611c56565b348015610b1b57600080fd5b50610b3960048036036020811015610b3257600080fd5b5035611c5c565b6040518084600260200280838360005b83811015610b61578181015183820152602001610b49565b5050505090500183600260200280838360005b83811015610b8c578181015183820152602001610b74565b5050505090500182600260200280838360005b83811015610bb7578181015183820152602001610b9f565b50505050905001935050505060405180910390f35b348015610bd857600080fd5b506105bc60048036036020811015610bef57600080fd5b5035611d3d565b348015610c0257600080fd5b5061037860048036036020811015610c1957600080fd5b5035611db5565b348015610c2c57600080fd5b50610c4a60048036036020811015610c4357600080fd5b5035611e89565b60405180826004811115610a2a57fe5b348015610c6657600080fd5b5061025860048036036020811015610c7d57600080fd5b5035611f01565b348015610c9057600080fd5b506102e960048036036020811015610ca757600080fd5b5035611f8d565b348015610cba57600080fd5b506105bc611fab565b348015610ccf57600080fd5b5061025860048036036020811015610ce657600080fd5b5035611fba565b61037860048036036060811015610d0357600080fd5b50803590600160a060020a036020820135169060400135612046565b348015610d2b57600080fd5b506102e960048036036020811015610d4257600080fd5b5035612238565b348015610d5557600080fd5b506103786004803603610100811015610d6d57600080fd5b50803590602081013590600160a060020a0360408201351690606081013590608081019060c0016122b0565b348015610da557600080fd5b506102e960048036036020811015610dbc57600080fd5b5035600160a060020a0316612391565b348015610dd857600080fd5b50610378600480360360e0811015610def57600080fd5b50803590600160a060020a036020820135169060408101359060608101359060808101359060a08101359060c001356123ac565b348015610e2f57600080fd5b506102e960048036036020811015610e4657600080fd5b5035612422565b610e55612a29565b610e5d612a29565b6000838152600660205260409081902081517fbcdf4ebb000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________9163bcdf4ebb91602480820192608092909190829003018186803b158015610ed957600080fd5b505af4158015610eed573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052506080811015610f1257600080fd5b509250506040820190505b915091565b600081815260066020908152604080832081517f418ec101000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________9263418ec1019260248083019392829003018186803b158015610f9a57600080fd5b505af4158015610fae573d6000803e3d6000fd5b505050506040513d6020811015610fc457600080fd5b50519392505050565b6007546000818152600660205260409020907f296143e7e25aa055fbb871702776a67da540876e2be721d5c38ba23c97c90d646110098361249a565b6040518082600260200280838360005b83811015611031578181015183820152602001611019565b5050505090500191505060405180910390a2505050565b60005b898110156111235760006006818d8d8581811061106457fe5b905060200201358152602001908152602001600020905060006110ab8b8b8581811061108c57fe5b90506020020135600160a060020a0316836124c290919063ffffffff16565b905060008260040182600281106110be57fe5b6008020160030190508989858181106110d357fe5b60200291909101358255508787858181106110ea57fe5b602002919091013560018301555085858581811061110457fe5b905060200201358160040181905550505050808060010191505061104b565b5061113060088b8b612a47565b5050505050505050505050565b60008181526006602052604090206001600382015460ff16600481111561116057fe5b146111b5576040805160e560020a62461bcd02815260206004820152601460248201527f4368616e6e656c20737461747573206572726f72000000000000000000000000604482015290519081900360640190fd5b6015810154600160a060020a0316611217576040805160e560020a62461bcd02815260206004820152601a60248201527f4e6f2070656e64696e6720776974686472617720696e74656e74000000000000604482015290519081900360640190fd5b611227813363ffffffff61255b16565b61127b576040805160e560020a62461bcd02815260206004820152601660248201527f6d73672e73656e646572206973206e6f74207065657200000000000000000000604482015290519081900360640190fd5b60158101805473ffffffffffffffffffffffffffffffffffffffff19169055600060168201819055601782018190556018820181905560405183917f9a8a5493b616f074b3f754b5fd66049c8e7980f01547289e5e31808485c6002c91a25050565b60055460ff165b90565b600081815260066020908152604080832081517f1fd4a9c2000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________92631fd4a9c29260248083019392829003018186803b158015610f9a57600080fd5b60008181526006602052604080822081517fc2f8816b000000000000000000000000000000000000000000000000000000008152600481018290529151839283928392909173__LedgerChannel_________________________9163c2f8816b91602480820192608092909190829003018186803b1580156113e057600080fd5b505af41580156113f4573d6000803e3d6000fd5b505050506040513d608081101561140a57600080fd5b508051602082015160408301516060909301519199909850919650945092505050565b60009081526020819052604090205490565b600254600160a060020a031690565b60005b6008548110156115105760008060060160006008848154811061147057fe5b9060005260206000200154815260200190815260200160002090506008828154811061149857fe5b90600052602060002001547fd0793cc4198bf052a6d91a9a1273c4af39f02a91b0e19029477511c278c5b2716114cd8361249a565b6040518082600260200280838360005b838110156114f55781810151838201526020016114dd565b5050505090500191505060405180910390a250600101611451565b505050565b61151d612a29565b611525612a29565b6000838152600660205260409081902081517fc814d28e000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________9163c814d28e91602480820192608092909190829003018186803b158015610ed957600080fd5b600081815260066020908152604080832081517fd6b89e3a000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________9263d6b89e3a9260248083019392829003018186803b158015610f9a57600080fd5b60008181526006602052604080822081517fc46dd9dd000000000000000000000000000000000000000000000000000000008152600481018290529151839283928392909173__LedgerChannel_________________________9163c46dd9dd91602480820192608092909190829003018186803b1580156113e057600080fd5b600081815260066020526040812060158101805460168301805460188501805473ffffffffffffffffffffffffffffffffffffffff19851690955591869055601785018690559490559192600160a060020a03909216919061170384848463ffffffff61259216565b61170b612a29565b611713612a29565b8573__LedgerChannel_________________________63c8ed149e90916040518263ffffffff1660e060020a0281526004018082815260200191505060c06040518083038186803b15801561176757600080fd5b505af415801561177b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525060c08110156117a057600080fd5b50604080518681528183019450608090920192508491600160a060020a038816918a917fe8110b4ee08638c48f6a4d5f726927df4e541893efa9d2c2c47a6b889041826e91899188918891906020820190849080838360005b838110156118115781810151838201526020016117f9565b5050505090500182600260200280838360005b8381101561183c578181015183820152602001611824565b50505050905001935050505060405180910390a450505050505050565b611861612a29565b611869612a29565b611871612a29565b611879612a29565b611881612a29565b611889612a29565b6000878152600660205260409081902081517fb3253127000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________9163b32531279160248082019261018092909190829003018186803b15801561190657600080fd5b505af415801561191a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525061018081101561194057600080fd5b509860408a01985060808a01975060c08a0196506101008a0195506101408a01945092505050565b6000838152600660209081526040918290206015810154835186815293519193600160a060020a039091169287927f97883669625c4ff7f5432b4ca33fe75fb5fee985deb196a967e5758f846170fe9281900390910190a350505050565b600084815260066020526040902060158101805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0393909316929092179091556016810192909255436017830155601890910155600755565b6007546000908152600660205260409020611a36612a29565b50604080518082019091526004820154600160a060020a039081168252600c830154166020820152611a66612a29565b506040805180820190915260058301548152600d8301546020820152600280840154600754600160a060020a036101008304169290917f9d9f66221370175606b4085f28a419b201c9b6dafd9e0c4520e5bf69ea3e166d9160ff90911690811115611acd57fe5b85856040518084815260200183600260200280838360005b83811015611afd578181015183820152602001611ae5565b5050505090500182600260200280838360005b83811015611b28578181015183820152602001611b10565b50505050905001935050505060405180910390a35050505050565b600081815260066020908152604080832081517f12bb8c81000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________926312bb8c819260248083019392829003018186803b158015610f9a57600080fd5b611bc3612a29565b611bcb612a29565b6000838152600660205260409081902081517f96a3c57f000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________916396a3c57f91602480820192608092909190829003018186803b158015610ed957600080fd5b600354600160a060020a031690565b60075481565b611c64612a29565b611c6c612a29565b611c74612a29565b6000848152600660205260409081902081517fc8ed149e000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________9163c8ed149e9160248082019260c092909190829003018186803b158015611cf057600080fd5b505af4158015611d04573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525060c0811015611d2957600080fd5b509560408701955060808701945092505050565b600081815260066020908152604080832081517f8970f8a5000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________92638970f8a59260248083019392829003018186803b158015610f9a57600080fd5b600081815260066020526040812090611dcc612a29565b611dd5836125ff565b9150915081611e1a57611de7836127f0565b60405184907fa6549eb18490d42e7ec93f42115d1ee11b706d04077be9597034dd73ec8bcb3690600090a2505050611e86565b611e2583600361287c565b837f728ddd8c5acda5947c34db8d759c66ae70884f526ff9b93637d351b012ef3206826040518082600260200280838360005b83811015611e70578181015183820152602001611e58565b5050505090500191505060405180910390a25050505b50565b600081815260066020908152604080832081517f565aebdb000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________9263565aebdb9260248083019392829003018186803b158015610f9a57600080fd5b611f09612a29565b611f11612a29565b6000838152600660205260409081902081517fd7db65ce000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________9163d7db65ce91602480820192608092909190829003018186803b158015610ed957600080fd5b60088181548110611f9a57fe5b600091825260209091200154905081565b600154600160a060020a031690565b611fc2612a29565b611fca612a29565b6000838152600660205260409081902081517fc2c3f21f000000000000000000000000000000000000000000000000000000008152600481018290529151909173__LedgerChannel_________________________9163c2c3f21f91602480820192608092909190829003018186803b158015610ed957600080fd5b600083815260066020526040812090612065828563ffffffff6124c216565b90506000612079843463ffffffff61299c16565b90506120a48184600401846002811061208e57fe5b600802016001015461299c90919063ffffffff16565b8360040183600281106120b357fe5b60080201600101819055506120c6612a29565b6120ce612a29565b6120d6612a29565b8573__LedgerChannel_________________________63c8ed149e90916040518263ffffffff1660e060020a0281526004018082815260200191505060c06040518083038186803b15801561212a57600080fd5b505af415801561213e573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525060c081101561216357600080fd5b506040805191945080850193506080850192508a917fb63f5dc096f516663ffb5ef2b611f0e2acca8617a868c2a3653cba5e3ed0e92c91869186918691908190859080838360005b838110156121c35781810151838201526020016121ab565b5050505090500183600260200280838360005b838110156121ee5781810151838201526020016121d6565b5050505090500182600260200280838360005b83811015612219578181015183820152602001612201565b50505050905001935050505060405180910390a2505050505050505050565b600081815260066020908152604080832081517fb80ddf7e000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________9263b80ddf7e9260248083019392829003018186803b158015610f9a57600080fd5b6007869055600086815260066020526040902060018082018790556122d690829061287c565b6002818101805474ffffffffffffffffffffffffffffffffffffffff001916610100600160a060020a03891602179055849081111561231157fe5b60028083018054909160ff1990911690600190849081111561232f57fe5b0217905550600481018054600160a060020a038535811673ffffffffffffffffffffffffffffffffffffffff199283161790925583356005840155600c83018054909116602095860135909216919091179055910135600d9091015550505050565b600160a060020a031660009081526004602052604090205490565b6000878152600660205260408120906123cb828963ffffffff6124c216565b905060008260040182600281106123de57fe5b6008020160038101898155600482018990556005820188905560068201879055600790910185905590506124118a6129ae565b505050600796909655505050505050565b600081815260066020908152604080832081517f77ffc623000000000000000000000000000000000000000000000000000000008152600481018290529151909273__LedgerChannel_________________________926377ffc6239260248083019392829003018186803b158015610f9a57600080fd5b6124a2612a29565b506040805180820190915260078201548152600f90910154602082015290565b6004820154600090600160a060020a03838116911614156124e557506000612555565b600c830154600160a060020a038381169116141561250557506001612555565b6040805160e560020a62461bcd02815260206004820152600d60248201527f4e6f6e6578697374207065657200000000000000000000000000000000000000604482015290519081900360640190fd5b92915050565b6004820154600090600160a060020a038381169116148061258b5750600c830154600160a060020a038381169116145b9392505050565b600061259e84846124c2565b90506125c9828560040183600281106125b357fe5b600802016002015461299c90919063ffffffff16565b8460040182600281106125d857fe5b600802016002018190555060006125ee856129df565b10156125f957600080fd5b50505050565b6000612609612a29565b612611612a92565b604080518082019091526004850160026000835b828210156126b55760408051608080820183526008850287018054600160a060020a03168352600180820154602080860191909152600283015485870152855160a081018752600384015481526004840154818301526005840154968101969096526006830154606087810191909152600790930154938601939093529083019390935290835292019101612625565b5050505090506126c3612a29565b6040805180820190915260208084015160600151015181906126fa908560005b60200201516020015161299c90919063ffffffff16565b8152835160600151602090810151910190612717908560016126e3565b9052905060005b60028110156127e357600061276884836002811061273857fe5b60200201516040015185846002811061274d57fe5b6020020151606001516020015161299c90919063ffffffff16565b90508083836002811061277757fe5b602002015110156127a857600060405180604001604052806000815260200160008152509550955050505050610f1d565b6127c9818484600281106127b857fe5b60200201519063ffffffff612a1416565b8383600281106127d557fe5b60200201525060010161271e565b5060019350915050915091565b600081556127ff81600161287c565b6000600782018190556008820181905560098201819055600a8201819055600b8201819055600f82018190556010820181905560118201819055601282018190556013820181905560158201805473ffffffffffffffffffffffffffffffffffffffff191690556016820181905560178201819055601890910155565b80600481111561288857fe5b600383015460ff16600481111561289b57fe5b14156128a657612998565b6000600383015460ff1660048111156128bb57fe5b146129265760038201546128fc90600190600090819060ff1660048111156128df57fe5b815260200190815260200160002054612a1490919063ffffffff16565b6003830154600090819060ff16600481111561291457fe5b81526020810191909152604001600020555b612957600160008084600481111561293a57fe5b81526020019081526020016000205461299c90919063ffffffff16565b60008083600481111561296657fe5b815260208101919091526040016000205560038201805482919060ff1916600183600481111561299257fe5b02179055505b5050565b60008282018381101561258b57600080fd5b600081815260066020526040902060018101546129d290439063ffffffff61299c16565b815561299881600261287c565b600e8101546006820154600d830154600092839261258b92612a0891908290600489018761208e565b9063ffffffff612a1416565b600082821115612a2357600080fd5b50900390565b60405180604001604052806002906020820280388339509192915050565b828054828255906000526020600020908101928215612a82579160200282015b82811115612a82578235825591602001919060010190612a67565b50612a8e929150612ac0565b5090565b6040518061020001604052806002905b612aaa612ada565b815260200190600190039081612aa25790505090565b6112e491905b80821115612a8e5760008155600101612ac6565b6040518061010001604052806000600160a060020a031681526020016000815260200160008152602001612b0c612b11565b905290565b6040518060a001604052806000815260200160008152602001600080191681526020016000815260200160008152509056fea265627a7a723058205dbfea5eff255b38f2016866c8e3deccfdf5b77e5caf5d4c64f6069615f1726c64736f6c634300050a0032`
+var CelerLedgerBin = "0x608060405234801561001057600080fd5b506040516126fd3803806126fd8339818101604052606081101561003357600080fd5b5080516020820151604092830151600080546001600160a01b031916331780825594519394929391926001600160a01b0316917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600280546001600160a01b039485166001600160a01b0319918216179091556003805493851693821693909317909255600480549190931691161790556006805460ff19166001179055612619806100e46000396000f3fe6080604052600436106102675760003560e01c806393b7b3ce11610144578063d75f960e116100b6578063e5780db21161007a578063e5780db214610dc1578063e6322df714610edc578063ec7c637d14610f06578063f0c73d7014610f39578063f2fde38b14610f63578063fd0a1a6114610f9657610267565b8063d75f960e14610cc0578063d927bfc414610cd5578063d954863c14610cff578063e063913c14610d31578063e0a515b714610d4657610267565b8063bd480cb711610108578063bd480cb714610ad0578063c38a325d14610b8d578063c7ff862514610bb7578063cc0b94b714610be1578063cd3a1be614610c1b578063d757abd214610c4557610267565b806393b7b3ce1461090a578063979a9b5e146109785780639f1fad83146109c6578063a099a39f146109f0578063a8580cab14610a0557610267565b80634102b9a8116101dd5780637e9a7a3e116101a15780637e9a7a3e1461072a57806383c8f8b81461075457806388f41465146107695780638942ecb2146108aa5780638da5cb5b146108e05780638f32d59b146108f557610267565b80634102b9a8146105ec578063666a6d651461066757806369d5dd6714610691578063715018a6146106bb57806376bff117146106d057610267565b80632b559ecc1161022f5780632b559ecc1461045b5780632e2a5a02146104845780632e3c517a146104ca5780632f0ac30414610555578063307d6f96146105ad578063312ea2c6146105d757610267565b80630165cef81461026c57806309683c03146102fd57806309b65d861461037a578063130d33fe146103b6578063255aab5914610431575b600080fd5b34801561027857600080fd5b506102966004803603602081101561028f57600080fd5b5035611026565b6040518083600260200280838360005b838110156102be5781810151838201526020016102a6565b5050505090500182600260200280838360005b838110156102e95781810151838201526020016102d1565b505050509050019250505060405180910390f35b34801561030957600080fd5b506103786004803603602081101561032057600080fd5b810190602081018135600160201b81111561033a57600080fd5b82018360208201111561034c57600080fd5b803590602001918460018302840111600160201b8311171561036d57600080fd5b5090925090506110e0565b005b34801561038657600080fd5b506103a46004803603602081101561039d57600080fd5b5035611181565b60408051918252519081900360200190f35b3480156103c257600080fd5b50610378600480360360208110156103d957600080fd5b810190602081018135600160201b8111156103f357600080fd5b82018360208201111561040557600080fd5b803590602001918460018302840111600160201b8311171561042657600080fd5b509092509050611213565b34801561043d57600080fd5b506103786004803603602081101561045457600080fd5b5035611298565b34801561046757600080fd5b5061047061130c565b604080519115158252519081900360200190f35b34801561049057600080fd5b506104ae600480360360208110156104a757600080fd5b5035611391565b604080516001600160a01b039092168252519081900360200190f35b3480156104d657600080fd5b50610378600480360360408110156104ed57600080fd5b6001600160a01b038235169190810190604081016020820135600160201b81111561051757600080fd5b82018360208201111561052957600080fd5b803590602001918460018302840111600160201b8311171561054a57600080fd5b5090925090506113f0565b34801561056157600080fd5b5061057f6004803603602081101561057857600080fd5b50356114a6565b6040805194855260208501939093526001600160a01b03909116838301526060830152519081900360800190f35b3480156105b957600080fd5b506103a4600480360360208110156105d057600080fd5b503561155b565b3480156105e357600080fd5b506104ae6115e9565b3480156105f857600080fd5b506103786004803603602081101561060f57600080fd5b810190602081018135600160201b81111561062957600080fd5b82018360208201111561063b57600080fd5b803590602001918460018302840111600160201b8311171561065c57600080fd5b50909250905061163d565b34801561067357600080fd5b506102966004803603602081101561068a57600080fd5b50356116c2565b34801561069d57600080fd5b506103a4600480360360208110156106b457600080fd5b5035611735565b3480156106c757600080fd5b50610378611794565b3480156106dc57600080fd5b506106fa600480360360208110156106f357600080fd5b50356117ef565b604080516001600160a01b0390951685526020850193909352838301919091526060830152519081900360800190f35b34801561073657600080fd5b506103786004803603602081101561074d57600080fd5b5035611857565b34801561076057600080fd5b506103786118b0565b34801561077557600080fd5b506107936004803603602081101561078c57600080fd5b503561192d565b6040518087600260200280838360005b838110156107bb5781810151838201526020016107a3565b5050505090500186600260200280838360005b838110156107e65781810151838201526020016107ce565b5050505090500185600260200280838360005b838110156108115781810151838201526020016107f9565b5050505090500184600260200280838360005b8381101561083c578181015183820152602001610824565b5050505090500183600260200280838360005b8381101561086757818101518382015260200161084f565b5050505090500182600260200280838360005b8381101561089257818101518382015260200161087a565b50505050905001965050505050505060405180910390f35b3480156108b657600080fd5b50610378600480360360608110156108cd57600080fd5b5080359060208101359060400135611a23565b3480156108ec57600080fd5b506104ae611a8a565b34801561090157600080fd5b50610470611a99565b6103786004803603602081101561092057600080fd5b810190602081018135600160201b81111561093a57600080fd5b82018360208201111561094c57600080fd5b803590602001918460018302840111600160201b8311171561096d57600080fd5b509092509050611aaa565b34801561098457600080fd5b506109a26004803603602081101561099b57600080fd5b5035611b2f565b604051808260028111156109b257fe5b60ff16815260200191505060405180910390f35b3480156109d257600080fd5b50610296600480360360208110156109e957600080fd5b5035611b8e565b3480156109fc57600080fd5b506104ae611c01565b348015610a1157600080fd5b5061037860048036036040811015610a2857600080fd5b810190602081018135600160201b811115610a4257600080fd5b820183602082011115610a5457600080fd5b803590602001918460208302840111600160201b83111715610a7557600080fd5b919390929091602081019035600160201b811115610a9257600080fd5b820183602082011115610aa457600080fd5b803590602001918460208302840111600160201b83111715610ac557600080fd5b509092509050611c55565b348015610adc57600080fd5b50610afa60048036036020811015610af357600080fd5b5035611d3d565b6040518084600260200280838360005b83811015610b22578181015183820152602001610b0a565b5050505090500183600260200280838360005b83811015610b4d578181015183820152602001610b35565b5050505090500182600260200280838360005b83811015610b78578181015183820152602001610b60565b50505050905001935050505060405180910390f35b348015610b9957600080fd5b506104ae60048036036020811015610bb057600080fd5b5035611e05565b348015610bc357600080fd5b5061037860048036036020811015610bda57600080fd5b5035611e64565b348015610bed57600080fd5b50610c0b60048036036020811015610c0457600080fd5b5035611ebd565b604051808260048111156109b257fe5b348015610c2757600080fd5b5061029660048036036020811015610c3e57600080fd5b5035611f1c565b348015610c5157600080fd5b5061037860048036036020811015610c6857600080fd5b810190602081018135600160201b811115610c8257600080fd5b820183602082011115610c9457600080fd5b803590602001918460018302840111600160201b83111715610cb557600080fd5b509092509050611f8f565b348015610ccc57600080fd5b506104ae612014565b348015610ce157600080fd5b5061029660048036036020811015610cf857600080fd5b5035612068565b61037860048036036060811015610d1557600080fd5b508035906001600160a01b0360208201351690604001356120db565b348015610d3d57600080fd5b5061037861214a565b348015610d5257600080fd5b506103a460048036036020811015610d6957600080fd5b810190602081018135600160201b811115610d8357600080fd5b820183602082011115610d9557600080fd5b803590602001918460018302840111600160201b83111715610db657600080fd5b5090925090506121ad565b348015610dcd57600080fd5b5061037860048036036060811015610de457600080fd5b810190602081018135600160201b811115610dfe57600080fd5b820183602082011115610e1057600080fd5b803590602001918460208302840111600160201b83111715610e3157600080fd5b919390929091602081019035600160201b811115610e4e57600080fd5b820183602082011115610e6057600080fd5b803590602001918460208302840111600160201b83111715610e8157600080fd5b919390929091602081019035600160201b811115610e9e57600080fd5b820183602082011115610eb057600080fd5b803590602001918460208302840111600160201b83111715610ed157600080fd5b509092509050612234565b348015610ee857600080fd5b506103a460048036036020811015610eff57600080fd5b5035612372565b348015610f1257600080fd5b506103a460048036036020811015610f2957600080fd5b50356001600160a01b03166123d1565b348015610f4557600080fd5b506103a460048036036020811015610f5c57600080fd5b5035612436565b348015610f6f57600080fd5b5061037860048036036020811015610f8657600080fd5b50356001600160a01b0316612495565b348015610fa257600080fd5b5061037860048036036060811015610fb957600080fd5b8135916001600160a01b0360208201351691810190606081016040820135600160201b811115610fe857600080fd5b820183602082011115610ffa57600080fd5b803590602001918460018302840111600160201b8311171561101b57600080fd5b5090925090506124b2565b61102e6125c6565b6110366125c6565b60008381526007602052604090819020815163bcdf4ebb60e01b8152600481018290529151909173__LedgerChannel_________________________9163bcdf4ebb91602480820192608092909190829003018186803b15801561109957600080fd5b505af41580156110ad573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525060808110156110d257600080fd5b509460408601945092505050565b604080516379e9008760e01b8152600160048201818152602483019384526044830185905273__LedgerOperation_______________________936379e9008793879287929091606401848480828437600081840152601f19601f82011690508083019250505094505050505060006040518083038186803b15801561116557600080fd5b505af4158015611179573d6000803e3d6000fd5b505050505050565b6000818152600760209081526040808320815163418ec10160e01b8152600481018290529151909273__LedgerChannel_________________________9263418ec1019260248083019392829003018186803b1580156111e057600080fd5b505af41580156111f4573d6000803e3d6000fd5b505050506040513d602081101561120a57600080fd5b50519392505050565b60408051630bdc541160e01b8152600160048201818152602483019384526044830185905273__LedgerOperation_______________________93630bdc541193879287929091606401848480828437600081840152601f19601f82011690508083019250505094505050505060006040518083038186803b15801561116557600080fd5b6040805163eb4de33760e01b81526001600482015260248101839052905173__LedgerOperation_______________________9163eb4de337916044808301926000929190829003018186803b1580156112f157600080fd5b505af4158015611305573d6000803e3d6000fd5b5050505050565b6000600173__LedgerBalanceLimit____________________636ae9747290916040518263ffffffff1660e01b81526004018082815260200191505060206040518083038186803b15801561136057600080fd5b505af4158015611374573d6000803e3d6000fd5b505050506040513d602081101561138a57600080fd5b5051905090565b60008181526007602090815260408083208151630fea54e160e11b8152600481018290529151909273__LedgerChannel_________________________92631fd4a9c29260248083019392829003018186803b1580156111e057600080fd5b60405163415a19c560e11b81526001600482018181526001600160a01b03861660248401526060604484019081526064840185905273__LedgerMigrate_________________________936382b4338a93928892889288929190608401848480828437600081840152601f19601f8201169050808301925050509550505050505060006040518083038186803b15801561148957600080fd5b505af415801561149d573d6000803e3d6000fd5b50505050505050565b600081815260076020526040808220815163c2f8816b60e01b8152600481018290529151839283928392909173__LedgerChannel_________________________9163c2f8816b91602480820192608092909190829003018186803b15801561150e57600080fd5b505af4158015611522573d6000803e3d6000fd5b505050506040513d608081101561153857600080fd5b508051602082015160408301516060909301519199909850919650945092505050565b6000600173__LedgerOperation_______________________6360297df39091846040518363ffffffff1660e01b8152600401808381526020018281526020019250505060206040518083038186803b1580156115b757600080fd5b505af41580156115cb573d6000803e3d6000fd5b505050506040513d60208110156115e157600080fd5b505192915050565b6000600173__LedgerOperation_______________________6344e58d5190916040518263ffffffff1660e01b81526004018082815260200191505060206040518083038186803b15801561136057600080fd5b604080516372cf9b4360e11b8152600160048201818152602483019384526044830185905273__LedgerOperation_______________________9363e59f368693879287929091606401848480828437600081840152601f19601f82011690508083019250505094505050505060006040518083038186803b15801561116557600080fd5b6116ca6125c6565b6116d26125c6565b60008381526007602052604090819020815163640a694760e11b8152600481018290529151909173__LedgerChannel_________________________9163c814d28e91602480820192608092909190829003018186803b15801561109957600080fd5b60008181526007602090815260408083208151636b5c4f1d60e11b8152600481018290529151909273__LedgerChannel_________________________9263d6b89e3a9260248083019392829003018186803b1580156111e057600080fd5b61179c611a99565b6117a557600080fd5b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b600081815260076020526040808220815163c46dd9dd60e01b8152600481018290529151839283928392909173__LedgerChannel_________________________9163c46dd9dd91602480820192608092909190829003018186803b15801561150e57600080fd5b604080516383e0fef560e01b81526001600482015260248101839052905173__LedgerOperation_______________________916383e0fef5916044808301926000929190829003018186803b1580156112f157600080fd5b6118b8611a99565b6118c157600080fd5b60408051636ad1dc2d60e01b815260016004820152905173__LedgerBalanceLimit____________________91636ad1dc2d916024808301926000929190829003018186803b15801561191357600080fd5b505af4158015611927573d6000803e3d6000fd5b50505050565b6119356125c6565b61193d6125c6565b6119456125c6565b61194d6125c6565b6119556125c6565b61195d6125c6565b60008781526007602052604090819020815163b325312760e01b8152600481018290529151909173__LedgerChannel_________________________9163b32531279160248082019261018092909190829003018186803b1580156119c157600080fd5b505af41580156119d5573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052506101808110156119fb57600080fd5b509860408a01985060808a01975060c08a0196506101008a0195506101408a01945092505050565b60408051637a2654ed60e01b815260016004820152602481018590526044810184905260648101839052905173__LedgerOperation_______________________91637a2654ed916084808301926000929190829003018186803b15801561148957600080fd5b6000546001600160a01b031690565b6000546001600160a01b0316331490565b6040805163594db6e360e01b8152600160048201818152602483019384526044830185905273__LedgerOperation_______________________9363594db6e393879287929091606401848480828437600081840152601f19601f82011690508083019250505094505050505060006040518083038186803b15801561116557600080fd5b600081815260076020908152604080832081516312bb8c8160e01b8152600481018290529151909273__LedgerChannel_________________________926312bb8c819260248083019392829003018186803b1580156111e057600080fd5b611b966125c6565b611b9e6125c6565b6000838152600760205260409081902081516396a3c57f60e01b8152600481018290529151909173__LedgerChannel_________________________916396a3c57f91602480820192608092909190829003018186803b15801561109957600080fd5b6000600173__LedgerOperation_______________________63bd199ca590916040518263ffffffff1660e01b81526004018082815260200191505060206040518083038186803b15801561136057600080fd5b611c5d611a99565b611c6657600080fd5b600173__LedgerBalanceLimit____________________63c88c62659091868686866040518663ffffffff1660e01b81526004018086815260200180602001806020018381038352878782818152602001925060200280828437600083820152601f01601f19169091018481038352858152602090810191508690860280828437600081840152601f19601f82011690508083019250505097505050505050505060006040518083038186803b158015611d1f57600080fd5b505af4158015611d33573d6000803e3d6000fd5b5050505050505050565b611d456125c6565b611d4d6125c6565b611d556125c6565b6000848152600760205260409081902081516364768a4f60e11b8152600481018290529151909173__LedgerChannel_________________________9163c8ed149e9160248082019260c092909190829003018186803b158015611db857600080fd5b505af4158015611dcc573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525060c0811015611df157600080fd5b509560408701955060808701945092505050565b60008181526007602090815260408083208151638970f8a560e01b8152600481018290529151909273__LedgerChannel_________________________92638970f8a59260248083019392829003018186803b1580156111e057600080fd5b6040805163bb3d0f2b60e01b81526001600482015260248101839052905173__LedgerOperation_______________________9163bb3d0f2b916044808301926000929190829003018186803b1580156112f157600080fd5b6000818152600760209081526040808320815163565aebdb60e01b8152600481018290529151909273__LedgerChannel_________________________9263565aebdb9260248083019392829003018186803b1580156111e057600080fd5b611f246125c6565b611f2c6125c6565b600083815260076020526040908190208151636bedb2e760e11b8152600481018290529151909173__LedgerChannel_________________________9163d7db65ce91602480820192608092909190829003018186803b15801561109957600080fd5b6040805163742fb50760e01b8152600160048201818152602483019384526044830185905273__LedgerOperation_______________________9363742fb50793879287929091606401848480828437600081840152601f19601f82011690508083019250505094505050505060006040518083038186803b15801561116557600080fd5b6000600173__LedgerOperation_______________________63c98c925190916040518263ffffffff1660e01b81526004018082815260200191505060206040518083038186803b15801561136057600080fd5b6120706125c6565b6120786125c6565b60008381526007602052604090819020815163c2c3f21f60e01b8152600481018290529151909173__LedgerChannel_________________________9163c2c3f21f91602480820192608092909190829003018186803b15801561109957600080fd5b6040805163bd9d315760e01b815260016004820152602481018590526001600160a01b038416604482015260648101839052905173__LedgerOperation_______________________9163bd9d3157916084808301926000929190829003018186803b15801561148957600080fd5b612152611a99565b61215b57600080fd5b60408051635930e0e160e01b815260016004820152905173__LedgerBalanceLimit____________________91635930e0e1916024808301926000929190829003018186803b15801561191357600080fd5b60408051631e28763960e11b8152600160048201818152602483019384526044830185905260009373__LedgerMigrate_________________________93633c50ec72939288928892606401848480828437600083820152604051601f909101601f1916909201965060209550909350505081840390508186803b1580156111e057600080fd5b848314801561224257508281145b61228a576040805162461bcd60e51b8152602060048201526014602482015273098cadccee8d0e640c8de40dcdee840dac2e8c6d60631b604482015290519081900360640190fd5b60005b8581101561149d5773__LedgerOperation_______________________63bd9d315760018989858181106122bd57fe5b905060200201358888868181106122d057fe5b905060200201356001600160a01b03168787878181106122ec57fe5b905060200201356040518563ffffffff1660e01b815260040180858152602001848152602001836001600160a01b03166001600160a01b0316815260200182815260200194505050505060006040518083038186803b15801561234e57600080fd5b505af4158015612362573d6000803e3d6000fd5b50506001909201915061228d9050565b60008181526007602090815260408083208151635c06efbf60e11b8152600481018290529151909273__LedgerChannel_________________________9263b80ddf7e9260248083019392829003018186803b1580156111e057600080fd5b6040805163bdca79a760e01b8152600160048201526001600160a01b0383166024820152905160009173__LedgerBalanceLimit____________________9163bdca79a791604480820192602092909190829003018186803b1580156115b757600080fd5b600081815260076020908152604080832081516377ffc62360e01b8152600481018290529151909273__LedgerChannel_________________________926377ffc6239260248083019392829003018186803b1580156111e057600080fd5b61249d611a99565b6124a657600080fd5b6124af81612558565b50565b604051600162804bef60e01b03198152600160048201818152602483018790526001600160a01b03861660448401526080606484019081526084840185905273__LedgerOperation_______________________9363ff7fb41193928992899289928992909160a401848480828437600081840152601f19601f820116905080830192505050965050505050505060006040518083038186803b158015611d1f57600080fd5b6001600160a01b03811661256b57600080fd5b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b6040518060400160405280600290602082028038833950919291505056fea265627a7a72305820cf902bf24fa9d1ac005f52ff59c3d529af185fc9cebc7ae788110c90712e301764736f6c634300050a0032"
 
 // DeployCelerLedger deploys a new Ethereum contract, binding an instance of CelerLedger to it.
 func DeployCelerLedger(auth *bind.TransactOpts, backend bind.ContractBackend, _ethPool common.Address, _payRegistry common.Address, _celerWallet common.Address) (common.Address, *types.Transaction, *CelerLedger, error) {
@@ -39,6 +39,7 @@ func DeployCelerLedger(auth *bind.TransactOpts, backend bind.ContractBackend, _e
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+
 	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(CelerLedgerBin), backend, _ethPool, _payRegistry, _celerWallet)
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -840,56 +841,77 @@ func (_CelerLedger *CelerLedgerCallerSession) GetWithdrawIntent(_channelId [32]b
 	return _CelerLedger.Contract.GetWithdrawIntent(&_CelerLedger.CallOpts, _channelId)
 }
 
-// TmpChannelId is a free data retrieval call binding the contract method 0xb962a1d8.
+// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function tmpChannelId() constant returns(bytes32)
-func (_CelerLedger *CelerLedgerCaller) TmpChannelId(opts *bind.CallOpts) ([32]byte, error) {
+// Solidity: function isOwner() constant returns(bool)
+func (_CelerLedger *CelerLedgerCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
-		ret0 = new([32]byte)
+		ret0 = new(bool)
 	)
 	out := ret0
-	err := _CelerLedger.contract.Call(opts, out, "tmpChannelId")
+	err := _CelerLedger.contract.Call(opts, out, "isOwner")
 	return *ret0, err
 }
 
-// TmpChannelId is a free data retrieval call binding the contract method 0xb962a1d8.
+// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function tmpChannelId() constant returns(bytes32)
-func (_CelerLedger *CelerLedgerSession) TmpChannelId() ([32]byte, error) {
-	return _CelerLedger.Contract.TmpChannelId(&_CelerLedger.CallOpts)
+// Solidity: function isOwner() constant returns(bool)
+func (_CelerLedger *CelerLedgerSession) IsOwner() (bool, error) {
+	return _CelerLedger.Contract.IsOwner(&_CelerLedger.CallOpts)
 }
 
-// TmpChannelId is a free data retrieval call binding the contract method 0xb962a1d8.
+// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function tmpChannelId() constant returns(bytes32)
-func (_CelerLedger *CelerLedgerCallerSession) TmpChannelId() ([32]byte, error) {
-	return _CelerLedger.Contract.TmpChannelId(&_CelerLedger.CallOpts)
+// Solidity: function isOwner() constant returns(bool)
+func (_CelerLedger *CelerLedgerCallerSession) IsOwner() (bool, error) {
+	return _CelerLedger.Contract.IsOwner(&_CelerLedger.CallOpts)
 }
 
-// TmpChannelIds is a free data retrieval call binding the contract method 0xd4e3680f.
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function tmpChannelIds(uint256 ) constant returns(bytes32)
-func (_CelerLedger *CelerLedgerCaller) TmpChannelIds(opts *bind.CallOpts, arg0 *big.Int) ([32]byte, error) {
+// Solidity: function owner() constant returns(address)
+func (_CelerLedger *CelerLedgerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
-		ret0 = new([32]byte)
+		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _CelerLedger.contract.Call(opts, out, "tmpChannelIds", arg0)
+	err := _CelerLedger.contract.Call(opts, out, "owner")
 	return *ret0, err
 }
 
-// TmpChannelIds is a free data retrieval call binding the contract method 0xd4e3680f.
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function tmpChannelIds(uint256 ) constant returns(bytes32)
-func (_CelerLedger *CelerLedgerSession) TmpChannelIds(arg0 *big.Int) ([32]byte, error) {
-	return _CelerLedger.Contract.TmpChannelIds(&_CelerLedger.CallOpts, arg0)
+// Solidity: function owner() constant returns(address)
+func (_CelerLedger *CelerLedgerSession) Owner() (common.Address, error) {
+	return _CelerLedger.Contract.Owner(&_CelerLedger.CallOpts)
 }
 
-// TmpChannelIds is a free data retrieval call binding the contract method 0xd4e3680f.
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function tmpChannelIds(uint256 ) constant returns(bytes32)
-func (_CelerLedger *CelerLedgerCallerSession) TmpChannelIds(arg0 *big.Int) ([32]byte, error) {
-	return _CelerLedger.Contract.TmpChannelIds(&_CelerLedger.CallOpts, arg0)
+// Solidity: function owner() constant returns(address)
+func (_CelerLedger *CelerLedgerCallerSession) Owner() (common.Address, error) {
+	return _CelerLedger.Contract.Owner(&_CelerLedger.CallOpts)
+}
+
+// ClearPays is a paid mutator transaction binding the contract method 0xfd0a1a61.
+//
+// Solidity: function clearPays(bytes32 _channelId, address _peerFrom, bytes _payIdList) returns()
+func (_CelerLedger *CelerLedgerTransactor) ClearPays(opts *bind.TransactOpts, _channelId [32]byte, _peerFrom common.Address, _payIdList []byte) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "clearPays", _channelId, _peerFrom, _payIdList)
+}
+
+// ClearPays is a paid mutator transaction binding the contract method 0xfd0a1a61.
+//
+// Solidity: function clearPays(bytes32 _channelId, address _peerFrom, bytes _payIdList) returns()
+func (_CelerLedger *CelerLedgerSession) ClearPays(_channelId [32]byte, _peerFrom common.Address, _payIdList []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.ClearPays(&_CelerLedger.TransactOpts, _channelId, _peerFrom, _payIdList)
+}
+
+// ClearPays is a paid mutator transaction binding the contract method 0xfd0a1a61.
+//
+// Solidity: function clearPays(bytes32 _channelId, address _peerFrom, bytes _payIdList) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) ClearPays(_channelId [32]byte, _peerFrom common.Address, _payIdList []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.ClearPays(&_CelerLedger.TransactOpts, _channelId, _peerFrom, _payIdList)
 }
 
 // ConfirmSettle is a paid mutator transaction binding the contract method 0xc7ff8625.
@@ -934,6 +956,48 @@ func (_CelerLedger *CelerLedgerTransactorSession) ConfirmWithdraw(_channelId [32
 	return _CelerLedger.Contract.ConfirmWithdraw(&_CelerLedger.TransactOpts, _channelId)
 }
 
+// CooperativeSettle is a paid mutator transaction binding the contract method 0x09683c03.
+//
+// Solidity: function cooperativeSettle(bytes _settleRequest) returns()
+func (_CelerLedger *CelerLedgerTransactor) CooperativeSettle(opts *bind.TransactOpts, _settleRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "cooperativeSettle", _settleRequest)
+}
+
+// CooperativeSettle is a paid mutator transaction binding the contract method 0x09683c03.
+//
+// Solidity: function cooperativeSettle(bytes _settleRequest) returns()
+func (_CelerLedger *CelerLedgerSession) CooperativeSettle(_settleRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.CooperativeSettle(&_CelerLedger.TransactOpts, _settleRequest)
+}
+
+// CooperativeSettle is a paid mutator transaction binding the contract method 0x09683c03.
+//
+// Solidity: function cooperativeSettle(bytes _settleRequest) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) CooperativeSettle(_settleRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.CooperativeSettle(&_CelerLedger.TransactOpts, _settleRequest)
+}
+
+// CooperativeWithdraw is a paid mutator transaction binding the contract method 0xd757abd2.
+//
+// Solidity: function cooperativeWithdraw(bytes _cooperativeWithdrawRequest) returns()
+func (_CelerLedger *CelerLedgerTransactor) CooperativeWithdraw(opts *bind.TransactOpts, _cooperativeWithdrawRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "cooperativeWithdraw", _cooperativeWithdrawRequest)
+}
+
+// CooperativeWithdraw is a paid mutator transaction binding the contract method 0xd757abd2.
+//
+// Solidity: function cooperativeWithdraw(bytes _cooperativeWithdrawRequest) returns()
+func (_CelerLedger *CelerLedgerSession) CooperativeWithdraw(_cooperativeWithdrawRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.CooperativeWithdraw(&_CelerLedger.TransactOpts, _cooperativeWithdrawRequest)
+}
+
+// CooperativeWithdraw is a paid mutator transaction binding the contract method 0xd757abd2.
+//
+// Solidity: function cooperativeWithdraw(bytes _cooperativeWithdrawRequest) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) CooperativeWithdraw(_cooperativeWithdrawRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.CooperativeWithdraw(&_CelerLedger.TransactOpts, _cooperativeWithdrawRequest)
+}
+
 // Deposit is a paid mutator transaction binding the contract method 0xd954863c.
 //
 // Solidity: function deposit(bytes32 _channelId, address _receiver, uint256 _transferFromAmount) returns()
@@ -953,6 +1017,69 @@ func (_CelerLedger *CelerLedgerSession) Deposit(_channelId [32]byte, _receiver c
 // Solidity: function deposit(bytes32 _channelId, address _receiver, uint256 _transferFromAmount) returns()
 func (_CelerLedger *CelerLedgerTransactorSession) Deposit(_channelId [32]byte, _receiver common.Address, _transferFromAmount *big.Int) (*types.Transaction, error) {
 	return _CelerLedger.Contract.Deposit(&_CelerLedger.TransactOpts, _channelId, _receiver, _transferFromAmount)
+}
+
+// DepositInBatch is a paid mutator transaction binding the contract method 0xe5780db2.
+//
+// Solidity: function depositInBatch(bytes32[] _channelIds, address[] _receivers, uint256[] _transferFromAmounts) returns()
+func (_CelerLedger *CelerLedgerTransactor) DepositInBatch(opts *bind.TransactOpts, _channelIds [][32]byte, _receivers []common.Address, _transferFromAmounts []*big.Int) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "depositInBatch", _channelIds, _receivers, _transferFromAmounts)
+}
+
+// DepositInBatch is a paid mutator transaction binding the contract method 0xe5780db2.
+//
+// Solidity: function depositInBatch(bytes32[] _channelIds, address[] _receivers, uint256[] _transferFromAmounts) returns()
+func (_CelerLedger *CelerLedgerSession) DepositInBatch(_channelIds [][32]byte, _receivers []common.Address, _transferFromAmounts []*big.Int) (*types.Transaction, error) {
+	return _CelerLedger.Contract.DepositInBatch(&_CelerLedger.TransactOpts, _channelIds, _receivers, _transferFromAmounts)
+}
+
+// DepositInBatch is a paid mutator transaction binding the contract method 0xe5780db2.
+//
+// Solidity: function depositInBatch(bytes32[] _channelIds, address[] _receivers, uint256[] _transferFromAmounts) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) DepositInBatch(_channelIds [][32]byte, _receivers []common.Address, _transferFromAmounts []*big.Int) (*types.Transaction, error) {
+	return _CelerLedger.Contract.DepositInBatch(&_CelerLedger.TransactOpts, _channelIds, _receivers, _transferFromAmounts)
+}
+
+// DisableBalanceLimits is a paid mutator transaction binding the contract method 0xe063913c.
+//
+// Solidity: function disableBalanceLimits() returns()
+func (_CelerLedger *CelerLedgerTransactor) DisableBalanceLimits(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "disableBalanceLimits")
+}
+
+// DisableBalanceLimits is a paid mutator transaction binding the contract method 0xe063913c.
+//
+// Solidity: function disableBalanceLimits() returns()
+func (_CelerLedger *CelerLedgerSession) DisableBalanceLimits() (*types.Transaction, error) {
+	return _CelerLedger.Contract.DisableBalanceLimits(&_CelerLedger.TransactOpts)
+}
+
+// DisableBalanceLimits is a paid mutator transaction binding the contract method 0xe063913c.
+//
+// Solidity: function disableBalanceLimits() returns()
+func (_CelerLedger *CelerLedgerTransactorSession) DisableBalanceLimits() (*types.Transaction, error) {
+	return _CelerLedger.Contract.DisableBalanceLimits(&_CelerLedger.TransactOpts)
+}
+
+// EnableBalanceLimits is a paid mutator transaction binding the contract method 0x83c8f8b8.
+//
+// Solidity: function enableBalanceLimits() returns()
+func (_CelerLedger *CelerLedgerTransactor) EnableBalanceLimits(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "enableBalanceLimits")
+}
+
+// EnableBalanceLimits is a paid mutator transaction binding the contract method 0x83c8f8b8.
+//
+// Solidity: function enableBalanceLimits() returns()
+func (_CelerLedger *CelerLedgerSession) EnableBalanceLimits() (*types.Transaction, error) {
+	return _CelerLedger.Contract.EnableBalanceLimits(&_CelerLedger.TransactOpts)
+}
+
+// EnableBalanceLimits is a paid mutator transaction binding the contract method 0x83c8f8b8.
+//
+// Solidity: function enableBalanceLimits() returns()
+func (_CelerLedger *CelerLedgerTransactorSession) EnableBalanceLimits() (*types.Transaction, error) {
+	return _CelerLedger.Contract.EnableBalanceLimits(&_CelerLedger.TransactOpts)
 }
 
 // IntendSettle is a paid mutator transaction binding the contract method 0x130d33fe.
@@ -976,48 +1103,6 @@ func (_CelerLedger *CelerLedgerTransactorSession) IntendSettle(_signedSimplexSta
 	return _CelerLedger.Contract.IntendSettle(&_CelerLedger.TransactOpts, _signedSimplexStateArray)
 }
 
-// IntendSettleMockSet is a paid mutator transaction binding the contract method 0xeff3417c.
-//
-// Solidity: function intendSettleMockSet(bytes32 _channelId, address _peerFrom, uint256 _seqNum, uint256 _transferOut, bytes32 _nextPayIdListHash, uint256 _lastPayResolveDeadline, uint256 _pendingPayOut) returns()
-func (_CelerLedger *CelerLedgerTransactor) IntendSettleMockSet(opts *bind.TransactOpts, _channelId [32]byte, _peerFrom common.Address, _seqNum *big.Int, _transferOut *big.Int, _nextPayIdListHash [32]byte, _lastPayResolveDeadline *big.Int, _pendingPayOut *big.Int) (*types.Transaction, error) {
-	return _CelerLedger.contract.Transact(opts, "intendSettleMockSet", _channelId, _peerFrom, _seqNum, _transferOut, _nextPayIdListHash, _lastPayResolveDeadline, _pendingPayOut)
-}
-
-// IntendSettleMockSet is a paid mutator transaction binding the contract method 0xeff3417c.
-//
-// Solidity: function intendSettleMockSet(bytes32 _channelId, address _peerFrom, uint256 _seqNum, uint256 _transferOut, bytes32 _nextPayIdListHash, uint256 _lastPayResolveDeadline, uint256 _pendingPayOut) returns()
-func (_CelerLedger *CelerLedgerSession) IntendSettleMockSet(_channelId [32]byte, _peerFrom common.Address, _seqNum *big.Int, _transferOut *big.Int, _nextPayIdListHash [32]byte, _lastPayResolveDeadline *big.Int, _pendingPayOut *big.Int) (*types.Transaction, error) {
-	return _CelerLedger.Contract.IntendSettleMockSet(&_CelerLedger.TransactOpts, _channelId, _peerFrom, _seqNum, _transferOut, _nextPayIdListHash, _lastPayResolveDeadline, _pendingPayOut)
-}
-
-// IntendSettleMockSet is a paid mutator transaction binding the contract method 0xeff3417c.
-//
-// Solidity: function intendSettleMockSet(bytes32 _channelId, address _peerFrom, uint256 _seqNum, uint256 _transferOut, bytes32 _nextPayIdListHash, uint256 _lastPayResolveDeadline, uint256 _pendingPayOut) returns()
-func (_CelerLedger *CelerLedgerTransactorSession) IntendSettleMockSet(_channelId [32]byte, _peerFrom common.Address, _seqNum *big.Int, _transferOut *big.Int, _nextPayIdListHash [32]byte, _lastPayResolveDeadline *big.Int, _pendingPayOut *big.Int) (*types.Transaction, error) {
-	return _CelerLedger.Contract.IntendSettleMockSet(&_CelerLedger.TransactOpts, _channelId, _peerFrom, _seqNum, _transferOut, _nextPayIdListHash, _lastPayResolveDeadline, _pendingPayOut)
-}
-
-// IntendSettleRevert is a paid mutator transaction binding the contract method 0xa979e229.
-//
-// Solidity: function intendSettleRevert(bytes _signedSimplexStateArray) returns()
-func (_CelerLedger *CelerLedgerTransactor) IntendSettleRevert(opts *bind.TransactOpts, _signedSimplexStateArray []byte) (*types.Transaction, error) {
-	return _CelerLedger.contract.Transact(opts, "intendSettleRevert", _signedSimplexStateArray)
-}
-
-// IntendSettleRevert is a paid mutator transaction binding the contract method 0xa979e229.
-//
-// Solidity: function intendSettleRevert(bytes _signedSimplexStateArray) returns()
-func (_CelerLedger *CelerLedgerSession) IntendSettleRevert(_signedSimplexStateArray []byte) (*types.Transaction, error) {
-	return _CelerLedger.Contract.IntendSettleRevert(&_CelerLedger.TransactOpts, _signedSimplexStateArray)
-}
-
-// IntendSettleRevert is a paid mutator transaction binding the contract method 0xa979e229.
-//
-// Solidity: function intendSettleRevert(bytes _signedSimplexStateArray) returns()
-func (_CelerLedger *CelerLedgerTransactorSession) IntendSettleRevert(_signedSimplexStateArray []byte) (*types.Transaction, error) {
-	return _CelerLedger.Contract.IntendSettleRevert(&_CelerLedger.TransactOpts, _signedSimplexStateArray)
-}
-
 // IntendWithdraw is a paid mutator transaction binding the contract method 0x8942ecb2.
 //
 // Solidity: function intendWithdraw(bytes32 _channelId, uint256 _amount, bytes32 _recipientChannelId) returns()
@@ -1039,25 +1124,46 @@ func (_CelerLedger *CelerLedgerTransactorSession) IntendWithdraw(_channelId [32]
 	return _CelerLedger.Contract.IntendWithdraw(&_CelerLedger.TransactOpts, _channelId, _amount, _recipientChannelId)
 }
 
-// IntendWithdrawMockSet is a paid mutator transaction binding the contract method 0x8f16cef4.
+// MigrateChannelFrom is a paid mutator transaction binding the contract method 0x2e3c517a.
 //
-// Solidity: function intendWithdrawMockSet(bytes32 _channelId, uint256 _amount, bytes32 _recipientChannelId, address _receiver) returns()
-func (_CelerLedger *CelerLedgerTransactor) IntendWithdrawMockSet(opts *bind.TransactOpts, _channelId [32]byte, _amount *big.Int, _recipientChannelId [32]byte, _receiver common.Address) (*types.Transaction, error) {
-	return _CelerLedger.contract.Transact(opts, "intendWithdrawMockSet", _channelId, _amount, _recipientChannelId, _receiver)
+// Solidity: function migrateChannelFrom(address _fromLedgerAddr, bytes _migrationRequest) returns()
+func (_CelerLedger *CelerLedgerTransactor) MigrateChannelFrom(opts *bind.TransactOpts, _fromLedgerAddr common.Address, _migrationRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "migrateChannelFrom", _fromLedgerAddr, _migrationRequest)
 }
 
-// IntendWithdrawMockSet is a paid mutator transaction binding the contract method 0x8f16cef4.
+// MigrateChannelFrom is a paid mutator transaction binding the contract method 0x2e3c517a.
 //
-// Solidity: function intendWithdrawMockSet(bytes32 _channelId, uint256 _amount, bytes32 _recipientChannelId, address _receiver) returns()
-func (_CelerLedger *CelerLedgerSession) IntendWithdrawMockSet(_channelId [32]byte, _amount *big.Int, _recipientChannelId [32]byte, _receiver common.Address) (*types.Transaction, error) {
-	return _CelerLedger.Contract.IntendWithdrawMockSet(&_CelerLedger.TransactOpts, _channelId, _amount, _recipientChannelId, _receiver)
+// Solidity: function migrateChannelFrom(address _fromLedgerAddr, bytes _migrationRequest) returns()
+func (_CelerLedger *CelerLedgerSession) MigrateChannelFrom(_fromLedgerAddr common.Address, _migrationRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.MigrateChannelFrom(&_CelerLedger.TransactOpts, _fromLedgerAddr, _migrationRequest)
 }
 
-// IntendWithdrawMockSet is a paid mutator transaction binding the contract method 0x8f16cef4.
+// MigrateChannelFrom is a paid mutator transaction binding the contract method 0x2e3c517a.
 //
-// Solidity: function intendWithdrawMockSet(bytes32 _channelId, uint256 _amount, bytes32 _recipientChannelId, address _receiver) returns()
-func (_CelerLedger *CelerLedgerTransactorSession) IntendWithdrawMockSet(_channelId [32]byte, _amount *big.Int, _recipientChannelId [32]byte, _receiver common.Address) (*types.Transaction, error) {
-	return _CelerLedger.Contract.IntendWithdrawMockSet(&_CelerLedger.TransactOpts, _channelId, _amount, _recipientChannelId, _receiver)
+// Solidity: function migrateChannelFrom(address _fromLedgerAddr, bytes _migrationRequest) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) MigrateChannelFrom(_fromLedgerAddr common.Address, _migrationRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.MigrateChannelFrom(&_CelerLedger.TransactOpts, _fromLedgerAddr, _migrationRequest)
+}
+
+// MigrateChannelTo is a paid mutator transaction binding the contract method 0xe0a515b7.
+//
+// Solidity: function migrateChannelTo(bytes _migrationRequest) returns(bytes32)
+func (_CelerLedger *CelerLedgerTransactor) MigrateChannelTo(opts *bind.TransactOpts, _migrationRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "migrateChannelTo", _migrationRequest)
+}
+
+// MigrateChannelTo is a paid mutator transaction binding the contract method 0xe0a515b7.
+//
+// Solidity: function migrateChannelTo(bytes _migrationRequest) returns(bytes32)
+func (_CelerLedger *CelerLedgerSession) MigrateChannelTo(_migrationRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.MigrateChannelTo(&_CelerLedger.TransactOpts, _migrationRequest)
+}
+
+// MigrateChannelTo is a paid mutator transaction binding the contract method 0xe0a515b7.
+//
+// Solidity: function migrateChannelTo(bytes _migrationRequest) returns(bytes32)
+func (_CelerLedger *CelerLedgerTransactorSession) MigrateChannelTo(_migrationRequest []byte) (*types.Transaction, error) {
+	return _CelerLedger.Contract.MigrateChannelTo(&_CelerLedger.TransactOpts, _migrationRequest)
 }
 
 // OpenChannel is a paid mutator transaction binding the contract method 0x93b7b3ce.
@@ -1081,25 +1187,46 @@ func (_CelerLedger *CelerLedgerTransactorSession) OpenChannel(_openRequest []byt
 	return _CelerLedger.Contract.OpenChannel(&_CelerLedger.TransactOpts, _openRequest)
 }
 
-// OpenChannelMockSet is a paid mutator transaction binding the contract method 0xe8032557.
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
-// Solidity: function openChannelMockSet(bytes32 _channelId, uint256 _disputeTimeout, address _tokenAddress, uint256 _tokenType, address[2] _peerAddrs, uint256[2] _deposits) returns()
-func (_CelerLedger *CelerLedgerTransactor) OpenChannelMockSet(opts *bind.TransactOpts, _channelId [32]byte, _disputeTimeout *big.Int, _tokenAddress common.Address, _tokenType *big.Int, _peerAddrs [2]common.Address, _deposits [2]*big.Int) (*types.Transaction, error) {
-	return _CelerLedger.contract.Transact(opts, "openChannelMockSet", _channelId, _disputeTimeout, _tokenAddress, _tokenType, _peerAddrs, _deposits)
+// Solidity: function renounceOwnership() returns()
+func (_CelerLedger *CelerLedgerTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "renounceOwnership")
 }
 
-// OpenChannelMockSet is a paid mutator transaction binding the contract method 0xe8032557.
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
-// Solidity: function openChannelMockSet(bytes32 _channelId, uint256 _disputeTimeout, address _tokenAddress, uint256 _tokenType, address[2] _peerAddrs, uint256[2] _deposits) returns()
-func (_CelerLedger *CelerLedgerSession) OpenChannelMockSet(_channelId [32]byte, _disputeTimeout *big.Int, _tokenAddress common.Address, _tokenType *big.Int, _peerAddrs [2]common.Address, _deposits [2]*big.Int) (*types.Transaction, error) {
-	return _CelerLedger.Contract.OpenChannelMockSet(&_CelerLedger.TransactOpts, _channelId, _disputeTimeout, _tokenAddress, _tokenType, _peerAddrs, _deposits)
+// Solidity: function renounceOwnership() returns()
+func (_CelerLedger *CelerLedgerSession) RenounceOwnership() (*types.Transaction, error) {
+	return _CelerLedger.Contract.RenounceOwnership(&_CelerLedger.TransactOpts)
 }
 
-// OpenChannelMockSet is a paid mutator transaction binding the contract method 0xe8032557.
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
-// Solidity: function openChannelMockSet(bytes32 _channelId, uint256 _disputeTimeout, address _tokenAddress, uint256 _tokenType, address[2] _peerAddrs, uint256[2] _deposits) returns()
-func (_CelerLedger *CelerLedgerTransactorSession) OpenChannelMockSet(_channelId [32]byte, _disputeTimeout *big.Int, _tokenAddress common.Address, _tokenType *big.Int, _peerAddrs [2]common.Address, _deposits [2]*big.Int) (*types.Transaction, error) {
-	return _CelerLedger.Contract.OpenChannelMockSet(&_CelerLedger.TransactOpts, _channelId, _disputeTimeout, _tokenAddress, _tokenType, _peerAddrs, _deposits)
+// Solidity: function renounceOwnership() returns()
+func (_CelerLedger *CelerLedgerTransactorSession) RenounceOwnership() (*types.Transaction, error) {
+	return _CelerLedger.Contract.RenounceOwnership(&_CelerLedger.TransactOpts)
+}
+
+// SetBalanceLimits is a paid mutator transaction binding the contract method 0xa8580cab.
+//
+// Solidity: function setBalanceLimits(address[] _tokenAddrs, uint256[] _limits) returns()
+func (_CelerLedger *CelerLedgerTransactor) SetBalanceLimits(opts *bind.TransactOpts, _tokenAddrs []common.Address, _limits []*big.Int) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "setBalanceLimits", _tokenAddrs, _limits)
+}
+
+// SetBalanceLimits is a paid mutator transaction binding the contract method 0xa8580cab.
+//
+// Solidity: function setBalanceLimits(address[] _tokenAddrs, uint256[] _limits) returns()
+func (_CelerLedger *CelerLedgerSession) SetBalanceLimits(_tokenAddrs []common.Address, _limits []*big.Int) (*types.Transaction, error) {
+	return _CelerLedger.Contract.SetBalanceLimits(&_CelerLedger.TransactOpts, _tokenAddrs, _limits)
+}
+
+// SetBalanceLimits is a paid mutator transaction binding the contract method 0xa8580cab.
+//
+// Solidity: function setBalanceLimits(address[] _tokenAddrs, uint256[] _limits) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) SetBalanceLimits(_tokenAddrs []common.Address, _limits []*big.Int) (*types.Transaction, error) {
+	return _CelerLedger.Contract.SetBalanceLimits(&_CelerLedger.TransactOpts, _tokenAddrs, _limits)
 }
 
 // SnapshotStates is a paid mutator transaction binding the contract method 0x4102b9a8.
@@ -1123,25 +1250,25 @@ func (_CelerLedger *CelerLedgerTransactorSession) SnapshotStates(_signedSimplexS
 	return _CelerLedger.Contract.SnapshotStates(&_CelerLedger.TransactOpts, _signedSimplexStateArray)
 }
 
-// SnapshotStatesMockSet is a paid mutator transaction binding the contract method 0x14ff1491.
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function snapshotStatesMockSet(bytes32[] _channelIds, address[] _peerFroms, uint256[] _seqNums, uint256[] _transferOuts, uint256[] _pendingPayOuts) returns()
-func (_CelerLedger *CelerLedgerTransactor) SnapshotStatesMockSet(opts *bind.TransactOpts, _channelIds [][32]byte, _peerFroms []common.Address, _seqNums []*big.Int, _transferOuts []*big.Int, _pendingPayOuts []*big.Int) (*types.Transaction, error) {
-	return _CelerLedger.contract.Transact(opts, "snapshotStatesMockSet", _channelIds, _peerFroms, _seqNums, _transferOuts, _pendingPayOuts)
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_CelerLedger *CelerLedgerTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
+	return _CelerLedger.contract.Transact(opts, "transferOwnership", newOwner)
 }
 
-// SnapshotStatesMockSet is a paid mutator transaction binding the contract method 0x14ff1491.
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function snapshotStatesMockSet(bytes32[] _channelIds, address[] _peerFroms, uint256[] _seqNums, uint256[] _transferOuts, uint256[] _pendingPayOuts) returns()
-func (_CelerLedger *CelerLedgerSession) SnapshotStatesMockSet(_channelIds [][32]byte, _peerFroms []common.Address, _seqNums []*big.Int, _transferOuts []*big.Int, _pendingPayOuts []*big.Int) (*types.Transaction, error) {
-	return _CelerLedger.Contract.SnapshotStatesMockSet(&_CelerLedger.TransactOpts, _channelIds, _peerFroms, _seqNums, _transferOuts, _pendingPayOuts)
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_CelerLedger *CelerLedgerSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _CelerLedger.Contract.TransferOwnership(&_CelerLedger.TransactOpts, newOwner)
 }
 
-// SnapshotStatesMockSet is a paid mutator transaction binding the contract method 0x14ff1491.
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
 //
-// Solidity: function snapshotStatesMockSet(bytes32[] _channelIds, address[] _peerFroms, uint256[] _seqNums, uint256[] _transferOuts, uint256[] _pendingPayOuts) returns()
-func (_CelerLedger *CelerLedgerTransactorSession) SnapshotStatesMockSet(_channelIds [][32]byte, _peerFroms []common.Address, _seqNums []*big.Int, _transferOuts []*big.Int, _pendingPayOuts []*big.Int) (*types.Transaction, error) {
-	return _CelerLedger.Contract.SnapshotStatesMockSet(&_CelerLedger.TransactOpts, _channelIds, _peerFroms, _seqNums, _transferOuts, _pendingPayOuts)
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_CelerLedger *CelerLedgerTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _CelerLedger.Contract.TransferOwnership(&_CelerLedger.TransactOpts, newOwner)
 }
 
 // VetoWithdraw is a paid mutator transaction binding the contract method 0x255aab59.
@@ -1316,6 +1443,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchClearOnePay(opts *bind.WatchOpts, 
 	}), nil
 }
 
+// ParseClearOnePay is a log parse operation binding the contract event 0x33252d4bc5cee2ad248475e8c39239a79dc64b2691c9ca1a63ff9af0c75b8776.
+//
+// Solidity: event ClearOnePay(bytes32 indexed channelId, bytes32 indexed payId, address indexed peerFrom, uint256 amount)
+func (_CelerLedger *CelerLedgerFilterer) ParseClearOnePay(log types.Log) (*CelerLedgerClearOnePay, error) {
+	event := new(CelerLedgerClearOnePay)
+	if err := _CelerLedger.contract.UnpackLog(event, "ClearOnePay", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerConfirmSettleIterator is returned from FilterConfirmSettle and is used to iterate over the raw logs and unpacked data for ConfirmSettle events raised by the CelerLedger contract.
 type CelerLedgerConfirmSettleIterator struct {
 	Event *CelerLedgerConfirmSettle // Event containing the contract specifics and raw log
@@ -1449,6 +1587,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchConfirmSettle(opts *bind.WatchOpts
 	}), nil
 }
 
+// ParseConfirmSettle is a log parse operation binding the contract event 0x728ddd8c5acda5947c34db8d759c66ae70884f526ff9b93637d351b012ef3206.
+//
+// Solidity: event ConfirmSettle(bytes32 indexed channelId, uint256[2] settleBalance)
+func (_CelerLedger *CelerLedgerFilterer) ParseConfirmSettle(log types.Log) (*CelerLedgerConfirmSettle, error) {
+	event := new(CelerLedgerConfirmSettle)
+	if err := _CelerLedger.contract.UnpackLog(event, "ConfirmSettle", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerConfirmSettleFailIterator is returned from FilterConfirmSettleFail and is used to iterate over the raw logs and unpacked data for ConfirmSettleFail events raised by the CelerLedger contract.
 type CelerLedgerConfirmSettleFailIterator struct {
 	Event *CelerLedgerConfirmSettleFail // Event containing the contract specifics and raw log
@@ -1579,6 +1728,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchConfirmSettleFail(opts *bind.Watch
 			}
 		}
 	}), nil
+}
+
+// ParseConfirmSettleFail is a log parse operation binding the contract event 0xa6549eb18490d42e7ec93f42115d1ee11b706d04077be9597034dd73ec8bcb36.
+//
+// Solidity: event ConfirmSettleFail(bytes32 indexed channelId)
+func (_CelerLedger *CelerLedgerFilterer) ParseConfirmSettleFail(log types.Log) (*CelerLedgerConfirmSettleFail, error) {
+	event := new(CelerLedgerConfirmSettleFail)
+	if err := _CelerLedger.contract.UnpackLog(event, "ConfirmSettleFail", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // CelerLedgerConfirmWithdrawIterator is returned from FilterConfirmWithdraw and is used to iterate over the raw logs and unpacked data for ConfirmWithdraw events raised by the CelerLedger contract.
@@ -1736,6 +1896,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchConfirmWithdraw(opts *bind.WatchOp
 	}), nil
 }
 
+// ParseConfirmWithdraw is a log parse operation binding the contract event 0xe8110b4ee08638c48f6a4d5f726927df4e541893efa9d2c2c47a6b889041826e.
+//
+// Solidity: event ConfirmWithdraw(bytes32 indexed channelId, uint256 withdrawnAmount, address indexed receiver, bytes32 indexed recipientChannelId, uint256[2] deposits, uint256[2] withdrawals)
+func (_CelerLedger *CelerLedgerFilterer) ParseConfirmWithdraw(log types.Log) (*CelerLedgerConfirmWithdraw, error) {
+	event := new(CelerLedgerConfirmWithdraw)
+	if err := _CelerLedger.contract.UnpackLog(event, "ConfirmWithdraw", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerCooperativeSettleIterator is returned from FilterCooperativeSettle and is used to iterate over the raw logs and unpacked data for CooperativeSettle events raised by the CelerLedger contract.
 type CelerLedgerCooperativeSettleIterator struct {
 	Event *CelerLedgerCooperativeSettle // Event containing the contract specifics and raw log
@@ -1867,6 +2038,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchCooperativeSettle(opts *bind.Watch
 			}
 		}
 	}), nil
+}
+
+// ParseCooperativeSettle is a log parse operation binding the contract event 0x6c666557dc97fd52cd2d9d6dd6d109e501ffdb831abeecf13aafeeaf762ee1fd.
+//
+// Solidity: event CooperativeSettle(bytes32 indexed channelId, uint256[2] settleBalance)
+func (_CelerLedger *CelerLedgerFilterer) ParseCooperativeSettle(log types.Log) (*CelerLedgerCooperativeSettle, error) {
+	event := new(CelerLedgerCooperativeSettle)
+	if err := _CelerLedger.contract.UnpackLog(event, "CooperativeSettle", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // CelerLedgerCooperativeWithdrawIterator is returned from FilterCooperativeWithdraw and is used to iterate over the raw logs and unpacked data for CooperativeWithdraw events raised by the CelerLedger contract.
@@ -2025,6 +2207,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchCooperativeWithdraw(opts *bind.Wat
 	}), nil
 }
 
+// ParseCooperativeWithdraw is a log parse operation binding the contract event 0x1b87d077d9b706e42883b454b67730633fd6b4b29f9a9cf5f57c278c54f51c8f.
+//
+// Solidity: event CooperativeWithdraw(bytes32 indexed channelId, uint256 withdrawnAmount, address indexed receiver, bytes32 indexed recipientChannelId, uint256[2] deposits, uint256[2] withdrawals, uint256 seqNum)
+func (_CelerLedger *CelerLedgerFilterer) ParseCooperativeWithdraw(log types.Log) (*CelerLedgerCooperativeWithdraw, error) {
+	event := new(CelerLedgerCooperativeWithdraw)
+	if err := _CelerLedger.contract.UnpackLog(event, "CooperativeWithdraw", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerDepositIterator is returned from FilterDeposit and is used to iterate over the raw logs and unpacked data for Deposit events raised by the CelerLedger contract.
 type CelerLedgerDepositIterator struct {
 	Event *CelerLedgerDeposit // Event containing the contract specifics and raw log
@@ -2160,6 +2353,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchDeposit(opts *bind.WatchOpts, sink
 	}), nil
 }
 
+// ParseDeposit is a log parse operation binding the contract event 0xb63f5dc096f516663ffb5ef2b611f0e2acca8617a868c2a3653cba5e3ed0e92c.
+//
+// Solidity: event Deposit(bytes32 indexed channelId, address[2] peerAddrs, uint256[2] deposits, uint256[2] withdrawals)
+func (_CelerLedger *CelerLedgerFilterer) ParseDeposit(log types.Log) (*CelerLedgerDeposit, error) {
+	event := new(CelerLedgerDeposit)
+	if err := _CelerLedger.contract.UnpackLog(event, "Deposit", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerIntendSettleIterator is returned from FilterIntendSettle and is used to iterate over the raw logs and unpacked data for IntendSettle events raised by the CelerLedger contract.
 type CelerLedgerIntendSettleIterator struct {
 	Event *CelerLedgerIntendSettle // Event containing the contract specifics and raw log
@@ -2291,6 +2495,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchIntendSettle(opts *bind.WatchOpts,
 			}
 		}
 	}), nil
+}
+
+// ParseIntendSettle is a log parse operation binding the contract event 0x296143e7e25aa055fbb871702776a67da540876e2be721d5c38ba23c97c90d64.
+//
+// Solidity: event IntendSettle(bytes32 indexed channelId, uint256[2] seqNums)
+func (_CelerLedger *CelerLedgerFilterer) ParseIntendSettle(log types.Log) (*CelerLedgerIntendSettle, error) {
+	event := new(CelerLedgerIntendSettle)
+	if err := _CelerLedger.contract.UnpackLog(event, "IntendSettle", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // CelerLedgerIntendWithdrawIterator is returned from FilterIntendWithdraw and is used to iterate over the raw logs and unpacked data for IntendWithdraw events raised by the CelerLedger contract.
@@ -2433,6 +2648,321 @@ func (_CelerLedger *CelerLedgerFilterer) WatchIntendWithdraw(opts *bind.WatchOpt
 			}
 		}
 	}), nil
+}
+
+// ParseIntendWithdraw is a log parse operation binding the contract event 0x97883669625c4ff7f5432b4ca33fe75fb5fee985deb196a967e5758f846170fe.
+//
+// Solidity: event IntendWithdraw(bytes32 indexed channelId, address indexed receiver, uint256 amount)
+func (_CelerLedger *CelerLedgerFilterer) ParseIntendWithdraw(log types.Log) (*CelerLedgerIntendWithdraw, error) {
+	event := new(CelerLedgerIntendWithdraw)
+	if err := _CelerLedger.contract.UnpackLog(event, "IntendWithdraw", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// CelerLedgerMigrateChannelFromIterator is returned from FilterMigrateChannelFrom and is used to iterate over the raw logs and unpacked data for MigrateChannelFrom events raised by the CelerLedger contract.
+type CelerLedgerMigrateChannelFromIterator struct {
+	Event *CelerLedgerMigrateChannelFrom // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *CelerLedgerMigrateChannelFromIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(CelerLedgerMigrateChannelFrom)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(CelerLedgerMigrateChannelFrom)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *CelerLedgerMigrateChannelFromIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *CelerLedgerMigrateChannelFromIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// CelerLedgerMigrateChannelFrom represents a MigrateChannelFrom event raised by the CelerLedger contract.
+type CelerLedgerMigrateChannelFrom struct {
+	ChannelId     [32]byte
+	OldLedgerAddr common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterMigrateChannelFrom is a free log retrieval operation binding the contract event 0x141a72a1d915a7c4205104b6e564cc991aa827c5f2c672a5d6a1da8bef99d6eb.
+//
+// Solidity: event MigrateChannelFrom(bytes32 indexed channelId, address indexed oldLedgerAddr)
+func (_CelerLedger *CelerLedgerFilterer) FilterMigrateChannelFrom(opts *bind.FilterOpts, channelId [][32]byte, oldLedgerAddr []common.Address) (*CelerLedgerMigrateChannelFromIterator, error) {
+
+	var channelIdRule []interface{}
+	for _, channelIdItem := range channelId {
+		channelIdRule = append(channelIdRule, channelIdItem)
+	}
+	var oldLedgerAddrRule []interface{}
+	for _, oldLedgerAddrItem := range oldLedgerAddr {
+		oldLedgerAddrRule = append(oldLedgerAddrRule, oldLedgerAddrItem)
+	}
+
+	logs, sub, err := _CelerLedger.contract.FilterLogs(opts, "MigrateChannelFrom", channelIdRule, oldLedgerAddrRule)
+	if err != nil {
+		return nil, err
+	}
+	return &CelerLedgerMigrateChannelFromIterator{contract: _CelerLedger.contract, event: "MigrateChannelFrom", logs: logs, sub: sub}, nil
+}
+
+// WatchMigrateChannelFrom is a free log subscription operation binding the contract event 0x141a72a1d915a7c4205104b6e564cc991aa827c5f2c672a5d6a1da8bef99d6eb.
+//
+// Solidity: event MigrateChannelFrom(bytes32 indexed channelId, address indexed oldLedgerAddr)
+func (_CelerLedger *CelerLedgerFilterer) WatchMigrateChannelFrom(opts *bind.WatchOpts, sink chan<- *CelerLedgerMigrateChannelFrom, channelId [][32]byte, oldLedgerAddr []common.Address) (event.Subscription, error) {
+
+	var channelIdRule []interface{}
+	for _, channelIdItem := range channelId {
+		channelIdRule = append(channelIdRule, channelIdItem)
+	}
+	var oldLedgerAddrRule []interface{}
+	for _, oldLedgerAddrItem := range oldLedgerAddr {
+		oldLedgerAddrRule = append(oldLedgerAddrRule, oldLedgerAddrItem)
+	}
+
+	logs, sub, err := _CelerLedger.contract.WatchLogs(opts, "MigrateChannelFrom", channelIdRule, oldLedgerAddrRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(CelerLedgerMigrateChannelFrom)
+				if err := _CelerLedger.contract.UnpackLog(event, "MigrateChannelFrom", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseMigrateChannelFrom is a log parse operation binding the contract event 0x141a72a1d915a7c4205104b6e564cc991aa827c5f2c672a5d6a1da8bef99d6eb.
+//
+// Solidity: event MigrateChannelFrom(bytes32 indexed channelId, address indexed oldLedgerAddr)
+func (_CelerLedger *CelerLedgerFilterer) ParseMigrateChannelFrom(log types.Log) (*CelerLedgerMigrateChannelFrom, error) {
+	event := new(CelerLedgerMigrateChannelFrom)
+	if err := _CelerLedger.contract.UnpackLog(event, "MigrateChannelFrom", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// CelerLedgerMigrateChannelToIterator is returned from FilterMigrateChannelTo and is used to iterate over the raw logs and unpacked data for MigrateChannelTo events raised by the CelerLedger contract.
+type CelerLedgerMigrateChannelToIterator struct {
+	Event *CelerLedgerMigrateChannelTo // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *CelerLedgerMigrateChannelToIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(CelerLedgerMigrateChannelTo)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(CelerLedgerMigrateChannelTo)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *CelerLedgerMigrateChannelToIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *CelerLedgerMigrateChannelToIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// CelerLedgerMigrateChannelTo represents a MigrateChannelTo event raised by the CelerLedger contract.
+type CelerLedgerMigrateChannelTo struct {
+	ChannelId     [32]byte
+	NewLedgerAddr common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterMigrateChannelTo is a free log retrieval operation binding the contract event 0xdefb8a94bbfc44ef5297b035407a7dd1314f369e39c3301f5b90f8810fb9fe4f.
+//
+// Solidity: event MigrateChannelTo(bytes32 indexed channelId, address indexed newLedgerAddr)
+func (_CelerLedger *CelerLedgerFilterer) FilterMigrateChannelTo(opts *bind.FilterOpts, channelId [][32]byte, newLedgerAddr []common.Address) (*CelerLedgerMigrateChannelToIterator, error) {
+
+	var channelIdRule []interface{}
+	for _, channelIdItem := range channelId {
+		channelIdRule = append(channelIdRule, channelIdItem)
+	}
+	var newLedgerAddrRule []interface{}
+	for _, newLedgerAddrItem := range newLedgerAddr {
+		newLedgerAddrRule = append(newLedgerAddrRule, newLedgerAddrItem)
+	}
+
+	logs, sub, err := _CelerLedger.contract.FilterLogs(opts, "MigrateChannelTo", channelIdRule, newLedgerAddrRule)
+	if err != nil {
+		return nil, err
+	}
+	return &CelerLedgerMigrateChannelToIterator{contract: _CelerLedger.contract, event: "MigrateChannelTo", logs: logs, sub: sub}, nil
+}
+
+// WatchMigrateChannelTo is a free log subscription operation binding the contract event 0xdefb8a94bbfc44ef5297b035407a7dd1314f369e39c3301f5b90f8810fb9fe4f.
+//
+// Solidity: event MigrateChannelTo(bytes32 indexed channelId, address indexed newLedgerAddr)
+func (_CelerLedger *CelerLedgerFilterer) WatchMigrateChannelTo(opts *bind.WatchOpts, sink chan<- *CelerLedgerMigrateChannelTo, channelId [][32]byte, newLedgerAddr []common.Address) (event.Subscription, error) {
+
+	var channelIdRule []interface{}
+	for _, channelIdItem := range channelId {
+		channelIdRule = append(channelIdRule, channelIdItem)
+	}
+	var newLedgerAddrRule []interface{}
+	for _, newLedgerAddrItem := range newLedgerAddr {
+		newLedgerAddrRule = append(newLedgerAddrRule, newLedgerAddrItem)
+	}
+
+	logs, sub, err := _CelerLedger.contract.WatchLogs(opts, "MigrateChannelTo", channelIdRule, newLedgerAddrRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(CelerLedgerMigrateChannelTo)
+				if err := _CelerLedger.contract.UnpackLog(event, "MigrateChannelTo", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseMigrateChannelTo is a log parse operation binding the contract event 0xdefb8a94bbfc44ef5297b035407a7dd1314f369e39c3301f5b90f8810fb9fe4f.
+//
+// Solidity: event MigrateChannelTo(bytes32 indexed channelId, address indexed newLedgerAddr)
+func (_CelerLedger *CelerLedgerFilterer) ParseMigrateChannelTo(log types.Log) (*CelerLedgerMigrateChannelTo, error) {
+	event := new(CelerLedgerMigrateChannelTo)
+	if err := _CelerLedger.contract.UnpackLog(event, "MigrateChannelTo", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // CelerLedgerOpenChannelIterator is returned from FilterOpenChannel and is used to iterate over the raw logs and unpacked data for OpenChannel events raised by the CelerLedger contract.
@@ -2581,6 +3111,169 @@ func (_CelerLedger *CelerLedgerFilterer) WatchOpenChannel(opts *bind.WatchOpts, 
 	}), nil
 }
 
+// ParseOpenChannel is a log parse operation binding the contract event 0x9d9f66221370175606b4085f28a419b201c9b6dafd9e0c4520e5bf69ea3e166d.
+//
+// Solidity: event OpenChannel(bytes32 indexed channelId, uint256 tokenType, address indexed tokenAddress, address[2] peerAddrs, uint256[2] initialDeposits)
+func (_CelerLedger *CelerLedgerFilterer) ParseOpenChannel(log types.Log) (*CelerLedgerOpenChannel, error) {
+	event := new(CelerLedgerOpenChannel)
+	if err := _CelerLedger.contract.UnpackLog(event, "OpenChannel", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// CelerLedgerOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the CelerLedger contract.
+type CelerLedgerOwnershipTransferredIterator struct {
+	Event *CelerLedgerOwnershipTransferred // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *CelerLedgerOwnershipTransferredIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(CelerLedgerOwnershipTransferred)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(CelerLedgerOwnershipTransferred)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *CelerLedgerOwnershipTransferredIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *CelerLedgerOwnershipTransferredIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// CelerLedgerOwnershipTransferred represents a OwnershipTransferred event raised by the CelerLedger contract.
+type CelerLedgerOwnershipTransferred struct {
+	PreviousOwner common.Address
+	NewOwner      common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_CelerLedger *CelerLedgerFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*CelerLedgerOwnershipTransferredIterator, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _CelerLedger.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &CelerLedgerOwnershipTransferredIterator{contract: _CelerLedger.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+}
+
+// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_CelerLedger *CelerLedgerFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *CelerLedgerOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _CelerLedger.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(CelerLedgerOwnershipTransferred)
+				if err := _CelerLedger.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_CelerLedger *CelerLedgerFilterer) ParseOwnershipTransferred(log types.Log) (*CelerLedgerOwnershipTransferred, error) {
+	event := new(CelerLedgerOwnershipTransferred)
+	if err := _CelerLedger.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerSnapshotStatesIterator is returned from FilterSnapshotStates and is used to iterate over the raw logs and unpacked data for SnapshotStates events raised by the CelerLedger contract.
 type CelerLedgerSnapshotStatesIterator struct {
 	Event *CelerLedgerSnapshotStates // Event containing the contract specifics and raw log
@@ -2714,6 +3407,17 @@ func (_CelerLedger *CelerLedgerFilterer) WatchSnapshotStates(opts *bind.WatchOpt
 	}), nil
 }
 
+// ParseSnapshotStates is a log parse operation binding the contract event 0xd0793cc4198bf052a6d91a9a1273c4af39f02a91b0e19029477511c278c5b271.
+//
+// Solidity: event SnapshotStates(bytes32 indexed channelId, uint256[2] seqNums)
+func (_CelerLedger *CelerLedgerFilterer) ParseSnapshotStates(log types.Log) (*CelerLedgerSnapshotStates, error) {
+	event := new(CelerLedgerSnapshotStates)
+	if err := _CelerLedger.contract.UnpackLog(event, "SnapshotStates", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // CelerLedgerVetoWithdrawIterator is returned from FilterVetoWithdraw and is used to iterate over the raw logs and unpacked data for VetoWithdraw events raised by the CelerLedger contract.
 type CelerLedgerVetoWithdrawIterator struct {
 	Event *CelerLedgerVetoWithdraw // Event containing the contract specifics and raw log
@@ -2844,4 +3548,15 @@ func (_CelerLedger *CelerLedgerFilterer) WatchVetoWithdraw(opts *bind.WatchOpts,
 			}
 		}
 	}), nil
+}
+
+// ParseVetoWithdraw is a log parse operation binding the contract event 0x9a8a5493b616f074b3f754b5fd66049c8e7980f01547289e5e31808485c6002c.
+//
+// Solidity: event VetoWithdraw(bytes32 indexed channelId)
+func (_CelerLedger *CelerLedgerFilterer) ParseVetoWithdraw(log types.Log) (*CelerLedgerVetoWithdraw, error) {
+	event := new(CelerLedgerVetoWithdraw)
+	if err := _CelerLedger.contract.UnpackLog(event, "VetoWithdraw", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }

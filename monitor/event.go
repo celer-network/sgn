@@ -59,6 +59,14 @@ func (e Event) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
 	switch e.Name {
 	case InitializeCandidate:
 		res, err = ethClient.Guard.ParseInitializeCandidate(e.Log)
+	case Delegate:
+		res, err = ethClient.Guard.ParseDelegate(e.Log)
+	case ValidatorChange:
+		res, err = ethClient.Guard.ParseValidatorChange(e.Log)
+	case IntendWithdraw:
+		res, err = ethClient.Guard.ParseIntendWithdraw(e.Log)
+	case IntendSettle:
+		res, err = ethClient.Ledger.ParseIntendSettle(e.Log)
 	default:
 		panic("Unsupported event")
 	}
