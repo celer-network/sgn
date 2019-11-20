@@ -15,17 +15,17 @@ import (
 )
 
 func (m *EthMonitor) processQueue() {
-	m.processPullerQueue()
-	// m.processEventQueue()
+	// m.processPullerQueue()
+	m.processEventQueue()
 	// m.processPusherQueue()
 }
 
 func (m *EthMonitor) processEventQueue() {
-	// secureBlockNum, err := m.getSecureBlockNum()
-	// if err != nil {
-	// 	log.Printf("Query secureBlockNum err", err)
-	// 	return
-	// }
+	secureBlockNum, err := m.getSecureBlockNum()
+	if err != nil {
+		log.Printf("Query secureBlockNum err", err)
+		return
+	}
 
 	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
 	defer iterator.Close()
@@ -33,30 +33,26 @@ func (m *EthMonitor) processEventQueue() {
 	for ; iterator.Valid(); iterator.Next() {
 		event := Event{}
 		event.MustUnMarshal(iterator.Value())
-		log.Printf("event", event.name, event.log)
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
+		}
+
+		log.Printf("process event", event.Name, event.Log.BlockNumber)
+		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.GuardInitializeCandidate:
+			m.handleInitializeCandidate(e)
+		case *mainchain.GuardDelegate:
+			m.handleDelegate(e)
+		case *mainchain.GuardValidatorChange:
+			m.handleValidatorChange(e)
+		case *mainchain.GuardIntendWithdraw:
+			m.handleIntendWithdraw(e)
+		case *mainchain.CelerLedgerIntendSettle:
+			m.handleIntendSettle(e)
+		}
+
+		m.db.Delete(iterator.Key())
 	}
-
-	// for m.eventQueue.Len() > 0 {
-	// 	e := m.eventQueue.Front().(Event)
-	// 	if secureBlockNum < e.log.BlockNumber {
-	// 		return
-	// 	}
-
-	// 	switch event := e.event.(type) {
-	// 	case *mainchain.GuardInitializeCandidate:
-	// 		m.handleInitializeCandidate(event)
-	// 	case *mainchain.GuardDelegate:
-	// 		m.handleDelegate(event)
-	// 	case *mainchain.GuardValidatorChange:
-	// 		m.handleValidatorChange(event)
-	// 	case *mainchain.GuardIntendWithdraw:
-	// 		m.handleIntendWithdraw(event)
-	// 	case *mainchain.CelerLedgerIntendSettle:
-	// 		m.handleIntendSettle(event)
-	// 	}
-
-	// 	m.eventQueue.PopFront()
-	// }
 }
 
 func (m *EthMonitor) processPullerQueue() {

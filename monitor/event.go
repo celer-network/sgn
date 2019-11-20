@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -18,17 +19,18 @@ const (
 
 // Wrapper for ethereum Event
 type Event struct {
-	name EventName `json:"name"`
-	log  types.Log `json:"log"`
+	Name EventName `json:"name"`
+	Log  types.Log `json:"log"`
 }
 
 func NewEvent(name EventName, l types.Log) Event {
 	return Event{
-		name: name,
-		log:  l,
+		Name: name,
+		Log:  l,
 	}
 }
 
+// Marshal event into json bytes
 func (e Event) MustMarshal() []byte {
 	res, err := json.Marshal(&e)
 	if err != nil {
@@ -37,11 +39,29 @@ func (e Event) MustMarshal() []byte {
 
 	return res
 }
+
+// Unmarshal json bytes to event
 func (e *Event) MustUnMarshal(input []byte) {
 	err := json.Unmarshal(input, e)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (e Event) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
+	var err error
+	switch e.Name {
+	case InitializeCandidate:
+		res, err = ethClient.Guard.ParseInitializeCandidate(e.Log)
+	default:
+		panic("Unsupported event")
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	return
 }
 
 type PenaltyEvent struct {

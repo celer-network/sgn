@@ -24,7 +24,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Printf("Push initializeCandidate event to pullerQueue: %+v", initializeCandidate)
+	log.Printf("store initializeCandidate event to puller db: %+v", initializeCandidate)
 	m.pullerQueue.PushBack(initializeCandidate)
 }
 

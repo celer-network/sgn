@@ -397,15 +397,5 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		cmn.Exit(err.Error())
 	}
 
-	prefix := []byte{0x01}
-	// db.SetSync(append(prefix, []byte{0x01}...), []byte("a"))
-	// db.SetSync(append(prefix, []byte{0x02}...), []byte("0x02"))
-	iterator := db.Iterator(prefix, prefix)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		ctx.Logger().Info(string(iterator.Value()))
-	}
-
 	monitor.NewEthMonitor(ethClient, transactor, db, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
 }

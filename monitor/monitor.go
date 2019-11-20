@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -36,7 +37,6 @@ type EthMonitor struct {
 	db          *dbm.GoLevelDB
 	pusherQueue deque.Deque
 	pullerQueue deque.Deque
-	eventQueue  deque.Deque
 	txMemo      *bigcache.BigCache
 	pubkey      string
 	transactors []string
@@ -89,12 +89,35 @@ func (m *EthMonitor) monitorBlockHead() {
 			log.Printf("SubscribeNewHead err", err)
 		case header := <-headerChan:
 			m.handleNewBlock(header)
-			go m.processQueue()
+			// go m.processQueue()
 		}
 	}
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
+	it, err := m.ethClient.Guard.FilterInitializeCandidate(nil, nil, nil)
+	if err != nil {
+		log.Println("WatchInitializeCandidate err: ", err)
+		return
+	}
+
+	defer it.Close()
+
+	for it.Next() {
+		initializeCandidate := it.Event
+		e, _ := json.Marshal(initializeCandidate)
+		var e1 interface{}
+		err = json.Unmarshal(e, &e1)
+		if err != nil {
+			log.Println("WatchInitializeCandidate err: ", err)
+			return
+		}
+		log.Println("event", e1.(mainchain.GuardInitializeCandidate))
+		event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
+		m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
+	}
+	go m.processQueue()
+
 	// initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
 	// sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
 	// if err != nil {
