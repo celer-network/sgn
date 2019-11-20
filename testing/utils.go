@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/testing/log"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )

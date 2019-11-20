@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
@@ -129,6 +130,14 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 	)
 	if err != nil {
 		cmn.Exit(err.Error())
+	}
+
+	setLogLevel(viper.GetString(flags.FlagSgnLogLevel))
+	if viper.GetBool(flags.FlagSgnLogColor) {
+		clog.EnableColor()
+	}
+	if viper.GetBool(flags.FlagSgnLogLongFile) {
+		clog.EnableLongFile()
 	}
 
 	// First define the top level codec that will be shared by the different modules
@@ -393,4 +402,26 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 	}
 
 	monitor.NewEthMonitor(ethClient, transactor, app.cdc, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
+}
+
+func setLogLevel(level string) {
+	switch level {
+	case "trace":
+		clog.SetLevel(clog.TraceLevel)
+	case "debug":
+		clog.SetLevel(clog.DebugLevel)
+	case "info":
+		clog.SetLevel(clog.InfoLevel)
+	case "warn":
+		clog.SetLevel(clog.WarnLevel)
+	case "error":
+		clog.SetLevel(clog.ErrorLevel)
+	case "fatal":
+		clog.SetLevel(clog.FatalLevel)
+	case "panic":
+		clog.SetLevel(clog.PanicLevel)
+	default:
+		clog.Warn("invalid log level input, set log to InfoLevel by default")
+		clog.SetLevel(clog.InfoLevel)
+	}
 }

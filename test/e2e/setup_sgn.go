@@ -11,7 +11,7 @@ import (
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/celer-network/sgn/testing/log"
+	log "github.com/celer-network/sgn/clog"
 	"github.com/spf13/viper"
 )
 

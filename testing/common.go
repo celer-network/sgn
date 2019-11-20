@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/celer-network/sgn/testing/log"
+	log "github.com/celer-network/sgn/clog"
 )
 
 // Killable is object that has Kill() func

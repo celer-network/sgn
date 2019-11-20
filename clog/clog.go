@@ -124,7 +124,7 @@ func init() {
 	flag.BoolVar(&std.color, "logcolor", false, "use color-coded log level")
 	flag.BoolVar(&std.localtime, "loglocaltime", false, "use the local time zone rather than UTC")
 	flag.BoolVar(&std.longfile, "loglongfile", false, "show long file path")
-	flag.StringVar(&std.pathsplit, "logpathsplit", "celer-network/", "file path splitter")
+	flag.StringVar(&std.pathsplit, "logpathsplit", "celer-network/sgn/", "file path splitter")
 
 	bufferPool = &sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
 	std.level = InfoLevel
@@ -296,6 +296,18 @@ func (l *Logger) isLevelEnabled(level Level) bool {
 }
 
 // API for the standard logger
+
+func EnableColor() {
+	std.rw.Lock()
+	defer std.rw.Unlock()
+	std.color = true
+}
+
+func EnableLongFile() {
+	std.rw.Lock()
+	defer std.rw.Unlock()
+	std.longfile = true
+}
 
 func SetLevel(level Level) {
 	std.rw.Lock()

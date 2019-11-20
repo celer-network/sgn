@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/celer-network/sgn/testing/log"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
