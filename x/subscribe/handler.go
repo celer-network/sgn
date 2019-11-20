@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
@@ -59,8 +60,6 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 
 // Handle a message to request guard
 func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
-	logger := ctx.Logger()
-
 	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to charge request fee: %s", err)).Result()
@@ -107,7 +106,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 	request.SeqNum = simplexPaymentChannel.SeqNum
 	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
 	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
-	logger.Info("Set request", "channelId", simplexPaymentChannel.ChannelId, "request seqNum", request.SeqNum)
+	log.Infof("Set request channelId %x request seqNum %d", simplexPaymentChannel.ChannelId, request.SeqNum)
 
 	return sdk.Result{}
 }

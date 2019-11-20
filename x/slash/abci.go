@@ -1,12 +1,10 @@
 package slash
 
 import (
-	"fmt"
-
+	log "github.com/celer-network/sgn/clog"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // BeginBlocker check for infraction evidence or downtime of validators
@@ -27,7 +25,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 		case tmtypes.ABCIEvidenceTypeDuplicateVote:
 			k.HandleDoubleSign(ctx, evidence.Validator.Address, evidence.Validator.Power)
 		default:
-			ctx.Logger().Error(fmt.Sprintf("ignored unknown evidence type: %s", evidence.Type))
+			log.Errorf("ignored unknown evidence type: %s", evidence.Type)
 		}
 	}
 }
