@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"testing"
 
-	log "github.com/celer-network/sgn/clog"
+	"github.com/celer-network/goutils/log"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

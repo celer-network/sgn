@@ -3,7 +3,7 @@ package subscribe
 import (
 	"fmt"
 
-	log "github.com/celer-network/sgn/clog"
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/celer-network/sgn/clog"
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	log "github.com/celer-network/sgn/clog"
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
@@ -132,7 +132,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		cmn.Exit(err.Error())
 	}
 
-	log.SetLevelStr(viper.GetString(flags.FlagSgnLogLevel))
+	log.SetLevelByName(viper.GetString(flags.FlagSgnLogLevel))
 	if viper.GetBool(flags.FlagSgnLogColor) {
 		log.EnableColor()
 	}
