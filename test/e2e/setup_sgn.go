@@ -68,7 +68,7 @@ func updateSGNConfig() {
 
 // startSidechain starts sgn sidechain with the data in test/data
 func startSidechain(rootDir, testName string) (*os.Process, error) {
-	cmd := exec.Command("make", "prepare-test")
+	cmd := exec.Command("make", "update-test-data")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../..")
 	if err := cmd.Run(); err != nil {

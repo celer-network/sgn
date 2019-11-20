@@ -21,9 +21,8 @@ copy-test-data:
 remove-test-data:
 	rm -rf ~/.sgn ~/.sgncli
 
+update-test-data: remove-test-data copy-test-data
+
 copy-test-config:
 	cp test/data/.sgn/config/genesis.json ~/.sgn/config/genesis.json
 	cp test/data/.sgncli/config/config.toml ~/.sgncli/config/config.toml
-
-.PHONY: prepare-test
-prepare-test: install remove-test-data copy-test-data
