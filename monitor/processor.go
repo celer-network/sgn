@@ -37,7 +37,7 @@ func (m *EthMonitor) processEventQueue() {
 			continue
 		}
 
-		log.Printf("process mainchain event", event.Name, event.Log.BlockNumber)
+		log.Infoln("process mainchain event", event.Name, event.Log.BlockNumber)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -66,7 +66,7 @@ func (m *EthMonitor) processPullerQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		log.Printf("process puller event", event.Name)
+		log.Infoln("process puller event", event.Name)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -88,7 +88,7 @@ func (m *EthMonitor) processPusherQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		log.Printf("process pusher event", event.Name)
+		log.Infoln("process pusher event", event.Name)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -104,7 +104,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewPenaltyEventFromBytes(iterator.Value())
-		log.Printf("process penalty event", event.nonce)
+		log.Infoln("process penalty event", event.nonce)
 		m.db.Delete(iterator.Key())
 		m.processPenalty(event)
 	}
