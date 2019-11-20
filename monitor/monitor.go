@@ -109,8 +109,8 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 			log.Errorln("WatchInitializeCandidate err:", err)
 		case event := <-initializeCandidateChan:
 			m.eventQueue.PushBack(NewEvent(event, event.Raw))
-			log.Infof("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %x, %s, %x, %+v",
-				event.Candidate, event.MinSelfStake.String(), event.SidechainAddr, event.Raw)
+			log.Infof("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: candidate %x, min self stake %s, sidechain addr %x",
+				event.Candidate, event.MinSelfStake.String(), event.SidechainAddr)
 		}
 	}
 }
