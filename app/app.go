@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
@@ -29,7 +30,7 @@ import (
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
+	tlog "github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -114,7 +115,7 @@ type sgnApp struct {
 }
 
 // NewSgnApp is a constructor function for sgnApp
-func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
+func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
 	viper.SetConfigFile("config.json")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -130,6 +131,14 @@ func NewSgnApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp
 	)
 	if err != nil {
 		cmn.Exit(err.Error())
+	}
+
+	log.SetLevelStr(viper.GetString(flags.FlagSgnLogLevel))
+	if viper.GetBool(flags.FlagSgnLogColor) {
+		log.EnableColor()
+	}
+	if viper.GetBool(flags.FlagSgnLogLongFile) {
+		log.EnableLongFile()
 	}
 
 	// First define the top level codec that will be shared by the different modules

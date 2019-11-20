@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -36,8 +37,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	logger := ctx.Logger()
-	logger.Info("Handling a message to initialize candidate")
+	log.Info("Handling a message to initialize candidate")
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
@@ -49,13 +49,13 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	if account == nil {
 		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
 		keeper.accountKeeper.SetAccount(ctx, account)
-		logger.Info("Candidate account not found. Created a new account.")
+		log.Info("Candidate account not found. Created a new account.")
 	}
 
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
-		logger.Info("Candidate not found. Created a new candidate.")
+		log.Info("Candidate not found. Created a new candidate.")
 	}
 
 	return sdk.Result{}
@@ -63,8 +63,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 
 // Handle a message to claim validator
 func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator) sdk.Result {
-	logger := ctx.Logger()
-	logger.Info(fmt.Sprintf("Handling MsgClaimValidator. %+v", msg))
+	log.Infof("Handling MsgClaimValidator. %+v", msg)
 
 	pk, err := sdk.GetConsPubKeyBech32(msg.PubKey)
 	if err != nil {
@@ -117,8 +116,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 // Handle a message to sync validator
 func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
-	logger := ctx.Logger()
-	logger.Info(fmt.Sprintf("Handling MsgSyncValidator. %+v", msg))
+	log.Infof("Handling MsgSyncValidator. %+v", msg)
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {

@@ -3,6 +3,7 @@ package subscribe
 import (
 	"fmt"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,8 +47,6 @@ func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 }
 
 func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	logger := ctx.Logger()
-
 	var params QueryRequestParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
@@ -56,7 +55,7 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 
 	request, found := keeper.GetRequest(ctx, params.ChannelId)
 	if !found {
-		logger.Error("Params info", "params.ChannelId", params.ChannelId)
+		log.Errorf("Params info ChannelId %x not found", params.ChannelId)
 		return nil, sdk.ErrInternal("Could not find corresponding request")
 	}
 

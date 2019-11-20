@@ -1,8 +1,7 @@
 package monitor
 
 import (
-	"log"
-
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -14,7 +13,7 @@ import (
 func (m *EthMonitor) isPuller() bool {
 	puller, err := validator.CLIQueryPuller(m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
-		log.Printf("Get puller err", err)
+		log.Errorln("Get puller err", err)
 		return false
 	}
 
@@ -24,7 +23,7 @@ func (m *EthMonitor) isPuller() bool {
 func (m *EthMonitor) isPusher() bool {
 	pusher, err := validator.CLIQueryPusher(m.transactor.CliCtx, validator.StoreKey)
 	if err != nil {
-		log.Printf("Get pusher err", err)
+		log.Errorln("Get pusher err", err)
 		return false
 	}
 

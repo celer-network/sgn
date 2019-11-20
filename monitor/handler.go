@@ -1,8 +1,7 @@
 package monitor
 
 import (
-	"log"
-
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
@@ -14,7 +13,7 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Printf("Push MsgSyncBlock with block number: %d to Transactor's msgQueue for broadcast.", header.Number)
+	log.Infof("Push MsgSyncBlock with block number: %d to Transactor's msgQueue for broadcast.", header.Number)
 	if !m.isPuller() {
 		return
 	}
@@ -24,13 +23,13 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Printf("store initializeCandidate event to puller db: %+v", initializeCandidate)
+	log.Infof("store initializeCandidate event to puller db: %+v", initializeCandidate)
 	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
-	log.Printf("New delegate", delegate.Candidate)
+	log.Infof("New delegate %x", delegate.Candidate)
 	if m.isPullerOrOwner(delegate.Candidate.String()) {
 		m.syncDelegator(delegate.Candidate, delegate.Delegator)
 	}
@@ -43,7 +42,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 }
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
-	log.Printf("New validator change", validatorChange.EthAddr, validatorChange.ChangeType)
+	log.Infof("New validator change %x, %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	doSync := m.isPuller()
 
 	if validatorChange.EthAddr.String() == m.ethClient.Address.String() {
@@ -62,7 +61,7 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValid
 }
 
 func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendWithdraw) {
-	log.Printf("New intend withdraw", intendWithdraw.Candidate)
+	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate.String()) {
 		m.syncValidator(intendWithdraw.Candidate)
@@ -70,16 +69,16 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 }
 
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	log.Printf("New intend settle", intendSettle.ChannelId)
+	log.Infof("New intend settle %x", intendSettle.ChannelId)
 	request, err := m.getRequest(intendSettle.ChannelId[:])
 	// TODO: a "not found" error should be regarded as a normal situation for not-guarded channels
 	if err != nil {
-		log.Printf("Query request err", err)
+		log.Errorln("Query request err", err)
 		return
 	}
 
 	if intendSettle.SeqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-		log.Printf("Ignore the intendSettle event with a larger seqNum")
+		log.Infoln("Ignore the intendSettle event with a larger seqNum")
 		return
 	}
 
@@ -88,17 +87,17 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 }
 
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
-	log.Printf("New initiate withdraw", ethAddr)
+	log.Infoln("New initiate withdraw", ethAddr)
 
 	reward, err := validator.CLIQueryReward(m.transactor.CliCtx, validator.StoreKey, ethAddr)
 	if err != nil {
-		log.Printf("Query reward err", err)
+		log.Errorln("Query reward err", err)
 		return
 	}
 
 	sig, err := m.ethClient.SignMessage(reward.RewardProtoBytes)
 	if err != nil {
-		log.Printf("SignMessage err", err)
+		log.Errorln("SignMessage err", err)
 		return
 	}
 
@@ -107,17 +106,17 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
-	log.Printf("New Penalty", nonce)
+	log.Infoln("New Penalty", nonce)
 
 	penalty, err := slash.CLIQueryPenalty(m.transactor.CliCtx, slash.StoreKey, nonce)
 	if err != nil {
-		log.Printf("Query penalty err", err)
+		log.Errorln("Query penalty err", err)
 		return
 	}
 
 	sig, err := m.ethClient.SignMessage(penalty.PenaltyProtoBytes)
 	if err != nil {
-		log.Printf("SignMessage err", err)
+		log.Errorln("SignMessage err", err)
 		return
 	}
 
@@ -128,28 +127,28 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
-		log.Printf("GetMinStakingPool err", err)
+		log.Errorln("GetMinStakingPool err", err)
 		return
 	}
 
 	if delegate.StakingPool.Uint64() <= minStake.Uint64() {
-		log.Printf("Not enough stake to become validator")
+		log.Error("Not enough stake to become validator")
 		return
 	}
 
 	tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
 	if err != nil {
-		log.Printf("ClaimValidator tx err", err)
+		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Printf("ClaimValidator tx detail", tx)
+	log.Infof("ClaimValidator tx detail %+v", tx)
 }
 
 func (m *EthMonitor) claimValidator() {
-	log.Printf("ClaimValidator")
+	log.Info("ClaimValidator")
 	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
 	if err != nil {
-		log.Printf("parse transactors err", err)
+		log.Errorln("parse transactors err", err)
 		return
 	}
 
@@ -159,13 +158,13 @@ func (m *EthMonitor) claimValidator() {
 }
 
 func (m *EthMonitor) syncValidator(address ethcommon.Address) {
-	log.Printf("SyncValidator", address.String())
+	log.Infoln("SyncValidator", address.String())
 	msg := validator.NewMsgSyncValidator(address.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr ethcommon.Address) {
-	log.Printf("SyncDelegator", candidatorAddr.String(), delegatorAddr.String())
+	log.Infoln("SyncDelegator", candidatorAddr.String(), delegatorAddr.String())
 	msg := validator.NewMsgSyncDelegator(candidatorAddr.String(), delegatorAddr.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }

@@ -1,9 +1,9 @@
 package monitor
 
 import (
-	"log"
 	"math/big"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/slash"
@@ -24,7 +24,7 @@ func (m *EthMonitor) processQueue() {
 func (m *EthMonitor) processEventQueue() {
 	secureBlockNum, err := m.getSecureBlockNum()
 	if err != nil {
-		log.Printf("Query secureBlockNum err", err)
+		log.Errorln("Query secureBlockNum err", err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (m *EthMonitor) processPullerQueue() {
 func (m *EthMonitor) processPusherQueue() {
 	latestBlock, err := m.getLatestBlock()
 	if err != nil {
-		log.Printf("Query latestBlock err", err)
+		log.Errorln("Query latestBlock err", err)
 		return
 	}
 
@@ -111,23 +111,23 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Printf("Push MsgInitializeCandidate of %s to Transactor's msgQueue for broadcast", initializeCandidate.Candidate.String())
+	log.Infoln("Push MsgInitializeCandidate of %s to Transactor's msgQueue for broadcast", initializeCandidate.Candidate.String())
 
 	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
-	log.Printf("Process IntendSettle", intendSettle.ChannelId)
+	log.Infof("Process IntendSettle %x", intendSettle.ChannelId)
 	channelId := intendSettle.ChannelId[:]
 	request, err := m.getRequest(channelId)
 	if err != nil {
-		log.Printf("Query request err", err)
+		log.Errorln("Query request err", err)
 		return
 	}
 
 	if request.GuardTxHash != "" {
-		log.Printf("Request has been fulfilled")
+		log.Errorln("Request has been fulfilled")
 		return
 	}
 
@@ -140,23 +140,23 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	var signedSimplexState chain.SignedSimplexState
 	err = protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
-		log.Print("Unmarshal SignedSimplexState error: ", err)
+		log.Errorln("Unmarshal SignedSimplexState error:", err)
 		return
 	}
 	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
 	})
 	if err != nil {
-		log.Print("Marshal signedSimplexStateArrayBytes error: ", err)
+		log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
 		return
 	}
 	// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
 	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
 	if err != nil {
-		log.Printf("intendSettle err", err)
+		log.Errorln("intendSettle err", err)
 		return
 	}
-	log.Printf("IntendSettle tx detail", tx)
+	log.Infof("IntendSettle tx detail %+v", tx)
 
 	triggerTxHash := intendSettle.Raw.TxHash.Hex()
 	msg := subscribe.NewMsgGuardProof(channelId, triggerTxHash, tx.Hash().Hex(), m.transactor.Key.GetAddress())
@@ -164,11 +164,11 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 }
 
 func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
-	log.Printf("Process Penalty", penaltyEvent.nonce)
+	log.Infoln("Process Penalty", penaltyEvent.nonce)
 
 	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.nonce)))
 	if err != nil {
-		log.Printf("get usedPenaltyNonce err", err)
+		log.Errorln("get usedPenaltyNonce err", err)
 		return
 	}
 
@@ -178,16 +178,16 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 
 	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
 	if err != nil {
-		log.Printf("QueryPenaltyRequest err", err)
+		log.Errorln("QueryPenaltyRequest err", err)
 		return
 	}
 
 	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
-		log.Printf("Punish err", err)
+		log.Errorln("Punish err", err)
 		m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		return
 	}
 
-	log.Printf("Punish tx detail", tx)
+	log.Infoln("Punish tx detail", tx)
 }

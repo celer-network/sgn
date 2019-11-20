@@ -11,7 +11,7 @@ import (
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/celer-network/sgn/testing/log"
+	log "github.com/celer-network/sgn/clog"
 	"github.com/spf13/viper"
 )
 
@@ -66,6 +66,17 @@ func updateSGNConfig() {
 	viper.WriteConfig()
 }
 
+func installSgn() error {
+	cmd := exec.Command("make", "install")
+	// set cmd.Dir under repo root path
+	cmd.Dir, _ = filepath.Abs("../..")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // startSidechain starts sgn sidechain with the data in test/data
 func startSidechain(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
@@ -77,10 +88,8 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 
 	cmd = exec.Command("sgn", "start")
 	cmd.Dir, _ = filepath.Abs("../..")
-	logFname := rootDir + "sgn_" + testName + ".log"
-	logF, _ := os.Create(logFname)
-	cmd.Stderr = logF
-	cmd.Stdout = logF
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
@@ -98,10 +107,8 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 func startGateway(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("sgncli", "gateway")
 	cmd.Dir, _ = filepath.Abs("../..")
-	logFname := rootDir + "gateway_" + testName + ".log"
-	logF, _ := os.Create(logFname)
-	cmd.Stderr = logF
-	cmd.Stdout = logF
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}

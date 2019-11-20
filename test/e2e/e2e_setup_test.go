@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
@@ -39,6 +40,8 @@ var (
 // and teardown. Test specific setup should be done in TestXxx
 func TestMain(m *testing.M) {
 	flag.Parse()
+	log.EnableColor()
+	log.EnableLongFile()
 	// mkdir out root
 	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())
@@ -57,6 +60,10 @@ func TestMain(m *testing.M) {
 	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
 	e2eProfile, mockCelerAddr = setupMainchain()
+
+	// make install sgn and sgncli
+	err = installSgn()
+	tf.ChkErr(err, "installing sgn and sgncli")
 
 	// run all e2e tests
 	ret := m.Run()
