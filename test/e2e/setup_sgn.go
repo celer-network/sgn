@@ -66,6 +66,17 @@ func updateSGNConfig() {
 	viper.WriteConfig()
 }
 
+func installSgn() error {
+	cmd := exec.Command("make", "install")
+	// set cmd.Dir under repo root path
+	cmd.Dir, _ = filepath.Abs("../..")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // startSidechain starts sgn sidechain with the data in test/data
 func startSidechain(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
