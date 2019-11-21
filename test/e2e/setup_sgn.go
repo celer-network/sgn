@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/goutils/log"
@@ -60,9 +60,9 @@ func updateSGNConfig() {
 	viper.SetConfigFile("../../config.json")
 	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
-	viper.Set(flags.FlagEthWS, "ws://127.0.0.1:8546")
-	viper.Set(flags.FlagEthGuardAddress, guardAddr.String())
-	viper.Set(flags.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
+	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 	viper.WriteConfig()
 }
 

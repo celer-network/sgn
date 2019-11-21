@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/transactor"
@@ -123,21 +123,21 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	}
 
 	ethClient, err = mainchain.NewEthClient(
-		viper.GetString(flags.FlagEthWS),
-		viper.GetString(flags.FlagEthGuardAddress),
-		viper.GetString(flags.FlagEthLedgerAddress),
-		viper.GetString(flags.FlagEthKeystore),
-		viper.GetString(flags.FlagEthPassphrase),
+		viper.GetString(common.FlagEthWS),
+		viper.GetString(common.FlagEthGuardAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+		viper.GetString(common.FlagEthKeystore),
+		viper.GetString(common.FlagEthPassphrase),
 	)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
 
-	log.SetLevelByName(viper.GetString(flags.FlagLogLevel))
-	if viper.GetBool(flags.FlagLogColor) {
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
 	}
-	if viper.GetBool(flags.FlagLogLongFile) {
+	if viper.GetBool(common.FlagLogLongFile) {
 		log.EnableLongFile()
 	}
 
@@ -391,10 +391,10 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 	transactor, err := transactor.NewTransactor(
 		DefaultCLIHome,
 		ctx.ChainID(),
-		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnOperator),
-		viper.GetString(flags.FlagSgnPassphrase),
-		viper.GetString(flags.FlagSgnGasPrice),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagSgnOperator),
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
 		app.cdc,
 	)
 	if err != nil {
@@ -406,5 +406,5 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		cmn.Exit(err.Error())
 	}
 
-	monitor.NewEthMonitor(ethClient, transactor, db, viper.GetString(flags.FlagSgnPubKey), viper.GetStringSlice(flags.FlagSgnTransactors))
+	monitor.NewEthMonitor(ethClient, transactor, db, viper.GetString(common.FlagSgnPubKey), viper.GetStringSlice(common.FlagSgnTransactors))
 }

@@ -2,7 +2,7 @@ package testing
 
 import (
 	"github.com/celer-network/sgn/app"
-	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/spf13/viper"
 )
@@ -15,11 +15,11 @@ func SetupTransactor() {
 	cdc := app.MakeCodec()
 	t, err := transactor.NewTransactor(
 		app.DefaultCLIHome,
-		viper.GetString(flags.FlagSgnChainID),
-		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetStringSlice(flags.FlagSgnTransactors)[0],
-		viper.GetString(flags.FlagSgnPassphrase),
-		viper.GetString(flags.FlagSgnGasPrice),
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
 		cdc,
 	)
 	ChkErr(err, "setup transactor")
