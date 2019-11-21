@@ -14,7 +14,8 @@ const (
 	FlagSgnChainID     = "sgn.chainID"
 	FlagSgnNodeURI     = "sgn.nodeURI"
 	FlagSgnGasPrice    = "sgn.gasPrice"
-	FlagSgnLogLevel    = "sgn.logLevel"
-	FlagSgnLogColor    = "sgn.logColor"
-	FlagSgnLogLongFile = "sgn.logLongFile"
+
+	FlagLogLevel    = "logLevel"
+	FlagLogColor    = "logColor"
+	FlagLogLongFile = "logLongFile"
 )

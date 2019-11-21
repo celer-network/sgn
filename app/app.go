@@ -133,11 +133,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		cmn.Exit(err.Error())
 	}
 
-	log.SetLevelByName(viper.GetString(flags.FlagSgnLogLevel))
-	if viper.GetBool(flags.FlagSgnLogColor) {
+	log.SetLevelByName(viper.GetString(flags.FlagLogLevel))
+	if viper.GetBool(flags.FlagLogColor) {
 		log.EnableColor()
 	}
-	if viper.GetBool(flags.FlagSgnLogLongFile) {
+	if viper.GetBool(flags.FlagLogLongFile) {
 		log.EnableLongFile()
 	}
 
