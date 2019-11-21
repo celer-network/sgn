@@ -129,7 +129,7 @@ func (m *EthMonitor) monitorDelegate() {
 		case delegate := <-delegateChan:
 			event := NewEvent(Delegate, delegate.Raw)
 			m.db.Set(GetEventKey(delegate.Raw), event.MustMarshal())
-			log.Infof("Catch event GuardDelegate, delegator %x, candidate %x, new stake %s, staking pool %s",
+			log.Infof("Catch event GuardDelegate, delegator %x, candidate %x, new stake %s, pool %s",
 				delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 		}
 	}

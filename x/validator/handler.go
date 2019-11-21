@@ -37,7 +37,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	log.Info("Handling a message to initialize candidate")
+	log.Infoln("Handling a message to initialize candidate of mainchain address", msg.EthAddress, ", from sender", msg.Sender)
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
@@ -47,15 +47,15 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
 	account := keeper.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
+		log.Infof("Set new account %x for candidate %s", accAddress, msg.EthAddress)
 		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
 		keeper.accountKeeper.SetAccount(ctx, account)
-		log.Info("Candidate account not found. Created a new account.")
 	}
 
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
+		log.Infof("Created a new profile for candidate %s account %x", msg.EthAddress, accAddress)
 		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
-		log.Info("Candidate not found. Created a new candidate.")
 	}
 
 	return sdk.Result{}

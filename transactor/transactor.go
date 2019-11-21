@@ -109,7 +109,7 @@ func (t *Transactor) start() {
 		}
 
 		// Make sure the transaction has been mines
-		log.Infoln("Transactor broadcasted tx:", tx)
+		log.Debugln("Transactor broadcasted tx:", tx)
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
 				break

@@ -23,7 +23,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Store GuardInitializeCandidate event to puller db for candidate %x", initializeCandidate.Candidate)
+	log.Infof("Handle GuardInitializeCandidate event for candidate %x", initializeCandidate.Candidate)
 	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
@@ -132,20 +132,20 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 	}
 
 	if delegate.StakingPool.Uint64() <= minStake.Uint64() {
-		log.Error("Not enough stake to become validator")
+		log.Debug("Not enough stake to become validator")
 		return
 	}
 
-	tx, err := m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
+	_, err = m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
 	if err != nil {
 		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Infof("ClaimValidator tx detail %+v", tx)
+	log.Infof("Claimed validator %x on mainchain", delegate.Candidate)
 }
 
 func (m *EthMonitor) claimValidator() {
-	log.Info("ClaimValidator")
+	log.Info("ClaimValidator on sidechain")
 	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
 	if err != nil {
 		log.Errorln("parse transactors err", err)

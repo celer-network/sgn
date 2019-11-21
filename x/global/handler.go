@@ -24,11 +24,11 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to sync block
 func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Result {
-	log.Infoln("Handle message to sync block number", msg.BlockNumber)
+	log.Infoln("Handle message to sync mainchain block number", msg.BlockNumber)
 
 	latestBlock := keeper.GetLatestBlock(ctx)
 	if msg.BlockNumber < latestBlock.Number {
-		errMsg := fmt.Sprintf("Block number is smaller than current latest block, recv %d latest %d",
+		errMsg := fmt.Sprintf("Mainchain block number is smaller than current latest block, recv %d latest %d",
 			msg.BlockNumber, latestBlock.Number)
 		log.Error(errMsg)
 		return sdk.ErrInternal(errMsg).Result()
@@ -43,7 +43,7 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Re
 
 	blockDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
 	if blockDiff.CmpAbs(big.NewInt(keeper.MaxBlockDiff(ctx))) > 0 {
-		errMsg := fmt.Sprintf("Block number is out of bound, recv %d head %d",
+		errMsg := fmt.Sprintf("Mainchain block number is out of bound, recv %d head %d",
 			msg.BlockNumber, head.Number.Uint64())
 		log.Error(errMsg)
 		return sdk.ErrInternal(errMsg).Result()
