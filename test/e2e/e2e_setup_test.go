@@ -10,11 +10,36 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 )
+
+// CProfile struct is based on github.com/goCeler/common (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
+// CProfile contains configurations for CelerClient/OSP
+type CProfile struct {
+	ETHInstance        string `json:"ethInstance"`
+	SvrETHAddr         string `json:"svrEthAddr"`
+	WalletAddr         string `json:"walletAddr"`
+	LedgerAddr         string `json:"ledgerAddr"`
+	VirtResolverAddr   string `json:"virtResolverAddr"`
+	EthPoolAddr        string `json:"ethPoolAddr"`
+	PayResolverAddr    string `json:"payResolverAddr"`
+	PayRegistryAddr    string `json:"payRegistryAddr"`
+	RouterRegistryAddr string `json:"routerRegistryAddr"`
+	SvrRPC             string `json:"svrRpc"`
+	SelfRPC            string `json:"selfRpc,omitempty"`
+	StoreDir           string `json:"storeDir,omitempty"`
+	StoreSql           string `json:"storeSql,omitempty"`
+	WebPort            string `json:"webPort,omitempty"`
+	WsOrigin           string `json:"wsOrigin,omitempty"`
+	ChainId            int64  `json:"chainId"`
+	BlockDelayNum      uint64 `json:"blockDelayNum"`
+	IsOSP              bool   `json:"isOsp,omitempty"`
+	ListenOnChain      bool   `json:"listenOnChain,omitempty"`
+	PollingInterval    uint64 `json:"pollingInterval"`
+	DisputeTimeout     uint64 `json:"disputeTimeout"`
+}
 
 // used by setup_onchain and tests
 var (
@@ -30,7 +55,7 @@ var (
 	// same var in testframework.go and expose a set api
 	outRootDir    string
 	envDir        = "../../testing/env"
-	e2eProfile    *common.CProfile
+	e2eProfile    *CProfile
 	celrContract  *mainchain.ERC20
 	guardAddr     ctype.Addr
 	mockCelerAddr ctype.Addr

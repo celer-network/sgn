@@ -7,7 +7,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
-	"github.com/celer-network/sgn/flags"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
@@ -38,22 +38,22 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 
 	transactorPool, err := transactor.NewTransactorPool(
 		app.DefaultCLIHome,
-		viper.GetString(flags.FlagSgnChainID),
-		viper.GetString(flags.FlagSgnNodeURI),
-		viper.GetString(flags.FlagSgnPassphrase),
-		viper.GetString(flags.FlagSgnGasPrice),
-		viper.GetStringSlice(flags.FlagSgnTransactors),
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+		viper.GetStringSlice(common.FlagSgnTransactors),
 		cdc,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	log.SetLevelByName(viper.GetString(flags.FlagLogLevel))
-	if viper.GetBool(flags.FlagLogColor) {
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
 	}
-	if viper.GetBool(flags.FlagLogLongFile) {
+	if viper.GetBool(common.FlagLogLongFile) {
 		log.EnableLongFile()
 	}
 

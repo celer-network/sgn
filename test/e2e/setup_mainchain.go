@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/cChannel-eth-go/ethpool"
 	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
@@ -65,7 +64,7 @@ func startMainchain() (*os.Process, error) {
 
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func setupMainchain() (*common.CProfile, ctype.Addr) {
+func setupMainchain() (*CProfile, ctype.Addr) {
 	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
@@ -135,7 +134,7 @@ func setupMainchain() (*common.CProfile, ctype.Addr) {
 	log.Infof("CELR transferFrom approved for celerLedger")
 
 	// output json file
-	p := &common.CProfile{
+	p := &CProfile{
 		// hardcoded values
 		ETHInstance:     tf.EthInstance,
 		SvrETHAddr:      client0AddrStr,

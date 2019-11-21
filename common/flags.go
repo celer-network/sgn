@@ -1,4 +1,4 @@
-package flags
+package common
 
 const (
 	FlagEthWS            = "eth.ws"

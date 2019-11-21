@@ -12,11 +12,10 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
-	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
@@ -46,41 +45,41 @@ func SetEnvDir(envDir string) {
 
 func SetupEthClient() {
 	ec, err := mainchain.NewEthClient(
-		viper.GetString(flags.FlagEthWS),
-		viper.GetString(flags.FlagEthGuardAddress),
-		viper.GetString(flags.FlagEthLedgerAddress),
-		// viper.GetString(flags.FlagEthKeystore),
+		viper.GetString(common.FlagEthWS),
+		viper.GetString(common.FlagEthGuardAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+		// viper.GetString(common.FlagEthKeystore),
 		"../../test/keys/client0.json", // relative path is different in tests
-		viper.GetString(flags.FlagEthPassphrase),
+		viper.GetString(common.FlagEthPassphrase),
 	)
 	ChkErr(err, "setup eth client")
 	EthClient = ec
 }
 
 func prepareEthClient() (
-	*ethclient.Client, *bind.TransactOpts, context.Context, common.Address, error) {
+	*ethclient.Client, *bind.TransactOpts, context.Context, ctype.Addr, error) {
 	conn, err := ethclient.Dial(EthInstance)
 	if err != nil {
-		return nil, nil, nil, common.Address{}, err
+		return nil, nil, nil, ctype.Addr{}, err
 	}
 	fmt.Println("etherBaseKs", etherBaseKs)
 	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
 	if err != nil {
-		return nil, nil, nil, common.Address{}, err
+		return nil, nil, nil, ctype.Addr{}, err
 	}
 	etherBaseAddrStr, err := GetAddressFromKeystore(etherBaseKsBytes)
 	if err != nil {
-		return nil, nil, nil, common.Address{}, err
+		return nil, nil, nil, ctype.Addr{}, err
 	}
 	etherBaseAddr := ctype.Hex2Addr(etherBaseAddrStr)
 	auth, err := bind.NewTransactor(strings.NewReader(string(etherBaseKsBytes)), "")
 	if err != nil {
-		return nil, nil, nil, common.Address{}, err
+		return nil, nil, nil, ctype.Addr{}, err
 	}
 	return conn, auth, context.Background(), etherBaseAddr, nil
 }
 
-func fundAccount(amount string, recipients []*common.Address) error {
+func fundAccount(amount string, recipients []*ctype.Addr) error {
 	conn, auth, ctx, senderAddr, err := prepareEthClient()
 	if err != nil {
 		return err
@@ -140,12 +139,12 @@ func fundAccount(amount string, recipients []*common.Address) error {
 	return nil
 }
 
-func FundAddr(amt string, recipients []*common.Address) error {
+func FundAddr(amt string, recipients []*ctype.Addr) error {
 	return fundAccount(amt, recipients)
 }
 
 func AdvanceBlock() error {
-	return fundAccount("0", []*common.Address{&common.Address{}})
+	return fundAccount("0", []*ctype.Addr{&ctype.Addr{}})
 }
 
 func AdvanceBlocks(blockCount uint64) error {
