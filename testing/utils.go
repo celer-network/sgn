@@ -19,9 +19,9 @@ func ChkErr(e error, msg string) {
 // if status isn't 1 (sucess), log.Fatal
 func ChkTxStatus(s uint64, txname string) {
 	if s != 1 {
-		log.Fatal(txname + " tx failed")
+		log.Fatalln(txname, "tx failed")
 	}
-	log.Info(txname + " tx success")
+	log.Infoln(txname, "tx success")
 }
 
 func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
@@ -34,7 +34,7 @@ func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
 func LogBlkNum(conn *ethclient.Client) {
 	blkNum, err := GetLatestBlkNum(conn)
 	ChkErr(err, "failed to get HeaderByNumber")
-	log.Infoln("Latest block number on mainchain: ", blkNum)
+	log.Infoln("Latest block number on mainchain:", blkNum)
 }
 
 func GetAddressFromKeystore(ksBytes []byte) (string, error) {

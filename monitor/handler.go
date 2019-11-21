@@ -13,11 +13,11 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Infof("Push MsgSyncBlock with block number: %d to Transactor's msgQueue for broadcast.", header.Number)
+	log.Infoln("Catch new mainchain block", header.Number)
 	if !m.isPuller() {
 		return
 	}
-
+	log.Infof("Push MsgSyncBlock #%d to transactor msgQueue", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }

@@ -106,7 +106,8 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 		case initializeCandidate := <-initializeCandidateChan:
 			event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 			m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
-			log.Infof("Monitored and pushed a new initializeCandidate event to EthMonitor's eventQueue: %+v", initializeCandidate)
+			log.Infof("Catch GuardInitializeCandidate event, candidate %x, min self stake %s, sidechain addr %x",
+				initializeCandidate.Candidate, initializeCandidate.MinSelfStake.String(), initializeCandidate.SidechainAddr)
 		}
 	}
 }
@@ -128,6 +129,8 @@ func (m *EthMonitor) monitorDelegate() {
 		case delegate := <-delegateChan:
 			event := NewEvent(Delegate, delegate.Raw)
 			m.db.Set(GetEventKey(delegate.Raw), event.MustMarshal())
+			log.Infof("Catch GuardDelegate event, delegator %x, candidate %x, new stake %s, staking pool %s",
+				delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 		}
 	}
 }
@@ -148,6 +151,8 @@ func (m *EthMonitor) monitorValidatorChange() {
 		case validatorChange := <-validatorChangeChan:
 			event := NewEvent(ValidatorChange, validatorChange.Raw)
 			m.db.Set(GetEventKey(validatorChange.Raw), event.MustMarshal())
+			log.Infof("Catch GuardValidatorChange event, addr %x, change type %d",
+				validatorChange.EthAddr, validatorChange.ChangeType)
 		}
 	}
 }
@@ -168,6 +173,8 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 		case intendWithdraw := <-intendWithdrawChan:
 			event := NewEvent(IntendWithdraw, intendWithdraw.Raw)
 			m.db.Set(GetEventKey(intendWithdraw.Raw), event.MustMarshal())
+			log.Infof("Catch GuardIntendWithdraw event, delegator %x, candidate %x, withdraw %s, time %s",
+				intendWithdraw.Delegator, intendWithdraw.Candidate, intendWithdraw.WithdrawAmount.String(), intendWithdraw.IntendTime.String())
 		}
 	}
 }
@@ -188,6 +195,8 @@ func (m *EthMonitor) monitorIntendSettle() {
 		case intendSettle := <-intendSettleChan:
 			event := NewEvent(IntendSettle, intendSettle.Raw)
 			m.db.Set(GetEventKey(intendSettle.Raw), event.MustMarshal())
+			log.Infof("Catch CelerLedgerIntendSettle event, channel ID %x, seqnums %s %s",
+				intendSettle.ChannelId, intendSettle.SeqNums[0].String(), intendSettle.SeqNums[1].String())
 		}
 	}
 }

@@ -24,21 +24,29 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to sync block
 func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Result {
-	log.Infoln("Handling a message to sync block number of", msg.BlockNumber)
+	log.Infoln("Handle message to sync block number", msg.BlockNumber)
 
-	lastestBlock := keeper.GetLatestBlock(ctx)
-	if msg.BlockNumber < lastestBlock.Number {
-		return sdk.ErrInternal("Block number is smaller than current latest block").Result()
+	latestBlock := keeper.GetLatestBlock(ctx)
+	if msg.BlockNumber < latestBlock.Number {
+		errMsg := fmt.Sprintf("Block number is smaller than current latest block, recv %d latest %d",
+			msg.BlockNumber, latestBlock.Number)
+		log.Error(errMsg)
+		return sdk.ErrInternal(errMsg).Result()
 	}
 
 	head, err := keeper.ethClient.Client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query mainchain header: %s", err)).Result()
+		errMsg := fmt.Sprintf("Failed to query mainchain header: %s", err)
+		log.Error(errMsg)
+		return sdk.ErrInternal(errMsg).Result()
 	}
 
 	blockDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
 	if blockDiff.CmpAbs(big.NewInt(keeper.MaxBlockDiff(ctx))) > 0 {
-		return sdk.ErrInternal("Block number is out of bound").Result()
+		errMsg := fmt.Sprintf("Block number is out of bound, recv %d head %d",
+			msg.BlockNumber, head.Number.Uint64())
+		log.Error(errMsg)
+		return sdk.ErrInternal(errMsg).Result()
 	}
 
 	keeper.SyncBlock(ctx, msg.BlockNumber)
