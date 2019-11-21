@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
-	log "github.com/celer-network/sgn/clog"
 	"github.com/celer-network/sgn/flags"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -49,7 +49,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	log.SetLevelStr(viper.GetString(flags.FlagLogLevel))
+	log.SetLevelByName(viper.GetString(flags.FlagLogLevel))
 	if viper.GetBool(flags.FlagLogColor) {
 		log.EnableColor()
 	}
