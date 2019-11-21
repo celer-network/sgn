@@ -86,7 +86,7 @@ func (t *Transactor) start() {
 		var msgs []sdk.Msg
 		for t.msgQueue.Len() != 0 {
 			msg := t.msgQueue.PopFront().(sdk.Msg)
-			log.Infof("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
+			log.Debugf("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
 			msgs = append(msgs, msg)
 		}
 

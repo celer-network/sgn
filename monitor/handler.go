@@ -23,7 +23,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("store initializeCandidate event to puller db: %+v", initializeCandidate)
+	log.Infof("Store GuardInitializeCandidate event to puller db for candidate %x", initializeCandidate.Candidate)
 	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
