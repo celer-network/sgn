@@ -3,6 +3,8 @@ package gateway
 import (
 	"net"
 	"os"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -55,6 +57,11 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 	if viper.GetBool(common.FlagLogLongFile) {
 		log.EnableLongFile()
+		_, file, _, ok := runtime.Caller(0)
+		if ok {
+			pref := file[:strings.LastIndex(file[:strings.LastIndex(file, "/")], "/")+1]
+			log.SetFilePathSplit(pref)
+		}
 	}
 
 	r := mux.NewRouter()

@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -67,6 +69,12 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	log.EnableColor()
 	log.EnableLongFile()
+	_, file, _, ok := runtime.Caller(0)
+	if ok {
+		pref := file[:strings.LastIndex(file, "/test/")+1]
+		log.SetFilePathSplit(pref)
+	}
+
 	// mkdir out root
 	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())

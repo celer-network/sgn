@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -139,6 +141,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	}
 	if viper.GetBool(common.FlagLogLongFile) {
 		log.EnableLongFile()
+		_, file, _, ok := runtime.Caller(0)
+		if ok {
+			pref := file[:strings.LastIndex(file[:strings.LastIndex(file, "/")], "/")+1]
+			log.SetFilePathSplit(pref)
+		}
 	}
 
 	// First define the top level codec that will be shared by the different modules
