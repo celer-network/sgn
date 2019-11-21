@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	log "github.com/celer-network/sgn/clog"
+	"github.com/celer-network/goutils/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

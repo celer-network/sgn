@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	log "github.com/celer-network/sgn/clog"
+	"github.com/celer-network/goutils/log"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
