@@ -96,7 +96,7 @@ func (m *EthMonitor) monitorBlockHead() {
 
 func (m *EthMonitor) monitorInitializeCandidate() {
 	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
-	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
+	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil)
 	if err != nil {
 		log.Println("WatchInitializeCandidate err: ", err)
 		return
