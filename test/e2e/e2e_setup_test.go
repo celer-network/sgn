@@ -5,13 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime"
-	"strings"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
@@ -68,12 +67,7 @@ var (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	log.EnableColor()
-	log.EnableLongFile()
-	_, file, _, ok := runtime.Caller(0)
-	if ok {
-		pref := file[:strings.LastIndex(file, "/test/")+1]
-		log.SetFilePathSplit(pref)
-	}
+	common.EnableLogLongFile()
 
 	// mkdir out root
 	tf.SetEnvDir(envDir)
