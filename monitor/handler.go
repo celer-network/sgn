@@ -30,9 +30,7 @@ func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.Gu
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	log.Infof("New delegate %x", delegate.Candidate)
-	if m.isPullerOrOwner(delegate.Candidate.String()) {
-		m.syncDelegator(delegate.Candidate, delegate.Delegator)
-	}
+	m.syncDelegator(delegate.Candidate, delegate.Delegator)
 
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
@@ -136,7 +134,7 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 		return
 	}
 
-	_, err = m.ethClient.Guard.GuardTransactor.ClaimValidator(m.ethClient.Auth)
+	_, err = m.ethClient.Guard.ClaimValidator(m.ethClient.Auth)
 	if err != nil {
 		log.Errorln("ClaimValidator tx err", err)
 		return

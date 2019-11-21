@@ -92,7 +92,7 @@ func (m *EthMonitor) monitorBlockHead() {
 
 func (m *EthMonitor) monitorInitializeCandidate() {
 	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
-	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil, nil)
+	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil)
 	if err != nil {
 		log.Errorln("WatchInitializeCandidate err:", err)
 		return
@@ -174,7 +174,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 			event := NewEvent(IntendWithdraw, intendWithdraw.Raw)
 			m.db.Set(GetEventKey(intendWithdraw.Raw), event.MustMarshal())
 			log.Infof("Catch event GuardIntendWithdraw, delegator %x, candidate %x, withdraw %s, time %s",
-				intendWithdraw.Delegator, intendWithdraw.Candidate, intendWithdraw.WithdrawAmount.String(), intendWithdraw.IntendTime.String())
+				intendWithdraw.Delegator, intendWithdraw.Candidate, intendWithdraw.WithdrawAmount.String(), intendWithdraw.ProposedTime.String())
 		}
 	}
 }
