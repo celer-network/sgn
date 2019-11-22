@@ -34,5 +34,5 @@ jobs:
       - save_cache:
           key: go-cache-{{ checksum "go.sum" }}
           paths:
-            - '/go/pkg'
-            - '/go/bin'
+            - "/go/pkg"
+            - "/go/bin"
