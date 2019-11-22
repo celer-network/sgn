@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -37,7 +36,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 
 	transactorPool, err := transactor.NewTransactorPool(
-		app.DefaultCLIHome,
+		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
@@ -83,7 +82,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	if err != nil {
 		return
 	}
-	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
+	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkcommon.FlagChainID))
 
 	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.logger, cfg)
 }
@@ -111,15 +110,15 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 
 			// Start the rest server and return error if one exists
 			err = rs.Start(
-				viper.GetString(sdkFlags.FlagListenAddr),
-				viper.GetInt(sdkFlags.FlagMaxOpenConnections),
-				uint(viper.GetInt(sdkFlags.FlagRPCReadTimeout)),
-				uint(viper.GetInt(sdkFlags.FlagRPCWriteTimeout)),
+				viper.GetString(sdkcommon.FlagListenAddr),
+				viper.GetInt(sdkcommon.FlagMaxOpenConnections),
+				uint(viper.GetInt(sdkcommon.FlagRPCReadTimeout)),
+				uint(viper.GetInt(sdkcommon.FlagRPCWriteTimeout)),
 			)
 
 			return err
 		},
 	}
 
-	return sdkFlags.RegisterRestServerFlags(cmd)
+	return sdkcommon.RegisterRestServerFlags(cmd)
 }

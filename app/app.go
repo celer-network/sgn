@@ -389,7 +389,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 
 func (app *sgnApp) startMonitor(ctx sdk.Context) {
 	transactor, err := transactor.NewTransactor(
-		DefaultCLIHome,
+		viper.GetString(flags.FlagSgnCLIHome), // app.DefaultCLIHome,
 		ctx.ChainID(),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnOperator),

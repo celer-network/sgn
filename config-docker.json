@@ -15,6 +15,8 @@
         "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
         "transactors": [
             "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"
-        ]
+        ],
+        "clihome": "/sgn/node0/sgn",
+        "nodehome": "/sgn/node0/sgncli"
     }
 }

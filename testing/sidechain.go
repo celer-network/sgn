@@ -14,12 +14,12 @@ var (
 func SetupTransactor() {
 	cdc := app.MakeCodec()
 	t, err := transactor.NewTransactor(
-		app.DefaultCLIHome,
-		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[0],
-		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
+		viper.GetString(flags.FlagSgnCLIHome), // app.DefaultCLIHome,
+		viper.GetString(flags.FlagSgnChainID),
+		viper.GetString(flags.FlagSgnNodeURI),
+		viper.GetStringSlice(flags.FlagSgnTransactors)[0],
+		viper.GetString(flags.FlagSgnPassphrase),
+		viper.GetString(flags.FlagSgnGasPrice),
 		cdc,
 	)
 	ChkErr(err, "setup transactor")

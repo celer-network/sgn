@@ -63,6 +63,12 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	path, err := filepath.Abs("~/.sgncli")
+	tf.ChkErr(err, "failed to get sgncli abs path")
+	viper.Set(flags.FlagSgnCLIHome, path);
+	path, err = filepath.Abs("~/.sgn")
+	tf.ChkErr(err, "failed to get sgn abs path")
+	viper.Set(flags.FlagSgnNodeHome, path);
 	viper.WriteConfig()
 }
 
