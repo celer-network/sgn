@@ -7,7 +7,7 @@ require (
 	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
 	github.com/celer-network/cChannel-eth-go v0.12.6
 	github.com/celer-network/goutils v0.1.1
-	github.com/cosmos/cosmos-sdk v0.37.0
+	github.com/cosmos/cosmos-sdk v0.37.4
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/elastic/gosigar v0.10.5 // indirect
@@ -15,6 +15,7 @@ require (
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
 	github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff // indirect
+	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/mux v1.7.0
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
@@ -35,8 +36,8 @@ require (
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/tendermint/go-amino v0.15.0
-	github.com/tendermint/tendermint v0.32.2
-	github.com/tendermint/tm-db v0.1.1
+	github.com/tendermint/tendermint v0.32.7
+	github.com/tendermint/tm-db v0.2.0
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
