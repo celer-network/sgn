@@ -36,7 +36,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	log.Infoln("Handling a message to initialize candidate of mainchain address", msg.EthAddress, ", from sender", msg.Sender)
+	log.Infoln("Handle msg to initialize candidate", msg.EthAddress, "from sender", msg.Sender)
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
