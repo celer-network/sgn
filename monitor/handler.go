@@ -40,10 +40,10 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 }
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
-	log.Infof("New validator change %x, %d", validatorChange.EthAddr, validatorChange.ChangeType)
+	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	doSync := m.isPuller()
 
-	if validatorChange.EthAddr.String() == m.ethClient.Address.String() {
+	if validatorChange.EthAddr == m.ethClient.Address {
 		m.isValidator = validatorChange.ChangeType == mainchain.AddValidator
 		if m.isValidator {
 			m.claimValidator()
@@ -143,7 +143,7 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 }
 
 func (m *EthMonitor) claimValidator() {
-	log.Info("ClaimValidator on sidechain")
+	log.Infof("Claim self as a validator on sidechain, self address %x", m.ethClient.Address)
 	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
 	if err != nil {
 		log.Errorln("parse transactors err", err)
