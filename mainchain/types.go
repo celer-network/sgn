@@ -68,14 +68,14 @@ func Bytes2Addr(b []byte) Addr {
 	return ec.BytesToAddress(b)
 }
 
-// Hex2AddrHex formats a string into standard Addr string
-func Hex2AddrHex(s string) string {
-	return Addr2Hex(Hex2Addr(s))
-}
-
 // Bytes2AddrHex returns hex without 0x
 func Bytes2AddrHex(b []byte) string {
 	return Addr2Hex(Bytes2Addr(b))
+}
+
+// FormatAddrHex formats a string into standard Addr string
+func FormatAddrHex(s string) string {
+	return Addr2Hex(Hex2Addr(s))
 }
 
 // ========== CidType ==========

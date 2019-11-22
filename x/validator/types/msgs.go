@@ -25,7 +25,7 @@ type MsgInitializeCandidate struct {
 // NewMsgInitializeCandidate is a constructor function for MsgInitializeCandidate
 func NewMsgInitializeCandidate(ethAddress string, sender sdk.AccAddress) MsgInitializeCandidate {
 	return MsgInitializeCandidate{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -70,7 +70,7 @@ type MsgClaimValidator struct {
 // NewMsgClaimValidator is a constructor function for MsgClaimValidator
 func NewMsgClaimValidator(ethAddress string, pubkey string, transactors []sdk.AccAddress, sender sdk.AccAddress) MsgClaimValidator {
 	return MsgClaimValidator{
-		EthAddress:  mainchain.Hex2AddrHex(ethAddress),
+		EthAddress:  mainchain.FormatAddrHex(ethAddress),
 		PubKey:      pubkey,
 		Transactors: transactors,
 		Sender:      sender,
@@ -126,7 +126,7 @@ type MsgSyncValidator struct {
 // NewMsgSyncValidator is a constructor function for MsgSyncValidator
 func NewMsgSyncValidator(ethAddress string, sender sdk.AccAddress) MsgSyncValidator {
 	return MsgSyncValidator{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -170,8 +170,8 @@ type MsgSyncDelegator struct {
 // NewMsgSyncDelegator is a constructor function for MsgSyncDelegator
 func NewMsgSyncDelegator(candidateAddress, delegatorAddress string, sender sdk.AccAddress) MsgSyncDelegator {
 	return MsgSyncDelegator{
-		CandidateAddress: mainchain.Hex2AddrHex(candidateAddress),
-		DelegatorAddress: mainchain.Hex2AddrHex(delegatorAddress),
+		CandidateAddress: mainchain.FormatAddrHex(candidateAddress),
+		DelegatorAddress: mainchain.FormatAddrHex(delegatorAddress),
 		Sender:           sender,
 	}
 }
@@ -217,7 +217,7 @@ type MsgWithdrawReward struct {
 
 func NewMsgWithdrawReward(ethAddress string, sender sdk.AccAddress) MsgWithdrawReward {
 	return MsgWithdrawReward{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -260,7 +260,7 @@ type MsgSignReward struct {
 
 func NewMsgSignReward(ethAddress string, sig []byte, sender sdk.AccAddress) MsgSignReward {
 	return MsgSignReward{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Sig:        sig,
 		Sender:     sender,
 	}

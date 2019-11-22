@@ -33,7 +33,7 @@ func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 	var candidates []validator.Candidate
 
 	for _, validator := range validators {
-		ethAddr := mainchain.Hex2AddrHex(validator.Description.Identity)
+		ethAddr := mainchain.FormatAddrHex(validator.Description.Identity)
 		if ethAddr == "" {
 			log.Errorf("Miss eth address for validator %x", validator.OperatorAddress)
 			continue

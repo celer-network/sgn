@@ -16,7 +16,7 @@ type QuerySubscriptionParams struct {
 
 func NewQuerySubscriptionParams(addr string) QuerySubscriptionParams {
 	return QuerySubscriptionParams{
-		EthAddress: mainchain.Hex2AddrHex(addr),
+		EthAddress: mainchain.FormatAddrHex(addr),
 	}
 }
 

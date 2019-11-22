@@ -31,13 +31,13 @@ func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) (newSigs 
 	}
 
 	signerAddr := mainchain.Addr2Hex(signer)
-	if signerAddr != mainchain.Hex2AddrHex(expectedSigner) {
+	if signerAddr != mainchain.FormatAddrHex(expectedSigner) {
 		err = fmt.Errorf("invalid signer address %s %s", signerAddr, expectedSigner)
 		return
 	}
 
 	for _, s := range sigs {
-		if mainchain.Hex2AddrHex(s.Signer) == signerAddr {
+		if mainchain.FormatAddrHex(s.Signer) == signerAddr {
 			err = fmt.Errorf("repeated signer %s", signerAddr)
 			return
 		}

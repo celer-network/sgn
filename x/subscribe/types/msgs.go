@@ -16,7 +16,7 @@ type MsgSubscribe struct {
 // NewMsgSubscribe is a constructor function for MsgSubscribe
 func NewMsgSubscribe(ethAddress string, sender sdk.AccAddress) MsgSubscribe {
 	return MsgSubscribe{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -59,7 +59,7 @@ type MsgRequestGuard struct {
 // NewMsgRequestGuard is a constructor function for MsgRequestGuard
 func NewMsgRequestGuard(ethAddress string, signedSimplexStateBytes []byte, sender sdk.AccAddress) MsgRequestGuard {
 	return MsgRequestGuard{
-		EthAddress:              mainchain.Hex2AddrHex(ethAddress),
+		EthAddress:              mainchain.FormatAddrHex(ethAddress),
 		SignedSimplexStateBytes: signedSimplexStateBytes,
 		Sender:                  sender,
 	}

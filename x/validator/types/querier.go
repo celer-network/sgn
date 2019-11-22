@@ -19,8 +19,8 @@ type QueryDelegatorParams struct {
 
 func NewQueryDelegatorParams(candidateAddress, delegatorAddress string) QueryDelegatorParams {
 	return QueryDelegatorParams{
-		CandidateAddress: mainchain.Hex2AddrHex(candidateAddress),
-		DelegatorAddress: mainchain.Hex2AddrHex(delegatorAddress),
+		CandidateAddress: mainchain.FormatAddrHex(candidateAddress),
+		DelegatorAddress: mainchain.FormatAddrHex(delegatorAddress),
 	}
 }
 
@@ -30,7 +30,7 @@ type QueryCandidateParams struct {
 
 func NewQueryCandidateParams(candidateAddress string) QueryCandidateParams {
 	return QueryCandidateParams{
-		CandidateAddress: mainchain.Hex2AddrHex(candidateAddress),
+		CandidateAddress: mainchain.FormatAddrHex(candidateAddress),
 	}
 }
 
@@ -40,6 +40,6 @@ type QueryRewardParams struct {
 
 func NewQueryRewardParams(ethAddress string) QueryRewardParams {
 	return QueryRewardParams{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 	}
 }

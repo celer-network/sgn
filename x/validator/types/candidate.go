@@ -15,7 +15,7 @@ type Delegator struct {
 
 func NewDelegator(ethAddress string) Delegator {
 	return Delegator{
-		EthAddress: mainchain.Hex2AddrHex(ethAddress),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 	}
 }
 

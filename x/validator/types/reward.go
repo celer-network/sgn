@@ -23,7 +23,7 @@ type Reward struct {
 
 func NewReward(receiver string) Reward {
 	return Reward{
-		Receiver:      mainchain.Hex2AddrHex(receiver),
+		Receiver:      mainchain.FormatAddrHex(receiver),
 		ServiceReward: sdk.ZeroInt(),
 		MiningReward:  sdk.ZeroInt(),
 	}
