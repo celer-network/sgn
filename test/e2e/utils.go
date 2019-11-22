@@ -12,7 +12,6 @@ import (
 	"math/big"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -63,7 +62,7 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 	return nil
 }
 
-func delegateStake(fromAuth *bind.TransactOpts, toEthAddress ctype.Addr, amt *big.Int) error {
+func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 	conn := tf.EthClient.Client
@@ -146,7 +145,7 @@ func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
 	channelId = <-channelIdChan
-	log.Info("channel ID: ", ctype.Bytes2Hex(channelId[:]))
+	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
 	return
 }

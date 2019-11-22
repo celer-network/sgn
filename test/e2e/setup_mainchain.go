@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/cChannel-eth-go/ethpool"
 	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -63,7 +62,7 @@ func startMainchain() (*os.Process, error) {
 
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func setupMainchain() (*CProfile, ctype.Addr) {
+func setupMainchain() (*CProfile, mainchain.Addr) {
 	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
@@ -142,17 +141,17 @@ func setupMainchain() (*CProfile, ctype.Addr) {
 		PollingInterval: 1,
 		DisputeTimeout:  10,
 		// deployed addresses
-		WalletAddr:       ctype.Addr2Hex(channelAddrBundle.CelerWalletAddr),
-		LedgerAddr:       ctype.Addr2Hex(channelAddrBundle.CelerLedgerAddr),
-		VirtResolverAddr: ctype.Addr2Hex(channelAddrBundle.VirtResolverAddr),
-		EthPoolAddr:      ctype.Addr2Hex(channelAddrBundle.EthPoolAddr),
-		PayResolverAddr:  ctype.Addr2Hex(channelAddrBundle.PayResolverAddr),
-		PayRegistryAddr:  ctype.Addr2Hex(channelAddrBundle.PayRegistryAddr),
+		WalletAddr:       mainchain.Addr2Hex(channelAddrBundle.CelerWalletAddr),
+		LedgerAddr:       mainchain.Addr2Hex(channelAddrBundle.CelerLedgerAddr),
+		VirtResolverAddr: mainchain.Addr2Hex(channelAddrBundle.VirtResolverAddr),
+		EthPoolAddr:      mainchain.Addr2Hex(channelAddrBundle.EthPoolAddr),
+		PayResolverAddr:  mainchain.Addr2Hex(channelAddrBundle.PayResolverAddr),
+		PayRegistryAddr:  mainchain.Addr2Hex(channelAddrBundle.PayRegistryAddr),
 	}
 	return p, erc20Addr
 }
 
-func deployGuardContract(sgnParams *SGNParams) ctype.Addr {
+func deployGuardContract(sgnParams *SGNParams) mainchain.Addr {
 	conn, err := ethclient.Dial(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 

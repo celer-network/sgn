@@ -13,7 +13,6 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -57,29 +56,29 @@ func SetupEthClient() {
 }
 
 func prepareEthClient() (
-	*ethclient.Client, *bind.TransactOpts, context.Context, ctype.Addr, error) {
+	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
 	conn, err := ethclient.Dial(EthInstance)
 	if err != nil {
-		return nil, nil, nil, ctype.Addr{}, err
+		return nil, nil, nil, mainchain.Addr{}, err
 	}
 	fmt.Println("etherBaseKs", etherBaseKs)
 	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
 	if err != nil {
-		return nil, nil, nil, ctype.Addr{}, err
+		return nil, nil, nil, mainchain.Addr{}, err
 	}
 	etherBaseAddrStr, err := GetAddressFromKeystore(etherBaseKsBytes)
 	if err != nil {
-		return nil, nil, nil, ctype.Addr{}, err
+		return nil, nil, nil, mainchain.Addr{}, err
 	}
-	etherBaseAddr := ctype.Hex2Addr(etherBaseAddrStr)
+	etherBaseAddr := mainchain.Hex2Addr(etherBaseAddrStr)
 	auth, err := bind.NewTransactor(strings.NewReader(string(etherBaseKsBytes)), "")
 	if err != nil {
-		return nil, nil, nil, ctype.Addr{}, err
+		return nil, nil, nil, mainchain.Addr{}, err
 	}
 	return conn, auth, context.Background(), etherBaseAddr, nil
 }
 
-func fundAccount(amount string, recipients []*ctype.Addr) error {
+func fundAccount(amount string, recipients []*mainchain.Addr) error {
 	conn, auth, ctx, senderAddr, err := prepareEthClient()
 	if err != nil {
 		return err
@@ -107,7 +106,7 @@ func fundAccount(amount string, recipients []*ctype.Addr) error {
 			pendingNonceLock.Unlock()
 			return err
 		}
-		if *r == ctype.ZeroAddr {
+		if *r == mainchain.ZeroAddr {
 			log.Info("Advancing block")
 		} else {
 			log.Infof("Sending %s wei from %x to %x, nonce %d. tx: %x", amount, senderAddr, r, nonce, tx.Hash())
@@ -126,7 +125,7 @@ func fundAccount(amount string, recipients []*ctype.Addr) error {
 		if receipt.Status != 1 {
 			log.Errorf("tx failed. tx hash: %x", receipt.TxHash)
 		} else {
-			if *r == ctype.ZeroAddr {
+			if *r == mainchain.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)
 				log.Info("Current block number:", head.Number.String())
 			} else {
@@ -138,12 +137,12 @@ func fundAccount(amount string, recipients []*ctype.Addr) error {
 	return nil
 }
 
-func FundAddr(amt string, recipients []*ctype.Addr) error {
+func FundAddr(amt string, recipients []*mainchain.Addr) error {
 	return fundAccount(amt, recipients)
 }
 
 func AdvanceBlock() error {
-	return fundAccount("0", []*ctype.Addr{&ctype.Addr{}})
+	return fundAccount("0", []*mainchain.Addr{&mainchain.Addr{}})
 }
 
 func AdvanceBlocks(blockCount uint64) error {
