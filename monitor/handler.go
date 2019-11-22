@@ -156,13 +156,13 @@ func (m *EthMonitor) claimValidator() {
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
-	log.Infoln("SyncValidator", address.Hex())
+	log.Infof("SyncValidator %x", address)
 	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
-	log.Infoln("SyncDelegator", candidatorAddr.Hex(), delegatorAddr.Hex())
+	log.Infof("SyncDelegator candidate %x delegator %x", candidatorAddr, delegatorAddr)
 	msg := validator.NewMsgSyncDelegator(
 		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)

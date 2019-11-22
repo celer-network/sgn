@@ -24,7 +24,7 @@ type AccountAmtPair struct {
 
 func NewAccountAmtPair(account string, amount sdk.Int) AccountAmtPair {
 	return AccountAmtPair{
-		Account: account,
+		Account: mainchain.Hex2AddrHex(account),
 		Amount:  amount,
 	}
 }
@@ -36,7 +36,7 @@ type AccountFractionPair struct {
 
 func NewAccountFractionPair(account string, fraction sdk.Dec) AccountFractionPair {
 	return AccountFractionPair{
-		Account:  account,
+		Account:  mainchain.Hex2AddrHex(account),
 		Fraction: fraction,
 	}
 }
@@ -55,7 +55,7 @@ func NewPenalty(nonce uint64, reason string, validatorAddr string) Penalty {
 	return Penalty{
 		Nonce:         nonce,
 		Reason:        reason,
-		ValidatorAddr: validatorAddr,
+		ValidatorAddr: mainchain.Hex2AddrHex(validatorAddr),
 	}
 }
 
