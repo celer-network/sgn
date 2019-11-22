@@ -103,7 +103,7 @@ func WaitMinedWithTxHash(ctx context.Context, ec *ethclient.Client,
 	}
 }
 
-// GetTxSender returns the sender address (with 0x prefix) of the given transaction
+// GetTxSender returns the sender address of the given transaction
 func GetTxSender(ec *ethclient.Client, txHashStr string) (string, error) {
 	tx, _, err := ec.TransactionByHash(context.Background(), Hex2Hash(txHashStr))
 	if err != nil {
