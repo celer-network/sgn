@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -31,15 +30,15 @@ func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) (newSigs 
 		return
 	}
 
-	signerAddr := signer.String()
-	if signerAddr != expectedSigner {
-		err = errors.New("invalid signer address")
+	signerAddr := mainchain.Addr2Hex(signer)
+	if signerAddr != mainchain.FormatAddrHex(expectedSigner) {
+		err = fmt.Errorf("invalid signer address %s %s", signerAddr, expectedSigner)
 		return
 	}
 
 	for _, s := range sigs {
-		if s.Signer == signerAddr {
-			err = errors.New("repeated signer")
+		if mainchain.FormatAddrHex(s.Signer) == signerAddr {
+			err = fmt.Errorf("repeated signer %s", signerAddr)
 			return
 		}
 	}

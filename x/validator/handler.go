@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // NewHandler returns a handler for "validator" type messages.
@@ -144,7 +143,7 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
 	di, err := keeper.ethClient.Guard.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, ethcommon.HexToAddress(msg.CandidateAddress), ethcommon.HexToAddress(msg.DelegatorAddress))
+	}, mainchain.Hex2Addr(msg.CandidateAddress), mainchain.Hex2Addr(msg.DelegatorAddress))
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query delegator info: %s", err)).Result()
 	}

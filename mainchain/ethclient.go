@@ -7,18 +7,17 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 )
 
 type EthClient struct {
 	PrivateKey    *ecdsa.PrivateKey
-	Address       ethcommon.Address
+	Address       Addr
 	Client        *ethclient.Client
-	GuardAddress  ethcommon.Address
+	GuardAddress  Addr
 	Guard         *Guard
-	LedgerAddress ethcommon.Address
+	LedgerAddress Addr
 	Ledger        *CelerLedger
 	Auth          *bind.TransactOpts
 }
@@ -32,13 +31,13 @@ func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthC
 
 	client := ethclient.NewClient(rpcClient)
 
-	guardAddress := ethcommon.HexToAddress(guardAddrStr)
+	guardAddress := Hex2Addr(guardAddrStr)
 	guard, err := NewGuard(guardAddress, client)
 	if err != nil {
 		return nil, err
 	}
 
-	ledgerAddress := ethcommon.HexToAddress(ledgerAddrStr)
+	ledgerAddress := Hex2Addr(ledgerAddrStr)
 	ledger, err := NewCelerLedger(ledgerAddress, client)
 	if err != nil {
 		return nil, err

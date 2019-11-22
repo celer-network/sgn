@@ -110,9 +110,10 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Push initializeCandidate of %s to transactor msgQueue", initializeCandidate.Candidate.String())
+	log.Infof("Push initializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
 
-	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
+	msg := validator.NewMsgInitializeCandidate(
+		mainchain.Addr2Hex(initializeCandidate.Candidate), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 

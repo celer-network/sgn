@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -30,8 +31,8 @@ func (m *EthMonitor) isPusher() bool {
 	return pusher.ValidatorAddr.Equals(m.transactor.Key.GetAddress())
 }
 
-func (m *EthMonitor) isPullerOrOwner(candidate string) bool {
-	return m.isPuller() || candidate == m.ethClient.Address.String()
+func (m *EthMonitor) isPullerOrOwner(candidate mainchain.Addr) bool {
+	return m.isPuller() || candidate == m.ethClient.Address
 }
 
 // Is the current node the guard to submit state proof

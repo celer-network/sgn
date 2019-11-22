@@ -1,7 +1,7 @@
 package types
 
 import (
-	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/celer-network/sgn/mainchain"
 )
 
 const (
@@ -19,8 +19,8 @@ type QueryDelegatorParams struct {
 
 func NewQueryDelegatorParams(candidateAddress, delegatorAddress string) QueryDelegatorParams {
 	return QueryDelegatorParams{
-		CandidateAddress: ethcommon.HexToAddress(candidateAddress).String(),
-		DelegatorAddress: ethcommon.HexToAddress(delegatorAddress).String(),
+		CandidateAddress: mainchain.FormatAddrHex(candidateAddress),
+		DelegatorAddress: mainchain.FormatAddrHex(delegatorAddress),
 	}
 }
 
@@ -30,7 +30,7 @@ type QueryCandidateParams struct {
 
 func NewQueryCandidateParams(candidateAddress string) QueryCandidateParams {
 	return QueryCandidateParams{
-		CandidateAddress: ethcommon.HexToAddress(candidateAddress).String(),
+		CandidateAddress: mainchain.FormatAddrHex(candidateAddress),
 	}
 }
 
@@ -40,6 +40,6 @@ type QueryRewardParams struct {
 
 func NewQueryRewardParams(ethAddress string) QueryRewardParams {
 	return QueryRewardParams{
-		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 	}
 }

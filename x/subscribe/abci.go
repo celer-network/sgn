@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,7 +33,7 @@ func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
 	var candidates []validator.Candidate
 
 	for _, validator := range validators {
-		ethAddr := validator.Description.Identity
+		ethAddr := mainchain.FormatAddrHex(validator.Description.Identity)
 		if ethAddr == "" {
 			log.Errorf("Miss eth address for validator %x", validator.OperatorAddress)
 			continue

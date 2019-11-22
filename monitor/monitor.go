@@ -15,7 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -115,7 +114,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 func (m *EthMonitor) monitorDelegate() {
 	delegateChan := make(chan *mainchain.GuardDelegate)
 
-	sub, err := m.ethClient.Guard.WatchDelegate(nil, delegateChan, nil, []ethcommon.Address{m.ethClient.Address})
+	sub, err := m.ethClient.Guard.WatchDelegate(nil, delegateChan, nil, []mainchain.Addr{m.ethClient.Address})
 	if err != nil {
 		log.Errorln("WatchDelegate err", err)
 		return

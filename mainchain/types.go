@@ -1,16 +1,4 @@
-// This file is based on github.com/goCeler/ctype (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
-
-// Copyright 2018-2019 Celer Network
-
-// util package to handle various types and hex string, bytes etc
-package ctype
-
-/*
-Terms in this package:
-Hex: hex string. Hex2xxx accepts with or without 0x prefix. xxxToHex always without 0x
-Bytes: []byte, mostly for interacting with protobuf
-Addr: go-ethereum/common.Address [20]byte
-*/
+package mainchain
 
 import (
 	"encoding/hex"
@@ -29,9 +17,6 @@ var (
 	// ZeroCid is all 0s
 	ZeroCid CidType
 )
-
-// PayIDType is the ID type for pays
-type PayIDType = ec.Hash
 
 // CidType is the type for payment channel ID
 // Note we need to change all cid.Hex() to Cid2Hex() because Hash.Hex() has 0x prefix
@@ -77,15 +62,20 @@ func Addr2Hex(a Addr) string {
 	return Bytes2Hex(a[:])
 }
 
-// Addr2HexWithPrefix returns hex with 0x
-func Addr2HexWithPrefix(a Addr) string {
-	return a.Hex()
-}
-
 // Bytes2Addr returns Address from b
 // Addr.Bytes() does the reverse
 func Bytes2Addr(b []byte) Addr {
 	return ec.BytesToAddress(b)
+}
+
+// Bytes2AddrHex returns hex without 0x
+func Bytes2AddrHex(b []byte) string {
+	return Addr2Hex(Bytes2Addr(b))
+}
+
+// FormatAddrHex formats a string into standard Addr string
+func FormatAddrHex(s string) string {
+	return Addr2Hex(Hex2Addr(s))
 }
 
 // ========== CidType ==========
@@ -115,4 +105,14 @@ func Hex2Hash(s string) HashType {
 // Bytes2Hash converts bytes to HashType
 func Bytes2Hash(b []byte) HashType {
 	return ec.BytesToHash(b)
+}
+
+// CandidateInfo contains info emitted by the mainchain
+type CandidateInfo struct {
+	Initialized   bool
+	MinSelfStake  *big.Int
+	SidechainAddr []byte
+	StakingPool   *big.Int
+	Status        *big.Int
+	UnbondTime    *big.Int
 }

@@ -3,7 +3,6 @@ package mainchain
 import (
 	"crypto/ecdsa"
 
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -19,10 +18,10 @@ func SignMessage(privateKey *ecdsa.PrivateKey, data []byte) ([]byte, error) {
 	return sig, nil
 }
 
-func RecoverSigner(data []byte, sig []byte) (ethcommon.Address, error) {
+func RecoverSigner(data []byte, sig []byte) (Addr, error) {
 	pubKey, err := crypto.SigToPub(generatePrefixedHash(data), sig)
 	if err != nil {
-		return ethcommon.Address{}, err
+		return ZeroAddr, err
 	}
 
 	recoveredAddr := crypto.PubkeyToAddress(*pubKey)

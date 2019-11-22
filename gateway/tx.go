@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 func (rs *RestServer) registerTxRoutes() {
@@ -84,7 +84,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateBytes := ethcommon.Hex2Bytes(req.SignedSimplexStateBytes)
+		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		msg := subscribe.NewMsgRequestGuard(req.EthAddr, signedSimplexStateBytes, transactor.CliCtx.GetFromAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}

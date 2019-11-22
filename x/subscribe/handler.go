@@ -7,14 +7,12 @@ import (
 	"strings"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	protobuf "github.com/golang/protobuf/proto"
 )
@@ -44,7 +42,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
 	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, ethcommon.HexToAddress(msg.EthAddress))
+	}, mainchain.Hex2Addr(msg.EthAddress))
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to query subscription desposit: %s", err)).Result()
 	}
@@ -79,7 +77,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 
 	// reject guard request if the channel is not Operable
 	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
-	cid := ctype.Bytes2Cid(simplexPaymentChannel.ChannelId)
+	cid := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
 	status, err := keeper.ethClient.Ledger.GetChannelStatus(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, cid)
@@ -119,12 +117,12 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		return sdk.ErrInternal("Cannot find request").Result()
 	}
 
-	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, ctype.Hex2Hash(msg.TriggerTxHash), ctype.Bytes2Cid(msg.ChannelId))
+	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return sdk.ErrInternal(err.Error()).Result()
 	}
 
-	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, ctype.Hex2Hash(msg.GuardTxHash), ctype.Bytes2Cid(msg.ChannelId))
+	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, mainchain.Hex2Hash(msg.GuardTxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return sdk.ErrInternal(err.Error()).Result()
 	}
@@ -176,7 +174,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 	return sdk.Result{}
 }
 
-func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash ctype.HashType, cid ctype.CidType) (*ethtypes.Log, error) {
+func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
 	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
 	if err != nil {
 		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)

@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/celer-network/sgn/mainchain"
+)
+
 const (
 	// module name
 	ModuleName = "validator"
@@ -22,20 +26,20 @@ var (
 
 // get delegators key from candidate address
 func GetDelegatorsKey(candidateAddr string) []byte {
-	return append(DelegatorKeyPrefix, []byte(candidateAddr)...)
+	return append(DelegatorKeyPrefix, []byte(mainchain.FormatAddrHex(candidateAddr))...)
 }
 
 // get delegator key from candidate address and delegator address
 func GetDelegatorKey(candidateAddr, delegatorAddr string) []byte {
-	return append(GetDelegatorsKey(candidateAddr), []byte(delegatorAddr)...)
+	return append(GetDelegatorsKey(candidateAddr), []byte(mainchain.FormatAddrHex(delegatorAddr))...)
 }
 
 // get candidate key from candidateAddr
 func GetCandidateKey(candidateAddr string) []byte {
-	return append(CandidateKeyPrefix, []byte(candidateAddr)...)
+	return append(CandidateKeyPrefix, []byte(mainchain.FormatAddrHex(candidateAddr))...)
 }
 
 // get reward key from ethAddr
 func GetRewardKey(ethAddr string) []byte {
-	return append(RewardKeyPrefix, []byte(ethAddr)...)
+	return append(RewardKeyPrefix, []byte(mainchain.FormatAddrHex(ethAddr))...)
 }

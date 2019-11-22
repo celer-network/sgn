@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -53,7 +54,7 @@ func validatorTest(t *testing.T) {
 	tf.ChkErr(err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")
-	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkErr(err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
@@ -63,15 +64,15 @@ func validatorTest(t *testing.T) {
 	tf.ChkErr(err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
-	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx, validator.RouterKey, ethAddress.String(), ethAddress.String())
+	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx, validator.RouterKey, ethAddress.Hex(), ethAddress.Hex())
 	tf.ChkErr(err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator delegator:", delegator)
-	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, ethAddress.String(), amt) // defined in Delegator.String()
+	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, mainchain.Addr2Hex(ethAddress), amt) // defined in Delegator.String()
 	assert.Equal(t, expectedRes, delegator.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn about the candidate to check if it has correct stakes
 	log.Info("Query sgn about the validator candidate...")
-	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkErr(err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, amt) // defined in Candidate.String()

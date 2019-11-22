@@ -11,7 +11,6 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 )
@@ -44,9 +43,9 @@ type CProfile struct {
 
 // used by setup_onchain and tests
 var (
-	etherBaseAddr = ctype.Hex2Addr(etherBaseAddrStr)
-	client0Addr   = ctype.Hex2Addr(client0AddrStr)
-	client1Addr   = ctype.Hex2Addr(client1AddrStr)
+	etherBaseAddr = mainchain.Hex2Addr(etherBaseAddrStr)
+	client0Addr   = mainchain.Hex2Addr(client0AddrStr)
+	client1Addr   = mainchain.Hex2Addr(client1AddrStr)
 )
 
 // runtime variables, will be initialized by TestMain
@@ -58,8 +57,8 @@ var (
 	envDir        = "../../testing/env"
 	e2eProfile    *CProfile
 	celrContract  *mainchain.ERC20
-	guardAddr     ctype.Addr
-	mockCelerAddr ctype.Addr
+	guardAddr     mainchain.Addr
+	mockCelerAddr mainchain.Addr
 )
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
@@ -84,7 +83,7 @@ func TestMain(m *testing.M) {
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
-	err = tf.FundAddr("100000000000000000000", []*ctype.Addr{&client0Addr})
+	err = tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
 	e2eProfile, mockCelerAddr = setupMainchain()
 

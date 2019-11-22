@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/ctype"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -35,7 +33,7 @@ func ParseStatus(candidateInfo CandidateInfo) sdk.BondStatus {
 }
 
 // GetEventSignature accepts the string of an event signature and return the hex
-func GetEventSignature(eventSigStr string) ctype.HashType {
+func GetEventSignature(eventSigStr string) HashType {
 	return crypto.Keccak256Hash([]byte(eventSigStr))
 }
 
@@ -58,7 +56,7 @@ func WaitMinedWithTxHash(ctx context.Context, ec *ethclient.Client,
 	queryTicker := time.NewTicker(time.Second)
 	defer queryTicker.Stop()
 	// wait tx to be mined
-	txHashBytes := ethcommon.HexToHash(txHash)
+	txHashBytes := Hex2Hash(txHash)
 	for {
 		receipt, rerr := ec.TransactionReceipt(ctx, txHashBytes)
 		if rerr == nil {
@@ -105,9 +103,9 @@ func WaitMinedWithTxHash(ctx context.Context, ec *ethclient.Client,
 	}
 }
 
-// GetTxSender returns the sender address (with 0x prefix) of the given transaction
+// GetTxSender returns the sender address of the given transaction
 func GetTxSender(ec *ethclient.Client, txHashStr string) (string, error) {
-	tx, _, err := ec.TransactionByHash(context.Background(), ctype.Hex2Hash(txHashStr))
+	tx, _, err := ec.TransactionByHash(context.Background(), Hex2Hash(txHashStr))
 	if err != nil {
 		return "", fmt.Errorf("Failed to get tx: %w", err)
 	}
@@ -115,5 +113,5 @@ func GetTxSender(ec *ethclient.Client, txHashStr string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Failed to get msg: %w", err)
 	}
-	return ctype.Addr2HexWithPrefix(msg.From()), nil
+	return Addr2Hex(msg.From()), nil
 }

@@ -1,7 +1,7 @@
 package types
 
 import (
-	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/celer-network/sgn/mainchain"
 )
 
 const (
@@ -16,7 +16,7 @@ type QuerySubscriptionParams struct {
 
 func NewQuerySubscriptionParams(addr string) QuerySubscriptionParams {
 	return QuerySubscriptionParams{
-		EthAddress: ethcommon.HexToAddress(addr).String(),
+		EthAddress: mainchain.FormatAddrHex(addr),
 	}
 }
 
