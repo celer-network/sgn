@@ -29,8 +29,6 @@ jobs:
           command: |
             which geth || { curl -sL https://gethstore.blob.core.windows.net/builds/$GETH_VER.tar.gz | tar -xz --strip 1 $GETH_VER/geth && mv geth /go/bin; }
             which geth  # ensure geth is in PATH
-            go mod tidy
-            make install
             go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e
           no_output_timeout: 16m
       - save_cache:
