@@ -39,7 +39,7 @@ func validatorTest(t *testing.T) {
 	// TODO: each test cases need a new and isolated sgn right now, which can't be run in parallel
 	// t.Parallel()
 
-	log.Info("=====================================================================")
+	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
 
 	auth := tf.EthClient.Auth

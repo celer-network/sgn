@@ -54,7 +54,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		log.EnableColor()
 	}
 	if viper.GetBool(common.FlagLogLongFile) {
-		log.EnableLongFile()
+		common.EnableLogLongFile()
 	}
 
 	r := mux.NewRouter()

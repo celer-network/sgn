@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ctype"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
@@ -66,7 +67,8 @@ var (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	log.EnableColor()
-	log.EnableLongFile()
+	common.EnableLogLongFile()
+
 	// mkdir out root
 	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())

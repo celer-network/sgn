@@ -37,7 +37,7 @@ func (m *EthMonitor) processEventQueue() {
 			continue
 		}
 
-		log.Infoln("process mainchain event", event.Name, event.Log.BlockNumber)
+		log.Infoln("process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -110,7 +110,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infoln("Push MsgInitializeCandidate of %s to Transactor's msgQueue for broadcast", initializeCandidate.Candidate.String())
+	log.Infof("Push initializeCandidate of %s to transactor msgQueue", initializeCandidate.Candidate.String())
 
 	msg := validator.NewMsgInitializeCandidate(initializeCandidate.Candidate.String(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)

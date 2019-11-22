@@ -13,17 +13,17 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Infof("Push MsgSyncBlock with block number: %d to Transactor's msgQueue for broadcast.", header.Number)
+	log.Infoln("Catch new mainchain block", header.Number)
 	if !m.isPuller() {
 		return
 	}
-
+	log.Infof("Push MsgSyncBlock #%d to transactor msgQueue", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("store initializeCandidate event to puller db: %+v", initializeCandidate)
+	log.Infof("Handle GuardInitializeCandidate event for candidate %x", initializeCandidate.Candidate)
 	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
@@ -40,10 +40,10 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 }
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
-	log.Infof("New validator change %x, %d", validatorChange.EthAddr, validatorChange.ChangeType)
+	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	doSync := m.isPuller()
 
-	if validatorChange.EthAddr.String() == m.ethClient.Address.String() {
+	if validatorChange.EthAddr == m.ethClient.Address {
 		m.isValidator = validatorChange.ChangeType == mainchain.AddValidator
 		if m.isValidator {
 			m.claimValidator()
@@ -130,20 +130,20 @@ func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
 	}
 
 	if delegate.StakingPool.Uint64() <= minStake.Uint64() {
-		log.Error("Not enough stake to become validator")
+		log.Debug("Not enough stake to become validator")
 		return
 	}
 
-	tx, err := m.ethClient.Guard.ClaimValidator(m.ethClient.Auth)
+	_, err = m.ethClient.Guard.ClaimValidator(m.ethClient.Auth)
 	if err != nil {
 		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Infof("ClaimValidator tx detail %+v", tx)
+	log.Infof("Claimed validator %x on mainchain", delegate.Candidate)
 }
 
 func (m *EthMonitor) claimValidator() {
-	log.Info("ClaimValidator")
+	log.Infof("Claim self as a validator on sidechain, self address %x", m.ethClient.Address)
 	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
 	if err != nil {
 		log.Errorln("parse transactors err", err)
