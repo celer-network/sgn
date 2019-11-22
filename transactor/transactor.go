@@ -16,7 +16,7 @@ import (
 	"github.com/gammazero/deque"
 )
 
-const maxTry = 5
+const maxTry = 10
 
 type Transactor struct {
 	TxBuilder  types.TxBuilder
@@ -109,12 +109,19 @@ func (t *Transactor) start() {
 		}
 
 		// Make sure the transaction has been mines
-		log.Debugln("Transactor broadcasted tx:", tx)
+		log.Debugln("Transactor broadcasted tx:", tx.TxHash)
+		success := false
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
+				success = true
 				break
 			}
 			time.Sleep(time.Second)
+		}
+		if !success {
+			log.Warnf("Transaction not mined %s", tx.TxHash)
+		} else {
+			log.Infof("Transaction mined %s", tx.TxHash)
 		}
 	}
 }
