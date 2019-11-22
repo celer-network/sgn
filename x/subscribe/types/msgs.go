@@ -1,8 +1,8 @@
 package types
 
 import (
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -16,7 +16,7 @@ type MsgSubscribe struct {
 // NewMsgSubscribe is a constructor function for MsgSubscribe
 func NewMsgSubscribe(ethAddress string, sender sdk.AccAddress) MsgSubscribe {
 	return MsgSubscribe{
-		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress: mainchain.Hex2AddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -59,7 +59,7 @@ type MsgRequestGuard struct {
 // NewMsgRequestGuard is a constructor function for MsgRequestGuard
 func NewMsgRequestGuard(ethAddress string, signedSimplexStateBytes []byte, sender sdk.AccAddress) MsgRequestGuard {
 	return MsgRequestGuard{
-		EthAddress:              ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress:              mainchain.Hex2AddrHex(ethAddress),
 		SignedSimplexStateBytes: signedSimplexStateBytes,
 		Sender:                  sender,
 	}

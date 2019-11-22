@@ -15,7 +15,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -118,7 +117,7 @@ func setupMainchain() (*CProfile, ctype.Addr) {
 	tf.LogBlkNum(conn)
 	celrAmt := new(big.Int)
 	celrAmt.SetString("500000000000000000000000000000", 10)
-	addrs := []ethcommon.Address{etherBaseAddr, client0Addr}
+	addrs := []mainchain.Addr{etherBaseAddr, client0Addr}
 	for _, addr := range addrs {
 		tx, err = erc20.Transfer(etherBaseAuth, addr, celrAmt)
 		tf.ChkErr(err, "failed to send CELR")

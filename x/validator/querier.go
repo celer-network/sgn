@@ -74,7 +74,7 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 
 	candidate, found := keeper.GetCandidate(ctx, params.CandidateAddress)
 	if !found {
-		return nil, sdk.ErrInternal("Cannot find candidate")
+		return nil, sdk.ErrInternal("Cannot find candidate " + params.CandidateAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
@@ -95,7 +95,7 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 	reward, found := keeper.GetReward(ctx, params.EthAddress)
 	if !found {
-		return nil, sdk.ErrInternal("Reward does not exist")
+		return nil, sdk.ErrInternal("Reward does not exist for " + params.EthAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, reward)

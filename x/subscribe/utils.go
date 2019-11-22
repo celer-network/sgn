@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
@@ -33,8 +32,8 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 			return Request{}, err
 		}
 
-		peerAddresses := []string{addresses[0].String(), addresses[1].String()}
-		peerFromAddress := ethcommon.BytesToAddress(simplexPaymentChannel.PeerFrom).String()
+		peerAddresses := []string{mainchain.Addr2Hex(addresses[0]), mainchain.Addr2Hex(addresses[1])}
+		peerFromAddress := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
 		var peerFromIndex uint8
 		if peerAddresses[0] == peerFromAddress {
 			peerFromIndex = uint8(0)
@@ -80,7 +79,7 @@ func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 			return err
 		}
 
-		if request.PeerAddresses[0] != addr.String() {
+		if request.PeerAddresses[0] != mainchain.Addr2Hex(addr) {
 			return errors.New("invalid sig")
 		}
 	}

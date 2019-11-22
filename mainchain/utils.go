@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/sgn/ctype"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -58,7 +57,7 @@ func WaitMinedWithTxHash(ctx context.Context, ec *ethclient.Client,
 	queryTicker := time.NewTicker(time.Second)
 	defer queryTicker.Stop()
 	// wait tx to be mined
-	txHashBytes := ethcommon.HexToHash(txHash)
+	txHashBytes := Hex2Hash(txHash)
 	for {
 		receipt, rerr := ec.TransactionReceipt(ctx, txHashBytes)
 		if rerr == nil {

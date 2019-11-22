@@ -3,11 +3,11 @@ package cli
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
 
@@ -71,7 +71,7 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			request, err := QueryRequest(cliCtx, queryRoute, ethcommon.Hex2Bytes(args[0]))
+			request, err := QueryRequest(cliCtx, queryRoute, mainchain.Hex2Bytes(args[0]))
 			if err != nil {
 				return err
 			}

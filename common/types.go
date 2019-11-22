@@ -31,7 +31,7 @@ func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) (newSigs 
 		return
 	}
 
-	signerAddr := signer.String()
+	signerAddr := mainchain.Addr2Hex(signer)
 	if signerAddr != expectedSigner {
 		err = errors.New("invalid signer address")
 		return

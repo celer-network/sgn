@@ -82,12 +82,12 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "Subscribe on Guard contract")
 
 	log.Info("Send tx on sidechain to sync mainchain subscription balance...")
-	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.String(), transactor.Key.GetAddress())
+	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.BroadcastTx(msgSubscribe)
 	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	log.Info("Query sgn about the subscription info...")
-	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.String())
+	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
 	tf.ChkErr(err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
@@ -105,7 +105,7 @@ func subscribeTest(t *testing.T) {
 	signedSimplexStateProto := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkErr(err, "failed to get signedSimplexStateBytes")
-	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.String(), signedSimplexStateBytes, transactor.Key.GetAddress())
+	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	transactor.BroadcastTx(msgRequestGuard)
 	sleepWithLog(10, "sgn processes request guard")
 
@@ -140,18 +140,18 @@ func subscribeTest(t *testing.T) {
 	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
 	tf.ChkErr(err, "failed to query params on sgn")
 	log.Infoln("Query sgn about the params info:", params.String())
-	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkErr(err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
 	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, params.RequestCost.String())
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Send tx on sidechain to withdraw reward")
-	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.String(), transactor.Key.GetAddress())
+	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.BroadcastTx(msgWithdrawReward)
 	sleepWithLog(60, "sgn withdrawing reward")
 
-	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.String())
+	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkErr(err, "failed to query reward on sgn")
 	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
 

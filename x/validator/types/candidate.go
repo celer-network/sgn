@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -14,7 +15,7 @@ type Delegator struct {
 
 func NewDelegator(ethAddress string) Delegator {
 	return Delegator{
-		EthAddress: ethAddress,
+		EthAddress: mainchain.Hex2AddrHex(ethAddress),
 	}
 }
 

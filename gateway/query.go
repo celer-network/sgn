@@ -3,12 +3,12 @@ package gateway
 import (
 	"net/http"
 
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/mux"
 )
 
@@ -83,7 +83,7 @@ func subscriptionHandlerFn(rs *RestServer) http.HandlerFunc {
 func guardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		channelId := ethcommon.Hex2Bytes(vars["channelId"])
+		channelId := mainchain.Hex2Bytes(vars["channelId"])
 		transactor := rs.transactorPool.GetTransactor()
 		request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId)
 		postProcessResponse(w, transactor.CliCtx, request, err)

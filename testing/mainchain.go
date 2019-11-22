@@ -110,8 +110,7 @@ func fundAccount(amount string, recipients []*ctype.Addr) error {
 		if *r == ctype.ZeroAddr {
 			log.Info("Advancing block")
 		} else {
-			log.Infof(
-				"Sending %s wei from %s to %s, nonce %d. tx: %x", amount, senderAddr.Hex(), r.Hex(), nonce, tx.Hash())
+			log.Infof("Sending %s wei from %x to %x, nonce %d. tx: %x", amount, senderAddr, r, nonce, tx.Hash())
 		}
 
 		err = conn.SendTransaction(ctx, tx)
@@ -125,7 +124,7 @@ func fundAccount(amount string, recipients []*ctype.Addr) error {
 			log.Error(err)
 		}
 		if receipt.Status != 1 {
-			log.Errorln("tx failed. tx hash:", receipt.TxHash.Hex())
+			log.Errorf("tx failed. tx hash: %x", receipt.TxHash)
 		} else {
 			if *r == ctype.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)

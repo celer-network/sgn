@@ -5,8 +5,9 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/ctype"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/sgn"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	protobuf "github.com/golang/protobuf/proto"
@@ -22,7 +23,7 @@ type Reward struct {
 
 func NewReward(receiver string) Reward {
 	return Reward{
-		Receiver:      receiver,
+		Receiver:      mainchain.Hex2AddrHex(receiver),
 		ServiceReward: sdk.ZeroInt(),
 		MiningReward:  sdk.ZeroInt(),
 	}
@@ -50,7 +51,7 @@ func (r Reward) HasNewReward() bool {
 // Initiate the withdraw process
 func (r *Reward) InitateWithdraw() {
 	rewardBytes, _ := protobuf.Marshal(&sgn.Reward{
-		Receiver:                ctype.Hex2Bytes(r.Receiver),
+		Receiver:                mainchain.Hex2Bytes(r.Receiver),
 		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
 		CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
 	})
@@ -63,6 +64,7 @@ func (r *Reward) InitateWithdraw() {
 func (r *Reward) AddSig(sig []byte, expectedSigner string) error {
 	sigs, err := common.AddSig(r.Sigs, r.RewardProtoBytes, sig, expectedSigner)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 

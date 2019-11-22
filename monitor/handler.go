@@ -8,7 +8,6 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -61,7 +60,7 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValid
 func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendWithdraw) {
 	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 
-	if m.isPullerOrOwner(intendWithdraw.Candidate.String()) {
+	if m.isPullerOrOwner(intendWithdraw.Candidate) {
 		m.syncValidator(intendWithdraw.Candidate)
 	}
 }
@@ -150,19 +149,21 @@ func (m *EthMonitor) claimValidator() {
 		return
 	}
 
-	msg := validator.NewMsgClaimValidator(m.ethClient.Address.String(), m.pubkey, transactors, m.transactor.Key.GetAddress())
+	msg := validator.NewMsgClaimValidator(
+		mainchain.Addr2Hex(m.ethClient.Address), m.pubkey, transactors, m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 
 }
 
-func (m *EthMonitor) syncValidator(address ethcommon.Address) {
-	log.Infoln("SyncValidator", address.String())
-	msg := validator.NewMsgSyncValidator(address.String(), m.transactor.Key.GetAddress())
+func (m *EthMonitor) syncValidator(address mainchain.Addr) {
+	log.Infoln("SyncValidator", address.Hex())
+	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }
 
-func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr ethcommon.Address) {
-	log.Infoln("SyncDelegator", candidatorAddr.String(), delegatorAddr.String())
-	msg := validator.NewMsgSyncDelegator(candidatorAddr.String(), delegatorAddr.String(), m.transactor.Key.GetAddress())
+func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+	log.Infoln("SyncDelegator", candidatorAddr.Hex(), delegatorAddr.Hex())
+	msg := validator.NewMsgSyncDelegator(
+		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
 	m.transactor.BroadcastTx(msg)
 }

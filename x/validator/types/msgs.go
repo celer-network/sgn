@@ -1,8 +1,8 @@
 package types
 
 import (
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -25,7 +25,7 @@ type MsgInitializeCandidate struct {
 // NewMsgInitializeCandidate is a constructor function for MsgInitializeCandidate
 func NewMsgInitializeCandidate(ethAddress string, sender sdk.AccAddress) MsgInitializeCandidate {
 	return MsgInitializeCandidate{
-		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress: mainchain.Hex2AddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -70,7 +70,7 @@ type MsgClaimValidator struct {
 // NewMsgClaimValidator is a constructor function for MsgClaimValidator
 func NewMsgClaimValidator(ethAddress string, pubkey string, transactors []sdk.AccAddress, sender sdk.AccAddress) MsgClaimValidator {
 	return MsgClaimValidator{
-		EthAddress:  ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress:  mainchain.Hex2AddrHex(ethAddress),
 		PubKey:      pubkey,
 		Transactors: transactors,
 		Sender:      sender,
@@ -126,7 +126,7 @@ type MsgSyncValidator struct {
 // NewMsgSyncValidator is a constructor function for MsgSyncValidator
 func NewMsgSyncValidator(ethAddress string, sender sdk.AccAddress) MsgSyncValidator {
 	return MsgSyncValidator{
-		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress: mainchain.Hex2AddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -170,8 +170,8 @@ type MsgSyncDelegator struct {
 // NewMsgSyncDelegator is a constructor function for MsgSyncDelegator
 func NewMsgSyncDelegator(candidateAddress, delegatorAddress string, sender sdk.AccAddress) MsgSyncDelegator {
 	return MsgSyncDelegator{
-		CandidateAddress: ethcommon.HexToAddress(candidateAddress).String(),
-		DelegatorAddress: ethcommon.HexToAddress(delegatorAddress).String(),
+		CandidateAddress: mainchain.Hex2AddrHex(candidateAddress),
+		DelegatorAddress: mainchain.Hex2AddrHex(delegatorAddress),
 		Sender:           sender,
 	}
 }
@@ -217,7 +217,7 @@ type MsgWithdrawReward struct {
 
 func NewMsgWithdrawReward(ethAddress string, sender sdk.AccAddress) MsgWithdrawReward {
 	return MsgWithdrawReward{
-		EthAddress: ethcommon.HexToAddress(ethAddress).String(),
+		EthAddress: mainchain.Hex2AddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
@@ -260,7 +260,7 @@ type MsgSignReward struct {
 
 func NewMsgSignReward(ethAddress string, sig []byte, sender sdk.AccAddress) MsgSignReward {
 	return MsgSignReward{
-		EthAddress: ethAddress,
+		EthAddress: mainchain.Hex2AddrHex(ethAddress),
 		Sig:        sig,
 		Sender:     sender,
 	}

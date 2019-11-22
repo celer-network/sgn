@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/sgn"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
@@ -72,7 +73,7 @@ func (p Penalty) GenerateProtoBytes() {
 	for _, penalizedDelegator := range p.PenalizedDelegators {
 		totalPenalty = totalPenalty.Add(penalizedDelegator.Amount)
 		penalizedDelegators = append(penalizedDelegators, &sgn.AccountAmtPair{
-			Account: ethcommon.HexToAddress(penalizedDelegator.Account).Bytes(),
+			Account: mainchain.Hex2Addr(penalizedDelegator.Account).Bytes(),
 			Amt:     penalizedDelegator.Amount.BigInt().Bytes(),
 		})
 	}
@@ -81,7 +82,7 @@ func (p Penalty) GenerateProtoBytes() {
 		amt := beneficiary.Fraction.MulInt(totalPenalty).TruncateInt()
 		totalBeneficiary = totalBeneficiary.Add(amt)
 		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
-			Account: ethcommon.HexToAddress(beneficiary.Account).Bytes(),
+			Account: mainchain.Hex2Addr(beneficiary.Account).Bytes(),
 			Amt:     amt.BigInt().Bytes(),
 		})
 	}
@@ -89,7 +90,7 @@ func (p Penalty) GenerateProtoBytes() {
 	restPenalty := totalPenalty.Sub(totalBeneficiary)
 	if restPenalty.IsPositive() {
 		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
-			Account: ethcommon.HexToAddress(emptyAddr).Bytes(),
+			Account: mainchain.Hex2Addr(emptyAddr).Bytes(),
 			Amt:     restPenalty.BigInt().Bytes(),
 		})
 	}
@@ -97,7 +98,7 @@ func (p Penalty) GenerateProtoBytes() {
 	penaltyBytes, _ := protobuf.Marshal(&sgn.Penalty{
 		Nonce:               p.Nonce,
 		ExpireTime:          expireTime,
-		ValidatorAddress:    ethcommon.HexToAddress(p.ValidatorAddr).Bytes(),
+		ValidatorAddress:    mainchain.Hex2Addr(p.ValidatorAddr).Bytes(),
 		PenalizedDelegators: penalizedDelegators,
 		Beneficiaries:       beneficiaries,
 	})
@@ -109,6 +110,7 @@ func (p Penalty) GenerateProtoBytes() {
 func (p *Penalty) AddSig(sig []byte, expectedSigner string) error {
 	sigs, err := common.AddSig(p.Sigs, p.PenaltyProtoBytes, sig, expectedSigner)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 

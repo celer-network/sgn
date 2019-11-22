@@ -72,7 +72,7 @@ func gatewayTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "Subscribe on Guard contract")
 
 	msg := map[string]interface{}{
-		"ethAddr": ethAddress.String(),
+		"ethAddr": ethAddress.Hex(),
 	}
 	body, err := json.Marshal(msg)
 	if err != nil {
@@ -85,7 +85,7 @@ func gatewayTest(t *testing.T) {
 	}
 	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
-	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.String())
+	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
 	if err != nil {
 		t.Error(err)
 	}
