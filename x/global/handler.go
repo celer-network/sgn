@@ -24,7 +24,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to sync block
 func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock) sdk.Result {
-	log.Infoln("Handle message to sync mainchain block number", msg.BlockNumber)
+	log.Infof("Handle MsgSyncBlock. %+v", msg)
 
 	latestBlock := keeper.GetLatestBlock(ctx)
 	if msg.BlockNumber < latestBlock.Number {

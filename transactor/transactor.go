@@ -110,7 +110,7 @@ func (t *Transactor) start() {
 			}
 		}
 		if !success {
-			log.Errorf("Transaction %s not mined within %d retry", tx.TxHash, maxQueryRetry)
+			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
 		} else {
 			log.Debugf("Transaction %s has been mined", tx.TxHash)
 		}

@@ -40,6 +40,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to subscribe
 func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
+	log.Infof("Handle MsgSubscribe. %+v", msg)
 	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, mainchain.Hex2Addr(msg.EthAddress))
@@ -58,6 +59,7 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 
 // Handle a message to request guard
 func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
+	log.Infof("Handle MsgRequestGuard. EthAddress %s, Sender %s", msg.EthAddress, msg.Sender.String())
 	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
 	if err != nil {
 		return sdk.ErrInternal(fmt.Sprintf("Failed to charge request fee: %s", err)).Result()
@@ -112,6 +114,8 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) 
 // Handle a message to submit guard proof
 // Currently only supports that the validator sends out a tx purely for one intendSettle. (not call it via a contract or put multiple calls in one tx)
 func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.Result {
+	log.Infof("Handle MsgGuardProof. ChannelID %x, TriggerTxHash %s, GuardHash %s, Sender %s",
+		msg.ChannelId, msg.TriggerTxHash, msg.GuardTxHash, msg.Sender.String())
 	request, found := keeper.GetRequest(ctx, msg.ChannelId)
 	if !found {
 		return sdk.ErrInternal("Cannot find request").Result()
