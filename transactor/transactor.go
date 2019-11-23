@@ -71,8 +71,8 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 	return transactor, nil
 }
 
-// Batch msg into a queue before actual broadcast
-func (t *Transactor) BroadcastTx(msg sdk.Msg) {
+// AddTxMsg add msg into a queue before actual broadcast
+func (t *Transactor) AddTxMsg(msg sdk.Msg) {
 	t.msgQueue.PushBack(msg)
 }
 

@@ -114,7 +114,7 @@ func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.G
 
 	msg := validator.NewMsgInitializeCandidate(
 		mainchain.Addr2Hex(initializeCandidate.Candidate), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
@@ -160,7 +160,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 
 	triggerTxHash := intendSettle.Raw.TxHash.Hex()
 	msg := subscribe.NewMsgGuardProof(channelId, triggerTxHash, tx.Hash().Hex(), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {

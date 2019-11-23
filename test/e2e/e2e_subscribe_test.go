@@ -82,7 +82,7 @@ func subscribeTest(t *testing.T) {
 
 	log.Info("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
-	transactor.BroadcastTx(msgSubscribe)
+	transactor.AddTxMsg(msgSubscribe)
 	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	log.Info("Query sgn about the subscription info...")
@@ -105,7 +105,7 @@ func subscribeTest(t *testing.T) {
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkErr(err, "failed to get signedSimplexStateBytes")
 	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
-	transactor.BroadcastTx(msgRequestGuard)
+	transactor.AddTxMsg(msgRequestGuard)
 	sleepWithLog(10, "sgn processes request guard")
 
 	log.Info("Query sgn to check if request has correct state proof data...")
@@ -147,7 +147,7 @@ func subscribeTest(t *testing.T) {
 
 	log.Info("Send tx on sidechain to withdraw reward")
 	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.Hex(), transactor.Key.GetAddress())
-	transactor.BroadcastTx(msgWithdrawReward)
+	transactor.AddTxMsg(msgWithdrawReward)
 	sleepWithLog(60, "sgn withdrawing reward")
 
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
