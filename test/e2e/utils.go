@@ -58,7 +58,7 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 	}
 
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	sleepWithLog(30, "sgn syncing InitializeCandidate event on mainchain")
+	sleepWithLog(10, "sgn syncing InitializeCandidate event on mainchain")
 	return nil
 }
 
@@ -80,7 +80,7 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	}
 
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
-	sleepWithLog(30, "sgn syncing Delegate event on mainchain")
+	sleepWithLog(10, "sgn syncing Delegate event on mainchain")
 	return nil
 }
 
