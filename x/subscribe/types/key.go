@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/celer-network/sgn/mainchain"
+)
+
 const (
 	// module name
 	ModuleName = "subscribe"
@@ -22,5 +26,5 @@ func GetSubscriptionKey(ethAddress string) []byte {
 
 // get request key from channelID
 func GetRequestKey(channelId []byte) []byte {
-	return append(RequestKeyPrefix, channelId...)
+	return append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...)
 }
