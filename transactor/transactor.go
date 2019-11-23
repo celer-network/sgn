@@ -85,37 +85,15 @@ func (t *Transactor) start() {
 		}
 
 		txlog := seal.NewTransactorLog()
-		txlog.MsgNum = uint32(t.msgQueue.Len())
-		var msgs []sdk.Msg
-		for t.msgQueue.Len() != 0 {
-			msg := t.msgQueue.PopFront().(sdk.Msg)
-			seal.AddTransactorMsg(txlog, msg.Type())
-			msgs = append(msgs, msg)
-		}
-
-		txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+		tx, err := t.broadcastTx(txlog)
 		if err != nil {
-			txlog.Error = fmt.Sprintf("PrepareTxBuilder err: %s", err)
-			log.Error(txlog)
+			txlog.Error = append(txlog.Error, err.Error())
+			seal.CommitTransactorLog(txlog)
 			continue
 		}
 
-		txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
-		if err != nil {
-			txlog.Error = fmt.Sprintf("BuildAndSign err: %s", err)
-			log.Error(txlog)
-			continue
-		}
+		seal.CommitTransactorLog(txlog)
 
-		tx, err := t.CliCtx.BroadcastTx(txBytes)
-		if err != nil {
-			txlog.Error = fmt.Sprintf("BroadcastTx err: %s", err)
-			log.Error(txlog)
-			continue
-		}
-
-		txlog.TxHash = tx.TxHash
-		log.Info(txlog)
 		// Make sure the transaction has been mined
 		success := false
 		for try := 0; try < maxTry; try++ {
@@ -129,4 +107,32 @@ func (t *Transactor) start() {
 			log.Errorf("Transaction %s not mined within %d seconds", tx.TxHash, maxTry)
 		}
 	}
+}
+
+func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, error) {
+	txlog.MsgNum = uint32(t.msgQueue.Len())
+	var msgs []sdk.Msg
+	for t.msgQueue.Len() != 0 {
+		msg := t.msgQueue.PopFront().(sdk.Msg)
+		seal.AddTransactorMsg(txlog, msg.Type())
+		msgs = append(msgs, msg)
+	}
+
+	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+	if err != nil {
+		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
+	}
+
+	txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
+	if err != nil {
+		return nil, fmt.Errorf("BuildAndSign err: %s", err)
+	}
+
+	tx, err := t.CliCtx.BroadcastTx(txBytes)
+	if err != nil {
+		return nil, fmt.Errorf("BroadcastTx err: %s", err)
+	}
+	txlog.TxHash = tx.TxHash
+
+	return &tx, nil
 }
