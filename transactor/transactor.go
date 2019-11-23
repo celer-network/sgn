@@ -1,9 +1,11 @@
 package transactor
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/seal"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -82,34 +84,39 @@ func (t *Transactor) start() {
 			continue
 		}
 
-		log.Infof("Packing %d messages in batch for broadcast", t.msgQueue.Len())
+		txlog := seal.NewTransactorLog()
+		txlog.MsgNum = uint32(t.msgQueue.Len())
 		var msgs []sdk.Msg
 		for t.msgQueue.Len() != 0 {
 			msg := t.msgQueue.PopFront().(sdk.Msg)
-			log.Debugf("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
+			seal.AddTransactorMsg(txlog, msg.Type())
 			msgs = append(msgs, msg)
 		}
 
 		txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 		if err != nil {
-			log.Errorln("Transactor PrepareTxBuilder err:", err)
+			txlog.Error = fmt.Sprintf("PrepareTxBuilder err: %s", err)
+			log.Error(txlog)
 			continue
 		}
 
 		txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
 		if err != nil {
-			log.Errorln("Transactor BuildAndSign err", err)
+			txlog.Error = fmt.Sprintf("BuildAndSign err: %s", err)
+			log.Error(txlog)
 			continue
 		}
 
 		tx, err := t.CliCtx.BroadcastTx(txBytes)
 		if err != nil {
-			log.Errorln("Transactor BroadcastTx err", err)
+			txlog.Error = fmt.Sprintf("BroadcastTx err: %s", err)
+			log.Error(txlog)
 			continue
 		}
 
-		// Make sure the transaction has been mines
-		log.Debugln("Transactor broadcasted tx:", tx.TxHash)
+		txlog.TxHash = tx.TxHash
+		log.Info(txlog)
+		// Make sure the transaction has been mined
 		success := false
 		for try := 0; try < maxTry; try++ {
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
@@ -119,9 +126,7 @@ func (t *Transactor) start() {
 			time.Sleep(time.Second)
 		}
 		if !success {
-			log.Warnf("Transaction not mined %s", tx.TxHash)
-		} else {
-			log.Infof("Transaction mined %s", tx.TxHash)
+			log.Errorf("Transaction %s not mined within %d seconds", tx.TxHash, maxTry)
 		}
 	}
 }
