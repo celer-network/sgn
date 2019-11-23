@@ -39,11 +39,11 @@ func queryLatestBlockTest(t *testing.T) {
 	}
 
 	blockSGN, err := global.CLIQueryLatestBlock(tf.Transactor.CliCtx, global.RouterKey)
-	tf.ChkErr(err, "failed to query latest synced block on sgn")
+	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
 	blkNumMain, err := tf.GetLatestBlkNum(conn)
-	tf.ChkErr(err, "failed to query latest synced block on mainchain")
+	tf.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
 	log.Infof("Latest block number on mainchain is %d", blkNumMain)
 
 	assert.GreaterOrEqual(t, blkNumMain.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")

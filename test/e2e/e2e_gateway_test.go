@@ -60,37 +60,25 @@ func gatewayTest(t *testing.T) {
 	log.Info("Call subscribe on guard contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
 	tx, err := celrContract.Approve(auth, guardAddr, amt)
-	if err != nil {
-		t.Error(err)
-	}
+	tf.ChkTestErr(t, err, "failed to approve CELR on mainchain")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 
 	tx, err = guardContract.Subscribe(auth, amt)
-	if err != nil {
-		t.Error(err)
-	}
-	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "Subscribe on Guard contract")
+	tf.ChkTestErr(t, err, "failed to subscribe on mainchain")
+	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "Subscribe on Guard contract")
 
 	msg := map[string]interface{}{
 		"ethAddr": ethAddress.Hex(),
 	}
-	body, err := json.Marshal(msg)
-	if err != nil {
-		t.Error(err)
-	}
-
+	body, _ := json.Marshal(msg)
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		t.Error(err)
-	}
+	tf.ChkTestErr(t, err, "failed to post subscribe msg to gateway")
 	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
-	if err != nil {
-		t.Error(err)
-	}
-	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	tf.ChkTestErr(t, err, "failed to query subscription from gateway")
 
+	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
 	var subscription subscribe.Subscription
 	transactor.CliCtx.Codec.MustUnmarshalJSON(result, &subscription)
 	log.Infoln("Query sgn about the subscription info:", subscription.String())

@@ -23,10 +23,6 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
-const (
-	defaultTimeout = 30 * time.Second
-)
-
 func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }
@@ -34,6 +30,10 @@ func sleep(second time.Duration) {
 func sleepWithLog(second time.Duration, waitFor string) {
 	log.Infof("Sleep %d seconds for %s", second, waitFor)
 	sleep(second)
+}
+
+func sleepBlocksWithLog(count int, waitFor string) {
+	sleepWithLog(count * sgnBlockInterval, waitFor)
 }
 
 func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMessage {
@@ -57,8 +57,8 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 		return err
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	sleepWithLog(30, "sgn syncing InitializeCandidate event on mainchain")
+	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "InitializeCandidate")
+	sleepBlocksWithLog(2, "sgn syncing InitializeCandidate event on mainchain")
 	return nil
 }
 
@@ -79,8 +79,7 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 		return err
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
-	sleepWithLog(30, "sgn syncing Delegate event on mainchain")
+	tf.WaitMinedWithChk(ctx, conn, tx, 3 * blockDelay, "Delegate to validator")
 	return nil
 }
 
@@ -143,7 +142,7 @@ func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 		return
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
+	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay+2, "OpenChannel")
 	channelId = <-channelIdChan
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
