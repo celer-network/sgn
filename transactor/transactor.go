@@ -2,6 +2,7 @@ package transactor
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -18,7 +19,12 @@ import (
 	"github.com/gammazero/deque"
 )
 
-const maxTry = 10
+const (
+	maxQueryRetry   = 20
+	queryRetryDelay = 500 * time.Millisecond
+	maxSignRetry    = 10
+	signRetryDelay  = 10 * time.Millisecond
+)
 
 type Transactor struct {
 	TxBuilder  types.TxBuilder
@@ -96,15 +102,17 @@ func (t *Transactor) start() {
 
 		// Make sure the transaction has been mined
 		success := false
-		for try := 0; try < maxTry; try++ {
+		for try := 0; try < maxQueryRetry; try++ {
+			time.Sleep(queryRetryDelay)
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
 				success = true
 				break
 			}
-			time.Sleep(time.Second)
 		}
 		if !success {
-			log.Errorf("Transaction %s not mined within %d seconds", tx.TxHash, maxTry)
+			log.Errorf("Transaction %s not mined within %d retry", tx.TxHash, maxQueryRetry)
+		} else {
+			log.Debugf("Transaction %s has been mined", tx.TxHash)
 		}
 	}
 }
@@ -118,16 +126,7 @@ func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, er
 		msgs = append(msgs, msg)
 	}
 
-	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
-	if err != nil {
-		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
-	}
-
-	txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
-	if err != nil {
-		return nil, fmt.Errorf("BuildAndSign err: %s", err)
-	}
-
+	txBytes, err := t.signTx(msgs)
 	tx, err := t.CliCtx.BroadcastTx(txBytes)
 	if err != nil {
 		return nil, fmt.Errorf("BroadcastTx err: %s", err)
@@ -135,4 +134,25 @@ func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, er
 	txlog.TxHash = tx.TxHash
 
 	return &tx, nil
+}
+
+func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
+	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+	if err != nil {
+		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
+	}
+	var txBytes []byte
+	for try := 0; try < maxSignRetry; try++ {
+		txBytes, err = txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
+		if err == nil {
+			return txBytes, nil
+		}
+		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
+			break
+		}
+		if try != maxSignRetry-1 {
+			time.Sleep(signRetryDelay)
+		}
+	}
+	return nil, fmt.Errorf("BuildAndSign err: %s", err)
 }
