@@ -13,18 +13,18 @@ message TransactorLog {
 
 message MsgLog {
     string type = 1;
-    string sender = 2;
-    string eth_address = 3;
-    string chan_id = 4;
-    uint64 chan_seq_num = 5;
-    string trigger_tx_hash = 6;
-    string guard_tx_hash = 7;
-    string pub_key = 8;
-    repeated string transactor = 9;
-    string candidate_addr = 10;
-    string delegator_addr = 11;
-    uint64 slash_nonce = 12;
-    uint64 block_num = 13;
+    string eth_address = 2;
+    string chan_id = 3;
+    uint64 chan_seq_num = 4;
+    string trigger_tx_hash = 5;
+    string guard_tx_hash = 6;
+    string pub_key = 7;
+    repeated string transactor = 8;
+    string candidate_addr = 9;
+    string delegator_addr = 10;
+    uint64 slash_nonce = 11;
+    uint64 block_num = 12;
+    string sender = 13;
 
     double execution_time_ms = 100;
     repeated string error = 101;
