@@ -3,6 +3,7 @@ package testing
 import (
 	"context"
 	"encoding/json"
+	"testing"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -10,9 +11,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func ChkErr(e error, msg string) {
-	if e != nil {
-		log.Fatalln(msg, e)
+func ChkTestErr(t *testing.T, err error, msg string) {
+	if err != nil {
+		log.Errorln(msg, err)
+		t.FailNow()
+	}
+}
+
+func ChkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalln(msg, err)
 	}
 }
 
