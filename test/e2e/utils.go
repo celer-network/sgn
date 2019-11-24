@@ -46,10 +46,10 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 }
 
 func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
 
 	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
@@ -58,15 +58,15 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 	}
 
 	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "InitializeCandidate")
-	sleepBlocksWithLog(2, "sgn syncing InitializeCandidate event on mainchain")
+	sleepBlocksWithLog(5, "sgn syncing InitializeCandidate event on mainchain")
 	return nil
 }
 
 func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
 	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
@@ -85,8 +85,6 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 
 func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
 	log.Info("Call openChannel on ledger contract...")
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
 	ledgerContract := tf.EthClient.Ledger
@@ -112,6 +110,9 @@ func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 		OpenDeadline:   1000000,
 		DisputeTimeout: 100,
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
 	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
 	if err != nil {
 		return
