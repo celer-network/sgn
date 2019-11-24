@@ -25,19 +25,19 @@ func CommitTransactorLog(entry *TransactorLog) {
 	}
 }
 
-func NewServiceMsgLog() *ServiceMsgLog {
+func NewMsgLog() *MsgLog {
 	now := time.Now().UnixNano()
-	return &ServiceMsgLog{
+	return &MsgLog{
 		ExecutionTimeMs: (float64)(now),
 	}
 }
 
-func CommitServiceMsgLog(entry *ServiceMsgLog) {
+func CommitMsgLog(entry *MsgLog) {
 	now := time.Now().UnixNano()
 	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
 	if len(entry.Error) > 0 {
-		log.Errorln("ServiceMsgLog:", entry)
+		log.Errorln("MsgLog:", entry)
 	} else {
-		log.Infoln("ServiceMsgLog:", entry)
+		log.Infoln("MsgLog:", entry)
 	}
 }

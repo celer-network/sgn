@@ -24,7 +24,7 @@ var (
 // NewHandler returns a handler for "subscribe" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-		logEntry := seal.NewServiceMsgLog()
+		logEntry := seal.NewMsgLog()
 		var res sdk.Result
 		var err error
 		switch msg := msg.(type) {
@@ -40,16 +40,16 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		}
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
-			seal.CommitServiceMsgLog(logEntry)
+			seal.CommitMsgLog(logEntry)
 			return sdk.ErrInternal(err.Error()).Result()
 		}
-		seal.CommitServiceMsgLog(logEntry)
+		seal.CommitMsgLog(logEntry)
 		return res
 	}
 }
 
 // Handle a message to subscribe
-func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.ServiceMsgLog) (sdk.Result, error) {
+func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
@@ -72,7 +72,7 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEnt
 }
 
 // Handle a message to request guard
-func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.ServiceMsgLog) (sdk.Result, error) {
+func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
@@ -98,8 +98,8 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	// reject guard request if the channel is not Operable
 	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
 	cid := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-	logEntry.ChannelId = mainchain.Cid2Hex(cid)
-	logEntry.SeqNum = simplexPaymentChannel.SeqNum
+	logEntry.ChanId = mainchain.Cid2Hex(cid)
+	logEntry.ChanSeqNum = simplexPaymentChannel.SeqNum
 
 	status, err := keeper.ethClient.Ledger.GetChannelStatus(
 		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))}, cid)
@@ -133,12 +133,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 // Handle a message to submit guard proof
 // Currently only supports that the validator sends out a tx purely for one intendSettle.
 // (not call it via a contract or put multiple calls in one tx)
-func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.ServiceMsgLog) (sdk.Result, error) {
+func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.TriggerTxHash = msg.TriggerTxHash
 	logEntry.GuardTxHash = msg.GuardTxHash
-	logEntry.ChannelId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId)
