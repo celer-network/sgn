@@ -9,14 +9,22 @@ func NewTransactorLog() *TransactorLog {
 	}
 }
 
-func AddTransactorMsg(txlog *TransactorLog, msgtype string) {
-	txlog.MsgType[msgtype] = txlog.MsgType[msgtype] + 1
-}
-
 func CommitTransactorLog(txlog *TransactorLog) {
 	if len(txlog.Error) > 0 {
 		log.Errorln("TransactorLog:", txlog)
 	} else {
 		log.Infoln("TransactorLog:", txlog)
+	}
+}
+
+func NewServiceMsgLog() *ServiceMsgLog {
+	return &ServiceMsgLog{}
+}
+
+func CommitServiceMsgLog(svlog *ServiceMsgLog) {
+	if len(svlog.Error) > 0 {
+		log.Errorln("ServiceMsgLog:", svlog)
+	} else {
+		log.Infoln("ServiceMsgLog:", svlog)
 	}
 }

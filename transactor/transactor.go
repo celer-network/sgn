@@ -122,7 +122,7 @@ func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, er
 	var msgs []sdk.Msg
 	for t.msgQueue.Len() != 0 {
 		msg := t.msgQueue.PopFront().(sdk.Msg)
-		seal.AddTransactorMsg(txlog, msg.Type())
+		txlog.MsgType[msg.Type()] = txlog.MsgType[msg.Type()] + 1
 		msgs = append(msgs, msg)
 	}
 

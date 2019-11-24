@@ -8,3 +8,14 @@ message TransactorLog {
     map<string, uint32> msg_type = 3;
     repeated string error = 4;
 }
+
+message ServiceMsgLog {
+    string type = 1;
+    string sender = 2;
+    string eth_address = 3;
+    string channel_id = 4;
+    uint64 seq_num = 5;
+    string trigger_tx_hash = 6;
+    string guard_tx_hash = 7;
+    repeated string error = 8;
+}
