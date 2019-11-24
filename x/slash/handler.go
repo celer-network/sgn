@@ -3,6 +3,7 @@ package slash
 import (
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -21,6 +22,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to sign penalty
 func handleMsgSignPenalty(ctx sdk.Context, keeper Keeper, msg MsgSignPenalty) sdk.Result {
+	log.Infof("Handle MsgSignPenalty. %+v", msg)
 	validator, found := keeper.validatorKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
 		return sdk.ErrInternal("Sender is not validator").Result()

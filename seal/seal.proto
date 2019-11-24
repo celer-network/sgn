@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package seal; // sgn event aggregated log
+
+message TransactorLog {
+    string tx_hash = 1;
+    uint32 msg_num = 2;
+    map<string, uint32> msg_type = 3;
+    repeated string error = 4;
+}

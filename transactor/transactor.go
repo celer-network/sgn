@@ -1,9 +1,12 @@
 package transactor
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/seal"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,7 +19,12 @@ import (
 	"github.com/gammazero/deque"
 )
 
-const maxTry = 5
+const (
+	maxQueryRetry   = 20
+	queryRetryDelay = 500 * time.Millisecond
+	maxSignRetry    = 10
+	signRetryDelay  = 10 * time.Millisecond
+)
 
 type Transactor struct {
 	TxBuilder  types.TxBuilder
@@ -69,8 +77,8 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 	return transactor, nil
 }
 
-// Batch msg into a queue before actual broadcast
-func (t *Transactor) BroadcastTx(msg sdk.Msg) {
+// AddTxMsg add msg into a queue before actual broadcast
+func (t *Transactor) AddTxMsg(msg sdk.Msg) {
 	t.msgQueue.PushBack(msg)
 }
 
@@ -82,39 +90,69 @@ func (t *Transactor) start() {
 			continue
 		}
 
-		log.Infof("Packing %d messages in batch for broadcast", t.msgQueue.Len())
-		var msgs []sdk.Msg
-		for t.msgQueue.Len() != 0 {
-			msg := t.msgQueue.PopFront().(sdk.Msg)
-			log.Debugf("Packed msg info. Route: %s; Type: %s", msg.Route(), msg.Type())
-			msgs = append(msgs, msg)
-		}
-
-		txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+		txlog := seal.NewTransactorLog()
+		tx, err := t.broadcastTx(txlog)
 		if err != nil {
-			log.Errorln("Transactor PrepareTxBuilder err:", err)
+			txlog.Error = append(txlog.Error, err.Error())
+			seal.CommitTransactorLog(txlog)
 			continue
 		}
 
-		txBytes, err := txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
-		if err != nil {
-			log.Errorln("Transactor BuildAndSign err", err)
-			continue
-		}
+		seal.CommitTransactorLog(txlog)
 
-		tx, err := t.CliCtx.BroadcastTx(txBytes)
-		if err != nil {
-			log.Errorln("Transactor BroadcastTx err", err)
-			continue
-		}
-
-		// Make sure the transaction has been mines
-		log.Debugln("Transactor broadcasted tx:", tx)
-		for try := 0; try < maxTry; try++ {
+		// Make sure the transaction has been mined
+		success := false
+		for try := 0; try < maxQueryRetry; try++ {
+			time.Sleep(queryRetryDelay)
 			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
+				success = true
 				break
 			}
-			time.Sleep(time.Second)
+		}
+		if !success {
+			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
+		} else {
+			log.Debugf("Transaction %s has been mined", tx.TxHash)
 		}
 	}
+}
+
+func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, error) {
+	txlog.MsgNum = uint32(t.msgQueue.Len())
+	var msgs []sdk.Msg
+	for t.msgQueue.Len() != 0 {
+		msg := t.msgQueue.PopFront().(sdk.Msg)
+		seal.AddTransactorMsg(txlog, msg.Type())
+		msgs = append(msgs, msg)
+	}
+
+	txBytes, err := t.signTx(msgs)
+	tx, err := t.CliCtx.BroadcastTx(txBytes)
+	if err != nil {
+		return nil, fmt.Errorf("BroadcastTx err: %s", err)
+	}
+	txlog.TxHash = tx.TxHash
+
+	return &tx, nil
+}
+
+func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
+	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
+	if err != nil {
+		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
+	}
+	var txBytes []byte
+	for try := 0; try < maxSignRetry; try++ {
+		txBytes, err = txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
+		if err == nil {
+			return txBytes, nil
+		}
+		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
+			break
+		}
+		if try != maxSignRetry-1 {
+			time.Sleep(signRetryDelay)
+		}
+	}
+	return nil, fmt.Errorf("BuildAndSign err: %s", err)
 }

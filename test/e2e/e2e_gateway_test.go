@@ -26,7 +26,7 @@ func setUpGateway() []tf.Killable {
 		startGateway:           true,
 	}
 	res := setupNewSGNEnv(p, "gateway")
-	sleepWithLog(20, "sgn being ready")
+	sleepWithLog(10, "sgn being ready")
 
 	return res
 }

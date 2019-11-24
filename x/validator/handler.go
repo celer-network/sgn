@@ -36,7 +36,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to initialize candidate
 func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	log.Infoln("Handling a message to initialize candidate of mainchain address", msg.EthAddress, ", from sender", msg.Sender)
+	log.Infoln("Handle msg to initialize candidate", msg.EthAddress, "from sender", msg.Sender)
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
@@ -62,7 +62,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 
 // Handle a message to claim validator
 func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator) sdk.Result {
-	log.Infof("Handling MsgClaimValidator. %+v", msg)
+	log.Infof("Handle MsgClaimValidator. %+v", msg)
 
 	pk, err := sdk.GetConsPubKeyBech32(msg.PubKey)
 	if err != nil {
@@ -115,7 +115,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 // Handle a message to sync validator
 func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
-	log.Infof("Handling MsgSyncValidator. %+v", msg)
+	log.Infof("Handle MsgSyncValidator. %+v", msg)
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
@@ -140,6 +140,7 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 
 // Handle a message to sync delegator
 func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator) sdk.Result {
+	log.Infof("Handle MsgSyncDelegator. %+v", msg)
 	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
 	di, err := keeper.ethClient.Guard.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
@@ -157,6 +158,7 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 
 // Handle a message to withdraw reward
 func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawReward) sdk.Result {
+	log.Infof("Handle MsgWithdrawReward. %+v", msg)
 	reward, found := keeper.GetReward(ctx, msg.EthAddress)
 	if !found {
 		return sdk.ErrInternal("Reward does not exist").Result()
@@ -181,6 +183,7 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 
 // Handle a message to sign reward
 func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.Result {
+	log.Infof("Handle MsgSignReward. EthAddress %s, Sender %s", msg.EthAddress, msg.Sender.String())
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
 		return sdk.ErrInternal("Sender is not validator").Result()
