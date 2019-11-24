@@ -19,6 +19,6 @@ const (
 
 	maxBlockDiff     = 5 // defined in sidechain's genesis file
 	blockDelay       = 8
-	sgnBlockInterval = 5 * time.Second
+	sgnBlockInterval = 5
 	defaultTimeout   = 60 * time.Second
 )

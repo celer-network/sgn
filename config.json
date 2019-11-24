@@ -1,23 +1,21 @@
 {
   "eth": {
-    "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
+    "ws": "wss://ropsten.infura.io/ws",
+    "guardAddress": "0x4ed6ef4f9e13be914e46b49743d000d551332df9",
+    "ledgerAddress": "0x1baed8e1166410c1494a107f091cfebb50d491e3",
     "keystore": "./test/keys/client0.json",
-    "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
-    "passphrase": "",
-    "ws": "ws://127.0.0.1:8546"
+    "passphrase": ""
+  },
+  "sgn": {
+    "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+    "transactors": ["cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"],
+    "passphrase": "12341234",
+    "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
+    "chainID": "sgnchain",
+    "nodeURI": "tcp://localhost:26657",
+    "gasPrice": ""
   },
   "logcolor": true,
   "loglevel": "debug",
-  "loglongfile": true,
-  "sgn": {
-    "chainid": "sgnchain",
-    "gasprice": "",
-    "nodeuri": "tcp://localhost:26657",
-    "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
-    "passphrase": "12341234",
-    "pubkey": "cosmosvalconspub1zcjduepq7xxfahzlg82vfs90q2m6zrdjvwg2rlsd24eq8a73qw9aczl5yjyswgfv6h",
-    "transactors": [
-      "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"
-    ]
-  }
+  "loglongfile": true
 }

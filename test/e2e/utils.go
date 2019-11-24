@@ -80,6 +80,7 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	}
 
 	tf.WaitMinedWithChk(ctx, conn, tx, 3 * blockDelay, "Delegate to validator")
+	sleepWithLog(10, "sgn syncing Delegate event on mainchain")
 	return nil
 }
 
@@ -143,7 +144,7 @@ func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 		return
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay+2, "OpenChannel")
+	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "OpenChannel")
 	channelId = <-channelIdChan
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
