@@ -12,29 +12,30 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Infoln("Catch new mainchain block", header.Number)
 	if !m.isPuller() {
+		log.Infoln("Catch new mainchain block", header.Number)
 		return
 	}
-	log.Infof("Push MsgSyncBlock #%d to transactor msgQueue", header.Number)
+	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Handle GuardInitializeCandidate event for candidate %x", initializeCandidate.Candidate)
+	log.Infof("Handle InitializeCandidate event for candidate %x", initializeCandidate.Candidate)
 	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
-	log.Infof("New delegate %x", delegate.Candidate)
+	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
+		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 	m.syncDelegator(delegate.Candidate, delegate.Delegator)
 
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
 	} else {
-		m.ethClaimValidator(delegate)
+		m.claimValidatorOnMainchain(delegate)
 	}
 }
 
@@ -99,7 +100,7 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	}
 
 	msg := validator.NewMsgSignReward(ethAddr, sig, m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
@@ -118,10 +119,10 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 	}
 
 	msg := slash.NewMsgSignPenalty(nonce, sig, m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) ethClaimValidator(delegate *mainchain.GuardDelegate) {
+func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate) {
 	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
@@ -151,19 +152,18 @@ func (m *EthMonitor) claimValidator() {
 
 	msg := validator.NewMsgClaimValidator(
 		mainchain.Addr2Hex(m.ethClient.Address), m.pubkey, transactors, m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	log.Infof("SyncValidator %x", address)
 	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
-	log.Infof("SyncDelegator candidate %x delegator %x", candidatorAddr, delegatorAddr)
 	msg := validator.NewMsgSyncDelegator(
 		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }

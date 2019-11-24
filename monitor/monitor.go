@@ -105,7 +105,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 		case initializeCandidate := <-initializeCandidateChan:
 			event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
 			m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
-			log.Infof("Catch event GuardInitializeCandidate, candidate %x, min self stake %s, sidechain addr %x",
+			log.Infof("Catch event InitializeCandidate, candidate %x, min self stake %s, sidechain addr %x",
 				initializeCandidate.Candidate, initializeCandidate.MinSelfStake.String(), initializeCandidate.SidechainAddr)
 		}
 	}

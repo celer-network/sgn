@@ -22,7 +22,7 @@ func setUpValidator() []tf.Killable {
 		sidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
-	sleepWithLog(20, "sgn being ready")
+	sleepWithLog(10, "sgn being ready")
 
 	return res
 }

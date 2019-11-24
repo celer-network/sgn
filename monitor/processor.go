@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/celer-network/goutils/log"
@@ -92,7 +93,7 @@ func (m *EthMonitor) processPusherQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(e, latestBlock.Number)
+			go m.processIntendSettle(e, latestBlock.Number)
 		}
 	}
 }
@@ -110,15 +111,15 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Push initializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
+	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
 
 	msg := validator.NewMsgInitializeCandidate(
 		mainchain.Addr2Hex(initializeCandidate.Candidate), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
-	log.Infof("Process IntendSettle %x", intendSettle.ChannelId)
+	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	channelId := intendSettle.ChannelId[:]
 	request, err := m.getRequest(channelId)
 	if err != nil {
@@ -156,11 +157,12 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		log.Errorln("intendSettle err", err)
 		return
 	}
-	log.Infof("IntendSettle tx detail %+v", tx)
-
-	triggerTxHash := intendSettle.Raw.TxHash.Hex()
-	msg := subscribe.NewMsgGuardProof(channelId, triggerTxHash, tx.Hash().Hex(), m.transactor.Key.GetAddress())
-	m.transactor.BroadcastTx(msg)
+	log.Infof("IntendSettle tx hash %x", tx.Hash())
+	// TODO: 1) bockDelay, 2) may need a better way than wait mined,
+	mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+	msg := subscribe.NewMsgGuardProof(channelId, intendSettle.Raw.TxHash.Hex(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
+	log.Infof("Add MsgGuardProof %x to transacto msgQueue", tx.Hash())
+	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {

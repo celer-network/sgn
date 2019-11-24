@@ -79,7 +79,12 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 		return err
 	}
 
+<<<<<<< HEAD
 	tf.WaitMinedWithChk(ctx, conn, tx, 3 * blockDelay, "Delegate to validator")
+=======
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
+	sleepWithLog(10, "sgn syncing Delegate event on mainchain")
+>>>>>>> origin
 	return nil
 }
 

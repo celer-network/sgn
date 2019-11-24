@@ -135,7 +135,7 @@ func writeGenerateStdTxResponse(w http.ResponseWriter, transactor *transactor.Tr
 		return
 	}
 
-	transactor.BroadcastTx(msg)
+	transactor.AddTxMsg(msg)
 
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte("success")); err != nil {
