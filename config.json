@@ -9,8 +9,9 @@
   "sgn": {
     "chainid": "sgnchain",
     "clihome": "/Users/cliu/repos/celer/sgn/test/e2e/~/.sgncli",
+    "clihome": "/Users/cliu/.sgncli",
     "gasprice": "",
-    "nodehome": "/Users/cliu/repos/celer/sgn/test/e2e/~/.sgn",
+    "nodehome": "/Users/cliu/.sgn",
     "nodeuri": "tcp://localhost:26657",
     "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
     "passphrase": "12341234",

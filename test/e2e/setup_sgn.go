@@ -13,6 +13,7 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/goutils/log"
 	"github.com/spf13/viper"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 type SGNParams struct {
@@ -63,10 +64,10 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
-	path, err := filepath.Abs("~/.sgncli")
+	path, err := homedir.Expand("~/.sgncli")
 	tf.ChkErr(err, "failed to get sgncli abs path")
 	viper.Set(flags.FlagSgnCLIHome, path);
-	path, err = filepath.Abs("~/.sgn")
+	path, err = homedir.Expand("~/.sgn")
 	tf.ChkErr(err, "failed to get sgn abs path")
 	viper.Set(flags.FlagSgnNodeHome, path);
 	viper.WriteConfig()
