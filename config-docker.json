@@ -9,6 +9,9 @@
     "sgn": {
         "chainid": "sgnchain",
         "gasprice": "",
+        "logcolor": true,
+        "loglevel": "debug",
+        "loglongfile": true,
         "nodeuri": "tcp://localhost:26657",
         "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
         "passphrase": "12341234",
@@ -16,7 +19,7 @@
         "transactors": [
             "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"
         ],
-        "clihome": "/sgn/node0/sgn",
-        "nodehome": "/sgn/node0/sgncli"
+        "clihome": "/sgn/node0/sgncli",
+        "nodehome": "/sgn/node0/sgn"
     }
 }
