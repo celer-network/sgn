@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -36,8 +37,10 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			res, err = handleMsgGuardProof(ctx, keeper, msg, logEntry)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
+			log.Error(errMsg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
+
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
 			seal.CommitMsgLog(logEntry)
