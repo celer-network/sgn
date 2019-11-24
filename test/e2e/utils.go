@@ -23,10 +23,6 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
-const (
-	defaultTimeout = 30 * time.Second
-)
-
 func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }
@@ -34,6 +30,10 @@ func sleep(second time.Duration) {
 func sleepWithLog(second time.Duration, waitFor string) {
 	log.Infof("Sleep %d seconds for %s", second, waitFor)
 	sleep(second)
+}
+
+func sleepBlocksWithLog(count time.Duration, waitFor string) {
+	sleepWithLog(count * sgnBlockInterval, waitFor)
 }
 
 func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMessage {
@@ -46,10 +46,10 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMe
 }
 
 func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
 
 	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
 	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
@@ -57,16 +57,16 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 		return err
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "InitializeCandidate")
-	sleepWithLog(10, "sgn syncing InitializeCandidate event on mainchain")
+	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "InitializeCandidate")
+	sleepBlocksWithLog(5, "sgn syncing InitializeCandidate event on mainchain")
 	return nil
 }
 
 func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
 	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
@@ -79,15 +79,13 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 		return err
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Delegate to validator")
+	tf.WaitMinedWithChk(ctx, conn, tx, 3 * blockDelay, "Delegate to validator")
 	sleepWithLog(10, "sgn syncing Delegate event on mainchain")
 	return nil
 }
 
 func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
 	log.Info("Call openChannel on ledger contract...")
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	conn := tf.EthClient.Client
 	auth := tf.EthClient.Auth
 	ledgerContract := tf.EthClient.Ledger
@@ -113,6 +111,9 @@ func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 		OpenDeadline:   1000000,
 		DisputeTimeout: 100,
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
 	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
 	if err != nil {
 		return
@@ -143,7 +144,7 @@ func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 		return
 	}
 
-	tf.WaitMinedWithChk(ctx, conn, tx, maxBlockDiff+2, "OpenChannel")
+	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "OpenChannel")
 	channelId = <-channelIdChan
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 

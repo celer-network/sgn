@@ -78,7 +78,7 @@ func TestMain(m *testing.M) {
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
 	ethProc, err := startMainchain()
-	tf.ChkErr(err, "starting chain")
+	tf.ChkErr(err, "starting mainchain")
 	sleep(2)
 
 	// set up mainchain: deploy contracts and fund ethpool etc

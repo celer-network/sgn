@@ -1,5 +1,7 @@
 package e2e
 
+import "time"
+
 const (
 	// outPathPrefix is the path prefix for all output from e2e (incl. chain data, binaries etc)
 	// the code will append epoch second to this and create the folder
@@ -15,5 +17,8 @@ const (
 	client1AddrStr    = "ba756d65a1a03f07d205749f35e2406e4a8522ad"
 	client1Priv       = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
 
-	maxBlockDiff = 5 // defined in sidechain's genesis file
+	maxBlockDiff     = 2 // defined in sidechain's genesis file
+	blockDelay       = 2
+	sgnBlockInterval = 1
+	defaultTimeout   = 60 * time.Second
 )

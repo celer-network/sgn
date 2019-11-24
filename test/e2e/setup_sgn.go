@@ -95,12 +95,6 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 	}
 
 	log.Infoln("sgn pid:", cmd.Process.Pid)
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Errorf("sgn process for [%s] failed: %v", testName, err)
-			// os.Exit(1) // sgn is expected to be killed after each test case
-		}
-	}()
 	return cmd.Process, nil
 }
 
@@ -114,11 +108,5 @@ func startGateway(rootDir, testName string) (*os.Process, error) {
 	}
 
 	log.Infoln("gateway pid:", cmd.Process.Pid)
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Errorf("gateway process for [%s] failed: %v", testName, err)
-			// os.Exit(1) // gateway is expected to be killed after each test case
-		}
-	}()
 	return cmd.Process, nil
 }

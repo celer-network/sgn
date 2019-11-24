@@ -48,24 +48,24 @@ func validatorTest(t *testing.T) {
 	transactor := tf.Transactor
 	amt := big.NewInt(100)
 	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
-	tf.ChkErr(err, "failed to parse sgn address")
+	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
 	err = initializeCandidate(auth, sgnAddr)
-	tf.ChkErr(err, "failed to initialize candidate")
+	tf.ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
-	tf.ChkErr(err, "failed to queryCandidate")
+	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	err = delegateStake(auth, ethAddress, amt)
-	tf.ChkErr(err, "failed to delegate stake")
+	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
 	delegator, err := validator.CLIQueryDelegator(transactor.CliCtx, validator.RouterKey, ethAddress.Hex(), ethAddress.Hex())
-	tf.ChkErr(err, "failed to queryDelegator")
+	tf.ChkTestErr(t, err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator delegator:", delegator)
 	expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, mainchain.Addr2Hex(ethAddress), amt) // defined in Delegator.String()
 	assert.Equal(t, expectedRes, delegator.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
@@ -73,14 +73,14 @@ func validatorTest(t *testing.T) {
 	// Query sgn about the candidate to check if it has correct stakes
 	log.Info("Query sgn about the validator candidate...")
 	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
-	tf.ChkErr(err, "failed to queryCandidate")
+	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, amt) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
 	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
-	tf.ChkErr(err, "failed to queryValidators")
+	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:", validators)
 	// TODO: use a better way to assert/check the validity of the lengthy query results.
 	// expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
