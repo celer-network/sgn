@@ -1,17 +1,23 @@
 package seal
 
 import (
+	"time"
+
 	"github.com/celer-network/goutils/log"
 )
 
 func NewTransactorLog() *TransactorLog {
 	msgtypes := make(map[string]uint32)
+	now := time.Now().UnixNano()
 	return &TransactorLog{
-		MsgType: msgtypes,
+		MsgType:         msgtypes,
+		ExecutionTimeMs: (float64)(now),
 	}
 }
 
 func CommitTransactorLog(entry *TransactorLog) {
+	now := time.Now().UnixNano()
+	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
 	if len(entry.Error) > 0 {
 		log.Errorln("TransactorLog:", entry)
 	} else {
@@ -20,10 +26,15 @@ func CommitTransactorLog(entry *TransactorLog) {
 }
 
 func NewServiceMsgLog() *ServiceMsgLog {
-	return &ServiceMsgLog{}
+	now := time.Now().UnixNano()
+	return &ServiceMsgLog{
+		ExecutionTimeMs: (float64)(now),
+	}
 }
 
 func CommitServiceMsgLog(entry *ServiceMsgLog) {
+	now := time.Now().UnixNano()
+	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
 	if len(entry.Error) > 0 {
 		log.Errorln("ServiceMsgLog:", entry)
 	} else {
