@@ -1,6 +1,8 @@
 package seal
 
-import "github.com/celer-network/goutils/log"
+import (
+	"github.com/celer-network/goutils/log"
+)
 
 func NewTransactorLog() *TransactorLog {
 	msgtypes := make(map[string]uint32)
@@ -9,11 +11,11 @@ func NewTransactorLog() *TransactorLog {
 	}
 }
 
-func CommitTransactorLog(txlog *TransactorLog) {
-	if len(txlog.Error) > 0 {
-		log.Errorln("TransactorLog:", txlog)
+func CommitTransactorLog(entry *TransactorLog) {
+	if len(entry.Error) > 0 {
+		log.Errorln("TransactorLog:", entry)
 	} else {
-		log.Infoln("TransactorLog:", txlog)
+		log.Infoln("TransactorLog:", entry)
 	}
 }
 
@@ -21,10 +23,10 @@ func NewServiceMsgLog() *ServiceMsgLog {
 	return &ServiceMsgLog{}
 }
 
-func CommitServiceMsgLog(svlog *ServiceMsgLog) {
-	if len(svlog.Error) > 0 {
-		log.Errorln("ServiceMsgLog:", svlog)
+func CommitServiceMsgLog(entry *ServiceMsgLog) {
+	if len(entry.Error) > 0 {
+		log.Errorln("ServiceMsgLog:", entry)
 	} else {
-		log.Infoln("ServiceMsgLog:", svlog)
+		log.Infoln("ServiceMsgLog:", entry)
 	}
 }

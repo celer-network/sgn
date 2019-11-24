@@ -24,35 +24,35 @@ var (
 // NewHandler returns a handler for "subscribe" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-		svlog := seal.NewServiceMsgLog()
+		logEntry := seal.NewServiceMsgLog()
 		var res sdk.Result
 		var err error
 		switch msg := msg.(type) {
 		case MsgSubscribe:
-			res, err = handleMsgSubscribe(ctx, keeper, msg, svlog)
+			res, err = handleMsgSubscribe(ctx, keeper, msg, logEntry)
 		case MsgRequestGuard:
-			res, err = handleMsgRequestGuard(ctx, keeper, msg, svlog)
+			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
 		case MsgGuardProof:
-			res, err = handleMsgGuardProof(ctx, keeper, msg, svlog)
+			res, err = handleMsgGuardProof(ctx, keeper, msg, logEntry)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 		if err != nil {
-			svlog.Error = append(svlog.Error, err.Error())
-			seal.CommitServiceMsgLog(svlog)
+			logEntry.Error = append(logEntry.Error, err.Error())
+			seal.CommitServiceMsgLog(logEntry)
 			return sdk.ErrInternal(err.Error()).Result()
 		}
-		seal.CommitServiceMsgLog(svlog)
+		seal.CommitServiceMsgLog(logEntry)
 		return res
 	}
 }
 
 // Handle a message to subscribe
-func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, svlog *seal.ServiceMsgLog) (sdk.Result, error) {
-	svlog.Type = msg.Type()
-	svlog.Sender = msg.Sender.String()
-	svlog.EthAddress = msg.EthAddress
+func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.ServiceMsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
 
 	res := sdk.Result{}
 	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(
@@ -72,10 +72,10 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, svlog 
 }
 
 // Handle a message to request guard
-func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, svlog *seal.ServiceMsgLog) (sdk.Result, error) {
-	svlog.Type = msg.Type()
-	svlog.Sender = msg.Sender.String()
-	svlog.EthAddress = msg.EthAddress
+func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.ServiceMsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
 
 	res := sdk.Result{}
 	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
@@ -98,8 +98,8 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	// reject guard request if the channel is not Operable
 	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
 	cid := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-	svlog.ChannelId = mainchain.Cid2Hex(cid)
-	svlog.SeqNum = simplexPaymentChannel.SeqNum
+	logEntry.ChannelId = mainchain.Cid2Hex(cid)
+	logEntry.SeqNum = simplexPaymentChannel.SeqNum
 
 	status, err := keeper.ethClient.Ledger.GetChannelStatus(
 		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))}, cid)
@@ -133,12 +133,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 // Handle a message to submit guard proof
 // Currently only supports that the validator sends out a tx purely for one intendSettle.
 // (not call it via a contract or put multiple calls in one tx)
-func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, svlog *seal.ServiceMsgLog) (sdk.Result, error) {
-	svlog.Type = msg.Type()
-	svlog.Sender = msg.Sender.String()
-	svlog.TriggerTxHash = msg.TriggerTxHash
-	svlog.GuardTxHash = msg.GuardTxHash
-	svlog.ChannelId = mainchain.Bytes2Hex(msg.ChannelId)
+func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.ServiceMsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.TriggerTxHash = msg.TriggerTxHash
+	logEntry.GuardTxHash = msg.GuardTxHash
+	logEntry.ChannelId = mainchain.Bytes2Hex(msg.ChannelId)
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId)
