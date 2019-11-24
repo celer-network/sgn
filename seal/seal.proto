@@ -24,8 +24,8 @@ message MsgLog {
     string delegator_addr = 10;
     uint64 slash_nonce = 11;
     uint64 block_num = 12;
-    string sender = 13;
-
+    
+    string sender = 99;
     double execution_time_ms = 100;
     repeated string error = 101;
 }
