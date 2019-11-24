@@ -23,6 +23,8 @@ message MsgLog {
     repeated string transactor = 9;
     string candidate_addr = 10;
     string delegator_addr = 11;
+    uint64 slash_nonce = 12;
+    uint64 block_num = 13;
 
     double execution_time_ms = 100;
     repeated string error = 101;
