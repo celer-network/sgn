@@ -38,7 +38,7 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			subscription, err := QuerySubscription(cliCtx, queryRoute, args[0])
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -74,7 +74,7 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			request, err := QueryRequest(cliCtx, queryRoute, mainchain.Hex2Bytes(args[0]))
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -110,7 +110,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			params, err := QueryParams(cliCtx, queryRoute)
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 

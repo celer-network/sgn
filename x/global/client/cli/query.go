@@ -43,7 +43,7 @@ func GetCmdLatestBlock(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			block, err := QueryLatestBlock(cliCtx, queryRoute)
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 

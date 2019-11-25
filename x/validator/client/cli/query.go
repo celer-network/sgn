@@ -48,7 +48,7 @@ func GetCmdPuller(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			puller, err := QueryPuller(cliCtx, queryRoute)
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -79,7 +79,7 @@ func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			pusher, err := QueryPusher(cliCtx, queryRoute)
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -110,7 +110,7 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			delegator, err := QueryDelegator(cliCtx, queryRoute, args[0], args[1])
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -145,7 +145,7 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			candidate, err := QueryCandidate(cliCtx, queryRoute, args[0])
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -193,7 +193,7 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -212,7 +212,7 @@ func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
-				fmt.Println("query error", err)
+				log.Errorln("query error", err)
 				return err
 			}
 
