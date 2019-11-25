@@ -46,7 +46,7 @@ func validatorTest(t *testing.T) {
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
 	transactor := tf.Transactor
-	amt := big.NewInt(100)
+	amt := big.NewInt(1000000000000000000)
 	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
@@ -82,7 +82,7 @@ func validatorTest(t *testing.T) {
 	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:", validators)
-	// TODO: use a better way to assert/check the validity of the lengthy query results.
-	// expectedRes = fmt.Sprintf("StakingPool: %d", amt) // defined in Candidate.String()
-	// assert.Equal(t, expectedRes, validators.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, 1, len(validators), "The length of validators should be 1")
+	assert.True(t, validators[0].Tokens.Equal(sdk.NewIntFromBigInt(amt)), "validator token should be 1000000000000000000")
+	assert.Equal(t, sdk.Bonded, validators[0].Status, "validator should be bonded")
 }
