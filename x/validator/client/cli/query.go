@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -60,7 +61,7 @@ func QueryPuller(cliCtx context.CLIContext, queryRoute string) (puller types.Pul
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPuller)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query puller error", err)
+		log.Errorln("query puller error", err)
 		return
 	}
 
@@ -91,7 +92,7 @@ func QueryPusher(cliCtx context.CLIContext, queryRoute string) (pusher types.Pus
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query pusher error", err)
+		log.Errorln("query pusher error", err)
 		return
 	}
 
@@ -126,7 +127,7 @@ func QueryDelegator(cliCtx context.CLIContext, queryRoute, candidateAddress, del
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDelegator)
 	bz, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 
@@ -161,7 +162,7 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
 	bz, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query candidate error", err)
+		log.Errorln("query candidate error", err)
 		return
 	}
 
@@ -210,7 +211,7 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryReward)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query reward error", err)
+		log.Errorln("query reward error", err)
 		return
 	}
 
@@ -231,7 +232,7 @@ func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(string(reward.GetRewardRequest()))
+			log.Info(string(reward.GetRewardRequest()))
 			return nil
 		},
 	}
