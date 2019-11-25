@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	txsPageLimit = 30
+	txsPageLimit    = 30
+	txsPullInterval = 5 // interval in seconds of pulling sidechain events
 )
 
 var (
@@ -255,6 +256,6 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 			}
 		}
 
-		time.Sleep(30 * time.Second)
+		time.Sleep(txsPullInterval * time.Second)
 	}
 }

@@ -6,11 +6,12 @@ import (
 	"github.com/celer-network/goutils/log"
 )
 
-func NewTransactorLog() *TransactorLog {
+func NewTransactorLog(sender string) *TransactorLog {
 	msgtypes := make(map[string]uint32)
 	now := time.Now().UnixNano()
 	return &TransactorLog{
 		MsgType:         msgtypes,
+		Sender:          sender,
 		ExecutionTimeMs: (float64)(now),
 	}
 }
