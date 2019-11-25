@@ -80,7 +80,8 @@ func gatewayTest(t *testing.T) {
 
 	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
 	var subscription subscribe.Subscription
-	transactor.CliCtx.Codec.MustUnmarshalJSON(result, &subscription)
+	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)
+	tf.ChkTestErr(t, err, "failed to unmarshal subscription JSON from gateway")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
