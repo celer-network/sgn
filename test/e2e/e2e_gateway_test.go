@@ -78,7 +78,8 @@ func gatewayTest(t *testing.T) {
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query subscription from gateway")
 
-	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	result, err := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	tf.ChkTestErr(t, err, "failed to parse GatewayQueryResponse")
 	var subscription subscribe.Subscription
 	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)
 	tf.ChkTestErr(t, err, "failed to unmarshal subscription JSON from gateway")
