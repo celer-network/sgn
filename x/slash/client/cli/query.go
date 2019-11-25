@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -59,7 +60,7 @@ func QueryPenalty(cliCtx context.CLIContext, queryRoute string, nonce uint64) (p
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPenalty)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 
@@ -85,7 +86,7 @@ func GetCmdPenaltyRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(string(penaltyRequest))
+			log.Info(string(penaltyRequest))
 			return nil
 		},
 	}

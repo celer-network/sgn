@@ -128,7 +128,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	sleepWithLog(20, "sgn submitting state proof")
+	sleepWithLog(15, "sgn submitting state proof")
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
 	tf.ChkTestErr(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
@@ -149,7 +149,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Send tx on sidechain to withdraw reward")
 	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgWithdrawReward)
-	sleepWithLog(30, "sgn withdrawing reward")
+	sleepWithLog(15, "sgn withdrawing reward")
 
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")

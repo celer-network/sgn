@@ -90,7 +90,7 @@ func (t *Transactor) start() {
 			continue
 		}
 
-		logEntry := seal.NewTransactorLog()
+		logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
 		tx, err := t.broadcastTx(logEntry)
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())

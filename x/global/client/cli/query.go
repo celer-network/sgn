@@ -55,7 +55,7 @@ func QueryLatestBlock(cliCtx context.CLIContext, queryRoute string) (block types
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func QuerySecureBlockNum(cliCtx context.CLIContext, queryRoute string) (secureBl
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 

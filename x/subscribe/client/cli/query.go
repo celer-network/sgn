@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -55,7 +56,7 @@ func QuerySubscription(cliCtx context.CLIContext, queryRoute, ethAddress string)
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySubscription)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 
@@ -91,7 +92,7 @@ func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRequest)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 
@@ -122,7 +123,7 @@ func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Par
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 

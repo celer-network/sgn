@@ -4,7 +4,6 @@ package testing
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"strings"
@@ -61,7 +60,7 @@ func prepareEthClient() (
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
 	}
-	fmt.Println("etherBaseKs", etherBaseKs)
+	log.Infoln("etherBaseKs", etherBaseKs)
 	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
