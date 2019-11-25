@@ -90,15 +90,15 @@ func (t *Transactor) start() {
 			continue
 		}
 
-		txlog := seal.NewTransactorLog()
-		tx, err := t.broadcastTx(txlog)
+		logEntry := seal.NewTransactorLog()
+		tx, err := t.broadcastTx(logEntry)
 		if err != nil {
-			txlog.Error = append(txlog.Error, err.Error())
-			seal.CommitTransactorLog(txlog)
+			logEntry.Error = append(logEntry.Error, err.Error())
+			seal.CommitTransactorLog(logEntry)
 			continue
 		}
 
-		seal.CommitTransactorLog(txlog)
+		seal.CommitTransactorLog(logEntry)
 
 		// Make sure the transaction has been mined
 		success := false
@@ -117,12 +117,12 @@ func (t *Transactor) start() {
 	}
 }
 
-func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, error) {
-	txlog.MsgNum = uint32(t.msgQueue.Len())
+func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
+	logEntry.MsgNum = uint32(t.msgQueue.Len())
 	var msgs []sdk.Msg
 	for t.msgQueue.Len() != 0 {
 		msg := t.msgQueue.PopFront().(sdk.Msg)
-		seal.AddTransactorMsg(txlog, msg.Type())
+		logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 		msgs = append(msgs, msg)
 	}
 
@@ -131,7 +131,7 @@ func (t *Transactor) broadcastTx(txlog *seal.TransactorLog) (*sdk.TxResponse, er
 	if err != nil {
 		return nil, fmt.Errorf("BroadcastTx err: %s", err)
 	}
-	txlog.TxHash = tx.TxHash
+	logEntry.TxHash = tx.TxHash
 
 	return &tx, nil
 }

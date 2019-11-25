@@ -2,9 +2,9 @@ package subscribe
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -15,38 +15,36 @@ import (
 func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
 	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId)
 	if !found {
-		channelId := [32]byte{}
-		copy(channelId[:], simplexPaymentChannel.ChannelId)
+		channelId := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
 
 		disputeTimeout, err := keeper.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
 			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 		}, channelId)
 		if err != nil {
-			return Request{}, err
+			return Request{}, fmt.Errorf("GetDisputeTimeout err: %s", err)
 		}
 
 		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
 			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 		}, channelId)
 		if err != nil {
-			return Request{}, err
+			return Request{}, fmt.Errorf("GetStateSeqNumMap err: %s", err)
 		}
 
-		peerAddresses := []string{mainchain.Addr2Hex(addresses[0]), mainchain.Addr2Hex(addresses[1])}
-		peerFromAddress := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
+		peerAddrs := []string{mainchain.Addr2Hex(addresses[0]), mainchain.Addr2Hex(addresses[1])}
+		peerFromAddr := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
 		var peerFromIndex uint8
-		if peerAddresses[0] == peerFromAddress {
+		if peerAddrs[0] == peerFromAddr {
 			peerFromIndex = uint8(0)
-		} else if peerAddresses[1] == peerFromAddress {
+		} else if peerAddrs[1] == peerFromAddr {
 			peerFromIndex = uint8(1)
 		} else {
-			log.Errorln("peerFrom is neither peerAddresses[0] nor peerAddresses[1], peerFrom", peerFromAddress, "peerAddresses[0]", peerAddresses[0], "peerAddresses[1]", peerAddresses[1], "channelId", channelId)
-			return Request{}, errors.New("peerFrom is not valid address")
+			return Request{}, fmt.Errorf("Invalid peerFromAddr %s %s %s", peerFromAddr, peerAddrs[0], peerAddrs[1])
 		}
 
 		seqNum := seqNums[peerFromIndex].Uint64()
 		requestGuards := getRequestGuards(ctx, keeper)
-		request = NewRequest(seqNum, peerAddresses, peerFromIndex, disputeTimeout.Uint64(), requestGuards)
+		request = NewRequest(seqNum, peerAddrs, peerFromIndex, disputeTimeout.Uint64(), requestGuards)
 	}
 
 	return request, nil
@@ -76,7 +74,7 @@ func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 	for i := 0; i < 2; i++ {
 		addr, err := mainchain.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[0])
 		if err != nil {
-			return err
+			return fmt.Errorf("RecoverSigner err: %s", err)
 		}
 
 		if request.PeerAddresses[0] != mainchain.Addr2Hex(addr) {

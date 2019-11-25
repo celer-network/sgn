@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
+	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -24,30 +25,44 @@ var (
 // NewHandler returns a handler for "subscribe" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		logEntry := seal.NewMsgLog()
+		var res sdk.Result
+		var err error
 		switch msg := msg.(type) {
 		case MsgSubscribe:
-			return handleMsgSubscribe(ctx, keeper, msg)
+			res, err = handleMsgSubscribe(ctx, keeper, msg, logEntry)
 		case MsgRequestGuard:
-			return handleMsgRequestGuard(ctx, keeper, msg)
+			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
 		case MsgGuardProof:
-			return handleMsgGuardProof(ctx, keeper, msg)
+			res, err = handleMsgGuardProof(ctx, keeper, msg, logEntry)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
+			log.Error(errMsg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
+
+		if err != nil {
+			logEntry.Error = append(logEntry.Error, err.Error())
+			seal.CommitMsgLog(logEntry)
+			return sdk.ErrInternal(err.Error()).Result()
+		}
+		seal.CommitMsgLog(logEntry)
+		return res
 	}
 }
 
 // Handle a message to subscribe
-func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Result {
-	log.Infof("Handle MsgSubscribe. %+v", msg)
-	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, mainchain.Hex2Addr(msg.EthAddress))
+func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
+
+	res := sdk.Result{}
+	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(
+		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))},
+		mainchain.Hex2Addr(msg.EthAddress))
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to query subscription desposit: %s", err)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to query subscription desposit: %s", err)
 	}
 
 	subscription, found := keeper.GetSubscription(ctx, msg.EthAddress)
@@ -56,113 +71,104 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe) sdk.Re
 	}
 	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
 	keeper.SetSubscription(ctx, subscription)
-	return sdk.Result{}
+	return res, nil
 }
 
 // Handle a message to request guard
-func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard) sdk.Result {
-	log.Infof("Handle MsgRequestGuard. EthAddress %s, Sender %s", msg.EthAddress, msg.Sender.String())
+func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
+
+	res := sdk.Result{}
 	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to charge request fee: %s", err)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to charge request fee: %s", err)
 	}
 
 	var signedSimplexState chain.SignedSimplexState
 	err = protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to unmarshal signedSimplexStateBytes: %s", err)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to unmarshal signedSimplexStateBytes: %s", err)
 	}
 
 	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err = protobuf.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to unmarshal simplexState: %s", err)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
 	}
 
 	// reject guard request if the channel is not Operable
 	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
 	cid := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
+	logEntry.ChanId = mainchain.Cid2Hex(cid)
+	logEntry.ChanSeqNum = simplexPaymentChannel.SeqNum
+
 	status, err := keeper.ethClient.Ledger.GetChannelStatus(
 		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))}, cid)
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to query channel status: %s. Channel ID: %x", err, cid)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to query channel status: %s", err)
 	}
 	if status != mainchain.OperableChannel {
-		errmsg := fmt.Sprintf("Channel status is not Operable. Channel ID: %x", cid)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Channel status is not Operable")
 	}
 
 	request, err := getRequest(ctx, keeper, simplexPaymentChannel)
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to get request: %s", err)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to get request: %s", err)
 	}
 	if simplexPaymentChannel.SeqNum < request.SeqNum {
-		errmsg := fmt.Sprintf("Seq num %d must be larger than previous request %d", request.SeqNum, simplexPaymentChannel.SeqNum)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Seq num smaller than previous request %d", request.SeqNum)
 	}
 
 	err = verifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
-		errmsg := fmt.Sprintf("Failed to verify sigs: %s", err)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Failed to verify sigs: %s", err)
 	}
 
 	request.SeqNum = simplexPaymentChannel.SeqNum
 	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
 	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
-	log.Infof("Set request channelId %x request seqNum %d", simplexPaymentChannel.ChannelId, request.SeqNum)
 
-	return sdk.Result{}
+	return res, nil
 }
 
 // Handle a message to submit guard proof
-// Currently only supports that the validator sends out a tx purely for one intendSettle. (not call it via a contract or put multiple calls in one tx)
-func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.Result {
-	log.Infof("Handle MsgGuardProof. ChannelID %x, TriggerTxHash %s, GuardHash %s, Sender %s",
-		msg.ChannelId, msg.TriggerTxHash, msg.GuardTxHash, msg.Sender.String())
+// Currently only supports that the validator sends out a tx purely for one intendSettle.
+// (not call it via a contract or put multiple calls in one tx)
+func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.TriggerTxHash = msg.TriggerTxHash
+	logEntry.GuardTxHash = msg.GuardTxHash
+	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+
+	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId)
 	if !found {
-		errmsg := fmt.Sprintf("Cannot find request for Channel ID %x", msg.ChannelId)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Cannot find request for channel ID")
 	}
 
-	triggerLog, err := validateIntendSettle("Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
+	triggerLog, err := validateIntendSettle(
+		"Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
-		log.Error(err)
-		return sdk.ErrInternal(err.Error()).Result()
+		return res, err
 	}
 
-	guardLog, err := validateIntendSettle("Guard", keeper.ethClient, mainchain.Hex2Hash(msg.GuardTxHash), mainchain.Bytes2Cid(msg.ChannelId))
+	guardLog, err := validateIntendSettle(
+		"Guard", keeper.ethClient, mainchain.Hex2Hash(msg.GuardTxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
-		log.Error(err)
-		return sdk.ErrInternal(err.Error()).Result()
+		return res, err
 	}
 
 	// check block numbers
 	if guardLog.BlockNumber <= triggerLog.BlockNumber {
-		errmsg := fmt.Sprintf("GuardTx's block number is not larger than TriggerTx's block number %d %d", guardLog.BlockNumber, triggerLog.BlockNumber)
-		log.Error(errmsg)
-		return sdk.ErrInternal(errmsg).Result()
+		return res, fmt.Errorf("Invalid block number for GuardTx %d TriggerTx %d", guardLog.BlockNumber, triggerLog.BlockNumber)
 	}
 
 	err = validateIntendSettleSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
 	if err != nil {
-		log.Error(err)
-		return sdk.ErrInternal(err.Error()).Result()
+		return res, err
 	}
 
 	requestGuards := request.RequestGuards
@@ -176,8 +182,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		// get mainchain tx sender in the last stage for rewarding
 		guardEthAddrStr, err := mainchain.GetTxSender(keeper.ethClient.Client, msg.GuardTxHash)
 		if err != nil {
-			log.Error(err)
-			return sdk.ErrInternal(err.Error()).Result()
+			return res, fmt.Errorf("GetTxSender err: %s", err)
 		}
 		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, guardEthAddrStr)
 		if found {
@@ -200,7 +205,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof) sdk.
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
 
-	return sdk.Result{}
+	return res, nil
 }
 
 func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {

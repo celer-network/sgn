@@ -1,22 +1,43 @@
 package seal
 
-import "github.com/celer-network/goutils/log"
+import (
+	"time"
+
+	"github.com/celer-network/goutils/log"
+)
 
 func NewTransactorLog() *TransactorLog {
 	msgtypes := make(map[string]uint32)
+	now := time.Now().UnixNano()
 	return &TransactorLog{
-		MsgType: msgtypes,
+		MsgType:         msgtypes,
+		ExecutionTimeMs: (float64)(now),
 	}
 }
 
-func AddTransactorMsg(txlog *TransactorLog, msgtype string) {
-	txlog.MsgType[msgtype] = txlog.MsgType[msgtype] + 1
+func CommitTransactorLog(entry *TransactorLog) {
+	now := time.Now().UnixNano()
+	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
+	if len(entry.Error) > 0 {
+		log.Errorln("TransactorLog:", entry)
+	} else {
+		log.Infoln("TransactorLog:", entry)
+	}
 }
 
-func CommitTransactorLog(txlog *TransactorLog) {
-	if len(txlog.Error) > 0 {
-		log.Errorln("TransactorLog:", txlog)
+func NewMsgLog() *MsgLog {
+	now := time.Now().UnixNano()
+	return &MsgLog{
+		ExecutionTimeMs: (float64)(now),
+	}
+}
+
+func CommitMsgLog(entry *MsgLog) {
+	now := time.Now().UnixNano()
+	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
+	if len(entry.Error) > 0 {
+		log.Errorln("MsgLog:", entry)
 	} else {
-		log.Infoln("TransactorLog:", txlog)
+		log.Infoln("MsgLog:", entry)
 	}
 }

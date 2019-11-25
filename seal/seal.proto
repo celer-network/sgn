@@ -6,5 +6,26 @@ message TransactorLog {
     string tx_hash = 1;
     uint32 msg_num = 2;
     map<string, uint32> msg_type = 3;
-    repeated string error = 4;
+
+    double execution_time_ms = 100;
+    repeated string error = 101;
+}
+
+message MsgLog {
+    string type = 1;
+    string eth_address = 2;
+    string chan_id = 3;
+    uint64 chan_seq_num = 4;
+    string trigger_tx_hash = 5;
+    string guard_tx_hash = 6;
+    string pub_key = 7;
+    repeated string transactor = 8;
+    string candidate_addr = 9;
+    string delegator_addr = 10;
+    uint64 slash_nonce = 11;
+    uint64 block_num = 12;
+    
+    string sender = 99;
+    double execution_time_ms = 100;
+    repeated string error = 101;
 }

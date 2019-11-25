@@ -6,6 +6,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -14,33 +15,48 @@ import (
 // NewHandler returns a handler for "validator" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		logEntry := seal.NewMsgLog()
+		var res sdk.Result
+		var err error
 		switch msg := msg.(type) {
 		case MsgInitializeCandidate:
-			return handleMsgInitializeCandidate(ctx, keeper, msg)
+			res, err = handleMsgInitializeCandidate(ctx, keeper, msg, logEntry)
 		case MsgClaimValidator:
-			return handleMsgClaimValidator(ctx, keeper, msg)
+			res, err = handleMsgClaimValidator(ctx, keeper, msg, logEntry)
 		case MsgSyncValidator:
-			return handleMsgSyncValidator(ctx, keeper, msg)
+			res, err = handleMsgSyncValidator(ctx, keeper, msg, logEntry)
 		case MsgSyncDelegator:
-			return handleMsgSyncDelegator(ctx, keeper, msg)
+			res, err = handleMsgSyncDelegator(ctx, keeper, msg, logEntry)
 		case MsgWithdrawReward:
-			return handleMsgWithdrawReward(ctx, keeper, msg)
+			res, err = handleMsgWithdrawReward(ctx, keeper, msg, logEntry)
 		case MsgSignReward:
-			return handleMsgSignReward(ctx, keeper, msg)
+			res, err = handleMsgSignReward(ctx, keeper, msg, logEntry)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized validator Msg type: %v", msg.Type())
+			log.Error(errMsg)
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
+
+		if err != nil {
+			logEntry.Error = append(logEntry.Error, err.Error())
+			seal.CommitMsgLog(logEntry)
+			return sdk.ErrInternal(err.Error()).Result()
+		}
+		seal.CommitMsgLog(logEntry)
+		return res
 	}
 }
 
 // Handle a message to initialize candidate
-func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate) sdk.Result {
-	log.Infoln("Handle msg to initialize candidate", msg.EthAddress, "from sender", msg.Sender)
+func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
 
+	res := sdk.Result{}
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
+		return res, fmt.Errorf("Failed to query candidate profile: %s", err)
 	}
 
 	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
@@ -57,34 +73,41 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
 	}
 
-	return sdk.Result{}
+	return res, nil
 }
 
 // Handle a message to claim validator
-func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator) sdk.Result {
-	log.Infof("Handle MsgClaimValidator. %+v", msg)
+func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
+	logEntry.PubKey = msg.PubKey
+	for _, transactor := range msg.Transactors {
+		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
+	}
 
+	res := sdk.Result{}
 	pk, err := sdk.GetConsPubKeyBech32(msg.PubKey)
 	if err != nil {
-		return sdk.ErrInvalidPubKey(err.Error()).Result()
+		return res, fmt.Errorf("GetConsPubKeyBech32 err: %s", err)
 	}
 
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
+		return res, fmt.Errorf("Failed to query candidate profile: %s", err)
 	}
 
 	if !mainchain.IsBonded(candidateInfo) {
-		return sdk.ErrInternal("Candidate is not in validator set").Result()
+		return res, fmt.Errorf("Candidate is not in validator set")
 	}
 
 	if !sdk.AccAddress(candidateInfo.SidechainAddr).Equals(msg.Sender) {
-		return sdk.ErrInternal("Sender has different address recorded on mainchain").Result()
+		return res, fmt.Errorf("Sender has different address recorded on mainchain")
 	}
 
 	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
-		return sdk.ErrInternal("Candidate does not exist").Result()
+		return res, fmt.Errorf("Candidate does not exist")
 	}
 
 	// Make sure both val address and pub address have not been used before
@@ -92,7 +115,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
 	if found != f {
-		return sdk.ErrInternal("Invalid sender address or public key").Result()
+		return res, fmt.Errorf("Invalid sender address or public key")
 	}
 
 	if !found {
@@ -110,22 +133,25 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	candidate.Transactors = msg.Transactors
 	keeper.SetCandidate(ctx, msg.EthAddress, candidate)
 
-	return sdk.Result{}
+	return res, nil
 }
 
 // Handle a message to sync validator
-func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator) sdk.Result {
-	log.Infof("Handle MsgSyncValidator. %+v", msg)
+func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
 
+	res := sdk.Result{}
 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query candidate profile: %s", err)).Result()
+		return res, fmt.Errorf("Failed to query candidate profile: %s", err)
 	}
 
 	valAddress := sdk.ValAddress(candidateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
-		return sdk.ErrInternal("Validator does not exist").Result()
+		return res, fmt.Errorf("Validator does not exist")
 	}
 
 	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
@@ -135,36 +161,45 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 		keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
 	}
 
-	return sdk.Result{}
+	return res, nil
 }
 
 // Handle a message to sync delegator
-func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator) sdk.Result {
-	log.Infof("Handle MsgSyncDelegator. %+v", msg)
+func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.CandidateAddr = msg.CandidateAddress
+	logEntry.DelegatorAddr = msg.DelegatorAddress
+
+	res := sdk.Result{}
 	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
 	di, err := keeper.ethClient.Guard.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, mainchain.Hex2Addr(msg.CandidateAddress), mainchain.Hex2Addr(msg.DelegatorAddress))
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to query delegator info: %s", err)).Result()
+		return res, fmt.Errorf("Failed to query delegator info: %s", err)
 	}
 
 	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
 	keeper.SnapshotCandidate(ctx, msg.CandidateAddress)
 
-	return sdk.Result{}
+	return res, nil
 }
 
 // Handle a message to withdraw reward
-func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawReward) sdk.Result {
-	log.Infof("Handle MsgWithdrawReward. %+v", msg)
+func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawReward, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
+
+	res := sdk.Result{}
 	reward, found := keeper.GetReward(ctx, msg.EthAddress)
 	if !found {
-		return sdk.ErrInternal("Reward does not exist").Result()
+		return res, fmt.Errorf("Reward does not exist")
 	}
 	if !reward.HasNewReward() {
-		return sdk.ErrInternal("No new reward").Result()
+		return res, fmt.Errorf("No new reward")
 	}
 
 	reward.InitateWithdraw()
@@ -178,32 +213,36 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 	)
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
-	}
+	}, nil
 }
 
 // Handle a message to sign reward
-func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward) sdk.Result {
-	log.Infof("Handle MsgSignReward. EthAddress %s, Sender %s", msg.EthAddress, msg.Sender.String())
+func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
+
+	res := sdk.Result{}
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
-		return sdk.ErrInternal("Sender is not validator").Result()
+		return res, fmt.Errorf("Sender is not validator")
 	}
 	if validator.Status != sdk.Bonded {
-		return sdk.ErrInternal("Validator is not bonded").Result()
+		return res, fmt.Errorf("Validator is not bonded")
 	}
 
 	reward, found := keeper.GetReward(ctx, msg.EthAddress)
 	if !found {
-		return sdk.ErrInternal("Reward does not exist").Result()
+		return res, fmt.Errorf("Reward does not exist")
 	}
 
 	err := reward.AddSig(msg.Sig, validator.Description.Identity)
 	if err != nil {
-		return sdk.ErrInternal(fmt.Sprintf("Failed to add sig: %s", err)).Result()
+		return res, fmt.Errorf("Failed to add sig: %s", err)
 	}
 
 	keeper.SetReward(ctx, msg.EthAddress, reward)
-	return sdk.Result{}
+	return res, nil
 }
 
 func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, totalTokens *big.Int) {
