@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/global/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -68,7 +69,7 @@ func QuerySecureBlockNum(cliCtx context.CLIContext, queryRoute string) (secureBl
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query error", err)
+		log.Errorln("query error", err)
 		return
 	}
 

@@ -73,7 +73,7 @@ func TestMain(m *testing.M) {
 	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())
 	err := os.MkdirAll(outRootDir, os.ModePerm)
 	tf.ChkErr(err, "creating root dir")
-	fmt.Println("Using folder:", outRootDir)
+	log.Infoln("Using folder:", outRootDir)
 	// set testing pkg level path
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
@@ -96,11 +96,11 @@ func TestMain(m *testing.M) {
 
 	ethProc.Signal(syscall.SIGTERM)
 	if ret == 0 {
-		fmt.Println("All tests passed! 🎉🎉🎉")
+		log.Infoln("All tests passed! 🎉🎉🎉")
 		os.RemoveAll(outRootDir)
 		os.Exit(0)
 	} else {
-		fmt.Println("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
+		log.Errorln("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
 		os.Exit(ret)
 	}
 }

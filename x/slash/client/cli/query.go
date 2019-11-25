@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -85,7 +86,7 @@ func GetCmdPenaltyRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(string(penaltyRequest))
+			log.Info(string(penaltyRequest))
 			return nil
 		},
 	}

@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -215,7 +216,7 @@ func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(string(reward.GetRewardRequest()))
+			log.Info(string(reward.GetRewardRequest()))
 			return nil
 		},
 	}
