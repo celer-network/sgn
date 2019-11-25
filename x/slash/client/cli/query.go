@@ -42,6 +42,7 @@ func GetCmdPenalty(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			penalty, err := QueryPenalty(cliCtx, queryRoute, nonce)
 			if err != nil {
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -60,11 +61,10 @@ func QueryPenalty(cliCtx context.CLIContext, queryRoute string, nonce uint64) (p
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPenalty)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		log.Errorln("query error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &penalty)
+	err = cliCtx.Codec.UnmarshalJSON(res, &penalty)
 	return
 }
 

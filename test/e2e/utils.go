@@ -36,13 +36,19 @@ func sleepBlocksWithLog(count time.Duration, waitFor string) {
 	sleepWithLog(count * sgnBlockInterval, waitFor)
 }
 
-func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) json.RawMessage {
+func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawMessage, error) {
 	body, err := ioutil.ReadAll(resp.Body)
-	tf.ChkErr(err, "failed to read http response")
+	if err != nil {
+		return nil, err
+	}
 
 	var responseWithHeight rest.ResponseWithHeight
-	cdc.MustUnmarshalJSON(body, &responseWithHeight)
-	return responseWithHeight.Result
+	err = cdc.UnmarshalJSON(body, &responseWithHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseWithHeight.Result, nil
 }
 
 func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
