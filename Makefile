@@ -40,9 +40,10 @@ build: go.sum
 build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
-# .PHONY: get-geth
-# get-geth:
-	# ...
+GETH_VER = geth-linux-amd64-1.9.1-b7b2f60f
+.PHONY: get-geth
+get-geth:
+	curl -sL https://gethstore.blob.core.windows.net/builds/$(GETH_VER).tar.gz | tar -xz --strip 1 $(GETH_VER)/geth && mv geth ./build;
 
 .PHONY: build-dockers
 build-dockers:
