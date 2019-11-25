@@ -47,6 +47,7 @@ func GetCmdPuller(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			puller, err := QueryPuller(cliCtx, queryRoute)
 			if err != nil {
+				fmt.Println("query error", err)
 				return err
 			}
 
@@ -60,11 +61,10 @@ func QueryPuller(cliCtx context.CLIContext, queryRoute string) (puller types.Pul
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPuller)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query puller error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &puller)
+	err = cliCtx.Codec.UnmarshalJSON(res, &puller)
 	return
 }
 
@@ -78,6 +78,7 @@ func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			pusher, err := QueryPusher(cliCtx, queryRoute)
 			if err != nil {
+				fmt.Println("query error", err)
 				return err
 			}
 
@@ -91,11 +92,10 @@ func QueryPusher(cliCtx context.CLIContext, queryRoute string) (pusher types.Pus
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		fmt.Println("query pusher error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &pusher)
+	err = cliCtx.Codec.UnmarshalJSON(res, &pusher)
 	return
 }
 
@@ -109,6 +109,7 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			delegator, err := QueryDelegator(cliCtx, queryRoute, args[0], args[1])
 			if err != nil {
+				fmt.Println("query error", err)
 				return err
 			}
 
@@ -126,11 +127,10 @@ func QueryDelegator(cliCtx context.CLIContext, queryRoute, candidateAddress, del
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDelegator)
 	bz, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(bz, &delegator)
+	err = cliCtx.Codec.UnmarshalJSON(bz, &delegator)
 	return
 }
 
@@ -144,6 +144,7 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			candidate, err := QueryCandidate(cliCtx, queryRoute, args[0])
 			if err != nil {
+				fmt.Println("query error", err)
 				return err
 			}
 
@@ -161,11 +162,10 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
 	bz, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query candidate error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(bz, &candidate)
+	err = cliCtx.Codec.UnmarshalJSON(bz, &candidate)
 	return
 }
 
@@ -192,10 +192,31 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
+				fmt.Println("query error", err)
 				return err
 			}
 
 			return cliCtx.PrintOutput(reward)
+		},
+	}
+}
+
+// GetCmdRewardRequest queries reward request
+func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "reward-request [ethAddress]",
+		Short: "query reward request",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			reward, err := QueryReward(cliCtx, queryRoute, args[0])
+			if err != nil {
+				fmt.Println("query error", err)
+				return err
+			}
+
+			fmt.Println(string(reward.GetRewardRequest()))
+			return nil
 		},
 	}
 }
@@ -210,29 +231,9 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryReward)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		fmt.Println("query reward error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &reward)
+	err = cliCtx.Codec.UnmarshalJSON(res, &reward)
 	return
-}
-
-// GetCmdRewardRequest queries reward request
-func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "reward-request [ethAddress]",
-		Short: "query reward request",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			reward, err := QueryReward(cliCtx, queryRoute, args[0])
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(string(reward.GetRewardRequest()))
-			return nil
-		},
-	}
 }
