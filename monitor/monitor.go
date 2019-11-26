@@ -48,7 +48,6 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		ethClient:   ethClient,
 		transactor:  transactor,
 		db:          db,
-		txMemo:      txMemo,
 		pubkey:      pubkey,
 		transactors: transactors,
 		isValidator: mainchain.IsBonded(candidateInfo),
