@@ -98,6 +98,7 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
+	log.Infoln("Prepare for requesting guard...")
 	channelId, err := openChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
 	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
@@ -137,6 +138,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to compile regexp")
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
 
+	log.Infoln("Query sgn to check if it gets the correct reward info (without sigs)...")
 	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query params on sgn")
 	log.Infoln("Query sgn about the params info:", params.String())
@@ -146,15 +148,17 @@ func subscribeTest(t *testing.T) {
 	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, params.RequestCost.String())
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	log.Infoln("Send tx on sidechain to withdraw reward")
+	log.Infoln("Send tx on sidechain to withdraw reward...")
 	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgWithdrawReward)
 	sleepWithLog(15, "sgn withdrawing reward")
 
+	log.Infoln("Query sgn to check if reward gets signature...")
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
 
+	log.Infoln("Call redeemReward on guard contract...")
 	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
 	tf.ChkTestErr(t, err, "failed to redeem reward")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "redeem reward on Guard contract")
