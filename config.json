@@ -6,6 +6,9 @@
     "passphrase": "",
     "ws": "ws://127.0.0.1:8546"
   },
+  "logcolor": true,
+  "loglevel": "debug",
+  "loglongfile": true,
   "sgn": {
     "chainid": "sgnchain",
     "clihome": "{home directory placeholder}/.sgncli",
@@ -15,14 +18,8 @@
     "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
     "passphrase": "12341234",
     "pubkey": "cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
-    "chainID": "sgnchain",
-    "nodeURI": "tcp://localhost:26657",
-    "gasPrice": "",
     "transactors": [
       "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"
     ]
-  },
-  "logcolor": true,
-  "loglevel": "debug",
-  "loglongfile": true
+  }
 }

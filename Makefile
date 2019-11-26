@@ -4,8 +4,8 @@ all: lint install
 
 .PHONY: install
 install: go.sum
-		go install -mod=readonly ./cmd/sgn
-		go install -mod=readonly ./cmd/sgncli
+		go install $(BUILD_FLAGS) ./cmd/sgn
+		go install $(BUILD_FLAGS) ./cmd/sgncli
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
