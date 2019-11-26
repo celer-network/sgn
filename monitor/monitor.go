@@ -226,7 +226,7 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 
 	for {
 		eventRecorded, ok := m.sgnEventRecord[eventTag]
-		initPage := eventRecorded / txsPageLimit
+		initPage := eventRecorded/txsPageLimit + 1
 		page := initPage
 
 		for ; ; page++ {
