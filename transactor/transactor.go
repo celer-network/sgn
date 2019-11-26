@@ -23,7 +23,7 @@ const (
 	maxQueryRetry   = 20
 	queryRetryDelay = 500 * time.Millisecond
 	maxSignRetry    = 10
-	signRetryDelay  = 10 * time.Millisecond
+	signRetryDelay  = 50 * time.Millisecond
 )
 
 type Transactor struct {
@@ -127,6 +127,9 @@ func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse,
 	}
 
 	txBytes, err := t.signTx(msgs)
+	if err != nil {
+		return nil, fmt.Errorf("signTx err: %s", err)
+	}
 	tx, err := t.CliCtx.BroadcastTx(txBytes)
 	if err != nil {
 		return nil, fmt.Errorf("BroadcastTx err: %s", err)
