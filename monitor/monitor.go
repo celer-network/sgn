@@ -243,7 +243,7 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 
 			txs = searchTxsResult.Txs
 			if page == initPage {
-				txs = searchTxsResult.Txs[eventRecorded%txsPageLimit:]
+				txs = txs[eventRecorded%txsPageLimit:]
 			}
 
 			for _, tx := range txs {
