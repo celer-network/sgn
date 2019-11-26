@@ -39,5 +39,5 @@ func GetPenaltyKey(nonce uint64) []byte {
 
 // get sgn event key from log
 func GetSgnEventKey(name string) []byte {
-	return append(EventKeyPrefix, []byte(name)...)
+	return append(SgnEventKeyPrefix, []byte(name)...)
 }
