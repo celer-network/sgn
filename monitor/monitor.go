@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"time"
@@ -29,13 +30,12 @@ var (
 )
 
 type EthMonitor struct {
-	ethClient      *mainchain.EthClient
-	transactor     *transactor.Transactor
-	db             *dbm.GoLevelDB
-	sgnEventRecord map[string]int
-	pubkey         string
-	transactors    []string
-	isValidator    bool
+	ethClient   *mainchain.EthClient
+	transactor  *transactor.Transactor
+	db          *dbm.GoLevelDB
+	pubkey      string
+	transactors []string
+	isValidator bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, db *dbm.GoLevelDB, pubkey string, transactors []string) {
@@ -220,13 +220,18 @@ func (m *EthMonitor) monitorSlash() {
 }
 
 func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event sdk.StringEvent)) {
-	var err error
 	var searchTxsResult *sdk.SearchTxsResult
 	var txs []sdk.TxResponse
+	var err error
 
 	for {
-		eventRecorded, ok := m.sgnEventRecord[eventTag]
-		initPage := eventRecorded/txsPageLimit + 1
+		er := m.db.Get(GetSgnEventKey(eventTag))
+		isInitialLaunch := len(er) == 0
+		eventRecorded := int(binary.BigEndian.Uint64(er))
+		initPage := 1
+		if !isInitialLaunch {
+			initPage = eventRecorded/txsPageLimit + 1
+		}
 		page := initPage
 
 		for ; ; page++ {
@@ -236,8 +241,8 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 				break
 			}
 
-			if !ok {
-				// first time will skip existing events
+			// first time will skip existing events
+			if isInitialLaunch {
 				break
 			}
 
@@ -258,8 +263,8 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 			}
 		}
 
-		if err != nil {
-			m.sgnEventRecord[eventTag] = searchTxsResult.TotalCount
+		if err == nil {
+			m.db.Set(GetSgnEventKey(eventTag), sdk.Uint64ToBigEndian(uint64(searchTxsResult.TotalCount)))
 		}
 
 		time.Sleep(txsPullInterval * time.Second)
