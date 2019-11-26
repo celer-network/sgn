@@ -38,6 +38,7 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			subscription, err := QuerySubscription(cliCtx, queryRoute, args[0])
 			if err != nil {
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -56,11 +57,10 @@ func QuerySubscription(cliCtx context.CLIContext, queryRoute, ethAddress string)
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySubscription)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		log.Errorln("query error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &subscription)
+	err = cliCtx.Codec.UnmarshalJSON(res, &subscription)
 	return
 }
 
@@ -74,6 +74,7 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			request, err := QueryRequest(cliCtx, queryRoute, mainchain.Hex2Bytes(args[0]))
 			if err != nil {
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -92,11 +93,10 @@ func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRequest)
 	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
-		log.Errorln("query error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &request)
+	err = cliCtx.Codec.UnmarshalJSON(res, &request)
 	return
 }
 
@@ -110,6 +110,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			params, err := QueryParams(cliCtx, queryRoute)
 			if err != nil {
+				log.Errorln("query error", err)
 				return err
 			}
 
@@ -123,10 +124,9 @@ func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Par
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		log.Errorln("query error", err)
 		return
 	}
 
-	cliCtx.Codec.MustUnmarshalJSON(res, &params)
+	err = cliCtx.Codec.UnmarshalJSON(res, &params)
 	return
 }

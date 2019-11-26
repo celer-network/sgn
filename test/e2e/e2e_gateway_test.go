@@ -78,9 +78,11 @@ func gatewayTest(t *testing.T) {
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query subscription from gateway")
 
-	result := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	result, err := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	tf.ChkTestErr(t, err, "failed to parse GatewayQueryResponse")
 	var subscription subscribe.Subscription
-	transactor.CliCtx.Codec.MustUnmarshalJSON(result, &subscription)
+	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)
+	tf.ChkTestErr(t, err, "failed to unmarshal subscription JSON from gateway")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
