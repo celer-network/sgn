@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/allegro/bigcache"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
@@ -30,21 +29,16 @@ var (
 )
 
 type EthMonitor struct {
-	ethClient   *mainchain.EthClient
-	transactor  *transactor.Transactor
-	db          *dbm.GoLevelDB
-	txMemo      *bigcache.BigCache
-	pubkey      string
-	transactors []string
-	isValidator bool
+	ethClient      *mainchain.EthClient
+	transactor     *transactor.Transactor
+	db             *dbm.GoLevelDB
+	sgnEventRecord map[string]int
+	pubkey         string
+	transactors    []string
+	isValidator    bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, db *dbm.GoLevelDB, pubkey string, transactors []string) {
-	txMemo, err := bigcache.NewBigCache(bigcache.DefaultConfig(24 * time.Hour))
-	if err != nil {
-		log.Fatalln("NewBigCache err", err)
-	}
-
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
 		log.Fatalln("GetCandidateInfo err", err)
@@ -227,33 +221,46 @@ func (m *EthMonitor) monitorSlash() {
 }
 
 func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event sdk.StringEvent)) {
+	var err error
+	var searchTxsResult *sdk.SearchTxsResult
+	var txs []sdk.TxResponse
+
 	for {
-		for page := 1; ; page++ {
-			hasSeenEvent := false
-			txs, err := authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{eventTag}, page, txsPageLimit)
+		eventRecorded, ok := m.sgnEventRecord[eventTag]
+		initPage := eventRecorded / txsPageLimit
+		page := initPage
+
+		for ; ; page++ {
+			searchTxsResult, err = authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{eventTag}, page, txsPageLimit)
 			if err != nil {
 				log.Errorln("QueryTxsByEvents err", err)
 				break
 			}
 
-			for _, tx := range txs.Txs {
-				// Check if the tx has been seen before
-				_, err = m.txMemo.Get(tx.TxHash)
-				if err == nil {
-					hasSeenEvent = true
-					continue
-				}
+			if !ok {
+				// first time will skip existing events
+				break
+			}
 
-				m.txMemo.Set(tx.TxHash, []byte{1})
+			txs = searchTxsResult.Txs
+			if page == initPage {
+				txs = searchTxsResult.Txs[eventRecorded%txsPageLimit:]
+			}
+
+			for _, tx := range txs {
 				for _, event := range tx.Events {
 					handleEvent(event)
 				}
 			}
 
 			// Check if it is necessary to query next page
-			if txs.PageNumber >= txs.PageTotal || hasSeenEvent {
+			if searchTxsResult.PageNumber >= searchTxsResult.PageTotal {
 				break
 			}
+		}
+
+		if err != nil {
+			m.sgnEventRecord[eventTag] = searchTxsResult.TotalCount
 		}
 
 		time.Sleep(txsPullInterval * time.Second)
