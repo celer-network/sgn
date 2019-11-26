@@ -1,0 +1,25 @@
+{
+    "eth": {
+        "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
+        "keystore": "./keys/client0.json",
+        "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
+        "passphrase": "",
+        "ws": "ws://geth:8546"
+    },
+    "logcolor": true,
+    "loglevel": "debug",
+    "loglongfile": true,
+    "sgn": {
+        "chainid": "sgnchain",
+        "gasprice": "",
+        "nodeuri": "tcp://localhost:26657",
+        "operator": "cosmos1lh8cr9p2a9dxtunte0sn3qmjkyksdh5yc5yxph",
+        "passphrase": "12341234",
+        "pubkey": "cosmosvalconspub1zcjduepqxqz973gvjkk84p2d8m9j92pfffghhrv677gd35jcn9ppzvm9gn0q3yldua",
+        "transactors": [
+            "cosmos1k88dweqanvd3j2csaak034amvjuyzlkefgmv8t"
+        ],
+        "clihome": "/sgn/env/sgncli",
+        "nodehome": "/sgn/env/sgn"
+    }
+}
