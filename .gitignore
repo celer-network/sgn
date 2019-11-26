@@ -15,4 +15,4 @@ build
 *.iml
 
 # Test
-data-tmp
+docker-test-mount

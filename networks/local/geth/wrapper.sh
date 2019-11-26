@@ -3,7 +3,7 @@
 ##
 ## Input parameters
 ##
-BINARY=/geth/${BINARY:-geth}
+BINARY=/geth/bin/${BINARY:-geth}
 LOG=${LOG:-geth.log}
 
 ##
@@ -22,8 +22,8 @@ fi
 ##
 ## Run binary with all parameters
 ##
-export GETHHOME="/geth/geth-env"
-export GETHDATA="/geth/geth-env/geth-data"
+export GETHHOME="/geth/env"
+export GETHDATA="/geth/env/data"
 
 mkdir -p "${GETHDATA}"
 

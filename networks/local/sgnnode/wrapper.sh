@@ -3,8 +3,7 @@
 ##
 ## Input parameters
 ##
-BINARY=/sgn/${BINARY:-sgn}
-ID=${ID:-0}
+BINARY=/sgn/bin/${BINARY:-sgn}
 LOG=${LOG:-sgn.log}
 
 ##
@@ -23,7 +22,7 @@ fi
 ##
 ## Run binary with all parameters
 ##
-export SGNHOME="/sgn/node${ID}/sgn"
+export SGNHOME="/sgn/env/sgn"
 
 if [ -d "$(dirname "${SGNHOME}"/"${LOG}")" ]; then
   "${BINARY}" --home "${SGNHOME}" "$@" | tee "${SGNHOME}/${LOG}"

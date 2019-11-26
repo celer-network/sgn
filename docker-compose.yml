@@ -7,7 +7,8 @@ services:
     ports:
       - "8546:8546"
     volumes:
-      - ./build:/geth:Z
+      - ./build:/geth/bin:Z
+      - ./docker-test-mount/geth-env:/geth/env:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.1
@@ -18,10 +19,10 @@ services:
     ports:
       - "26656-26657:26656-26657"
     environment:
-      - ID=0
       - LOG=${LOG:-sgn.log}
     volumes:
-      - ./build:/sgn:Z
+      - ./build:/sgn/bin:Z
+      - ./docker-test-mount/node0:/sgn/env:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.2
@@ -32,10 +33,10 @@ services:
     ports:
       - "26659-26660:26656-26657"
     environment:
-      - ID=1
       - LOG=${LOG:-sgn.log}
     volumes:
-      - ./build:/sgn:Z
+      - ./build:/sgn/bin:Z
+      - ./docker-test-mount/node1:/sgn/env:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.3
@@ -44,12 +45,12 @@ services:
     container_name: sgnnode2
     image: "celer-network/sgnnode"
     environment:
-      - ID=2
       - LOG=${LOG:-sgn.log}
     ports:
       - "26661-26662:26656-26657"
     volumes:
-      - ./build:/sgn:Z
+      - ./build:/sgn/bin:Z
+      - ./docker-test-mount/node2:/sgn/env:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.4
@@ -58,12 +59,12 @@ services:
     container_name: sgnnode3
     image: "celer-network/sgnnode"
     environment:
-      - ID=3
       - LOG=${LOG:-sgn.log}
     ports:
       - "26663-26664:26656-26657"
     volumes:
-      - ./build:/sgn:Z
+      - ./build:/sgn/bin:Z
+      - ./docker-test-mount/node3:/sgn/env:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.5

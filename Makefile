@@ -33,8 +33,8 @@ copy-test-config:
 ################################ Docker related ################################
 .PHONY: build
 build: go.sum
-	go build -mod=readonly -o build/sgn ./cmd/sgn
-	go build -mod=readonly -o build/sgncli ./cmd/sgncli
+	go build -o build/sgn ./cmd/sgn
+	go build -o build/sgncli ./cmd/sgncli
 
 .PHONY: build-linux
 build-linux: go.sum
@@ -62,31 +62,8 @@ localnet-stop:
 
 
 ######### utils
-.PHONY: prepare-geth-env
-prepare-geth-env:
-	rm -rf ./build/geth-env
-	cp -r ./testing/env ./build/
-	mv ./build/env ./build/geth-env
-
-.PHONY: prepare-keys
-prepare-keys:
-	rm -rf ./build/keys
-	cp -r ./test/keys ./build/
-
-.PHONY: prepare-sgn-data
-prepare-sgn-data:
-	rm -rf ./build/node*
-	cp -r ./test/data ./build/
-	mv ./build/data/.sgn ./build/data/sgn
-	mv ./build/data/.sgncli ./build/data/sgncli
-	mv ./build/data ./build/node0
-	cp -r ./build/node0 ./build/node1
-	cp -r ./build/node0 ./build/node2
-	cp -r ./build/node0 ./build/node3
-
-.PHONY: prepare-config
-prepare-config:
-	cp config-docker.json ./build/config.json
-
 .PHONY: prepare-docker-env
-prepare-docker-env: prepare-geth-env prepare-keys prepare-sgn-data prepare-config
+prepare-docker-env:
+	rm -rf ./docker-test-mount
+	cp -r ./test/multi-node-data .
+	mv ./multi-node-data ./docker-test-mount
