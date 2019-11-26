@@ -225,12 +225,12 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 	var err error
 
 	for {
-		er := m.db.Get(GetSgnEventKey(eventTag))
-		isInitialLaunch := len(er) == 0
+		eventRecordedRaw := m.db.Get(GetSgnEventKey(eventTag))
+		isInitialLaunch := len(eventRecordedRaw) == 0
 		eventRecorded := 0
 		initPage := 1
 		if !isInitialLaunch {
-			eventRecorded = int(binary.BigEndian.Uint64(er))
+			eventRecorded = int(binary.BigEndian.Uint64(eventRecordedRaw))
 			initPage = eventRecorded/txsPageLimit + 1
 		}
 		page := initPage

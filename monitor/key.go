@@ -32,7 +32,7 @@ func GetPusherKey(log types.Log) []byte {
 	return append(PusherKeyPrefix, log.TxHash.Bytes()...)
 }
 
-// get penalty key from nounce
+// get penalty key from nonce
 func GetPenaltyKey(nonce uint64) []byte {
 	return append(PenaltyKeyPrefix, sdk.Uint64ToBigEndian(nonce)...)
 }
