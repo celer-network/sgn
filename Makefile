@@ -64,6 +64,6 @@ localnet-stop:
 ######### utils
 .PHONY: prepare-docker-env
 prepare-docker-env:
-	rm -rf ./docker-test-mount
+	rm -rf ./docker-volumes
 	cp -r ./test/multi-node-data .
-	mv ./multi-node-data ./docker-test-mount
+	mv ./multi-node-data ./docker-volumes
