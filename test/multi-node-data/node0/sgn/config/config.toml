@@ -33,7 +33,8 @@ db_backend = "goleveldb"
 db_dir = "data"
 
 # Output level for logging, including package level options
-log_level = "main:info,state:info,*:error"
+# log_level = "main:info,state:info,*:error"
+log_level = "main:debug,state:debug,*:debug"
 
 # Output format: 'plain' (colored text) or 'json'
 log_format = "plain"
@@ -171,7 +172,7 @@ addr_book_file = "config/addrbook.json"
 
 # Set true for strict address routability rules
 # Set false for private or local networks
-addr_book_strict = true
+addr_book_strict = false
 
 # Maximum number of inbound peers
 max_num_inbound_peers = 40
@@ -228,6 +229,10 @@ max_txs_bytes = 1073741824
 # Size of the cache (used to filter transactions we saw earlier) in transactions
 cache_size = 10000
 
+# Maximum size of a single transaction.
+# NOTE: the max size of a tx transmitted over the network is {max_tx_bytes} + {amino overhead}.
+max_tx_bytes = 1048576
+
 ##### fast sync configuration options #####
 [fastsync]
 
@@ -235,9 +240,6 @@ cache_size = 10000
 #   1) "v0" (default) - the legacy fast sync implementation
 #   2) "v1" - refactor of v0 version for better testability
 version = "v0"
-
-# Limit the size of TxMessage
-max_msg_bytes = 1048576
 
 ##### consensus configuration options #####
 [consensus]

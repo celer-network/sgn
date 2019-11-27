@@ -1,1 +1,45 @@
-{"type":"cosmos-sdk/StdTx","value":{"msg":[{"type":"cosmos-sdk/MsgCreateValidator","value":{"description":{"moniker":"validator0","identity":"0x6A6d2a97dA1C453a4e099E8054865a0a59728863","website":"","details":""},"commission":{"rate":"0.100000000000000000","max_rate":"0.200000000000000000","max_change_rate":"0.010000000000000000"},"min_self_delegation":"1","delegator_address":"cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp","validator_address":"cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj","pubkey":"cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy","value":{"denom":"stake","amount":"100000000"}}}],"fee":{"amount":[],"gas":"200000"},"signatures":[{"pub_key":{"type":"tendermint/PubKeySecp256k1","value":"A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"},"signature":"/520hq0MgwzLX1d5JfsBRSYc6224Rm2MeA/rXFxjrkUhtAuTiIKBRAQILhSp1AxRUknbA6CJvonyO0khcJHZyw=="}],"memo":"9b70230e6243339a3222887385857f73bf60997d@192.168.1.35:26656"}}
+{
+    "type": "cosmos-sdk/StdTx",
+    "value": {
+        "msg": [
+            {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                    "description": {
+                        "moniker": "validator0",
+                        "identity": "0x6A6d2a97dA1C453a4e099E8054865a0a59728863",
+                        "website": "",
+                        "details": ""
+                    },
+                    "commission": {
+                        "rate": "0.100000000000000000",
+                        "max_rate": "0.200000000000000000",
+                        "max_change_rate": "0.010000000000000000"
+                    },
+                    "min_self_delegation": "1",
+                    "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+                    "validator_address": "cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
+                    "pubkey": "cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
+                    "value": {
+                        "denom": "stake",
+                        "amount": "100000000"
+                    }
+                }
+            }
+        ],
+        "fee": {
+            "amount": [],
+            "gas": "200000"
+        },
+        "signatures": [
+            {
+                "pub_key": {
+                    "type": "tendermint/PubKeySecp256k1",
+                    "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
+                },
+                "signature": "/520hq0MgwzLX1d5JfsBRSYc6224Rm2MeA/rXFxjrkUhtAuTiIKBRAQILhSp1AxRUknbA6CJvonyO0khcJHZyw=="
+            }
+        ],
+        "memo": "9b70230e6243339a3222887385857f73bf60997d@192.168.10.2:26656"
+    }
+}

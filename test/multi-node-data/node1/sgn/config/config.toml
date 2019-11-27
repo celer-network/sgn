@@ -1,11 +1,6 @@
 # This is a TOML config file.
 # For more information, see https://github.com/toml-lang/toml
 
-# NOTE: Any path below can be absolute (e.g. "/var/myawesomeapp/data") or
-# relative to the home directory (e.g. "data"). The home directory is
-# "$HOME/.tendermint" by default, but could be changed via $TMHOME env variable
-# or --home cmd flag.
-
 ##### main base config options #####
 
 # TCP or UNIX socket address of the ABCI application,
@@ -38,7 +33,8 @@ db_backend = "goleveldb"
 db_dir = "data"
 
 # Output level for logging, including package level options
-log_level = "main:info,state:info,*:error"
+# log_level = "main:info,state:info,*:error"
+log_level = "main:debug,state:debug,*:debug"
 
 # Output format: 'plain' (colored text) or 'json'
 log_format = "plain"
@@ -142,14 +138,12 @@ max_header_bytes = 1048576
 # If the certificate is signed by a certificate authority,
 # the certFile should be the concatenation of the server's certificate, any intermediates,
 # and the CA's certificate.
-# NOTE: both tls_cert_file and tls_key_file must be present for Tendermint to create HTTPS server.
-# Otherwise, HTTP server is run.
+# NOTE: both tls_cert_file and tls_key_file must be present for Tendermint to create HTTPS server. Otherwise, HTTP server is run.
 tls_cert_file = ""
 
 # The path to a file containing matching private key that is used to create the HTTPS server.
 # Migth be either absolute path or path related to tendermint's config directory.
-# NOTE: both tls_cert_file and tls_key_file must be present for Tendermint to create HTTPS server.
-# Otherwise, HTTP server is run.
+# NOTE: both tls_cert_file and tls_key_file must be present for Tendermint to create HTTPS server. Otherwise, HTTP server is run.
 tls_key_file = ""
 
 ##### peer to peer configuration options #####
@@ -165,10 +159,10 @@ laddr = "tcp://0.0.0.0:26656"
 external_address = ""
 
 # Comma separated list of seed nodes to connect to
-seeds = "9b70230e6243339a3222887385857f73bf60997d@sgnnode0:26656"
+seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = ""
+persistent_peers = "9b70230e6243339a3222887385857f73bf60997d@sgnnode0:26656"
 
 # UPNP port forwarding
 upnp = false
@@ -178,7 +172,7 @@ addr_book_file = "config/addrbook.json"
 
 # Set true for strict address routability rules
 # Set false for private or local networks
-addr_book_strict = true
+addr_book_strict = false
 
 # Maximum number of inbound peers
 max_num_inbound_peers = 40
