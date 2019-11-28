@@ -11,7 +11,9 @@
       "max_age": "100000"
     },
     "validator": {
-      "pub_key_types": ["ed25519"]
+      "pub_key_types": [
+        "ed25519"
+      ]
     }
   },
   "app_hash": "",
@@ -20,8 +22,8 @@
     "global": {
       "params": {
         "epochLength": "10",
-        "maxBlockDiff": "5",
-        "confirmationCount": "5"
+        "maxBlockDiff": "2",
+        "confirmationCount": "2"
       }
     },
     "supply": {
@@ -48,7 +50,9 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [""]
+        "module_permissions": [
+          ""
+        ]
       },
       {
         "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
@@ -66,7 +70,9 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [""]
+        "module_permissions": [
+          ""
+        ]
       }
     ],
     "auth": {
