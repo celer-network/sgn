@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"crypto/ecdsa"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -13,14 +12,11 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	protobuf "github.com/golang/protobuf/proto"
 )
 
 func sleep(second time.Duration) {

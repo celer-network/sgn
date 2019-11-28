@@ -189,7 +189,7 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(channelIdChan)
-	tx, err := ledgerContract.OpenChannel(auth, requestBytes)
+	_, err = ledgerContract.OpenChannel(auth, requestBytes)
 	if err != nil {
 		return
 	}

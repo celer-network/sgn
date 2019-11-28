@@ -17,7 +17,7 @@ lint:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 	go mod verify
 
-test:
+e2e-test:
 	go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e
 
 copy-test-data:
