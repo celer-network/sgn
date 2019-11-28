@@ -187,12 +187,11 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(channelIdChan)
-	tx, err := EthClient.Ledger.OpenChannel(EthClient.Auth, requestBytes)
+	_, err = EthClient.Ledger.OpenChannel(EthClient.Auth, requestBytes)
 	if err != nil {
 		return
 	}
 
-	WaitMinedWithChk(context.Background(), EthClient.Client, tx, 0, "OpenChannel")
 	channelId = <-channelIdChan
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 

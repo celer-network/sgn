@@ -100,6 +100,7 @@ func subscribeTest(t *testing.T) {
 
 	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey, mockCelerAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
+	sleepWithLog(10, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
