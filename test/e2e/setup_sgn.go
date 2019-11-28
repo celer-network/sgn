@@ -63,6 +63,7 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthKeystore, filepath.Abs("../keys/client0.json"))
 	viper.WriteConfig()
 }
 
