@@ -140,8 +140,6 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 
 func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey, tokenAddr []byte) (channelId [32]byte, err error) {
 	log.Info("Call openChannel on ledger contract...")
-	auth := EthClient.Auth
-	ledgerContract := EthClient.Ledger
 	tokenInfo := &entity.TokenInfo{
 		TokenType:    entity.TokenType_ERC20,
 		TokenAddress: tokenAddr,
@@ -189,11 +187,12 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(channelIdChan)
-	_, err = ledgerContract.OpenChannel(auth, requestBytes)
+	tx, err := EthClient.Ledger.OpenChannel(EthClient.Auth, requestBytes)
 	if err != nil {
 		return
 	}
 
+	WaitMinedWithChk(context.Background(), EthClient.Client, tx, 0, "OpenChannel")
 	channelId = <-channelIdChan
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
