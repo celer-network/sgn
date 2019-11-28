@@ -30,7 +30,7 @@ mkdir -p "${GETHDATA}"
 "${BINARY}" --datadir "${GETHDATA}" init "${GETHHOME}"/mainchain_genesis.json
 
 if [ -d "$(dirname "${GETHHOME}"/"${LOG}")" ]; then
-  "${BINARY}" "$@" | tee "${GETHHOME}/${LOG}"
+  "${BINARY}" --datadir "${GETHDATA}" "$@" | tee "${GETHHOME}/${LOG}"
 else
-  "${BINARY}" "$@"
+  "${BINARY}" --datadir "${GETHDATA}" "$@"
 fi

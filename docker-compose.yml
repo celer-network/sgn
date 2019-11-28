@@ -5,7 +5,7 @@ services:
     container_name: geth
     image: "celer-network/geth"
     ports:
-      - "8546:8546"
+      - "8545-8546:8545-8546"
     volumes:
       - ./build:/geth/bin:Z
       - ./docker-volumes/geth-env:/geth/env:Z
