@@ -1,6 +1,6 @@
 // Copyright 2018 Celer Network
 
-package e2e
+package singlenode
 
 import (
 	"math/big"
@@ -39,7 +39,8 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	updateSGNConfig()
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
-	tf.SetupEthClient()
+	ks_path, _ := filepath.Abs("../../keys/client0.json")
+	tf.SetupEthClient(ks_path)
 	tf.SetupTransactor()
 
 	celrContract, err = mainchain.NewERC20(mockCelerAddr, tf.EthClient.Client)
@@ -58,7 +59,7 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 func updateSGNConfig() {
 	log.Infoln("Updating SGN's config.json")
 
-	viper.SetConfigFile("../../config.json")
+	viper.SetConfigFile("../../../config.json")
 	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
@@ -76,7 +77,7 @@ func updateSGNConfig() {
 func installSgn() error {
 	cmd := exec.Command("make", "install")
 	// set cmd.Dir under repo root path
-	cmd.Dir, _ = filepath.Abs("../..")
+	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -88,13 +89,13 @@ func installSgn() error {
 func startSidechain(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("make", "update-test-data")
 	// set cmd.Dir under repo root path
-	cmd.Dir, _ = filepath.Abs("../..")
+	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
 
 	cmd = exec.Command("sgn", "start")
-	cmd.Dir, _ = filepath.Abs("../..")
+	cmd.Dir, _ = filepath.Abs("../../..")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
@@ -107,7 +108,7 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 
 func startGateway(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("sgncli", "gateway")
-	cmd.Dir, _ = filepath.Abs("../..")
+	cmd.Dir, _ = filepath.Abs("../../..")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {

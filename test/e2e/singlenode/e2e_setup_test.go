@@ -1,5 +1,5 @@
 // Setup mainchain and sgn sidechain etc for e2e tests
-package e2e
+package singlenode
 
 import (
 	"flag"
@@ -54,7 +54,7 @@ var (
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
 	outRootDir    string
-	envDir        = "../../testing/env"
+	envDir        = "../../../testing/env"
 	e2eProfile    *CProfile
 	celrContract  *mainchain.ERC20
 	guardAddr     mainchain.Addr

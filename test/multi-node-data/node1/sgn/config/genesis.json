@@ -22,7 +22,7 @@
     "global": {
       "params": {
         "epochLength": "10",
-        "maxBlockDiff": "2",
+        "maxBlockDiff": "10",
         "confirmationCount": "2"
       }
     },

@@ -1,6 +1,6 @@
 // Copyright 2018 Celer Network
 
-package e2e
+package singlenode
 
 import (
 	"crypto/ecdsa"
