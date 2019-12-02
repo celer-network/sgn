@@ -54,7 +54,7 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEnt
 
 	blockDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
 	if blockDiff.CmpAbs(big.NewInt(keeper.MaxBlockDiff(ctx))) > 0 {
-		return res, fmt.Errorf("out of bound diff with mainchain blknum %d", head.Number.Uint64())
+		return res, fmt.Errorf("out of bound diff with mainchain blknum %d; msg blockNumber %d; maxBlockDiff %d", head.Number.Uint64(), msg.BlockNumber, keeper.MaxBlockDiff(ctx))
 	}
 
 	keeper.SyncBlock(ctx, msg.BlockNumber)

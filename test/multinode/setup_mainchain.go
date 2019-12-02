@@ -65,7 +65,6 @@ const (
 	client1AddrStr    = "ba756d65a1a03f07d205749f35e2406e4a8522ad"
 	client1Priv       = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
 
-	maxBlockDiff     = 2 // defined in sidechain's genesis file
 	blockDelay       = 2
 	sgnBlockInterval = 1
 	defaultTimeout   = 60 * time.Second
@@ -220,7 +219,7 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 	viper.WriteConfig()
 
-	viper.SetConfigFile("/Users/cliu/repos/celer/sgn/docker-volumes/node0/config.json")
+	viper.SetConfigFile("/Users/cliu/repos/celer/sgn/docker-volumes/node1/config.json")
 	err = viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
