@@ -55,20 +55,6 @@ services:
       localnet:
         ipv4_address: 192.168.10.4
 
-  sgnnode3:
-    container_name: sgnnode3
-    image: "celer-network/sgnnode"
-    environment:
-      - LOG=${LOG:-sgn.log}
-    ports:
-      - "26663-26664:26656-26657"
-    volumes:
-      - ./build:/sgn/bin:Z
-      - ./docker-volumes/node3:/sgn/env:Z
-    networks:
-      localnet:
-        ipv4_address: 192.168.10.5
-
 networks:
   localnet:
     driver: bridge

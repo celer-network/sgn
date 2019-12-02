@@ -1,0 +1,4 @@
+chain-id = "sgnchain"
+indent = true
+output = "json"
+trust-node = true

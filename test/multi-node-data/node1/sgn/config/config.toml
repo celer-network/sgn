@@ -33,8 +33,8 @@ db_backend = "goleveldb"
 db_dir = "data"
 
 # Output level for logging, including package level options
-# log_level = "main:info,state:info,*:error"
-log_level = "main:debug,state:debug,*:debug"
+log_level = "main:info,state:info,*:error"
+# log_level = "main:debug,state:debug,*:debug"
 
 # Output format: 'plain' (colored text) or 'json'
 log_format = "plain"

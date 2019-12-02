@@ -225,6 +225,13 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 	viper.WriteConfig()
+
+	viper.SetConfigFile("/Users/cliu/repos/celer/sgn/docker-volumes/node2/config.json")
+	err = viper.ReadInConfig()
+	tf.ChkErr(err, "failed to read config")
+	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.WriteConfig()
 }
 
 func main() {
