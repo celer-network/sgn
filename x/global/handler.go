@@ -53,6 +53,7 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEnt
 
 	numDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
 	if numDiff.CmpAbs(big.NewInt(keeper.MaxBlockNumDiff(ctx))) > 0 {
+		// Handle the case that sidechain is at tx replay syncing period
 		block, err := keeper.ethClient.Client.HeaderByNumber(context.Background(), big.NewInt(int64(msg.BlockNumber)))
 		if err != nil {
 			return res, fmt.Errorf("Failed to query mainchain block by number: %s", err)
