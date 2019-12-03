@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
+	tf "github.com/celer-network/sgn/testing"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/gorilla/mux"
@@ -17,14 +19,16 @@ import (
 
 // RestServer represents the Light Client Rest server
 type RestServer struct {
-	Mux      *mux.Router
-	listener net.Listener
-	logger   tlog.Logger
+	Mux       *mux.Router
+	listener  net.Listener
+	logger    tlog.Logger
+	channelID [32]byte
 }
 
 const (
 	client0Flag = "client0"
 	client1Flag = "client1"
+	configFlag  = "config"
 )
 
 // NewRestServer creates a new rest server instance
@@ -32,9 +36,20 @@ func NewRestServer() (*RestServer, error) {
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
+	tf.SetupEthClient()
+	client0 := mainchain.EthClient{}
+	client0.SetupAuth(viper.GetString(client0Flag), "")
+	client1 := mainchain.EthClient{}
+	client1.SetupAuth(viper.GetString(client1Flag), "")
+	channelID, err := tf.OpenChannel(client0.Address.Bytes(), client1.Address.Bytes(), client0.PrivateKey, client1.PrivateKey, []byte(viper.GetString(configFlag)))
+	if err != nil {
+		return nil, err
+	}
+
 	return &RestServer{
-		Mux:    r,
-		logger: logger,
+		Mux:       r,
+		logger:    logger,
+		channelID: channelID,
 	}, nil
 }
 
@@ -67,6 +82,12 @@ func ServeCommand() *cobra.Command {
 		Use:   "osp",
 		Short: "Start a local REST server talking to osp",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			viper.SetConfigFile(viper.GetString(configFlag))
+			err = viper.ReadInConfig()
+			if err != nil {
+				return err
+			}
+
 			rs, err := NewRestServer()
 			if err != nil {
 				return err
@@ -86,6 +107,8 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(client0Flag, "./test/key", "client 0 keystore path")
+	cmd.Flags().String(client0Flag, "./test/keys/client0.json", "client 0 keystore path")
+	cmd.Flags().String(client1Flag, "./test/keys/client1.json", "client 1 keystore path")
+	cmd.Flags().String(configFlag, "./config.json", "config path")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
