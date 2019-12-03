@@ -1,9 +1,14 @@
-package main
+// Setup mainchain and sgn sidechain etc for e2e tests
+package multinode
 
 import (
 	"context"
+	"flag"
 	"math/big"
-	"time"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"testing"
 
 	"github.com/celer-network/cChannel-eth-go/deploy"
 	"github.com/celer-network/cChannel-eth-go/ethpool"
@@ -15,17 +20,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/spf13/viper"
 )
 
-type SGNParams struct {
-	blameTimeout           *big.Int
-	minValidatorNum        *big.Int
-	minStakingPool         *big.Int
-	sidechainGoLiveTimeout *big.Int
-	startGateway           bool
-}
-
+// CProfile struct is based on github.com/goCeler/common (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
+// CProfile contains configurations for CelerClient/OSP
 type CProfile struct {
 	ETHInstance        string `json:"ethInstance"`
 	SvrETHAddr         string `json:"svrEthAddr"`
@@ -50,26 +48,7 @@ type CProfile struct {
 	DisputeTimeout     uint64 `json:"disputeTimeout"`
 }
 
-const (
-	// outPathPrefix is the path prefix for all output from multinode (incl. chain data, binaries etc)
-	// the code will append epoch second to this and create the folder
-	// the folder will be deleted after test ends successfully
-	outRootDirPrefix = "/tmp/celer_multinode_"
-
-	// etherbase and osp addr/priv key in hex
-	etherBaseAddrStr  = "b5bb8b7f6f1883e0c01ffb8697024532e6f3238c"
-	etherBasePriv     = "69ef4da8204644e354d759ca93b94361474259f63caac6e12d7d0abcca0063f8"
-	client0AddrStr    = "6a6d2a97da1c453a4e099e8054865a0a59728863"
-	client0Priv       = "a7c9fa8bcd45a86fdb5f30fecf88337f20185b0c526088f2b8e0f726cad12857"
-	client0SGNAddrStr = "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp"
-	client1AddrStr    = "ba756d65a1a03f07d205749f35e2406e4a8522ad"
-	client1Priv       = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
-
-	blockDelay       = 2
-	sgnBlockInterval = 1
-	defaultTimeout   = 60 * time.Second
-)
-
+// used by setup_onchain and tests
 var (
 	etherBaseAddr = mainchain.Hex2Addr(etherBaseAddrStr)
 	client0Addr   = mainchain.Hex2Addr(client0AddrStr)
@@ -78,15 +57,66 @@ var (
 
 // runtime variables, will be initialized by TestMain
 var (
-	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
-	// due to testframework etc in a different testing package, we have to define
-	// same var in testframework.go and expose a set api
-	outRootDir    string
 	e2eProfile    *CProfile
-	celrContract  *mainchain.ERC20
 	guardAddr     mainchain.Addr
 	mockCelerAddr mainchain.Addr
 )
+
+// TestMain handles common setup (start mainchain, deploy, start sidechain etc)
+// and teardown. Test specific setup should be done in TestXxx
+func TestMain(m *testing.M) {
+	flag.Parse()
+	log.EnableColor()
+	common.EnableLogLongFile()
+
+	repoRoot, _ := filepath.Abs("../../..")
+
+	log.Infoln("make localnet-down")
+	cmd := exec.Command("make", "localnet-down")
+	cmd.Dir = repoRoot
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+
+	log.Infoln("build dockers, get geth, build sgn binary")
+	cmd = exec.Command("make", "prepare-docker-env")
+	cmd.Dir = repoRoot
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+
+	log.Infoln("start geth container")
+	cmd = exec.Command("make", "localnet-start-geth")
+	cmd.Dir = repoRoot
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+	sleepWithLog(5, "geth start")
+
+	// TODO: can remove the fund distribution in genesis file?
+	// log.Infoln("first fund client0Addr 100 ETH")
+	// err := tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
+	// tf.ChkErr(err, "fund server")
+	log.Infoln("set up mainchain")
+	e2eProfile, mockCelerAddr = setupMainchain()
+
+	log.Infoln("run all e2e tests")
+	ret := m.Run()
+
+	if ret == 0 {
+		log.Infoln("All tests passed! 🎉🎉🎉")
+		// tear down all containers
+		cmd = exec.Command("make", "localnet-down")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
+	} else {
+		log.Errorln("Tests failed. 🚧🚧🚧 Geth and sgn nodes are still running for debug. 🚧🚧🚧Run make localnet-down to stop it")
+		os.Exit(ret)
+	}
+}
 
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
@@ -182,62 +212,4 @@ func setupMainchain() (*CProfile, mainchain.Addr) {
 		PayRegistryAddr:  mainchain.Addr2Hex(channelAddrBundle.PayRegistryAddr),
 	}
 	return p, erc20Addr
-}
-
-func deployGuardContract() mainchain.Addr {
-	sgnParams := &SGNParams{
-		blameTimeout:           big.NewInt(50),
-		minValidatorNum:        big.NewInt(1),
-		minStakingPool:         big.NewInt(100),
-		sidechainGoLiveTimeout: big.NewInt(0),
-	}
-
-	conn, err := ethclient.Dial(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-
-	ctx := context.Background()
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
-
-	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, mockCelerAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
-	tf.ChkErr(err, "failed to deploy Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
-
-	return guardAddr
-}
-
-func updateSGNConfig() {
-	log.Infoln("Updating SGN's config.json")
-
-	viper.SetConfigFile("/Users/cliu/repos/celer/sgn/docker-volumes/node0/config.json")
-	err := viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
-	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
-	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
-	viper.WriteConfig()
-
-	viper.SetConfigFile("/Users/cliu/repos/celer/sgn/docker-volumes/node1/config.json")
-	err = viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
-	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
-	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
-	viper.WriteConfig()
-
-	viper.SetConfigFile("/Users/cliu/repos/celer/sgn/docker-volumes/node2/config.json")
-	err = viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
-	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
-	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
-	viper.WriteConfig()
-}
-
-func main() {
-	e2eProfile, mockCelerAddr = setupMainchain()
-
-	guardAddr = deployGuardContract()
-
-	updateSGNConfig()
 }

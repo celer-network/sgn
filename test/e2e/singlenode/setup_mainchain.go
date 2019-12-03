@@ -32,7 +32,6 @@ func startMainchain() (*os.Process, error) {
 	// set cmd.Dir because relative files are under testing/env
 	cmdInit.Dir, _ = filepath.Abs(envDir)
 	if err := cmdInit.Run(); err != nil {
-		log.Infoln(err.Error())
 		return nil, err
 	}
 

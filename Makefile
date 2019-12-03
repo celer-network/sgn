@@ -49,21 +49,34 @@ get-geth:
 build-dockers:
 	$(MAKE) -C networks/local
 
-# Run a 4-node testnet locally
-localnet-start: build-linux localnet-stop
-	@if ! [ -f build/node0/sgn/config/genesis.json ]; then\
-		docker run --rm -v $(CURDIR)/build:/sgn:Z celer-network/sgnnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 ;\
-	fi
-	docker-compose up -d
+# Prepare docker environment for multinode testing
+.PHONY: prepare-docker-env
+prepare-docker-env: build-dockers get-geth build-linux
 
-# Stop testnet
-localnet-stop:
+# Run geth
+.PHONY: localnet-start-geth
+localnet-start-geth:
+	docker-compose stop geth
+	docker-compose up -d geth
+
+# Run a 3-node sgn testnet locally
+.PHONY: localnet-start-nodes
+localnet-start-nodes: localnet-stop-nodes
+	docker-compose up -d sgnnode0 sgnnode1 sgnnode2
+
+# Stop sgn testnet
+.PHONY: localnet-stop-nodes
+localnet-stop-nodes:
+	docker-compose stop sgnnode0 sgnnode1 sgnnode2
+
+# Stop both geth and sgn testnet
+.PHONY: localnet-down
+localnet-down:
 	docker-compose down
 
-
-######### utils
-.PHONY: prepare-docker-env
-prepare-docker-env:
+# Prepare sgn nodes' data
+.PHONY: prepare-sgn-data
+prepare-sgn-data:
 	rm -rf ./docker-volumes
 	cp -r ./test/multi-node-data .
 	mv ./multi-node-data ./docker-volumes
