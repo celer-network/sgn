@@ -36,12 +36,11 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 // Handle a message to sync block
-func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEntry *seal.MsgLog) (res sdk.Result, err error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.BlockNum = msg.BlockNumber
 
-	res := sdk.Result{}
 	latestBlock := keeper.GetLatestBlock(ctx)
 	if msg.BlockNumber < latestBlock.Number {
 		return res, fmt.Errorf("smaller than latest blknum %d", latestBlock.Number)
@@ -52,11 +51,19 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEnt
 		return res, fmt.Errorf("Failed to query mainchain header: %s", err)
 	}
 
-	blockDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
-	if blockDiff.CmpAbs(big.NewInt(keeper.MaxBlockDiff(ctx))) > 0 {
-		return res, fmt.Errorf("out of bound diff with mainchain blknum %d", head.Number.Uint64())
+	numDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
+	if numDiff.CmpAbs(big.NewInt(keeper.MaxBlockNumDiff(ctx))) > 0 {
+		block, err := keeper.ethClient.Client.HeaderByNumber(context.Background(), big.NewInt(int64(msg.BlockNumber)))
+		if err != nil {
+			return res, fmt.Errorf("Failed to query mainchain block by number: %s", err)
+		}
+		timeDiff := ctx.BlockTime().Unix() - int64(block.Time)
+		if timeDiff < 0 || timeDiff > keeper.MaxBlockTimeDiff(ctx) {
+			return res, fmt.Errorf("out of bound diff with mainchain blknum %d and timestamp %d", head.Number.Uint64(), ctx.BlockTime().Unix())
+		}
 	}
 
 	keeper.SyncBlock(ctx, msg.BlockNumber)
-	return res, nil
+
+	return
 }
