@@ -98,8 +98,9 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	channelId, err := openChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey)
+	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey, mockCelerAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
+	sleepWithLog(10, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
@@ -189,27 +190,4 @@ func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKe
 	}
 
 	return signedSimplexStateProto, nil
-}
-
-func monitorOpenChannel(ledgerContract *mainchain.CelerLedger, channelIdChan chan [32]byte) {
-	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
-	sub, err := ledgerContract.WatchOpenChannel(nil, openChannelChan, nil, nil)
-	if err != nil {
-		log.Errorln("WatchInitializeCandidate err: ", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchInitializeCandidate err: ", err)
-		case openChannel := <-openChannelChan:
-			log.Infoln("Monitored a OpenChannel event")
-			channelId := [32]byte{}
-			copy(channelId[:], openChannel.ChannelId[:])
-			channelIdChan <- channelId
-			return
-		}
-	}
 }

@@ -60,9 +60,14 @@ func updateSGNConfig() {
 	viper.SetConfigFile("../../config.json")
 	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
+
+	clientKeystore, err := filepath.Abs("../keys/client0.json")
+	tf.ChkErr(err, "get client keystore path")
+
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }
 

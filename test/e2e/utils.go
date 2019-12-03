@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"crypto/ecdsa"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -13,14 +12,11 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	protobuf "github.com/golang/protobuf/proto"
 )
 
 func sleep(second time.Duration) {
@@ -88,71 +84,4 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	tf.WaitMinedWithChk(ctx, conn, tx, 3 * blockDelay, "Delegate to validator")
 	sleepWithLog(10, "sgn syncing Delegate event on mainchain")
 	return nil
-}
-
-func openChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
-	log.Info("Call openChannel on ledger contract...")
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ledgerContract := tf.EthClient.Ledger
-	tokenInfo := &entity.TokenInfo{
-		TokenType:    entity.TokenType_ERC20,
-		TokenAddress: mockCelerAddr.Bytes(),
-	}
-	lowAddrDist := &entity.AccountAmtPair{
-		Account: peer0Addr,
-		Amt:     big.NewInt(0).Bytes(),
-	}
-	highAddrDist := &entity.AccountAmtPair{
-		Account: peer1Addr,
-		Amt:     big.NewInt(0).Bytes(),
-	}
-	initializer := &entity.PaymentChannelInitializer{
-		InitDistribution: &entity.TokenDistribution{
-			Token: tokenInfo,
-			Distribution: []*entity.AccountAmtPair{
-				lowAddrDist, highAddrDist,
-			},
-		},
-		OpenDeadline:   1000000,
-		DisputeTimeout: 100,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
-
-	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
-	if err != nil {
-		return
-	}
-
-	sig0, err := mainchain.SignMessage(peer0PrivKey, paymentChannelInitializerBytes)
-	if err != nil {
-		return
-	}
-
-	sig1, err := mainchain.SignMessage(peer1PrivKey, paymentChannelInitializerBytes)
-	if err != nil {
-		return
-	}
-
-	requestBytes, err := protobuf.Marshal(&chain.OpenChannelRequest{
-		ChannelInitializer: paymentChannelInitializerBytes,
-		Sigs:               [][]byte{sig0, sig1},
-	})
-	if err != nil {
-		return
-	}
-
-	channelIdChan := make(chan [32]byte)
-	go monitorOpenChannel(ledgerContract, channelIdChan)
-	tx, err := ledgerContract.OpenChannel(auth, requestBytes)
-	if err != nil {
-		return
-	}
-
-	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "OpenChannel")
-	channelId = <-channelIdChan
-	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
-
-	return
 }
