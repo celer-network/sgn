@@ -105,7 +105,7 @@ func TestMain(m *testing.M) {
 
 	if ret == 0 {
 		log.Infoln("All tests passed! 🎉🎉🎉")
-		// tear down all containers
+		log.Infoln("Tearing down all containers...")
 		cmd = exec.Command("make", "localnet-down")
 		cmd.Dir = repoRoot
 		if err := cmd.Run(); err != nil {
