@@ -39,8 +39,9 @@ copy-test-config:
 ################################ Docker related ################################
 .PHONY: build
 build: go.sum
-	go build -o build/sgn ./cmd/sgn
-	go build -o build/sgncli ./cmd/sgncli
+	mkdir -p ./build
+	go build -o ./build/sgn ./cmd/sgn
+	go build -o ./build/sgncli ./cmd/sgncli
 
 .PHONY: build-linux
 build-linux: go.sum
@@ -49,6 +50,7 @@ build-linux: go.sum
 GETH_VER = geth-linux-amd64-1.9.1-b7b2f60f
 .PHONY: get-geth
 get-geth:
+	mkdir -p ./build
 	curl -sL https://gethstore.blob.core.windows.net/builds/$(GETH_VER).tar.gz | tar -xz --strip 1 $(GETH_VER)/geth && mv geth ./build;
 
 .PHONY: build-dockers
@@ -57,7 +59,7 @@ build-dockers:
 
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env
-prepare-docker-env: build-dockers get-geth build-linux
+prepare-docker-env: build-dockers get-geth build-linux prepare-geth-data
 
 # Run geth
 .PHONY: localnet-start-geth
@@ -80,9 +82,20 @@ localnet-stop-nodes:
 localnet-down:
 	docker-compose down
 
+# Prepare geth data
+.PHONY: prepare-geth-data
+prepare-geth-data:
+	rm -rf ./docker-volumes/geth-env
+	mkdir -p ./docker-volumes
+	cp -r ./test/multi-node-data/geth-env ./docker-volumes/
+
 # Prepare sgn nodes' data
 .PHONY: prepare-sgn-data
 prepare-sgn-data:
-	rm -rf ./docker-volumes
-	cp -r ./test/multi-node-data .
-	mv ./multi-node-data ./docker-volumes
+	rm -rf ./docker-volumes/node*
+	cp -r ./test/multi-node-data/node* ./docker-volumes/
+
+# Clean test data
+.PHONY: clean-test
+clean-test:
+	rm -rf ./docker-volumes ./build
