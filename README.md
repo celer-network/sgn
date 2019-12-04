@@ -22,3 +22,14 @@
 11. `make test-client` to submit client request
 12. Call intendSettle on `0x1baed8e1166410c1494a107f091cfebb50d491e3` with channelId `[1,"0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0",0]`
 13. sgn should triffer onchain intendSettle tx
+
+## Test
+### Multinode Local Tests
+#### Requirements
+* Install [docker](https://docs.docker.com/install/)
+* Install [docker-compose](https://docs.docker.com/compose/install/)
+
+#### Steps
+cd to repo's root folder and run
+
+`go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e/multinode`
