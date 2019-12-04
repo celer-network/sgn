@@ -34,3 +34,7 @@
 2. cd to repo's root folder and run
     
     `go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e/multinode`
+
+#### Test Logs
+* geth log path: docker-volumes/geth-env/geth.log
+* sgn nodeN log path: docker-volumes/nodeN/sgn/sgn.log

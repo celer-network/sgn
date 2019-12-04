@@ -25,7 +25,7 @@ fi
 export SGNHOME="/sgn/env/sgn"
 
 if [ -d "$(dirname "${SGNHOME}"/"${LOG}")" ]; then
-  "${BINARY}" --home "${SGNHOME}" "$@" | tee "${SGNHOME}/${LOG}"
+  "${BINARY}" --home "${SGNHOME}" "$@" 2>&1 | tee "${SGNHOME}/${LOG}"
 else
   "${BINARY}" --home "${SGNHOME}" "$@"
 fi
