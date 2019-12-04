@@ -30,6 +30,7 @@
 * Install [docker-compose](https://docs.docker.com/compose/install/)
 
 #### Steps
-cd to repo's root folder and run
-
-`go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e/multinode`
+1. Start Docker daemon
+2. cd to repo's root folder and run
+    
+    `go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e/multinode`
