@@ -64,7 +64,7 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 	}
 
 	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "InitializeCandidate")
-	sleepBlocksWithLog(5, "sgn syncing InitializeCandidate event on mainchain")
+	sleepBlocksWithLog(6, "sgn syncing InitializeCandidate event on mainchain")
 	return nil
 }
 
