@@ -53,7 +53,7 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEnt
 
 	timeDiff := ctx.BlockTime().Unix() - int64(block.Time)
 	if timeDiff < keeper.BlkTimeDiffLower(ctx) || timeDiff > keeper.BlkTimeDiffUpper(ctx) {
-		return res, fmt.Errorf("out of bound diff with mainchain timestamp %d", ctx.BlockTime().Unix())
+		return res, fmt.Errorf("out of bound diff %d with mainchain timestamp %d", timeDiff, ctx.BlockTime().Unix())
 	}
 
 	keeper.SyncBlock(ctx, msg.BlockNumber)
