@@ -46,25 +46,16 @@ func handleMsgSyncBlock(ctx sdk.Context, keeper Keeper, msg MsgSyncBlock, logEnt
 		return res, fmt.Errorf("smaller than latest blknum %d", latestBlock.Number)
 	}
 
-	head, err := keeper.ethClient.Client.HeaderByNumber(context.Background(), nil)
+	block, err := keeper.ethClient.Client.HeaderByNumber(context.Background(), big.NewInt(int64(msg.BlockNumber)))
 	if err != nil {
-		return res, fmt.Errorf("Failed to query mainchain header: %s", err)
+		return res, fmt.Errorf("Failed to query mainchain block by number: %s", err)
 	}
 
-	numDiff := new(big.Int).Sub(head.Number, new(big.Int).SetUint64(msg.BlockNumber))
-	if numDiff.CmpAbs(big.NewInt(keeper.MaxBlockNumDiff(ctx))) > 0 {
-		// Handle the case that sidechain is at tx replay syncing period
-		block, err := keeper.ethClient.Client.HeaderByNumber(context.Background(), big.NewInt(int64(msg.BlockNumber)))
-		if err != nil {
-			return res, fmt.Errorf("Failed to query mainchain block by number: %s", err)
-		}
-		timeDiff := ctx.BlockTime().Unix() - int64(block.Time)
-		if timeDiff < 0 || timeDiff > keeper.MaxBlockTimeDiff(ctx) {
-			return res, fmt.Errorf("out of bound diff with mainchain blknum %d and timestamp %d", head.Number.Uint64(), ctx.BlockTime().Unix())
-		}
+	timeDiff := ctx.BlockTime().Unix() - int64(block.Time)
+	if timeDiff < keeper.BlkTimeDiffLower(ctx) || timeDiff > keeper.BlkTimeDiffUpper(ctx) {
+		return res, fmt.Errorf("out of bound diff with mainchain timestamp %d", ctx.BlockTime().Unix())
 	}
 
 	keeper.SyncBlock(ctx, msg.BlockNumber)
-
 	return
 }

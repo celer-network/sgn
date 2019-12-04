@@ -22,15 +22,15 @@ func (k Keeper) EpochLength(ctx sdk.Context) (res int64) {
 	return
 }
 
-// MaxBlockNumDiff - Max block diff accepted when sync block
-func (k Keeper) MaxBlockNumDiff(ctx sdk.Context) (res int64) {
-	k.paramstore.Get(ctx, types.KeyMaxBlockNumDiff, &res)
+// BlkTimeDiffLower - Max block diff accepted when sync block
+func (k Keeper) BlkTimeDiffLower(ctx sdk.Context) (res int64) {
+	k.paramstore.Get(ctx, types.KeyBlkTimeDiffLower, &res)
 	return
 }
 
-// MaxBlockTimeDiff - Max block diff accepted when sync block
-func (k Keeper) MaxBlockTimeDiff(ctx sdk.Context) (res int64) {
-	k.paramstore.Get(ctx, types.KeyMaxBlockTimeDiff, &res)
+// BlkTimeDiffUpper - Max block diff accepted when sync block
+func (k Keeper) BlkTimeDiffUpper(ctx sdk.Context) (res int64) {
+	k.paramstore.Get(ctx, types.KeyBlkTimeDiffUpper, &res)
 	return
 }
 
@@ -44,8 +44,8 @@ func (k Keeper) ConfirmationCount(ctx sdk.Context) (res uint64) {
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.EpochLength(ctx),
-		k.MaxBlockNumDiff(ctx),
-		k.MaxBlockTimeDiff(ctx),
+		k.BlkTimeDiffLower(ctx),
+		k.BlkTimeDiffUpper(ctx),
 		k.ConfirmationCount(ctx),
 	)
 }

@@ -77,7 +77,7 @@ func (m *EthMonitor) monitorBlockHead() {
 		case err := <-sub.Err():
 			log.Errorln("SubscribeNewHead err", err)
 		case header := <-headerChan:
-			m.handleNewBlock(header)
+			go m.handleNewBlock(header)
 			go m.processQueue()
 		}
 	}

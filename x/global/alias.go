@@ -28,6 +28,7 @@ var (
 	DefaultParams          = types.DefaultParams
 	CLIQueryLatestBlock    = cli.QueryLatestBlock
 	CLIQuerySecureBlockNum = cli.QuerySecureBlockNum
+	CLIQueryParams         = cli.QueryParams
 )
 
 type (
