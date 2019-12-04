@@ -73,7 +73,7 @@ func gatewayTest(t *testing.T) {
 	body, _ := json.Marshal(msg)
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
 	tf.ChkTestErr(t, err, "failed to post subscribe msg to gateway")
-	sleepWithLog(15, "sgn syncing Subscribe balance from mainchain")
+	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query subscription from gateway")
