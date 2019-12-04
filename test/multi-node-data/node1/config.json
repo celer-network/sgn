@@ -6,7 +6,7 @@
         "passphrase": "",
         "ws": "ws://geth:8546"
     },
-    "logcolor": true,
+    "logcolor": false,
     "loglevel": "debug",
     "loglongfile": true,
     "sgn": {
