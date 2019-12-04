@@ -25,7 +25,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 		return
 	}
 
-	time.Sleep(time.Duration(params.BlkTimeDiffLower) * time.Second)
+	time.Sleep(time.Duration(params.BlkTimeDiffLower+1) * time.Second)
 	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
