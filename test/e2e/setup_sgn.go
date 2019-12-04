@@ -32,7 +32,7 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 		}
 	}
 
-	deployGuardContract(sgnParams)
+	e2eProfile.GuardAddr = deployGuardContract(sgnParams)
 
 	updateSGNConfig()
 	sgnProc, err := startSidechain(outRootDir, testName)

@@ -122,7 +122,7 @@ func setupMainchain() *TestProfile {
 	}
 }
 
-func deployGuardContract(sgnParams *SGNParams) {
+func deployGuardContract(sgnParams *SGNParams) mainchain.Addr {
 	conn, err := ethclient.Dial(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 
@@ -137,5 +137,5 @@ func deployGuardContract(sgnParams *SGNParams) {
 	tf.ChkErr(err, "failed to deploy Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
-	e2eProfile.GuardAddr = guardAddr
+	return guardAddr
 }
