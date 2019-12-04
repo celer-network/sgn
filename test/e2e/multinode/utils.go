@@ -74,6 +74,7 @@ func setupNewSGNEnv() mainchain.Addr {
 	tf.ChkErr(err, "failed to read config")
 	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	sgnCliHome, _ := filepath.Abs("../../../docker-volumes/node0/sgncli")
 	viper.Set(common.FlagSgnCLIHome, sgnCliHome)
 	sgnNodeHome, _ := filepath.Abs("../../../docker-volumes/node0/sgn")
