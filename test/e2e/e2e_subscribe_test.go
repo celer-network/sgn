@@ -73,7 +73,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Infoln("Call subscribe on guard contract...")
-	tx, err := celrContract.Approve(auth, guardAddr, amt)
+	tx, err := e2eProfile.CelrContract.Approve(auth, e2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
@@ -98,7 +98,7 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey, mockCelerAddr.Bytes())
+	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(client1AddrStr), tf.EthClient.PrivateKey, client1PrivKey, e2eProfile.CelrAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
 	sleepWithLog(10, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, client1PrivKey)
