@@ -15,30 +15,12 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-// CProfile struct is based on github.com/goCeler/common (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
-// CProfile contains configurations for CelerClient/OSP
-type CProfile struct {
-	ETHInstance        string `json:"ethInstance"`
-	SvrETHAddr         string `json:"svrEthAddr"`
-	WalletAddr         string `json:"walletAddr"`
-	LedgerAddr         string `json:"ledgerAddr"`
-	VirtResolverAddr   string `json:"virtResolverAddr"`
-	EthPoolAddr        string `json:"ethPoolAddr"`
-	PayResolverAddr    string `json:"payResolverAddr"`
-	PayRegistryAddr    string `json:"payRegistryAddr"`
-	RouterRegistryAddr string `json:"routerRegistryAddr"`
-	SvrRPC             string `json:"svrRpc"`
-	SelfRPC            string `json:"selfRpc,omitempty"`
-	StoreDir           string `json:"storeDir,omitempty"`
-	StoreSql           string `json:"storeSql,omitempty"`
-	WebPort            string `json:"webPort,omitempty"`
-	WsOrigin           string `json:"wsOrigin,omitempty"`
-	ChainId            int64  `json:"chainId"`
-	BlockDelayNum      uint64 `json:"blockDelayNum"`
-	IsOSP              bool   `json:"isOsp,omitempty"`
-	ListenOnChain      bool   `json:"listenOnChain,omitempty"`
-	PollingInterval    uint64 `json:"pollingInterval"`
-	DisputeTimeout     uint64 `json:"disputeTimeout"`
+type TestProfile struct {
+	DisputeTimeout uint64
+	LedgerAddr     mainchain.Addr
+	GuardAddr      mainchain.Addr
+	CelrAddr       mainchain.Addr
+	CelrContract   *mainchain.ERC20
 }
 
 // used by setup_onchain and tests
@@ -53,12 +35,9 @@ var (
 	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
-	outRootDir    string
-	envDir        = "../../testing/env"
-	e2eProfile    *CProfile
-	celrContract  *mainchain.ERC20
-	guardAddr     mainchain.Addr
-	mockCelerAddr mainchain.Addr
+	outRootDir string
+	envDir     = "../../testing/env"
+	e2eProfile *TestProfile
 )
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
@@ -85,7 +64,7 @@ func TestMain(m *testing.M) {
 	// first fund client0Addr 100 ETH
 	err = tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
-	e2eProfile, mockCelerAddr = setupMainchain()
+	e2eProfile = setupMainchain()
 
 	// make install sgn and sgncli
 	err = installSgn()

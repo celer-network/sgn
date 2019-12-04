@@ -71,7 +71,7 @@ func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	defer cancel()
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
+	tx, err := e2eProfile.CelrContract.Approve(fromAuth, e2eProfile.GuardAddr, amt)
 	if err != nil {
 		return err
 	}
