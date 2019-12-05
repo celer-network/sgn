@@ -13,7 +13,6 @@
     "chainid": "sgnchain",
     "clihome": "PATH/TO/YOU/SGN_CLI_HOME",
     "gasprice": "",
-    "nodehome": "PATH/TO/YOU/SGN_DAEMON_HOME",
     "nodeuri": "tcp://localhost:26657",
     "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
     "passphrase": "12341234",

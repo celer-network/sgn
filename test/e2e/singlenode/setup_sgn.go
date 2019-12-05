@@ -68,9 +68,6 @@ func updateSGNConfig() {
 	path, err := homedir.Expand("~/.sgncli")
 	tf.ChkErr(err, "failed to get sgncli abs path")
 	viper.Set(common.FlagSgnCLIHome, path);
-	path, err = homedir.Expand("~/.sgn")
-	tf.ChkErr(err, "failed to get sgn abs path")
-	viper.Set(common.FlagSgnNodeHome, path);
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }

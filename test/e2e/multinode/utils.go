@@ -78,8 +78,6 @@ func setupNewSGNEnv() mainchain.Addr {
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	sgnCliHome, _ := filepath.Abs("../../../docker-volumes/node0/sgncli")
 	viper.Set(common.FlagSgnCLIHome, sgnCliHome)
-	sgnNodeHome, _ := filepath.Abs("../../../docker-volumes/node0/sgn")
-	viper.Set(common.FlagSgnNodeHome, sgnNodeHome)
 	clientKeystore, err := filepath.Abs("../../keys/client0.json")
 	tf.ChkErr(err, "get client keystore path")
 	viper.Set(common.FlagEthKeystore, clientKeystore)

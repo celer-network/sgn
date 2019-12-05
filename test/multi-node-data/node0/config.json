@@ -19,7 +19,6 @@
         "transactors": [
             "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"
         ],
-        "clihome": "/sgn/env/sgncli",
-        "nodehome": "/sgn/env/sgn"
+        "clihome": "/sgn/env/sgncli"
     }
 }

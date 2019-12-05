@@ -19,5 +19,4 @@ const (
 	FlagLogColor    = "logColor"
 	FlagLogLongFile = "logLongFile"
 	FlagSgnCLIHome  = "sgn.cliHome"
-	FlagSgnNodeHome = "sgn.nodeHome"
 )
