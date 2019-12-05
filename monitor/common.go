@@ -61,8 +61,11 @@ func (m *EthMonitor) getSecureBlockNum() (uint64, error) {
 	return global.CLIQuerySecureBlockNum(m.transactor.CliCtx, global.RouterKey)
 }
 
-// Get account info
 func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 	accGetter := types.NewAccountRetriever(m.transactor.CliCtx)
 	return accGetter.GetAccount(addr)
+}
+
+func (m *EthMonitor) getGlobalParams() (global.Params, error) {
+	return global.CLIQueryParams(m.transactor.CliCtx, global.RouterKey)
 }

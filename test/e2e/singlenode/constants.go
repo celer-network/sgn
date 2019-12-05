@@ -18,7 +18,7 @@ const (
 	client1Priv       = "c2ff7d4ce25f7448de00e21bbbb7b884bb8dc0ca642031642863e78a35cb933d"
 
 	maxBlockDiff     = 2 // defined in sidechain's genesis file
-	blockDelay       = 2
+	blockDelay       = 3
 	sgnBlockInterval = 1
 	defaultTimeout   = 60 * time.Second
 )

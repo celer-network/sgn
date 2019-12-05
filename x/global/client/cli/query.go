@@ -116,16 +116,23 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "Query the current global parameters information",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
-			bz, _, err := cliCtx.QueryWithData(route, nil)
+			params, err := QueryParams(cliCtx, queryRoute)
 			if err != nil {
 				return err
 			}
 
-			var params types.Params
-			cdc.MustUnmarshalJSON(bz, &params)
 			return cliCtx.PrintOutput(params)
 		},
 	}
+}
+
+func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Params, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
+	res, _, err := cliCtx.Query(route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &params)
+	return
 }

@@ -13,8 +13,11 @@ const (
 	// Default epoch length based on seconds
 	DefaultEpochLength int64 = 60
 
-	// Default max block diff accepted when sync block
-	DefaultMaxBlockDiff int64 = 2
+	// Default lower bound of block time diff
+	DefaultBlkTimeDiffLower int64 = 30
+
+	// Default upper bound of block time diff
+	DefaultBlkTimeDiffUpper int64 = 60
 
 	// Default number of blocks to confirm a block is safe
 	DefaultConfirmationCount uint64 = 5
@@ -23,7 +26,8 @@ const (
 // nolint - Keys for parameter access
 var (
 	KeyEpochLength       = []byte("EpochLength")
-	KeyMaxBlockDiff      = []byte("KeyMaxBlockDiff")
+	KeyBlkTimeDiffLower  = []byte("KeyBlkTimeDiffLower")
+	KeyBlkTimeDiffUpper  = []byte("KeyBlkTimeDiffUpper")
 	KeyConfirmationCount = []byte("KeyConfirmationCount")
 )
 
@@ -32,16 +36,17 @@ var _ params.ParamSet = (*Params)(nil)
 // Params defines the high level settings for global
 type Params struct {
 	EpochLength       int64  `json:"epochLength" yaml:"epochLength"`             // epoch length based on seconds
-	MaxBlockDiff      int64  `json:"maxBlockDiff" yaml:"maxBlockDiff"`           // Max block diff accepted when sync block
+	BlkTimeDiffLower  int64  `json:"blkTimeDiffLower" yaml:"blkTimeDiffLower"`   // The lower bound of block time diff
+	BlkTimeDiffUpper  int64  `json:"blkTimeDiffUpper" yaml:"blkTimeDiffUpper"`   // The upper bound of block time diff
 	ConfirmationCount uint64 `json:"confirmationCount" yaml:"confirmationCount"` // Number of blocks to confirm a block is safe
 }
 
 // NewParams creates a new Params instance
-func NewParams(epochLength, maxBlockDiff int64, confirmationCount uint64) Params {
-
+func NewParams(epochLength, blkTimeDiffLower, blkTimeDiffUpper int64, confirmationCount uint64) Params {
 	return Params{
 		EpochLength:       epochLength,
-		MaxBlockDiff:      maxBlockDiff,
+		BlkTimeDiffLower:  blkTimeDiffLower,
+		BlkTimeDiffUpper:  blkTimeDiffUpper,
 		ConfirmationCount: confirmationCount,
 	}
 }
@@ -50,7 +55,8 @@ func NewParams(epochLength, maxBlockDiff int64, confirmationCount uint64) Params
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		{KeyEpochLength, &p.EpochLength},
-		{KeyMaxBlockDiff, &p.MaxBlockDiff},
+		{KeyBlkTimeDiffLower, &p.BlkTimeDiffLower},
+		{KeyBlkTimeDiffUpper, &p.BlkTimeDiffUpper},
 		{KeyConfirmationCount, &p.ConfirmationCount},
 	}
 }
@@ -64,16 +70,17 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultEpochLength, DefaultMaxBlockDiff, DefaultConfirmationCount)
+	return NewParams(DefaultEpochLength, DefaultBlkTimeDiffLower, DefaultBlkTimeDiffUpper, DefaultConfirmationCount)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   EpochLength:    %d
-	MaxBlockDiff:   %d
+	BlkTimeDiffLower:   %d
+	BlkTimeDiffUpper:   %d
 	ConfirmationCount:   %d`,
-		p.EpochLength, p.MaxBlockDiff, p.ConfirmationCount)
+		p.EpochLength, p.BlkTimeDiffLower, p.BlkTimeDiffUpper, p.ConfirmationCount)
 }
 
 // unmarshal the current global params value from store key or panic
@@ -100,8 +107,16 @@ func (p Params) Validate() error {
 		return fmt.Errorf("global parameter EpochLength must be a positive integer")
 	}
 
-	if p.MaxBlockDiff < 0 {
-		return fmt.Errorf("global parameter EpochLength must be a positive integer")
+	if p.BlkTimeDiffLower < 0 {
+		return fmt.Errorf("global parameter BlkTimeDiffLower cannot be a negative integer")
+	}
+
+	if p.BlkTimeDiffUpper < 0 {
+		return fmt.Errorf("global parameter BlkTimeDiffUpper cannot be a negative integer")
+	}
+
+	if p.ConfirmationCount < 0 {
+		return fmt.Errorf("global parameter ConfirmationCount cannot be a negative integer")
 	}
 
 	return nil
