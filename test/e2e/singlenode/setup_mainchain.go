@@ -96,6 +96,25 @@ func setupMainchain() *TestProfile {
 	tf.ChkErr(err, "failed to deploy ERC20")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
+	// Transfer ERC20 to etherbase and client0
+	tf.LogBlkNum(conn)
+	celrAmt := new(big.Int)
+	celrAmt.SetString("5" + strings.Repeat("0", 29), 10)
+	addrs := []mainchain.Addr{etherBaseAddr, client0Addr}
+	for _, addr := range addrs {
+		tx, err = erc20.Transfer(etherBaseAuth, addr, celrAmt)
+		tf.ChkErr(err, "failed to send CELR")
+		mainchain.WaitMined(ctx, conn, tx, 0)
+	}
+	log.Infof("Sent CELR to etherbase and client0")
+
+	// Approve transferFrom of CELR for celerLedger
+	tf.LogBlkNum(conn)
+	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, celrAmt)
+	tf.ChkErr(err, "failed to approve transferFrom of CELR for celerLedger")
+	mainchain.WaitMined(ctx, conn, tx, 0)
+	log.Infof("CELR transferFrom approved for celerLedger")
+
 	return &TestProfile{
 		// hardcoded values
 		DisputeTimeout: 10,
