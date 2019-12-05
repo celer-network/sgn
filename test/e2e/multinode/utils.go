@@ -43,7 +43,8 @@ func setupNewSGNEnv() mainchain.Addr {
 	price := big.NewInt(2e9) // 2Gwei
 	etherBaseAuth.GasPrice = price
 	etherBaseAuth.GasLimit = 7000000
-	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, mockCelerAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
+	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
+	e2eProfile.GuardAddr = guardAddr
 	tf.ChkErr(err, "failed to deploy Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
@@ -62,7 +63,7 @@ func setupNewSGNEnv() mainchain.Addr {
 		viper.SetConfigFile(configPath)
 		err := viper.ReadInConfig()
 		tf.ChkErr(err, "failed to read config")
-		viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+		viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
 		viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 		viper.WriteConfig()
 	}
@@ -72,7 +73,7 @@ func setupNewSGNEnv() mainchain.Addr {
 	viper.SetConfigFile("../../../config.json")
 	err = viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
-	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	sgnCliHome, _ := filepath.Abs("../../../docker-volumes/node0/sgncli")

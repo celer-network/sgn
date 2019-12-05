@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/goutils/log"
 	"github.com/spf13/viper"
@@ -34,7 +33,7 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 		}
 	}
 
-	guardAddr = deployGuardContract(sgnParams)
+	e2eProfile.GuardAddr = deployGuardContract(sgnParams)
 
 	updateSGNConfig()
 	sgnProc, err := startSidechain(outRootDir, testName)
@@ -42,9 +41,6 @@ func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
 	ks_path, _ := filepath.Abs("../../keys/client0.json")
 	tf.SetupEthClient(ks_path)
 	tf.SetupTransactor()
-
-	celrContract, err = mainchain.NewERC20(mockCelerAddr, tf.EthClient.Client)
-	tf.ChkErr(err, "NewERC20 error")
 
 	killable := []tf.Killable{sgnProc}
 	if sgnParams.startGateway {
@@ -67,7 +63,7 @@ func updateSGNConfig() {
 	tf.ChkErr(err, "get client keystore path")
 
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
-	viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 	path, err := homedir.Expand("~/.sgncli")
 	tf.ChkErr(err, "failed to get sgncli abs path")

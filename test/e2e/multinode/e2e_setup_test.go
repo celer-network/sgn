@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/celer-network/cChannel-eth-go/deploy"
-	"github.com/celer-network/cChannel-eth-go/ethpool"
 	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -22,30 +21,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// CProfile struct is based on github.com/goCeler/common (commit ID: d7335ae321b67150d92de18f6589f1d1fd8b0910)
-// CProfile contains configurations for CelerClient/OSP
-type CProfile struct {
-	ETHInstance        string `json:"ethInstance"`
-	SvrETHAddr         string `json:"svrEthAddr"`
-	WalletAddr         string `json:"walletAddr"`
-	LedgerAddr         string `json:"ledgerAddr"`
-	VirtResolverAddr   string `json:"virtResolverAddr"`
-	EthPoolAddr        string `json:"ethPoolAddr"`
-	PayResolverAddr    string `json:"payResolverAddr"`
-	PayRegistryAddr    string `json:"payRegistryAddr"`
-	RouterRegistryAddr string `json:"routerRegistryAddr"`
-	SvrRPC             string `json:"svrRpc"`
-	SelfRPC            string `json:"selfRpc,omitempty"`
-	StoreDir           string `json:"storeDir,omitempty"`
-	StoreSql           string `json:"storeSql,omitempty"`
-	WebPort            string `json:"webPort,omitempty"`
-	WsOrigin           string `json:"wsOrigin,omitempty"`
-	ChainId            int64  `json:"chainId"`
-	BlockDelayNum      uint64 `json:"blockDelayNum"`
-	IsOSP              bool   `json:"isOsp,omitempty"`
-	ListenOnChain      bool   `json:"listenOnChain,omitempty"`
-	PollingInterval    uint64 `json:"pollingInterval"`
-	DisputeTimeout     uint64 `json:"disputeTimeout"`
+type TestProfile struct {
+	DisputeTimeout uint64
+	LedgerAddr     mainchain.Addr
+	GuardAddr      mainchain.Addr
+	CelrAddr       mainchain.Addr
+	CelrContract   *mainchain.ERC20
 }
 
 // used by setup_onchain and tests
@@ -56,11 +37,7 @@ var (
 )
 
 // runtime variables, will be initialized by TestMain
-var (
-	e2eProfile    *CProfile
-	guardAddr     mainchain.Addr
-	mockCelerAddr mainchain.Addr
-)
+var e2eProfile *TestProfile
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
 // and teardown. Test specific setup should be done in TestXxx
@@ -98,7 +75,7 @@ func TestMain(m *testing.M) {
 	// err := tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
 	// tf.ChkErr(err, "fund server")
 	log.Infoln("set up mainchain")
-	e2eProfile, mockCelerAddr = setupMainchain()
+	e2eProfile = setupMainchain()
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()
@@ -120,7 +97,7 @@ func TestMain(m *testing.M) {
 
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func setupMainchain() (*CProfile, mainchain.Addr) {
+func setupMainchain() *TestProfile {
 	conn, err := ethclient.Dial("ws://127.0.0.1:8546")
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 
@@ -149,24 +126,6 @@ func setupMainchain() (*CProfile, mainchain.Addr) {
 	tf.ChkErr(err, "failed disable channel deposit limits")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Disable balance limit")
 
-	// Deposit into EthPool (used for openChannel)
-	tf.LogBlkNum(conn)
-	ethPoolContract, err := ethpool.NewEthPool(channelAddrBundle.EthPoolAddr, conn)
-	tf.ChkErr(err, "failed to NewEthPool")
-	amt := new(big.Int)
-	amt.SetString("1000000000000000000000000", 10) // 1000000 ETH
-	etherBaseAuth.Value = amt
-	tx, err = ethPoolContract.Deposit(etherBaseAuth, client0Addr)
-	tf.ChkErr(err, "failed to deposit into ethpool")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deposit to ethpool")
-	etherBaseAuth.Value = big.NewInt(0)
-
-	// Approve transferFrom of eth from ethpool for celerLedger
-	tf.LogBlkNum(conn)
-	tx, err = ethPoolContract.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, amt)
-	tf.ChkErr(err, "failed to approve transferFrom of ETH for celerLedger")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve ethpool for ledger")
-
 	// Deploy sample ERC20 contract (CELR)
 	tf.LogBlkNum(conn)
 	initAmt := new(big.Int)
@@ -194,22 +153,12 @@ func setupMainchain() (*CProfile, mainchain.Addr) {
 	mainchain.WaitMined(ctx, conn, tx, 0)
 	log.Infof("CELR transferFrom approved for celerLedger")
 
-	// output json file
-	p := &CProfile{
+	return &TestProfile{
 		// hardcoded values
-		ETHInstance:     tf.EthInstance,
-		SvrETHAddr:      client0AddrStr,
-		SvrRPC:          "localhost:10000",
-		ChainId:         883,
-		PollingInterval: 1,
-		DisputeTimeout:  10,
+		DisputeTimeout: 10,
 		// deployed addresses
-		WalletAddr:       mainchain.Addr2Hex(channelAddrBundle.CelerWalletAddr),
-		LedgerAddr:       mainchain.Addr2Hex(channelAddrBundle.CelerLedgerAddr),
-		VirtResolverAddr: mainchain.Addr2Hex(channelAddrBundle.VirtResolverAddr),
-		EthPoolAddr:      mainchain.Addr2Hex(channelAddrBundle.EthPoolAddr),
-		PayResolverAddr:  mainchain.Addr2Hex(channelAddrBundle.PayResolverAddr),
-		PayRegistryAddr:  mainchain.Addr2Hex(channelAddrBundle.PayRegistryAddr),
+		LedgerAddr:   channelAddrBundle.CelerLedgerAddr,
+		CelrAddr:     erc20Addr,
+		CelrContract: erc20,
 	}
-	return p, erc20Addr
 }
