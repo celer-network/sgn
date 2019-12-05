@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	EthInstance = "http://127.0.0.1:8545"
+	EthInstance = "ws://127.0.0.1:8546"
 )
 
 var (

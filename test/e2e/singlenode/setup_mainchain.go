@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"os"
 	"os/exec"
-	"strings"
 	"path/filepath"
+	"strings"
 
 	"github.com/celer-network/cChannel-eth-go/deploy"
 	"github.com/celer-network/cChannel-eth-go/ledger"
@@ -82,7 +82,7 @@ func setupMainchain() *TestProfile {
 	// Deploy sample ERC20 contract (CELR)
 	tf.LogBlkNum(ethClient.Client)
 	initAmt := new(big.Int)
-	initAmt.SetString("5" + strings.Repeat("0", 44), 10)
+	initAmt.SetString("5"+strings.Repeat("0", 44), 10)
 	erc20Addr, tx, erc20, err := mainchain.DeployERC20(ethClient.Auth, ethClient.Client, initAmt, "Celer", 18, "CELR")
 	tf.ChkErr(err, "failed to deploy ERC20")
 	tf.WaitMinedWithChk(ctx, ethClient.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
@@ -95,15 +95,4 @@ func setupMainchain() *TestProfile {
 		CelrAddr:     erc20Addr,
 		CelrContract: erc20,
 	}
-}
-
-func deployGuardContract(sgnParams *SGNParams) mainchain.Addr {
-	ethClient := tf.EthClient
-	ctx := context.Background()
-
-	guardAddr, tx, _, err := mainchain.DeployGuard(ethClient.Auth, ethClient.Client, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
-	tf.ChkErr(err, "failed to deploy Guard contract")
-	tf.WaitMinedWithChk(ctx, ethClient.Client, tx, 0, "Deploy Guard "+guardAddr.Hex())
-
-	return guardAddr
 }

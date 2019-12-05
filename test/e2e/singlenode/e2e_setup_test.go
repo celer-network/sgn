@@ -26,9 +26,8 @@ type TestProfile struct {
 
 // used by setup_onchain and tests
 var (
-	etherBaseAddr = mainchain.Hex2Addr(etherBaseAddrStr)
-	client0Addr   = mainchain.Hex2Addr(client0AddrStr)
-	client1Addr   = mainchain.Hex2Addr(client1AddrStr)
+	client0Addr = mainchain.Hex2Addr(client0AddrStr)
+	client1Addr = mainchain.Hex2Addr(client1AddrStr)
 )
 
 // runtime variables, will be initialized by TestMain

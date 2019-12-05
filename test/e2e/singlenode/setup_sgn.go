@@ -15,36 +15,28 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-type SGNParams struct {
-	blameTimeout           *big.Int
-	minValidatorNum        *big.Int
-	minStakingPool         *big.Int
-	sidechainGoLiveTimeout *big.Int
-	startGateway           bool
-}
-
-func setupNewSGNEnv(sgnParams *SGNParams, testName string) []tf.Killable {
+func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 	if sgnParams == nil {
-		sgnParams = &SGNParams{
-			blameTimeout:           big.NewInt(50),
-			minValidatorNum:        big.NewInt(1),
-			minStakingPool:         big.NewInt(100),
-			sidechainGoLiveTimeout: big.NewInt(0),
+		sgnParams = &tf.SGNParams{
+			BlameTimeout:           big.NewInt(50),
+			MinValidatorNum:        big.NewInt(1),
+			MinStakingPool:         big.NewInt(100),
+			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
 
-	e2eProfile.GuardAddr = deployGuardContract(sgnParams)
-
+	sgnParams.CelrAddr = e2eProfile.CelrAddr
+	e2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 	updateSGNConfig()
+
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
-	ks_path, _ := filepath.Abs("../../keys/client0.json")
-	tf.SetupEthClient(ks_path)
+	tf.EthClient.SetupContract(e2eProfile.GuardAddr.String(), e2eProfile.LedgerAddr.String())
 	tf.SetupTransactor()
 
 	killable := []tf.Killable{sgnProc}
-	if sgnParams.startGateway {
-		gatewayProc, err := startGateway(outRootDir, testName)
+	if sgnParams.StartGateway {
+		gatewayProc, err := StartGateway(outRootDir, testName)
 		tf.ChkErr(err, "start gateway")
 		killable = append(killable, gatewayProc)
 	}
@@ -62,8 +54,8 @@ func updateSGNConfig() {
 	clientKeystore, err := filepath.Abs("../../keys/client0.json")
 	tf.ChkErr(err, "get client keystore path")
 
-	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
-	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
+	viper.Set(common.FlagEthWS, tf.EthInstance)
+	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr)
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
 	path, err := homedir.Expand("~/.sgncli")
 	tf.ChkErr(err, "failed to get sgncli abs path")
@@ -104,7 +96,7 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 	return cmd.Process, nil
 }
 
-func startGateway(rootDir, testName string) (*os.Process, error) {
+func StartGateway(rootDir, testName string) (*os.Process, error) {
 	cmd := exec.Command("sgncli", "gateway")
 	cmd.Dir, _ = filepath.Abs("../../..")
 	cmd.Stdout = os.Stdout

@@ -1,11 +1,23 @@
 package testing
 
 import (
+	"math/big"
+
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/spf13/viper"
 )
+
+type SGNParams struct {
+	CelrAddr               mainchain.Addr
+	BlameTimeout           *big.Int
+	MinValidatorNum        *big.Int
+	MinStakingPool         *big.Int
+	SidechainGoLiveTimeout *big.Int
+	StartGateway           bool
+}
 
 var (
 	Transactor *transactor.Transactor
