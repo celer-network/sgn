@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -37,7 +36,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 
 	transactorPool, err := transactor.NewTransactorPool(
-		app.DefaultCLIHome,
+		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),

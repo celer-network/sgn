@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
@@ -36,7 +37,7 @@ func NewRestServer() (*RestServer, error) {
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
-	tf.SetupEthClient()
+	tf.SetupEthClient(viper.GetString(common.FlagEthKeystore))
 	client0 := mainchain.EthClient{}
 	client0.SetupAuth(viper.GetString(client0Flag), "")
 	client1 := mainchain.EthClient{}

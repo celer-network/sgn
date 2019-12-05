@@ -44,12 +44,12 @@ func SetEnvDir(envDir string) {
 	etherBaseKs = envDir + "/keystore/etherbase.json"
 }
 
-func SetupEthClient() {
+func SetupEthClient(ks string) {
 	ec, err := mainchain.NewEthClient(
 		viper.GetString(common.FlagEthWS),
 		viper.GetString(common.FlagEthGuardAddress),
 		viper.GetString(common.FlagEthLedgerAddress),
-		viper.GetString(common.FlagEthKeystore),
+		ks, // relative path is different in tests
 		viper.GetString(common.FlagEthPassphrase),
 	)
 	ChkErr(err, "setup eth client")
