@@ -50,7 +50,7 @@ func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthC
 		LedgerAddress: ledgerAddress,
 		Ledger:        ledger,
 	}
-	err = ethClient.setupAuth(ks, passphrase)
+	err = ethClient.SetupAuth(ks, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthC
 	return ethClient, nil
 }
 
-func (ethClient *EthClient) setupAuth(ks, passphrase string) error {
+func (ethClient *EthClient) SetupAuth(ks, passphrase string) error {
 	keystoreBytes, err := ioutil.ReadFile(ks)
 	if err != nil {
 		return err
