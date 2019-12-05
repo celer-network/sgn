@@ -87,13 +87,6 @@ func setupMainchain() *TestProfile {
 	tf.ChkErr(err, "failed to deploy ERC20")
 	tf.WaitMinedWithChk(ctx, ethClient.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
-	// Approve transferFrom of CELR for celerLedger
-	tf.LogBlkNum(ethClient.Client)
-	tx, err = erc20.Approve(ethClient.Auth, channelAddrBundle.CelerLedgerAddr, initAmt)
-	tf.ChkErr(err, "failed to approve transferFrom of CELR for celerLedger")
-	mainchain.WaitMined(ctx, ethClient.Client, tx, 0)
-	log.Infof("CELR transferFrom approved for celerLedger")
-
 	return &TestProfile{
 		// hardcoded values
 		DisputeTimeout: 10,
