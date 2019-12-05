@@ -27,18 +27,10 @@ const (
 )
 
 var (
+	EthClient        = &mainchain.EthClient{}
 	pendingNonceLock sync.Mutex
 	etherBaseKs      string
-	EthClient        *mainchain.EthClient
 )
-
-func GetLatestBlkNum(conn *ethclient.Client) (*big.Int, error) {
-	header, err := conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return header.Number, nil
-}
 
 func SetEnvDir(envDir string) {
 	etherBaseKs = envDir + "/keystore/etherbase.json"

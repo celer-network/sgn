@@ -24,38 +24,33 @@ type EthClient struct {
 
 // Get a new eth client
 func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
-	rpcClient, err := ethrpc.Dial(ws)
+	ethClient := &EthClient{}
+	err := ethClient.SetupClient(ws)
 	if err != nil {
 		return nil, err
 	}
 
-	client := ethclient.NewClient(rpcClient)
-
-	guardAddress := Hex2Addr(guardAddrStr)
-	guard, err := NewGuard(guardAddress, client)
-	if err != nil {
-		return nil, err
-	}
-
-	ledgerAddress := Hex2Addr(ledgerAddrStr)
-	ledger, err := NewCelerLedger(ledgerAddress, client)
-	if err != nil {
-		return nil, err
-	}
-
-	ethClient := &EthClient{
-		Client:        client,
-		GuardAddress:  guardAddress,
-		Guard:         guard,
-		LedgerAddress: ledgerAddress,
-		Ledger:        ledger,
-	}
 	err = ethClient.SetupAuth(ks, passphrase)
 	if err != nil {
 		return nil, err
 	}
 
+	err = ethClient.SetupContract(guardAddrStr, ledgerAddrStr)
+	if err != nil {
+		return nil, err
+	}
+
 	return ethClient, nil
+}
+
+func (ethClient *EthClient) SetupClient(ws string) error {
+	rpcClient, err := ethrpc.Dial(ws)
+	if err != nil {
+		return err
+	}
+
+	ethClient.Client = ethclient.NewClient(rpcClient)
+	return nil
 }
 
 func (ethClient *EthClient) SetupAuth(ks, passphrase string) error {
@@ -77,5 +72,23 @@ func (ethClient *EthClient) SetupAuth(ks, passphrase string) error {
 	ethClient.PrivateKey = key.PrivateKey
 	ethClient.Address = key.Address
 	ethClient.Auth = auth
+	return nil
+}
+
+func (ethClient *EthClient) SetupContract(guardAddrStr, ledgerAddrStr string) error {
+	ethClient.GuardAddress = Hex2Addr(guardAddrStr)
+	guard, err := NewGuard(ethClient.GuardAddress, ethClient.Client)
+	if err != nil {
+		return err
+	}
+
+	ethClient.LedgerAddress = Hex2Addr(ledgerAddrStr)
+	ledger, err := NewCelerLedger(ethClient.LedgerAddress, ethClient.Client)
+	if err != nil {
+		return err
+	}
+
+	ethClient.Guard = guard
+	ethClient.Ledger = ledger
 	return nil
 }

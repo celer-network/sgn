@@ -1,6 +1,7 @@
 package multinode
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -41,9 +42,9 @@ func queryLatestBlockTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
-	blkNumMain, err := tf.GetLatestBlkNum(conn)
+	header, err := conn.HeaderByNumber(context.Background(), nil)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
-	log.Infof("Latest block number on mainchain is %d", blkNumMain)
+	log.Infof("Latest block number on mainchain is %d", header.Number)
 
-	assert.GreaterOrEqual(t, blkNumMain.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
+	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
 }

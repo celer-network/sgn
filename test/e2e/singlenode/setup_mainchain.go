@@ -13,9 +13,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // start process to handle eth rpc, and fund etherbase and server account
@@ -65,50 +62,36 @@ func startMainchain() (*os.Process, error) {
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
 func setupMainchain() *TestProfile {
-	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
+	ethClient := tf.EthClient
+	err := ethClient.SetupClient(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-
-	client0PrivKey, _ := crypto.HexToECDSA(client0Priv)
-	client0Auth := bind.NewKeyedTransactor(client0PrivKey)
+	err = ethClient.SetupAuth("../../keys/client0.json", "")
+	tf.ChkErr(err, "failed to create auth")
 
 	ctx := context.Background()
-	channelAddrBundle := deploy.DeployAll(etherBaseAuth, conn, ctx, 0)
+	channelAddrBundle := deploy.DeployAll(ethClient.Auth, ethClient.Client, ctx, 0)
 
 	// Disable channel deposit limit
-	tf.LogBlkNum(conn)
-	ledgerContract, err := ledger.NewCelerLedger(channelAddrBundle.CelerLedgerAddr, conn)
+	tf.LogBlkNum(ethClient.Client)
+	ledgerContract, err := ledger.NewCelerLedger(channelAddrBundle.CelerLedgerAddr, ethClient.Client)
 	tf.ChkErr(err, "failed to NewCelerLedger")
-	tx, err := ledgerContract.DisableBalanceLimits(etherBaseAuth)
+	tx, err := ledgerContract.DisableBalanceLimits(ethClient.Auth)
 	tf.ChkErr(err, "failed disable channel deposit limits")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Disable balance limit")
+	tf.WaitMinedWithChk(ctx, ethClient.Client, tx, 0, "Disable balance limit")
 
 	// Deploy sample ERC20 contract (CELR)
-	tf.LogBlkNum(conn)
+	tf.LogBlkNum(ethClient.Client)
 	initAmt := new(big.Int)
 	initAmt.SetString("5" + strings.Repeat("0", 44), 10)
-	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Celer", 18, "CELR")
+	erc20Addr, tx, erc20, err := mainchain.DeployERC20(ethClient.Auth, ethClient.Client, initAmt, "Celer", 18, "CELR")
 	tf.ChkErr(err, "failed to deploy ERC20")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
-
-	// Transfer ERC20 to etherbase and client0
-	tf.LogBlkNum(conn)
-	celrAmt := new(big.Int)
-	celrAmt.SetString("5" + strings.Repeat("0", 29), 10)
-	addrs := []mainchain.Addr{etherBaseAddr, client0Addr}
-	for _, addr := range addrs {
-		tx, err = erc20.Transfer(etherBaseAuth, addr, celrAmt)
-		tf.ChkErr(err, "failed to send CELR")
-		mainchain.WaitMined(ctx, conn, tx, 0)
-	}
-	log.Infof("Sent CELR to etherbase and client0")
+	tf.WaitMinedWithChk(ctx, ethClient.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
 	// Approve transferFrom of CELR for celerLedger
-	tf.LogBlkNum(conn)
-	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, celrAmt)
+	tf.LogBlkNum(ethClient.Client)
+	tx, err = erc20.Approve(ethClient.Auth, channelAddrBundle.CelerLedgerAddr, initAmt)
 	tf.ChkErr(err, "failed to approve transferFrom of CELR for celerLedger")
-	mainchain.WaitMined(ctx, conn, tx, 0)
+	mainchain.WaitMined(ctx, ethClient.Client, tx, 0)
 	log.Infof("CELR transferFrom approved for celerLedger")
 
 	return &TestProfile{
@@ -122,16 +105,12 @@ func setupMainchain() *TestProfile {
 }
 
 func deployGuardContract(sgnParams *SGNParams) mainchain.Addr {
-	conn, err := ethclient.Dial(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-
+	ethClient := tf.EthClient
 	ctx := context.Background()
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
 
-	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
+	guardAddr, tx, _, err := mainchain.DeployGuard(ethClient.Auth, ethClient.Client, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
 	tf.ChkErr(err, "failed to deploy Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
+	tf.WaitMinedWithChk(ctx, ethClient.Client, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
 	return guardAddr
 }
