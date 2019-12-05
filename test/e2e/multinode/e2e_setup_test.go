@@ -107,9 +107,13 @@ func setupMainchain() *TestProfile {
 
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
 	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
+	price := big.NewInt(2e9) // 2Gwei
+	etherBaseAuth.GasPrice = price
+	etherBaseAuth.GasLimit = 7000000
 
 	client0PrivKey, _ := crypto.HexToECDSA(client0Priv)
 	client0Auth := bind.NewKeyedTransactor(client0PrivKey)
+	client0Auth.GasPrice = price
 
 	ctx := context.Background()
 	channelAddrBundle := deploy.DeployAll(etherBaseAuth, conn, ctx, 0)

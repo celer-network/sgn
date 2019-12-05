@@ -69,13 +69,9 @@ func setupMainchain() *TestProfile {
 	tf.ChkErr(err, "failed to connect to the Ethereum")
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
 	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
 
 	client0PrivKey, _ := crypto.HexToECDSA(client0Priv)
 	client0Auth := bind.NewKeyedTransactor(client0PrivKey)
-	client0Auth.GasPrice = price
 
 	ctx := context.Background()
 	channelAddrBundle := deploy.DeployAll(etherBaseAuth, conn, ctx, 0)
@@ -132,9 +128,6 @@ func deployGuardContract(sgnParams *SGNParams) mainchain.Addr {
 	ctx := context.Background()
 	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
 	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
 
 	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
 	tf.ChkErr(err, "failed to deploy Guard contract")
