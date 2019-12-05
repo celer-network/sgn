@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -62,7 +63,7 @@ func TestMain(m *testing.M) {
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
-	err = tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
+	err = tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
 	e2eProfile = setupMainchain()
 
