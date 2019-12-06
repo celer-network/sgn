@@ -6,19 +6,16 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpQueryLatestBlock() mainchain.Addr {
+func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
-	guardAddr := setupNewSGNEnv()
+	setupNewSGNEnv()
 	sleepWithLog(15, "sgn syncing")
-
-	return guardAddr
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {

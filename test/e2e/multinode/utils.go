@@ -2,7 +2,6 @@
 package multinode
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os/exec"
@@ -11,15 +10,11 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 )
 
-func setupNewSGNEnv() mainchain.Addr {
+func setupNewSGNEnv() {
 	// deploy guard contract
 	sgnParams := &tf.SGNParams{
 		BlameTimeout:           big.NewInt(50),
@@ -53,7 +48,7 @@ func setupNewSGNEnv() mainchain.Addr {
 	// update config.json
 	// TODO: better config.json solution
 	viper.SetConfigFile("../../../config.json")
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
 	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
@@ -77,8 +72,6 @@ func setupNewSGNEnv() mainchain.Addr {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-
-	return guardAddr
 }
 
 func sleep(second time.Duration) {
