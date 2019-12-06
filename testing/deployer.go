@@ -77,7 +77,7 @@ func DeployCommand() *cobra.Command {
 			DeployLedgerContract()
 			erc20Addr, _ := DeployERC20Contract()
 
-			sgnParams := &SGNParams{
+			sgnParams := &tf.SGNParams{
 				BlameTimeout:           big.NewInt(50),
 				MinValidatorNum:        big.NewInt(1),
 				MinStakingPool:         big.NewInt(100),
