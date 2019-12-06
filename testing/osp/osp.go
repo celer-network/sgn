@@ -29,7 +29,6 @@ type RestServer struct {
 const (
 	client0Flag = "client0"
 	client1Flag = "client1"
-	configFlag  = "config"
 )
 
 // NewRestServer creates a new rest server instance
@@ -42,7 +41,7 @@ func NewRestServer() (*RestServer, error) {
 	client0.SetupAuth(viper.GetString(client0Flag), "")
 	client1 := mainchain.EthClient{}
 	client1.SetupAuth(viper.GetString(client1Flag), "")
-	channelID, err := tf.OpenChannel(client0.Address.Bytes(), client1.Address.Bytes(), client0.PrivateKey, client1.PrivateKey, []byte(viper.GetString(configFlag)))
+	channelID, err := tf.OpenChannel(client0.Address.Bytes(), client1.Address.Bytes(), client0.PrivateKey, client1.PrivateKey, []byte(viper.GetString(common.FlagConfig)))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,7 @@ func ServeCommand() *cobra.Command {
 		Use:   "osp",
 		Short: "Start a local REST server talking to osp",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			viper.SetConfigFile(viper.GetString(configFlag))
+			viper.SetConfigFile(viper.GetString(common.FlagConfig))
 			err = viper.ReadInConfig()
 			if err != nil {
 				return err
@@ -110,6 +109,5 @@ func ServeCommand() *cobra.Command {
 
 	cmd.Flags().String(client0Flag, "./test/keys/client0.json", "client 0 keystore path")
 	cmd.Flags().String(client1Flag, "./test/keys/client1.json", "client 1 keystore path")
-	cmd.Flags().String(configFlag, "./config.json", "config path")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
