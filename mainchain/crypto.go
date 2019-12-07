@@ -7,15 +7,11 @@ import (
 )
 
 func (ethClient *EthClient) SignMessage(data []byte) ([]byte, error) {
-	return crypto.Sign(generatePrefixedHash(data), ethClient.PrivateKey)
+	return SignMessage(ethClient.PrivateKey, data)
 }
 
 func SignMessage(privateKey *ecdsa.PrivateKey, data []byte) ([]byte, error) {
-	sig, err := crypto.Sign(generatePrefixedHash(data), privateKey)
-	if err != nil {
-		return nil, err
-	}
-	return sig, nil
+	return crypto.Sign(generatePrefixedHash(data), privateKey)
 }
 
 func RecoverSigner(data []byte, sig []byte) (Addr, error) {

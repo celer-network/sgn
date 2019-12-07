@@ -2,7 +2,6 @@
 package multinode
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os/exec"
@@ -11,42 +10,20 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 )
 
-type SGNParams struct {
-	blameTimeout           *big.Int
-	minValidatorNum        *big.Int
-	minStakingPool         *big.Int
-	sidechainGoLiveTimeout *big.Int
-	startGateway           bool
-}
-
-func setupNewSGNEnv() mainchain.Addr {
+func setupNewSGNEnv() {
 	// deploy guard contract
-	sgnParams := &SGNParams{
-		blameTimeout:           big.NewInt(50),
-		minValidatorNum:        big.NewInt(1),
-		minStakingPool:         big.NewInt(100),
-		sidechainGoLiveTimeout: big.NewInt(0),
+	sgnParams := &tf.SGNParams{
+		BlameTimeout:           big.NewInt(50),
+		MinValidatorNum:        big.NewInt(1),
+		MinStakingPool:         big.NewInt(100),
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	conn, err := ethclient.Dial(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-	ctx := context.Background()
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
-	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
-	e2eProfile.GuardAddr = guardAddr
-	tf.ChkErr(err, "failed to deploy Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
+
+	e2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
 	// make prepare-sgn-data
 	repoRoot, _ := filepath.Abs("../../..")
@@ -71,7 +48,7 @@ func setupNewSGNEnv() mainchain.Addr {
 	// update config.json
 	// TODO: better config.json solution
 	viper.SetConfigFile("../../../config.json")
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
 	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
 	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
@@ -95,8 +72,6 @@ func setupNewSGNEnv() mainchain.Addr {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-
-	return guardAddr
 }
 
 func sleep(second time.Duration) {

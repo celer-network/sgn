@@ -1,20 +1,12 @@
 package singlenode
 
 import (
-	"context"
-	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/celer-network/cChannel-eth-go/deploy"
-	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // start process to handle eth rpc, and fund etherbase and server account
@@ -64,80 +56,24 @@ func startMainchain() (*os.Process, error) {
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
 func setupMainchain() *TestProfile {
-	conn, err := ethclient.Dial(outRootDir + "mainchaindata/geth.ipc")
+	ethClient := tf.EthClient
+	err := ethClient.SetupClient(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
+	err = ethClient.SetupAuth("../../keys/client0.json", "")
+	tf.ChkErr(err, "failed to create auth")
 
-	client0PrivKey, _ := crypto.HexToECDSA(client0Priv)
-	client0Auth := bind.NewKeyedTransactor(client0PrivKey)
-	client0Auth.GasPrice = price
-
-	ctx := context.Background()
-	channelAddrBundle := deploy.DeployAll(etherBaseAuth, conn, ctx, 0)
-
-	// Disable channel deposit limit
-	tf.LogBlkNum(conn)
-	ledgerContract, err := ledger.NewCelerLedger(channelAddrBundle.CelerLedgerAddr, conn)
-	tf.ChkErr(err, "failed to NewCelerLedger")
-	tx, err := ledgerContract.DisableBalanceLimits(etherBaseAuth)
-	tf.ChkErr(err, "failed disable channel deposit limits")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Disable balance limit")
+	ledgerAddr := tf.DeployLedgerContract()
 
 	// Deploy sample ERC20 contract (CELR)
-	tf.LogBlkNum(conn)
-	initAmt := new(big.Int)
-	initAmt.SetString("500000000000000000000000000000000000000000000", 10)
-	erc20Addr, tx, erc20, err := mainchain.DeployERC20(etherBaseAuth, conn, initAmt, "Celer", 18, "CELR")
-	tf.ChkErr(err, "failed to deploy ERC20")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
-
-	// Transfer ERC20 to etherbase and client0
-	tf.LogBlkNum(conn)
-	celrAmt := new(big.Int)
-	celrAmt.SetString("500000000000000000000000000000", 10)
-	addrs := []mainchain.Addr{etherBaseAddr, client0Addr}
-	for _, addr := range addrs {
-		tx, err = erc20.Transfer(etherBaseAuth, addr, celrAmt)
-		tf.ChkErr(err, "failed to send CELR")
-		mainchain.WaitMined(ctx, conn, tx, 0)
-	}
-	log.Infof("Sent CELR to etherbase and client0")
-
-	// Approve transferFrom of CELR for celerLedger
-	tf.LogBlkNum(conn)
-	tx, err = erc20.Approve(client0Auth, channelAddrBundle.CelerLedgerAddr, celrAmt)
-	tf.ChkErr(err, "failed to approve transferFrom of CELR for celerLedger")
-	mainchain.WaitMined(ctx, conn, tx, 0)
-	log.Infof("CELR transferFrom approved for celerLedger")
+	tf.LogBlkNum(ethClient.Client)
+	erc20Addr, erc20 := tf.DeployERC20Contract()
 
 	return &TestProfile{
 		// hardcoded values
 		DisputeTimeout: 10,
 		// deployed addresses
-		LedgerAddr:   channelAddrBundle.CelerLedgerAddr,
+		LedgerAddr:   ledgerAddr,
 		CelrAddr:     erc20Addr,
 		CelrContract: erc20,
 	}
-}
-
-func deployGuardContract(sgnParams *SGNParams) mainchain.Addr {
-	conn, err := ethclient.Dial(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-
-	ctx := context.Background()
-	ethbasePrivKey, _ := crypto.HexToECDSA(etherBasePriv)
-	etherBaseAuth := bind.NewKeyedTransactor(ethbasePrivKey)
-	price := big.NewInt(2e9) // 2Gwei
-	etherBaseAuth.GasPrice = price
-	etherBaseAuth.GasLimit = 7000000
-
-	guardAddr, tx, _, err := mainchain.DeployGuard(etherBaseAuth, conn, e2eProfile.CelrAddr, sgnParams.blameTimeout, sgnParams.minValidatorNum, sgnParams.minStakingPool, sgnParams.sidechainGoLiveTimeout)
-	tf.ChkErr(err, "failed to deploy Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Deploy Guard "+guardAddr.Hex())
-
-	return guardAddr
 }

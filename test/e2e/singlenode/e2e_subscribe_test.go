@@ -24,11 +24,11 @@ import (
 )
 
 func setUpSubscribe() []tf.Killable {
-	p := &SGNParams{
-		blameTimeout:           big.NewInt(10),
-		minValidatorNum:        big.NewInt(0),
-		minStakingPool:         big.NewInt(0),
-		sidechainGoLiveTimeout: big.NewInt(0),
+	p := &tf.SGNParams{
+		BlameTimeout:           big.NewInt(10),
+		MinValidatorNum:        big.NewInt(0),
+		MinStakingPool:         big.NewInt(0),
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "subscribe")
 	sleepWithLog(10, "sgn being ready")

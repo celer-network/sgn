@@ -40,9 +40,9 @@ func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
 }
 
 func LogBlkNum(conn *ethclient.Client) {
-	blkNum, err := GetLatestBlkNum(conn)
+	header, err := conn.HeaderByNumber(context.Background(), nil)
 	ChkErr(err, "failed to get HeaderByNumber")
-	log.Infoln("Latest block number on mainchain:", blkNum)
+	log.Infoln("Latest block number on mainchain:", header.Number)
 }
 
 func GetAddressFromKeystore(ksBytes []byte) (string, error) {

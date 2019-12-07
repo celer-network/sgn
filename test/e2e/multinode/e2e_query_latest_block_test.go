@@ -1,23 +1,21 @@
 package multinode
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpQueryLatestBlock() mainchain.Addr {
+func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
-	guardAddr := setupNewSGNEnv()
+	setupNewSGNEnv()
 	sleepWithLog(15, "sgn syncing")
-
-	return guardAddr
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
@@ -41,9 +39,9 @@ func queryLatestBlockTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
-	blkNumMain, err := tf.GetLatestBlkNum(conn)
+	header, err := conn.HeaderByNumber(context.Background(), nil)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
-	log.Infof("Latest block number on mainchain is %d", blkNumMain)
+	log.Infof("Latest block number on mainchain is %d", header.Number)
 
-	assert.GreaterOrEqual(t, blkNumMain.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
+	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
 }

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -25,9 +26,8 @@ type TestProfile struct {
 
 // used by setup_onchain and tests
 var (
-	etherBaseAddr = mainchain.Hex2Addr(etherBaseAddrStr)
-	client0Addr   = mainchain.Hex2Addr(client0AddrStr)
-	client1Addr   = mainchain.Hex2Addr(client1AddrStr)
+	client0Addr = mainchain.Hex2Addr(client0AddrStr)
+	client1Addr = mainchain.Hex2Addr(client1AddrStr)
 )
 
 // runtime variables, will be initialized by TestMain
@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
-	err = tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
+	err = tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&client0Addr})
 	tf.ChkErr(err, "fund server")
 	e2eProfile = setupMainchain()
 

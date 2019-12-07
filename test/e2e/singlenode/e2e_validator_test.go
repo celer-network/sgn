@@ -15,11 +15,11 @@ import (
 )
 
 func setUpValidator() []tf.Killable {
-	p := &SGNParams{
-		blameTimeout:           big.NewInt(10),
-		minValidatorNum:        big.NewInt(1),
-		minStakingPool:         big.NewInt(1),
-		sidechainGoLiveTimeout: big.NewInt(0),
+	p := &tf.SGNParams{
+		BlameTimeout:           big.NewInt(10),
+		MinValidatorNum:        big.NewInt(1),
+		MinStakingPool:         big.NewInt(1),
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
 	sleepWithLog(10, "sgn being ready")

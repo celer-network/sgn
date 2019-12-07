@@ -1,6 +1,8 @@
 package common
 
 const (
+	FlagConfig = "config"
+
 	FlagEthWS            = "eth.ws"
 	FlagEthGuardAddress  = "eth.guardAddress"
 	FlagEthLedgerAddress = "eth.ledgerAddress"

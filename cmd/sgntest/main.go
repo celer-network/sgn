@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/testing/osp"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -17,8 +19,11 @@ func main() {
 
 	// Construct Root Command
 	rootCmd.AddCommand(
+		testing.DeployCommand(),
 		osp.ServeCommand(),
 	)
+
+	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 
 	executor := cli.PrepareMainCmd(rootCmd, "NS", app.DefaultCLIHome)
 	err := executor.Execute()

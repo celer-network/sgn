@@ -22,6 +22,7 @@ jobs:
       #     command: |
       #       which shadow || go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow  # modifies go.sum!
       #       go vet -vettool=$(which shadow) ./...
+      - run: make install-test
       - run:
           name: fetch geth if not found and run e2e test
           environment:
