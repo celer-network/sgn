@@ -15,7 +15,7 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
 	setupNewSGNEnv()
-	sleepWithLog(15, "sgn syncing")
+	sleepWithLog(5, "sgn syncing")
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
