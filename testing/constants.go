@@ -7,6 +7,8 @@ const (
 	// the code will append epoch second to this and create the folder
 	// the folder will be deleted after test ends successfully
 	OutRootDirPrefix = "/tmp/celer_e2e_"
+	EnvDir           = "../../../testing/env"
+	etherBaseKs      = EnvDir + "/keystore/etherbase.json"
 
 	EthInstance = "ws://127.0.0.1:8546"
 

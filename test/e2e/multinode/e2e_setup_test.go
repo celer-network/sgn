@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -62,10 +63,9 @@ func TestMain(m *testing.M) {
 	}
 	tf.SleepWithLog(5, "geth start")
 
-	// TODO: can remove the fund distribution in genesis file?
-	// log.Infoln("first fund client0Addr 100 ETH")
-	// err := tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
-	// tf.ChkErr(err, "fund server")
+	log.Infoln("first fund client0Addr 100 ETH")
+	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&client0Addr})
+	tf.ChkErr(err, "fund client0")
 	log.Infoln("set up mainchain")
 	e2eProfile = setupMainchain()
 

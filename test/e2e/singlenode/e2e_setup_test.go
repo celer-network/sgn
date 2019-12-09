@@ -36,7 +36,6 @@ var (
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
 	outRootDir string
-	envDir     = "../../../testing/env"
 	e2eProfile *TestProfile
 )
 
@@ -48,7 +47,6 @@ func TestMain(m *testing.M) {
 	common.EnableLogLongFile()
 
 	// mkdir out root
-	tf.SetEnvDir(envDir)
 	outRootDir = fmt.Sprintf("%s%d/", tf.OutRootDirPrefix, time.Now().Unix())
 	err := os.MkdirAll(outRootDir, os.ModePerm)
 	tf.ChkErr(err, "creating root dir")
