@@ -54,14 +54,14 @@ func setupNewSGNEnv() {
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	sgnCliHome, _ := filepath.Abs("../../../docker-volumes/node0/sgncli")
 	viper.Set(common.FlagSgnCLIHome, sgnCliHome)
-	clientKeystore, err := filepath.Abs("../../keys/client0.json")
+	clientKeystore, err := filepath.Abs("../../../testing/env/keystore/client0.json")
 	tf.ChkErr(err, "get client keystore path")
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	// TODO: set operator, transactors
 	viper.WriteConfig()
 
 	// set up eth client and transactor
-	ks_path, _ := filepath.Abs("../../keys/client0.json")
+	ks_path, _ := filepath.Abs("../../../testing/env/keystore/client0.json")
 	tf.SetupEthClient(ks_path)
 	tf.SetupTransactor()
 
