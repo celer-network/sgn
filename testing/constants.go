@@ -18,4 +18,6 @@ const (
 
 	SgnBlockInterval = 1
 	DefaultTimeout   = 60 * time.Second
+
+	BlockDelay = 3
 )

@@ -22,7 +22,7 @@ func setUpValidator() []tf.Killable {
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
-	sleepWithLog(10, "sgn being ready")
+	tf.SleepWithLog(10, "sgn being ready")
 
 	return res
 }
@@ -50,7 +50,7 @@ func validatorTest(t *testing.T) {
 	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
-	err = initializeCandidate(auth, sgnAddr)
+	err = tf.InitializeCandidate(auth, sgnAddr)
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")
@@ -60,7 +60,7 @@ func validatorTest(t *testing.T) {
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, tf.Client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	err = delegateStake(auth, ethAddress, amt)
+	err = tf.DelegateStake(e2eProfile.CelrContract, e2eProfile.GuardAddr, auth, ethAddress, amt)
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")

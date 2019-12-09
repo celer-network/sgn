@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-	sleepWithLog(5, "geth start")
+	tf.SleepWithLog(5, "geth start")
 
 	// TODO: can remove the fund distribution in genesis file?
 	// log.Infoln("first fund client0Addr 100 ETH")

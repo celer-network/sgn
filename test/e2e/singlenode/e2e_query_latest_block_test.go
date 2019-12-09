@@ -14,7 +14,7 @@ import (
 
 func setUpQueryLatestBlock() []tf.Killable {
 	res := setupNewSGNEnv(nil, "query_latest_block")
-	sleepWithLog(10, "sgn syncing")
+	tf.SleepWithLog(10, "sgn syncing")
 
 	return res
 }
