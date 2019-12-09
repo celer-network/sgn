@@ -29,7 +29,7 @@ func sleepWithLog(second time.Duration, waitFor string) {
 }
 
 func sleepBlocksWithLog(count time.Duration, waitFor string) {
-	sleepWithLog(count * sgnBlockInterval, waitFor)
+	sleepWithLog(count * tf.SgnBlockInterval, waitFor)
 }
 
 func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawMessage, error) {
@@ -50,7 +50,7 @@ func parseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawM
 func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), tf.DefaultTimeout)
 	defer cancel()
 
 	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
@@ -67,7 +67,7 @@ func initializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 func delegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
 	conn := tf.EthClient.Client
 	guardContract := tf.EthClient.Guard
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), tf.DefaultTimeout)
 	defer cancel()
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")

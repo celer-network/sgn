@@ -22,10 +22,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	EthInstance = "ws://127.0.0.1:8546"
-)
-
 var (
 	EthClient        = &mainchain.EthClient{}
 	pendingNonceLock sync.Mutex

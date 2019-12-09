@@ -53,8 +53,8 @@ func gatewayTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	transactor := tf.Transactor
-	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
-	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
+	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
+	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
 	log.Info("Call subscribe on guard contract...")

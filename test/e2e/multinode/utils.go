@@ -84,5 +84,5 @@ func sleepWithLog(second time.Duration, waitFor string) {
 }
 
 func sleepBlocksWithLog(count time.Duration, waitFor string) {
-	sleepWithLog(count*sgnBlockInterval, waitFor)
+	sleepWithLog(count*tf.SgnBlockInterval, waitFor)
 }
