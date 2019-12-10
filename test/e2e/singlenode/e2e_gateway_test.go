@@ -10,10 +10,12 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,7 +54,7 @@ func gatewayTest(t *testing.T) {
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
-	transactor := tf.Transactor
+	transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei

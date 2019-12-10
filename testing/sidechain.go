@@ -19,21 +19,18 @@ type SGNParams struct {
 	StartGateway           bool
 }
 
-var (
-	Transactor *transactor.Transactor
-)
-
-func SetupTransactor() {
+func NewTransactor(sgnNodeURI string) *transactor.Transactor {
 	cdc := app.MakeCodec()
 	t, err := transactor.NewTransactor(
 		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
 		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
+		sgnNodeURI,
 		viper.GetStringSlice(common.FlagSgnTransactors)[0],
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 		cdc,
 	)
-	ChkErr(err, "setup transactor")
-	Transactor = t
+	ChkErr(err, "new transactor")
+
+	return t
 }

@@ -32,7 +32,6 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
 	tf.EthClient.SetupContract(e2eProfile.GuardAddr.String(), e2eProfile.LedgerAddr.String())
-	tf.SetupTransactor()
 
 	killable := []tf.Killable{sgnProc}
 	if sgnParams.StartGateway {
@@ -81,6 +80,7 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {
+		log.Errorln("Failed to run \"make update-test-data\": ", err)
 		return nil, err
 	}
 
@@ -89,6 +89,7 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
+		log.Errorln("Failed to run \"sgn start\": ", err)
 		return nil, err
 	}
 

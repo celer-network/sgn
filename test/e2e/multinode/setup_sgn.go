@@ -63,7 +63,6 @@ func setupNewSGNEnv() {
 	// set up eth client and transactor
 	ks_path, _ := filepath.Abs("../../keys/client0.json")
 	tf.SetupEthClient(ks_path)
-	tf.SetupTransactor()
 
 	// make localnet-start-nodes
 	cmd = exec.Command("make", "localnet-start-nodes")

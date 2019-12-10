@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -20,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +60,7 @@ func subscribeTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	ledgerContract := tf.EthClient.Ledger
-	transactor := tf.Transactor
+	transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei

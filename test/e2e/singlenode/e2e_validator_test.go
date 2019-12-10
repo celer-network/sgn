@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +47,7 @@ func validatorTest(t *testing.T) {
 
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
-	transactor := tf.Transactor
+	transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
 	amt := big.NewInt(1000000000000000000)
 	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
