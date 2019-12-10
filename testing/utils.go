@@ -42,7 +42,9 @@ func ChkTxStatus(s uint64, txname string) {
 
 func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
 	tx *ethtypes.Transaction, BlockDelay uint64, txname string) {
-	receipt, err := mainchain.WaitMined(ctx, conn, tx, BlockDelay)
+	ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
+	defer cancel()
+	receipt, err := mainchain.WaitMined(ctx2, conn, tx, BlockDelay)
 	ChkErr(err, "WaitMined error")
 	ChkTxStatus(receipt.Status, txname)
 }

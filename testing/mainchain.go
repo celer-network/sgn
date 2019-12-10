@@ -102,7 +102,9 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 			return err
 		}
 		pendingNonceLock.Unlock()
-		receipt, err := mainchain.WaitMined(ctx, conn, tx, 0)
+		ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
+		defer cancel()
+		receipt, err := mainchain.WaitMined(ctx2, conn, tx, 0)
 		if err != nil {
 			log.Error(err)
 		}
