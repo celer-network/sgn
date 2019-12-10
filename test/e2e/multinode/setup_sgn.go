@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"os/exec"
 	"path/filepath"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -72,17 +71,4 @@ func setupNewSGNEnv() {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-}
-
-func sleep(second time.Duration) {
-	time.Sleep(second * time.Second)
-}
-
-func sleepWithLog(second time.Duration, waitFor string) {
-	log.Infof("Sleep %d seconds for %s", second, waitFor)
-	sleep(second)
-}
-
-func sleepBlocksWithLog(count time.Duration, waitFor string) {
-	sleepWithLog(count*sgnBlockInterval, waitFor)
 }

@@ -22,7 +22,7 @@ func setUpValidator() []tf.Killable {
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
-	sleepWithLog(10, "sgn being ready")
+	tf.SleepWithLog(10, "sgn being ready")
 
 	return res
 }
@@ -47,20 +47,20 @@ func validatorTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	transactor := tf.Transactor
 	amt := big.NewInt(1000000000000000000)
-	sgnAddr, err := sdk.AccAddressFromBech32(client0SGNAddrStr)
+	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
-	err = initializeCandidate(auth, sgnAddr)
+	err = tf.InitializeCandidate(auth, sgnAddr)
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, 0) // defined in Candidate.String()
+	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, tf.Client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	err = delegateStake(auth, ethAddress, amt)
+	err = tf.DelegateStake(e2eProfile.CelrContract, e2eProfile.GuardAddr, auth, ethAddress, amt)
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
@@ -75,7 +75,7 @@ func validatorTest(t *testing.T) {
 	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, client0SGNAddrStr, amt) // defined in Candidate.String()
+	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, tf.Client0SGNAddrStr, amt) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")

@@ -26,7 +26,7 @@ func setUpGateway() []tf.Killable {
 		StartGateway:           true,
 	}
 	res := setupNewSGNEnv(p, "gateway")
-	sleepWithLog(10, "sgn being ready")
+	tf.SleepWithLog(10, "sgn being ready")
 
 	return res
 }
@@ -53,8 +53,8 @@ func gatewayTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	transactor := tf.Transactor
-	client1PrivKey, _ := crypto.HexToECDSA(client1Priv)
-	client1Auth := bind.NewKeyedTransactor(client1PrivKey)
+	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
+	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
 	log.Info("Call subscribe on guard contract...")
@@ -65,7 +65,7 @@ func gatewayTest(t *testing.T) {
 
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to subscribe on mainchain")
-	tf.WaitMinedWithChk(ctx, conn, tx, blockDelay, "Subscribe on Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
 
 	msg := map[string]interface{}{
 		"ethAddr": ethAddress.Hex(),
@@ -73,12 +73,12 @@ func gatewayTest(t *testing.T) {
 	body, _ := json.Marshal(msg)
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
 	tf.ChkTestErr(t, err, "failed to post subscribe msg to gateway")
-	sleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
+	tf.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query subscription from gateway")
 
-	result, err := parseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	result, err := tf.ParseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
 	tf.ChkTestErr(t, err, "failed to parse GatewayQueryResponse")
 	var subscription subscribe.Subscription
 	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)

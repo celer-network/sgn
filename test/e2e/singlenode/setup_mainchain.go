@@ -11,7 +11,7 @@ import (
 
 // start process to handle eth rpc, and fund etherbase and server account
 func startMainchain() (*os.Process, error) {
-	log.Infoln("outRootDir", outRootDir, "envDir", envDir)
+	log.Infoln("outRootDir", outRootDir, "envDir", tf.EnvDir)
 	chainDataDir := outRootDir + "mainchaindata"
 	logFname := outRootDir + "mainchain.log"
 	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
@@ -21,7 +21,7 @@ func startMainchain() (*os.Process, error) {
 	// geth init
 	cmdInit := exec.Command("geth", "--datadir", chainDataDir, "init", "mainchain_genesis.json")
 	// set cmd.Dir because relative files are under testing/env
-	cmdInit.Dir, _ = filepath.Abs(envDir)
+	cmdInit.Dir, _ = filepath.Abs(tf.EnvDir)
 	if err := cmdInit.Run(); err != nil {
 		return nil, err
 	}

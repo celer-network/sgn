@@ -26,17 +26,16 @@ type TestProfile struct {
 
 // used by setup_onchain and tests
 var (
-	client0Addr = mainchain.Hex2Addr(client0AddrStr)
-	client1Addr = mainchain.Hex2Addr(client1AddrStr)
+	client0Addr = mainchain.Hex2Addr(tf.Client0AddrStr)
+	client1Addr = mainchain.Hex2Addr(tf.Client1AddrStr)
 )
 
 // runtime variables, will be initialized by TestMain
 var (
-	// root dir with ending / for all files, outRootDirPrefix + epoch seconds
+	// root dir with ending / for all files, OutRootDirPrefix + epoch seconds
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
 	outRootDir string
-	envDir     = "../../../testing/env"
 	e2eProfile *TestProfile
 )
 
@@ -48,8 +47,7 @@ func TestMain(m *testing.M) {
 	common.EnableLogLongFile()
 
 	// mkdir out root
-	tf.SetEnvDir(envDir)
-	outRootDir = fmt.Sprintf("%s%d/", outRootDirPrefix, time.Now().Unix())
+	outRootDir = fmt.Sprintf("%s%d/", tf.OutRootDirPrefix, time.Now().Unix())
 	err := os.MkdirAll(outRootDir, os.ModePerm)
 	tf.ChkErr(err, "creating root dir")
 	log.Infoln("Using folder:", outRootDir)
@@ -58,7 +56,7 @@ func TestMain(m *testing.M) {
 	// if geth exits with non-zero, os.Exit(1)
 	ethProc, err := startMainchain()
 	tf.ChkErr(err, "starting mainchain")
-	sleep(2)
+	tf.SleepWithLog(2, "starting mainchain")
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH

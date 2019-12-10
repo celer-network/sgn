@@ -22,19 +22,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	EthInstance = "ws://127.0.0.1:8546"
-)
-
 var (
 	EthClient        = &mainchain.EthClient{}
 	pendingNonceLock sync.Mutex
-	etherBaseKs      string
 )
-
-func SetEnvDir(envDir string) {
-	etherBaseKs = envDir + "/keystore/etherbase.json"
-}
 
 func SetupEthClient(ks string) {
 	ec, err := mainchain.NewEthClient(
@@ -54,7 +45,7 @@ func prepareEthClient() (
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
 	}
-	log.Infoln("etherBaseKs", etherBaseKs)
+	log.Infoln("etherBaseKs: ", etherBaseKs)
 	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
@@ -111,7 +102,9 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 			return err
 		}
 		pendingNonceLock.Unlock()
-		receipt, err := mainchain.WaitMined(ctx, conn, tx, 0)
+		ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
+		defer cancel()
+		receipt, err := mainchain.WaitMined(ctx2, conn, tx, 0)
 		if err != nil {
 			log.Error(err)
 		}

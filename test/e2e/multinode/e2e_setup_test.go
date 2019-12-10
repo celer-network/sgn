@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -24,9 +25,8 @@ type TestProfile struct {
 
 // used by setup_onchain and tests
 var (
-	etherBaseAddr = mainchain.Hex2Addr(etherBaseAddrStr)
-	client0Addr   = mainchain.Hex2Addr(client0AddrStr)
-	client1Addr   = mainchain.Hex2Addr(client1AddrStr)
+	client0Addr = mainchain.Hex2Addr(tf.Client0AddrStr)
+	client1Addr = mainchain.Hex2Addr(tf.Client1AddrStr)
 )
 
 // runtime variables, will be initialized by TestMain
@@ -61,12 +61,11 @@ func TestMain(m *testing.M) {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-	sleepWithLog(5, "geth start")
+	tf.SleepWithLog(5, "geth start")
 
-	// TODO: can remove the fund distribution in genesis file?
-	// log.Infoln("first fund client0Addr 100 ETH")
-	// err := tf.FundAddr("100000000000000000000", []*mainchain.Addr{&client0Addr})
-	// tf.ChkErr(err, "fund server")
+	log.Infoln("first fund client0Addr 100 ETH")
+	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&client0Addr})
+	tf.ChkErr(err, "fund client0")
 	log.Infoln("set up mainchain")
 	e2eProfile = setupMainchain()
 
