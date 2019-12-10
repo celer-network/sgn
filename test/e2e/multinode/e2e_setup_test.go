@@ -93,7 +93,7 @@ func setupMainchain() *TestProfile {
 	ethClient := tf.EthClient
 	err := ethClient.SetupClient(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
-	err = ethClient.SetupAuth("../../../testing/env/keystore/client0.json", "")
+	err = ethClient.SetupAuth("../../keys/client0.json", "")
 	tf.ChkErr(err, "failed to create auth")
 
 	ledgerAddr := tf.DeployLedgerContract()

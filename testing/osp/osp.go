@@ -107,7 +107,7 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(client0Flag, "./testing/env/keystore/client0.json", "client 0 keystore path")
-	cmd.Flags().String(client1Flag, "./testing/env/keystore/client1.json", "client 1 keystore path")
+	cmd.Flags().String(client0Flag, "./test/keys/client0.json", "client 0 keystore path")
+	cmd.Flags().String(client1Flag, "./test/keys/client1.json", "client 1 keystore path")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }

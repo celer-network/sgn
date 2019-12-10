@@ -51,7 +51,7 @@ func updateSGNConfig() {
 	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
 
-	clientKeystore, err := filepath.Abs("../../../testing/env/keystore/client0.json")
+	clientKeystore, err := filepath.Abs("../../keys/client0.json")
 	tf.ChkErr(err, "get client keystore path")
 
 	viper.Set(common.FlagEthWS, tf.EthInstance)
