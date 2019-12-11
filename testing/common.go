@@ -7,11 +7,20 @@ import (
 	"os/exec"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 )
 
 // Killable is object that has Kill() func
 type Killable interface {
 	Kill() error
+}
+
+type TestProfile struct {
+	DisputeTimeout uint64
+	LedgerAddr     mainchain.Addr
+	GuardAddr      mainchain.Addr
+	CelrAddr       mainchain.Addr
+	CelrContract   *mainchain.ERC20
 }
 
 func TearDown(tokill []Killable) {

@@ -15,14 +15,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-type TestProfile struct {
-	DisputeTimeout uint64
-	LedgerAddr     mainchain.Addr
-	GuardAddr      mainchain.Addr
-	CelrAddr       mainchain.Addr
-	CelrContract   *mainchain.ERC20
-}
-
 // used by setup_onchain and tests
 var (
 	client0Addr = mainchain.Hex2Addr(tf.Client0AddrStr)
@@ -30,7 +22,7 @@ var (
 )
 
 // runtime variables, will be initialized by TestMain
-var e2eProfile *TestProfile
+var e2eProfile *tf.TestProfile
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
 // and teardown. Test specific setup should be done in TestXxx
@@ -89,7 +81,7 @@ func TestMain(m *testing.M) {
 
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func setupMainchain() *TestProfile {
+func setupMainchain() *tf.TestProfile {
 	ethClient := tf.EthClient
 	err := ethClient.SetupClient(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
@@ -102,7 +94,7 @@ func setupMainchain() *TestProfile {
 	tf.LogBlkNum(ethClient.Client)
 	erc20Addr, erc20 := tf.DeployERC20Contract()
 
-	return &TestProfile{
+	return &tf.TestProfile{
 		// hardcoded values
 		DisputeTimeout: 10,
 		// deployed addresses

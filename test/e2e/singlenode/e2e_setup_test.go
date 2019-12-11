@@ -16,14 +16,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-type TestProfile struct {
-	DisputeTimeout uint64
-	LedgerAddr     mainchain.Addr
-	GuardAddr      mainchain.Addr
-	CelrAddr       mainchain.Addr
-	CelrContract   *mainchain.ERC20
-}
-
 // used by setup_onchain and tests
 var (
 	client0Addr = mainchain.Hex2Addr(tf.Client0AddrStr)
@@ -36,7 +28,7 @@ var (
 	// due to testframework etc in a different testing package, we have to define
 	// same var in testframework.go and expose a set api
 	outRootDir string
-	e2eProfile *TestProfile
+	e2eProfile *tf.TestProfile
 )
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)

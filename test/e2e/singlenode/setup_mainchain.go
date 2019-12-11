@@ -55,7 +55,7 @@ func startMainchain() (*os.Process, error) {
 
 // setupMainchain deploy contracts, and do setups
 // return profile, tokenAddrErc20
-func setupMainchain() *TestProfile {
+func setupMainchain() *tf.TestProfile {
 	ethClient := tf.EthClient
 	err := ethClient.SetupClient(tf.EthInstance)
 	tf.ChkErr(err, "failed to connect to the Ethereum")
@@ -68,7 +68,7 @@ func setupMainchain() *TestProfile {
 	tf.LogBlkNum(ethClient.Client)
 	erc20Addr, erc20 := tf.DeployERC20Contract()
 
-	return &TestProfile{
+	return &tf.TestProfile{
 		// hardcoded values
 		DisputeTimeout: 10,
 		// deployed addresses
