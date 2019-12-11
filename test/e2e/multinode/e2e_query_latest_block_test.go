@@ -6,18 +6,16 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
 	setupNewSGNEnv()
-	tf.SleepWithLog(5, "sgn syncing")
+	tf.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
@@ -37,7 +35,8 @@ func queryLatestBlockTest(t *testing.T) {
 		os.Exit(1)
 	}
 
-	transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
+	// transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
+	transactor := tf.NewTransactor(node1uri)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
@@ -48,4 +47,5 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Infof("Latest block number on mainchain is %d", header.Number)
 
 	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
+	assert.Greater(t, blockSGN.Number, uint64(0), "blockSGN.Number should be larger than 0")
 }

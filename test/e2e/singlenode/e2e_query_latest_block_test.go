@@ -52,4 +52,5 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Infof("Latest block number on mainchain is %d", header.Number)
 
 	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
+	assert.Greater(t, blockSGN.Number, uint64(0), "blockSGN.Number should be larger than 0")
 }

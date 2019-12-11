@@ -82,7 +82,7 @@ func TestMain(m *testing.M) {
 		}
 		os.Exit(0)
 	} else {
-		log.Errorln("Tests failed. 🚧🚧🚧 Geth and sgn nodes are still running for debug. 🚧🚧🚧Run make localnet-down to stop it")
+		log.Errorln("Tests failed. 🚧🚧🚧 Geth and sgn containers are still running for debug. 🚧🚧🚧 Run \"make localnet-down\" to stop them")
 		os.Exit(ret)
 	}
 }
