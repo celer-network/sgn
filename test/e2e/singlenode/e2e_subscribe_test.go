@@ -60,7 +60,14 @@ func subscribeTest(t *testing.T) {
 	ethAddress := tf.EthClient.Address
 	guardContract := tf.EthClient.Guard
 	ledgerContract := tf.EthClient.Ledger
-	transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
+	transactor := tf.NewTransactor(
+		viper.GetString(common.FlagSgnCLIHome),
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+	)
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei

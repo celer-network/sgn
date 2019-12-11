@@ -47,7 +47,14 @@ func validatorTest(t *testing.T) {
 
 	auth := tf.EthClient.Auth
 	ethAddress := tf.EthClient.Address
-	transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
+	transactor := tf.NewTransactor(
+		viper.GetString(common.FlagSgnCLIHome),
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+	)
 	amt := big.NewInt(1000000000000000000)
 	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")

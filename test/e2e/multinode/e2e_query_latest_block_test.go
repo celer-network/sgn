@@ -35,8 +35,14 @@ func queryLatestBlockTest(t *testing.T) {
 		os.Exit(1)
 	}
 
-	// transactor := tf.NewTransactor(viper.GetString(common.FlagSgnNodeURI))
-	transactor := tf.NewTransactor(node1uri)
+	transactor := tf.NewTransactor(
+		sgnCLIHome1,
+		sgnChainID,
+		sgnNode1URI,
+		sgnTransactor1,
+		sgnPassphrase,
+		sgnGasPrice,
+	)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
