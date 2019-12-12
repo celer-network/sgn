@@ -45,8 +45,8 @@ func validatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
 
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
+	auth := tf.DefaultTestEthClient.Auth
+	ethAddress := tf.DefaultTestEthClient.Address
 	transactor := tf.NewTransactor(
 		viper.GetString(common.FlagSgnCLIHome),
 		viper.GetString(common.FlagSgnChainID),

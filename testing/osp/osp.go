@@ -36,7 +36,7 @@ func NewRestServer() (*RestServer, error) {
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
-	tf.SetupEthClient(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
+	tf.SetupDefaultTestEthClient(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
 	client0 := mainchain.EthClient{}
 	client0.SetupAuth(viper.GetString(client0Flag), "")
 	client1 := mainchain.EthClient{}

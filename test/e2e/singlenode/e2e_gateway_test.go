@@ -50,10 +50,10 @@ func gatewayTest(t *testing.T) {
 	log.Info("======================== Test gateway ===========================")
 
 	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
-	guardContract := tf.EthClient.Guard
+	conn := tf.DefaultTestEthClient.Client
+	auth := tf.DefaultTestEthClient.Auth
+	ethAddress := tf.DefaultTestEthClient.Address
+	guardContract := tf.DefaultTestEthClient.Guard
 	transactor := tf.NewTransactor(
 		viper.GetString(common.FlagSgnCLIHome),
 		viper.GetString(common.FlagSgnChainID),

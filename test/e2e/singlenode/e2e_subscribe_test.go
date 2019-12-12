@@ -55,11 +55,11 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("======================== Test subscribe ===========================")
 
 	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
-	guardContract := tf.EthClient.Guard
-	ledgerContract := tf.EthClient.Ledger
+	conn := tf.DefaultTestEthClient.Client
+	auth := tf.DefaultTestEthClient.Auth
+	ethAddress := tf.DefaultTestEthClient.Address
+	guardContract := tf.DefaultTestEthClient.Guard
+	ledgerContract := tf.DefaultTestEthClient.Ledger
 	transactor := tf.NewTransactor(
 		viper.GetString(common.FlagSgnCLIHome),
 		viper.GetString(common.FlagSgnChainID),
@@ -108,10 +108,10 @@ func subscribeTest(t *testing.T) {
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Prepare for requesting guard...")
-	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.EthClient.PrivateKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
+	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
 	tf.SleepWithLog(10, "wait channelId to be in secure state")
-	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, Client1PrivKey)
+	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
@@ -128,7 +128,7 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, Client1PrivKey)
+	signedSimplexStateProto, err = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},

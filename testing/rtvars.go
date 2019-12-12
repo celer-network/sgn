@@ -16,6 +16,6 @@ var (
 	// not support parallel tests
 	E2eProfile *TestProfile
 
-	EthClient        = &mainchain.EthClient{}
-	pendingNonceLock sync.Mutex
+	DefaultTestEthClient = &mainchain.EthClient{}
+	pendingNonceLock     sync.Mutex
 )

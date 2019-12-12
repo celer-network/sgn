@@ -19,7 +19,7 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
-func SetupEthClient(ks, passphrase string) {
+func SetupDefaultTestEthClient(ks, passphrase string) {
 	ec, err := mainchain.NewEthClient(
 		EthInstance,
 		E2eProfile.GuardAddr.String(),
@@ -28,10 +28,10 @@ func SetupEthClient(ks, passphrase string) {
 		passphrase,
 	)
 	ChkErr(err, "setup eth client")
-	EthClient = ec
+	DefaultTestEthClient = ec
 }
 
-func prepareEthClient() (
+func prepareEtherBaseClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
 	conn, err := ethclient.Dial(EthInstance)
 	if err != nil {
@@ -55,7 +55,7 @@ func prepareEthClient() (
 }
 
 func FundAddr(amt string, recipients []*mainchain.Addr) error {
-	conn, auth, ctx, senderAddr, err := prepareEthClient()
+	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(channelIdChan)
-	_, err = EthClient.Ledger.OpenChannel(EthClient.Auth, requestBytes)
+	_, err = DefaultTestEthClient.Ledger.OpenChannel(DefaultTestEthClient.Auth, requestBytes)
 	if err != nil {
 		return
 	}
@@ -177,7 +177,7 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 func monitorOpenChannel(channelIdChan chan [32]byte) {
 	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
-	sub, err := EthClient.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
+	sub, err := DefaultTestEthClient.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
 	if err != nil {
 		log.Errorln("WatchInitializeCandidate err: ", err)
 		return
@@ -200,16 +200,16 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 
 // SetupMainchainAndUpdateE2eProfile deploy contracts, and do setups
 func SetupMainchainAndUpdateE2eProfile() {
-	err := EthClient.SetupClient(EthInstance)
+	err := DefaultTestEthClient.SetupClient(EthInstance)
 	ChkErr(err, "failed to connect to the Ethereum")
 	// TODO: move keys to testing and make this path not hardcoded
-	err = EthClient.SetupAuth("../../keys/client0.json", "")
+	err = DefaultTestEthClient.SetupAuth("../../keys/client0.json", "")
 	ChkErr(err, "failed to create auth")
 
 	ledgerAddr := DeployLedgerContract()
 
 	// Deploy sample ERC20 contract (CELR)
-	LogBlkNum(EthClient.Client)
+	LogBlkNum(DefaultTestEthClient.Client)
 	erc20Addr, erc20 := DeployERC20Contract()
 
 	E2eProfile = &TestProfile{

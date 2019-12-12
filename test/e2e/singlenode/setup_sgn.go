@@ -31,7 +31,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
-	tf.EthClient.SetupContract(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+	tf.DefaultTestEthClient.SetupContract(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
 
 	killable := []tf.Killable{sgnProc}
 	if sgnParams.StartGateway {
