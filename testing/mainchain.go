@@ -209,8 +209,9 @@ func InitializeDefaultTestEthClient() {
 }
 
 func SetupMainchainAndUpdateE2eProfile() {
-	LogBlkNum(DefaultTestEthClient.Client)
+	InitializeDefaultTestEthClient()
 
+	LogBlkNum(DefaultTestEthClient.Client)
 	ledgerAddr := DeployLedgerContract()
 	// Deploy sample ERC20 contract (CELR)
 	erc20Addr, erc20 := DeployERC20Contract()
