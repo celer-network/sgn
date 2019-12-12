@@ -15,12 +15,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-// used by setup_onchain and tests
-var (
-	client0Addr = mainchain.Hex2Addr(tf.Client0AddrStr)
-	client1Addr = mainchain.Hex2Addr(tf.Client1AddrStr)
-)
-
 // runtime variables, will be initialized by TestMain
 var e2eProfile *tf.TestProfile
 
@@ -56,7 +50,7 @@ func TestMain(m *testing.M) {
 	tf.SleepWithLog(5, "geth start")
 
 	log.Infoln("first fund client0Addr 100 ETH")
-	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&client0Addr})
+	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund client0")
 	log.Infoln("set up mainchain")
 	e2eProfile = setupMainchain()
