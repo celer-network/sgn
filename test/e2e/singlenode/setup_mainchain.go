@@ -52,28 +52,3 @@ func startMainchain() (*os.Process, error) {
 	}()
 	return cmd.Process, nil
 }
-
-// setupMainchain deploy contracts, and do setups
-// return profile, tokenAddrErc20
-func setupMainchain() *tf.TestProfile {
-	ethClient := tf.EthClient
-	err := ethClient.SetupClient(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-	err = ethClient.SetupAuth("../../keys/client0.json", "")
-	tf.ChkErr(err, "failed to create auth")
-
-	ledgerAddr := tf.DeployLedgerContract()
-
-	// Deploy sample ERC20 contract (CELR)
-	tf.LogBlkNum(ethClient.Client)
-	erc20Addr, erc20 := tf.DeployERC20Contract()
-
-	return &tf.TestProfile{
-		// hardcoded values
-		DisputeTimeout: 10,
-		// deployed addresses
-		LedgerAddr:   ledgerAddr,
-		CelrAddr:     erc20Addr,
-		CelrContract: erc20,
-	}
-}

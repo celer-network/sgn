@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund client0")
 	log.Infoln("set up mainchain")
-	tf.E2eProfile = setupMainchain()
+	tf.SetupMainchainAndUpdateE2eProfile()
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()
@@ -67,30 +67,5 @@ func TestMain(m *testing.M) {
 	} else {
 		log.Errorln("Tests failed. 🚧🚧🚧 Geth and sgn containers are still running for debug. 🚧🚧🚧 Run \"make localnet-down\" to stop them")
 		os.Exit(ret)
-	}
-}
-
-// setupMainchain deploy contracts, and do setups
-// return profile, tokenAddrErc20
-func setupMainchain() *tf.TestProfile {
-	ethClient := tf.EthClient
-	err := ethClient.SetupClient(tf.EthInstance)
-	tf.ChkErr(err, "failed to connect to the Ethereum")
-	err = ethClient.SetupAuth("../../keys/client0.json", "")
-	tf.ChkErr(err, "failed to create auth")
-
-	ledgerAddr := tf.DeployLedgerContract()
-
-	// Deploy sample ERC20 contract (CELR)
-	tf.LogBlkNum(ethClient.Client)
-	erc20Addr, erc20 := tf.DeployERC20Contract()
-
-	return &tf.TestProfile{
-		// hardcoded values
-		DisputeTimeout: 10,
-		// deployed addresses
-		LedgerAddr:   ledgerAddr,
-		CelrAddr:     erc20Addr,
-		CelrContract: erc20,
 	}
 }

@@ -205,3 +205,27 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 		}
 	}
 }
+
+// SetupMainchainAndUpdateE2eProfile deploy contracts, and do setups
+func SetupMainchainAndUpdateE2eProfile() {
+	err := EthClient.SetupClient(EthInstance)
+	ChkErr(err, "failed to connect to the Ethereum")
+	// TODO: move keys to testing
+	err = EthClient.SetupAuth("../../keys/client0.json", "")
+	ChkErr(err, "failed to create auth")
+
+	ledgerAddr := DeployLedgerContract()
+
+	// Deploy sample ERC20 contract (CELR)
+	LogBlkNum(EthClient.Client)
+	erc20Addr, erc20 := DeployERC20Contract()
+
+	E2eProfile = &TestProfile{
+		// hardcoded values
+		DisputeTimeout: 10,
+		// deployed addresses
+		LedgerAddr:   ledgerAddr,
+		CelrAddr:     erc20Addr,
+		CelrContract: erc20,
+	}
+}
