@@ -25,7 +25,7 @@ type EthClient struct {
 	Ledger        *CelerLedger
 }
 
-// NewEthClient create a new eth client and initialize all fields
+// NewEthClient creates a new eth client and initializes all fields
 func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
 	ethClient := &EthClient{}
 	err := ethClient.SetupClient(ws)
