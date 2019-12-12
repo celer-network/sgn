@@ -68,7 +68,7 @@ func gatewayTest(t *testing.T) {
 
 	log.Info("Call subscribe on guard contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
-	tx, err := e2eProfile.CelrContract.Approve(auth, e2eProfile.GuardAddr, amt)
+	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR on mainchain")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 

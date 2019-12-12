@@ -78,11 +78,11 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
-	err = tf.DelegateStake(e2eProfile.CelrContract, e2eProfile.GuardAddr, auth, ethAddress, amt)
+	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Infoln("Call subscribe on guard contract...")
-	tx, err := e2eProfile.CelrContract.Approve(auth, e2eProfile.GuardAddr, amt)
+	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
@@ -108,7 +108,7 @@ func subscribeTest(t *testing.T) {
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Prepare for requesting guard...")
-	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.EthClient.PrivateKey, Client1PrivKey, e2eProfile.CelrAddr.Bytes())
+	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.EthClient.PrivateKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
 	tf.SleepWithLog(10, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, Client1PrivKey)

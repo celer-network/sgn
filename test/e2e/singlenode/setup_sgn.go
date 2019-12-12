@@ -8,11 +8,11 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
-	"github.com/celer-network/goutils/log"
-	"github.com/spf13/viper"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/viper"
 )
 
 func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
@@ -25,13 +25,13 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 		}
 	}
 
-	sgnParams.CelrAddr = e2eProfile.CelrAddr
-	e2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+	sgnParams.CelrAddr = tf.E2eProfile.CelrAddr
+	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 	updateSGNConfig()
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
-	tf.EthClient.SetupContract(e2eProfile.GuardAddr.String(), e2eProfile.LedgerAddr.String())
+	tf.EthClient.SetupContract(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
 
 	killable := []tf.Killable{sgnProc}
 	if sgnParams.StartGateway {
@@ -54,11 +54,11 @@ func updateSGNConfig() {
 	tf.ChkErr(err, "get client keystore path")
 
 	viper.Set(common.FlagEthWS, tf.EthInstance)
-	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr)
-	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
+	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
 	path, err := homedir.Expand("~/.sgncli")
 	tf.ChkErr(err, "failed to get sgncli abs path")
-	viper.Set(common.FlagSgnCLIHome, path);
+	viper.Set(common.FlagSgnCLIHome, path)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }

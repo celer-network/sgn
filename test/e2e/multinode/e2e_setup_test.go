@@ -15,9 +15,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-// runtime variables, will be initialized by TestMain
-var e2eProfile *tf.TestProfile
-
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
 // and teardown. Test specific setup should be done in TestXxx
 func TestMain(m *testing.M) {
@@ -53,7 +50,7 @@ func TestMain(m *testing.M) {
 	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund client0")
 	log.Infoln("set up mainchain")
-	e2eProfile = setupMainchain()
+	tf.E2eProfile = setupMainchain()
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()

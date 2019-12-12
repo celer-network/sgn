@@ -69,7 +69,7 @@ func validatorTest(t *testing.T) {
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, tf.Client0SGNAddrStr, 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
-	err = tf.DelegateStake(e2eProfile.CelrContract, e2eProfile.GuardAddr, auth, ethAddress, amt)
+	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")

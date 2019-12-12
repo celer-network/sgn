@@ -22,7 +22,7 @@ func setupNewSGNEnv() {
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 
-	e2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
 	// make prepare-sgn-data
 	repoRoot, _ := filepath.Abs("../../..")
@@ -39,8 +39,8 @@ func setupNewSGNEnv() {
 		viper.SetConfigFile(configPath)
 		err := viper.ReadInConfig()
 		tf.ChkErr(err, "failed to read config")
-		viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
-		viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr.String())
+		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
 		viper.WriteConfig()
 	}
 
@@ -49,8 +49,8 @@ func setupNewSGNEnv() {
 	viper.SetConfigFile("../../../config.json")
 	err := viper.ReadInConfig()
 	tf.ChkErr(err, "failed to read config")
-	viper.Set(common.FlagEthGuardAddress, e2eProfile.GuardAddr.String())
-	viper.Set(common.FlagEthLedgerAddress, e2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr.String())
+	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
 	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
 	clientKeystore, err := filepath.Abs("../../keys/client0.json")
 	tf.ChkErr(err, "get client keystore path")
