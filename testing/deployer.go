@@ -64,12 +64,12 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
-			err = DefaultTestEthClient.SetupClient(viper.GetString(common.FlagEthWS))
+			err = DefaultTestEthClient.SetClient(viper.GetString(common.FlagEthWS))
 			if err != nil {
 				return
 			}
 
-			err = DefaultTestEthClient.SetupAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
+			err = DefaultTestEthClient.SetAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
 			if err != nil {
 				return
 			}

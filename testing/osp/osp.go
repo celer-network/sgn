@@ -38,9 +38,9 @@ func NewRestServer() (*RestServer, error) {
 
 	tf.SetupDefaultTestEthClient(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
 	client0 := mainchain.EthClient{}
-	client0.SetupAuth(viper.GetString(client0Flag), "")
+	client0.SetAuth(viper.GetString(client0Flag), "")
 	client1 := mainchain.EthClient{}
-	client1.SetupAuth(viper.GetString(client1Flag), "")
+	client1.SetAuth(viper.GetString(client1Flag), "")
 	channelID, err := tf.OpenChannel(client0.Address.Bytes(), client1.Address.Bytes(), client0.PrivateKey, client1.PrivateKey, []byte(viper.GetString(common.FlagConfig)))
 	if err != nil {
 		return nil, err

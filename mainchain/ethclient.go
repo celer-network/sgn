@@ -12,13 +12,13 @@ import (
 )
 
 type EthClient struct {
-	// initialized by SetupClient
+	// initialized by SetClient()
 	Client *ethclient.Client
-	// initialized by SetupAuth
+	// initialized by SetAuth()
 	PrivateKey *ecdsa.PrivateKey
 	Address    Addr
 	Auth       *bind.TransactOpts
-	// initialized by SetupContract
+	// initialized by SetContracts()
 	GuardAddress  Addr
 	Guard         *Guard
 	LedgerAddress Addr
@@ -28,17 +28,17 @@ type EthClient struct {
 // NewEthClient creates a new eth client and initializes all fields
 func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
 	ethClient := &EthClient{}
-	err := ethClient.SetupClient(ws)
+	err := ethClient.SetClient(ws)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ethClient.SetupAuth(ks, passphrase)
+	err = ethClient.SetAuth(ks, passphrase)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ethClient.SetupContract(guardAddrStr, ledgerAddrStr)
+	err = ethClient.SetContracts(guardAddrStr, ledgerAddrStr)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthC
 	return ethClient, nil
 }
 
-func (ethClient *EthClient) SetupClient(ws string) error {
+func (ethClient *EthClient) SetClient(ws string) error {
 	rpcClient, err := ethrpc.Dial(ws)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func (ethClient *EthClient) SetupClient(ws string) error {
 	return nil
 }
 
-func (ethClient *EthClient) SetupAuth(ks, passphrase string) error {
+func (ethClient *EthClient) SetAuth(ks, passphrase string) error {
 	keystoreBytes, err := ioutil.ReadFile(ks)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (ethClient *EthClient) SetupAuth(ks, passphrase string) error {
 	return nil
 }
 
-func (ethClient *EthClient) SetupContract(guardAddrStr, ledgerAddrStr string) error {
+func (ethClient *EthClient) SetContracts(guardAddrStr, ledgerAddrStr string) error {
 	ethClient.GuardAddress = Hex2Addr(guardAddrStr)
 	guard, err := NewGuard(ethClient.GuardAddress, ethClient.Client)
 	if err != nil {

@@ -198,18 +198,21 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	}
 }
 
-// SetupMainchainAndUpdateE2eProfile deploy contracts, and do setups
-func SetupMainchainAndUpdateE2eProfile() {
-	err := DefaultTestEthClient.SetupClient(EthInstance)
+// InitializeDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
+// Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
+func InitializeDefaultTestEthClient() {
+	err := DefaultTestEthClient.SetClient(EthInstance)
 	ChkErr(err, "failed to connect to the Ethereum")
 	// TODO: move keys to testing and make this path not hardcoded
-	err = DefaultTestEthClient.SetupAuth("../../keys/client0.json", "")
+	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
 	ChkErr(err, "failed to create auth")
+}
+
+func SetupMainchainAndUpdateE2eProfile() {
+	LogBlkNum(DefaultTestEthClient.Client)
 
 	ledgerAddr := DeployLedgerContract()
-
 	// Deploy sample ERC20 contract (CELR)
-	LogBlkNum(DefaultTestEthClient.Client)
 	erc20Addr, erc20 := DeployERC20Contract()
 
 	E2eProfile = &TestProfile{
