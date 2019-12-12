@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -19,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	protobuf "github.com/golang/protobuf/proto"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -27,13 +25,13 @@ var (
 	pendingNonceLock sync.Mutex
 )
 
-func SetupEthClient(ks string) {
+func SetupEthClient(ks, passphrase string) {
 	ec, err := mainchain.NewEthClient(
 		EthInstance,
-		viper.GetString(common.FlagEthGuardAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-		ks, // relative path is different in tests
-		viper.GetString(common.FlagEthPassphrase),
+		E2eProfile.GuardAddr.String(),
+		E2eProfile.LedgerAddr.String(),
+		ks,
+		passphrase,
 	)
 	ChkErr(err, "setup eth client")
 	EthClient = ec
