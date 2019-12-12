@@ -32,7 +32,7 @@ func setupNewSGNEnv() {
 		log.Error(err)
 	}
 
-	// update SGN config
+	// update config files of SGN nodes
 	log.Infoln("Updating SGN's config.json")
 	for i := 0; /* 3 nodes */ i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
@@ -43,20 +43,6 @@ func setupNewSGNEnv() {
 		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
 		viper.WriteConfig()
 	}
-
-	// update config.json
-	// TODO: better config.json solution
-	viper.SetConfigFile("../../../config.json")
-	err := viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
-	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr.String())
-	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-	viper.Set(common.FlagEthWS, "ws://127.0.0.1:8546")
-	clientKeystore, err := filepath.Abs("../../keys/client0.json")
-	tf.ChkErr(err, "get client keystore path")
-	viper.Set(common.FlagEthKeystore, clientKeystore)
-	// TODO: set operator, transactors
-	viper.WriteConfig()
 
 	// set up eth client and transactor
 	ks_path, _ := filepath.Abs("../../keys/client0.json")

@@ -208,7 +208,7 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 func SetupMainchainAndUpdateE2eProfile() {
 	err := EthClient.SetupClient(EthInstance)
 	ChkErr(err, "failed to connect to the Ethereum")
-	// TODO: move keys to testing
+	// TODO: move keys to testing and make this path not hardcoded
 	err = EthClient.SetupAuth("../../keys/client0.json", "")
 	ChkErr(err, "failed to create auth")
 
