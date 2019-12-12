@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"math/big"
 	"strings"
-	"sync"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -18,11 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	protobuf "github.com/golang/protobuf/proto"
-)
-
-var (
-	EthClient        = &mainchain.EthClient{}
-	pendingNonceLock sync.Mutex
 )
 
 func SetupEthClient(ks, passphrase string) {

@@ -1,6 +1,10 @@
 package testing
 
-import "github.com/celer-network/sgn/mainchain"
+import (
+	"sync"
+
+	"github.com/celer-network/sgn/mainchain"
+)
 
 // runtime variables, will be initialized before each test
 var (
@@ -11,4 +15,7 @@ var (
 	// E2eProfile will be updated and used for each test
 	// not support parallel tests
 	E2eProfile *TestProfile
+
+	EthClient        = &mainchain.EthClient{}
+	pendingNonceLock sync.Mutex
 )
