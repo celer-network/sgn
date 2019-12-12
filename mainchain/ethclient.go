@@ -12,20 +12,20 @@ import (
 )
 
 type EthClient struct {
-	// set by SetupClient
+	// initialized by SetupClient
 	Client *ethclient.Client
-	// set by SetupAuth
+	// initialized by SetupAuth
 	PrivateKey *ecdsa.PrivateKey
 	Address    Addr
 	Auth       *bind.TransactOpts
-	// set by SetupContract
+	// initialized by SetupContract
 	GuardAddress  Addr
 	Guard         *Guard
 	LedgerAddress Addr
 	Ledger        *CelerLedger
 }
 
-// Get a new eth client
+// NewEthClient create a new eth client and initialize all fields
 func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
 	ethClient := &EthClient{}
 	err := ethClient.SetupClient(ws)
