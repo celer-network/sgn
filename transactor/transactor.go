@@ -35,35 +35,17 @@ type Transactor struct {
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
-	var err error
-	var kb keys.Keybase
-	for try := 0; try < maxSignRetry; try++ {
-		kb, err = client.NewKeyBaseFromDir(cliHome)
-		if err == nil {
-			break
-		}
-		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
-			return nil, err
-		}
-		if try != maxSignRetry-1 {
-			time.Sleep(signRetryDelay)
-		}
+	kb, err := client.NewKeyBaseFromDir(cliHome)
+	if err != nil {
+		return nil, err
 	}
 
-	var addr sdk.AccAddress
-	for try := 0; try < maxSignRetry; try++ {
-		addr, err = sdk.AccAddressFromBech32(accAddr)
-		if err == nil {
-			break
-		}
-		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
-			return nil, err
-		}
-		if try != maxSignRetry-1 {
-			time.Sleep(signRetryDelay)
-		}
+	addr, err := sdk.AccAddressFromBech32(accAddr)
+	if err != nil {
+		return nil, err
 	}
 
+	// might run into "resource temporarily unavailable" error, use retry to avoid it.
 	var key keys.Info
 	for try := 0; try < maxSignRetry; try++ {
 		key, err = kb.GetByAddress(addr)
