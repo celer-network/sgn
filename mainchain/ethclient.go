@@ -12,14 +12,17 @@ import (
 )
 
 type EthClient struct {
-	PrivateKey    *ecdsa.PrivateKey
-	Address       Addr
-	Client        *ethclient.Client
+	// set by SetupClient
+	Client *ethclient.Client
+	// set by SetupAuth
+	PrivateKey *ecdsa.PrivateKey
+	Address    Addr
+	Auth       *bind.TransactOpts
+	// set by SetupContract
 	GuardAddress  Addr
 	Guard         *Guard
 	LedgerAddress Addr
 	Ledger        *CelerLedger
-	Auth          *bind.TransactOpts
 }
 
 // Get a new eth client
