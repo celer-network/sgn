@@ -29,7 +29,7 @@ func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransact
 		sgnGasPrice,
 		cdc,
 	)
-	ChkTestErr(t, err, "Failed to create new transactor")
+	ChkTestErr(t, err, "Failed to create new transactor.")
 
 	return tr
 }
