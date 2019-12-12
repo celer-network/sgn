@@ -61,6 +61,7 @@ func subscribeTest(t *testing.T) {
 	guardContract := tf.DefaultTestEthClient.Guard
 	ledgerContract := tf.DefaultTestEthClient.Ledger
 	transactor := tf.NewTransactor(
+		t,
 		viper.GetString(common.FlagSgnCLIHome),
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),

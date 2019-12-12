@@ -42,6 +42,7 @@ func queryLatestBlockTest(t *testing.T) {
 	}
 
 	transactor := tf.NewTransactor(
+		t,
 		viper.GetString(common.FlagSgnCLIHome),
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
