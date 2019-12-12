@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -20,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,12 +55,19 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("======================== Test subscribe ===========================")
 
 	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
-	guardContract := tf.EthClient.Guard
-	ledgerContract := tf.EthClient.Ledger
-	transactor := tf.Transactor
+	conn := tf.DefaultTestEthClient.Client
+	auth := tf.DefaultTestEthClient.Auth
+	ethAddress := tf.DefaultTestEthClient.Address
+	guardContract := tf.DefaultTestEthClient.Guard
+	ledgerContract := tf.DefaultTestEthClient.Ledger
+	transactor := tf.NewTransactor(
+		viper.GetString(common.FlagSgnCLIHome),
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+	)
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
@@ -69,11 +78,11 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
-	err = tf.DelegateStake(e2eProfile.CelrContract, e2eProfile.GuardAddr, auth, ethAddress, amt)
+	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Infoln("Call subscribe on guard contract...")
-	tx, err := e2eProfile.CelrContract.Approve(auth, e2eProfile.GuardAddr, amt)
+	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
@@ -99,10 +108,10 @@ func subscribeTest(t *testing.T) {
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Prepare for requesting guard...")
-	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.EthClient.PrivateKey, Client1PrivKey, e2eProfile.CelrAddr.Bytes())
+	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
 	tf.SleepWithLog(10, "wait channelId to be in secure state")
-	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, Client1PrivKey)
+	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
@@ -119,7 +128,7 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.EthClient.PrivateKey, Client1PrivKey)
+	signedSimplexStateProto, err = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},

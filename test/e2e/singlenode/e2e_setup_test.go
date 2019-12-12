@@ -16,28 +16,10 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-type TestProfile struct {
-	DisputeTimeout uint64
-	LedgerAddr     mainchain.Addr
-	GuardAddr      mainchain.Addr
-	CelrAddr       mainchain.Addr
-	CelrContract   *mainchain.ERC20
-}
-
-// used by setup_onchain and tests
-var (
-	client0Addr = mainchain.Hex2Addr(tf.Client0AddrStr)
-	client1Addr = mainchain.Hex2Addr(tf.Client1AddrStr)
-)
-
-// runtime variables, will be initialized by TestMain
-var (
-	// root dir with ending / for all files, OutRootDirPrefix + epoch seconds
-	// due to testframework etc in a different testing package, we have to define
-	// same var in testframework.go and expose a set api
-	outRootDir string
-	e2eProfile *TestProfile
-)
+// root dir with ending / for all files, OutRootDirPrefix + epoch seconds
+// due to testframework etc in a different testing package, we have to define
+// same var in testframework.go and expose a set api
+var outRootDir string
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
 // and teardown. Test specific setup should be done in TestXxx
@@ -60,9 +42,9 @@ func TestMain(m *testing.M) {
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
-	err = tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&client0Addr})
+	err = tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund server")
-	e2eProfile = setupMainchain()
+	tf.SetupMainchainAndUpdateE2eProfile()
 
 	// make install sgn and sgncli
 	err = installSgn()

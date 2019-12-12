@@ -15,7 +15,7 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
 	setupNewSGNEnv()
-	tf.SleepWithLog(5, "sgn syncing")
+	tf.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
@@ -35,7 +35,16 @@ func queryLatestBlockTest(t *testing.T) {
 		os.Exit(1)
 	}
 
-	blockSGN, err := global.CLIQueryLatestBlock(tf.Transactor.CliCtx, global.RouterKey)
+	transactor := tf.NewTransactor(
+		sgnCLIHome1,
+		sgnChainID,
+		sgnNode1URI,
+		sgnTransactor1,
+		sgnPassphrase,
+		sgnGasPrice,
+	)
+
+	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
@@ -44,4 +53,5 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Infof("Latest block number on mainchain is %d", header.Number)
 
 	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")
+	assert.Greater(t, blockSGN.Number, uint64(0), "blockSGN.Number should be larger than 0")
 }

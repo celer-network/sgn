@@ -10,10 +10,12 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,18 +50,25 @@ func gatewayTest(t *testing.T) {
 	log.Info("======================== Test gateway ===========================")
 
 	ctx := context.Background()
-	conn := tf.EthClient.Client
-	auth := tf.EthClient.Auth
-	ethAddress := tf.EthClient.Address
-	guardContract := tf.EthClient.Guard
-	transactor := tf.Transactor
+	conn := tf.DefaultTestEthClient.Client
+	auth := tf.DefaultTestEthClient.Auth
+	ethAddress := tf.DefaultTestEthClient.Address
+	guardContract := tf.DefaultTestEthClient.Guard
+	transactor := tf.NewTransactor(
+		viper.GetString(common.FlagSgnCLIHome),
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+	)
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
 	log.Info("Call subscribe on guard contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
-	tx, err := e2eProfile.CelrContract.Approve(auth, e2eProfile.GuardAddr, amt)
+	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR on mainchain")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 

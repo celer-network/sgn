@@ -95,8 +95,8 @@ func ParseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawM
 }
 
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
-	conn := EthClient.Client
-	guardContract := EthClient.Guard
+	conn := DefaultTestEthClient.Client
+	guardContract := DefaultTestEthClient.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
@@ -112,8 +112,8 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error 
 }
 
 func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
-	conn := EthClient.Client
-	guardContract := EthClient.Guard
+	conn := DefaultTestEthClient.Client
+	guardContract := DefaultTestEthClient.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 

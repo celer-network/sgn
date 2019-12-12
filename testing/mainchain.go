@@ -8,10 +8,8 @@ import (
 	"io/ioutil"
 	"math/big"
 	"strings"
-	"sync"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -19,27 +17,21 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	protobuf "github.com/golang/protobuf/proto"
-	"github.com/spf13/viper"
 )
 
-var (
-	EthClient        = &mainchain.EthClient{}
-	pendingNonceLock sync.Mutex
-)
-
-func SetupEthClient(ks string) {
+func SetupDefaultTestEthClient(ks, passphrase string) {
 	ec, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthWS),
-		viper.GetString(common.FlagEthGuardAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-		ks, // relative path is different in tests
-		viper.GetString(common.FlagEthPassphrase),
+		EthInstance,
+		E2eProfile.GuardAddr.String(),
+		E2eProfile.LedgerAddr.String(),
+		ks,
+		passphrase,
 	)
 	ChkErr(err, "setup eth client")
-	EthClient = ec
+	DefaultTestEthClient = ec
 }
 
-func prepareEthClient() (
+func prepareEtherBaseClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
 	conn, err := ethclient.Dial(EthInstance)
 	if err != nil {
@@ -63,7 +55,7 @@ func prepareEthClient() (
 }
 
 func FundAddr(amt string, recipients []*mainchain.Addr) error {
-	conn, auth, ctx, senderAddr, err := prepareEthClient()
+	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
 	if err != nil {
 		return err
 	}
@@ -172,7 +164,7 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(channelIdChan)
-	_, err = EthClient.Ledger.OpenChannel(EthClient.Auth, requestBytes)
+	_, err = DefaultTestEthClient.Ledger.OpenChannel(DefaultTestEthClient.Auth, requestBytes)
 	if err != nil {
 		return
 	}
@@ -185,7 +177,7 @@ func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.
 
 func monitorOpenChannel(channelIdChan chan [32]byte) {
 	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
-	sub, err := EthClient.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
+	sub, err := DefaultTestEthClient.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
 	if err != nil {
 		log.Errorln("WatchInitializeCandidate err: ", err)
 		return
@@ -203,5 +195,33 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 			channelIdChan <- channelId
 			return
 		}
+	}
+}
+
+// InitializeDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
+// Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
+func InitializeDefaultTestEthClient() {
+	err := DefaultTestEthClient.SetClient(EthInstance)
+	ChkErr(err, "failed to connect to the Ethereum")
+	// TODO: move keys to testing and make this path not hardcoded
+	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
+	ChkErr(err, "failed to create auth")
+}
+
+func SetupMainchainAndUpdateE2eProfile() {
+	InitializeDefaultTestEthClient()
+
+	LogBlkNum(DefaultTestEthClient.Client)
+	ledgerAddr := DeployLedgerContract()
+	// Deploy sample ERC20 contract (CELR)
+	erc20Addr, erc20 := DeployERC20Contract()
+
+	E2eProfile = &TestProfile{
+		// hardcoded values
+		DisputeTimeout: 10,
+		// deployed addresses
+		LedgerAddr:   ledgerAddr,
+		CelrAddr:     erc20Addr,
+		CelrContract: erc20,
 	}
 }
