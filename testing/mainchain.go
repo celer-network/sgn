@@ -29,7 +29,7 @@ var (
 
 func SetupEthClient(ks string) {
 	ec, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthWS),
+		EthInstance,
 		viper.GetString(common.FlagEthGuardAddress),
 		viper.GetString(common.FlagEthLedgerAddress),
 		ks, // relative path is different in tests
