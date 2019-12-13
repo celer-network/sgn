@@ -45,7 +45,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 		return nil, err
 	}
 
-	// might run into "resource temporarily unavailable" error if directly run it
+	// may run into "resource temporarily unavailable" error if directly run it
 	// retry when get this issue to avoid failure.
 	var key keys.Info
 	for try := 0; try < maxSignRetry; try++ {
