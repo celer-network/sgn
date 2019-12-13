@@ -45,9 +45,21 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 		return nil, err
 	}
 
-	key, err := kb.GetByAddress(addr)
-	if err != nil {
-		return nil, err
+	// may run into "resource temporarily unavailable" error if directly run it
+	// retry when get this issue to avoid failure.
+	var key keys.Info
+	for try := 0; try < maxSignRetry; try++ {
+		key, err = kb.GetByAddress(addr)
+		if err == nil {
+			break
+		}
+		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
+			return nil, err
+		}
+		if try != maxSignRetry-1 {
+			log.Debugln("Failed to call kb.GetByAddress. Will retry it.")
+			time.Sleep(signRetryDelay)
+		}
 	}
 
 	txBldr := auth.
@@ -154,6 +166,7 @@ func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
 			break
 		}
 		if try != maxSignRetry-1 {
+			log.Debugln("Failed to call txBldr.BuildAndSign. Will retry it.")
 			time.Sleep(signRetryDelay)
 		}
 	}

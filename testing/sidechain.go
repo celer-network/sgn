@@ -2,6 +2,7 @@ package testing
 
 import (
 	"math/big"
+	"testing"
 
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/mainchain"
@@ -17,9 +18,9 @@ type SGNParams struct {
 	StartGateway           bool
 }
 
-func NewTransactor(sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase, sgnGasPrice string) *transactor.Transactor {
+func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase, sgnGasPrice string) *transactor.Transactor {
 	cdc := app.MakeCodec()
-	t, err := transactor.NewTransactor(
+	tr, err := transactor.NewTransactor(
 		sgnCLIHome,
 		sgnChainID,
 		sgnNodeURI,
@@ -28,7 +29,7 @@ func NewTransactor(sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphr
 		sgnGasPrice,
 		cdc,
 	)
-	ChkErr(err, "new transactor")
+	ChkTestErr(t, err, "Failed to create new transactor.")
 
-	return t
+	return tr
 }

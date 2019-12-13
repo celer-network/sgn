@@ -36,6 +36,7 @@ func queryLatestBlockTest(t *testing.T) {
 	}
 
 	transactor := tf.NewTransactor(
+		t,
 		sgnCLIHome1,
 		sgnChainID,
 		sgnNode1URI,
