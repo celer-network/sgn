@@ -225,3 +225,31 @@ func SetupMainchainAndUpdateE2eProfile() {
 		CelrContract: erc20,
 	}
 }
+
+func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) (*chain.SignedSimplexState, error) {
+	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
+		SeqNum:    seqNum,
+		ChannelId: channelId,
+		PeerFrom:  peerFrom,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	sig0, err := mainchain.SignMessage(prvtKey0, simplexPaymentChannelBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	sig1, err := mainchain.SignMessage(prvtKey1, simplexPaymentChannelBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	signedSimplexStateProto := &chain.SignedSimplexState{
+		SimplexState: simplexPaymentChannelBytes,
+		Sigs:         [][]byte{sig0, sig1},
+	}
+
+	return signedSimplexStateProto, nil
+}
