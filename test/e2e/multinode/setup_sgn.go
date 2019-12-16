@@ -44,6 +44,8 @@ func setupNewSGNEnv() {
 		viper.WriteConfig()
 	}
 
+	tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+
 	// make localnet-start-nodes
 	cmd = exec.Command("make", "localnet-start-nodes")
 	cmd.Dir = repoRoot
