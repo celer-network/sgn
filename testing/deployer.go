@@ -34,7 +34,7 @@ func DeployLedgerContract() mainchain.Addr {
 func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
 	ctx := context.Background()
 	initAmt := new(big.Int)
-	initAmt.SetString("5"+strings.Repeat("0", 44), 10)
+	initAmt.SetString("1"+strings.Repeat("0", 28), 10)
 	erc20Addr, tx, erc20, err := mainchain.DeployERC20(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, initAmt, "Celer", 18, "CELR")
 	ChkErr(err, "failed to deploy ERC20")
 	WaitMinedWithChk(ctx, DefaultTestEthClient.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
