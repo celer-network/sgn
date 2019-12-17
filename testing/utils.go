@@ -2,6 +2,7 @@ package testing
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/json"
 	"io/ioutil"
 	"math/big"
@@ -11,12 +12,15 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	protobuf "github.com/golang/protobuf/proto"
 )
 
 func ChkTestErr(t *testing.T, err error, msg string) {
@@ -131,4 +135,32 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 	WaitMinedWithChk(ctx, conn, tx, 3*BlockDelay, "Delegate to validator")
 	SleepWithLog(10, "sgn syncing Delegate event on mainchain")
 	return nil
+}
+
+func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) (*chain.SignedSimplexState, error) {
+	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
+		SeqNum:    seqNum,
+		ChannelId: channelId,
+		PeerFrom:  peerFrom,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	sig0, err := mainchain.SignMessage(prvtKey0, simplexPaymentChannelBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	sig1, err := mainchain.SignMessage(prvtKey1, simplexPaymentChannelBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	signedSimplexStateProto := &chain.SignedSimplexState{
+		SimplexState: simplexPaymentChannelBytes,
+		Sigs:         [][]byte{sig0, sig1},
+	}
+
+	return signedSimplexStateProto, nil
 }

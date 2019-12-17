@@ -2,7 +2,6 @@ package singlenode
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -13,7 +12,6 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/proto/entity"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -60,6 +58,7 @@ func subscribeTest(t *testing.T) {
 	ethAddress := tf.DefaultTestEthClient.Address
 	guardContract := tf.DefaultTestEthClient.Guard
 	ledgerContract := tf.DefaultTestEthClient.Ledger
+	privKey := tf.DefaultTestEthClient.PrivateKey
 	transactor := tf.NewTransactor(
 		t,
 		viper.GetString(common.FlagSgnCLIHome),
@@ -109,10 +108,10 @@ func subscribeTest(t *testing.T) {
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Prepare for requesting guard...")
-	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
+	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), privKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
 	tf.ChkTestErr(t, err, "failed to open channel")
 	tf.SleepWithLog(10, "wait channelId to be in secure state")
-	signedSimplexStateProto, err := prepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
+	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
@@ -129,7 +128,7 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = prepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
+	signedSimplexStateProto, err = tf.PrepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
@@ -176,32 +175,4 @@ func subscribeTest(t *testing.T) {
 	rsr, err := guardContract.RedeemedServiceReward(&bind.CallOpts{}, ethAddress)
 	tf.ChkTestErr(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
-}
-
-func prepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) (*chain.SignedSimplexState, error) {
-	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
-		SeqNum:    seqNum,
-		ChannelId: channelId,
-		PeerFrom:  peerFrom,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	sig0, err := mainchain.SignMessage(prvtKey0, simplexPaymentChannelBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	sig1, err := mainchain.SignMessage(prvtKey1, simplexPaymentChannelBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	signedSimplexStateProto := &chain.SignedSimplexState{
-		SimplexState: simplexPaymentChannelBytes,
-		Sigs:         [][]byte{sig0, sig1},
-	}
-
-	return signedSimplexStateProto, nil
 }

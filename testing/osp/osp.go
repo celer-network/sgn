@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
+	"github.com/celer-network/sgn/transactor"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/gorilla/mux"
@@ -20,36 +22,57 @@ import (
 
 // RestServer represents the Light Client Rest server
 type RestServer struct {
-	Mux       *mux.Router
-	listener  net.Listener
-	logger    tlog.Logger
-	channelID [32]byte
+	Mux        *mux.Router
+	listener   net.Listener
+	logger     tlog.Logger
+	transactor *transactor.Transactor
+	osp        *mainchain.EthClient
+	user       *mainchain.EthClient
+	channelID  [32]byte
 }
 
 const (
-	client0Flag = "client0"
-	client1Flag = "client1"
+	ospFlag  = "osp"
+	userFlag = "user"
 )
 
 // NewRestServer creates a new rest server instance
 func NewRestServer() (*RestServer, error) {
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+	cdc := app.MakeCodec()
+	transactor, err := transactor.NewTransactor(
+		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+		cdc,
+	)
+	if err != nil {
+		return nil, err
+	}
 
-	tf.SetupDefaultTestEthClient(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
-	client0 := mainchain.EthClient{}
-	client0.SetAuth(viper.GetString(client0Flag), "")
-	client1 := mainchain.EthClient{}
-	client1.SetAuth(viper.GetString(client1Flag), "")
-	channelID, err := tf.OpenChannel(client0.Address.Bytes(), client1.Address.Bytes(), client0.PrivateKey, client1.PrivateKey, []byte(viper.GetString(common.FlagConfig)))
+	osp := &mainchain.EthClient{}
+	osp.SetAuth(viper.GetString(ospFlag), "")
+	osp.SetContracts(viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress))
+	tf.DefaultTestEthClient = osp
+
+	user := &mainchain.EthClient{}
+	user.SetAuth(viper.GetString(userFlag), "")
+	channelID, err := tf.OpenChannel(osp.Address.Bytes(), user.Address.Bytes(), osp.PrivateKey, user.PrivateKey, []byte(viper.GetString(common.FlagConfig)))
 	if err != nil {
 		return nil, err
 	}
 
 	return &RestServer{
-		Mux:       r,
-		logger:    logger,
-		channelID: channelID,
+		Mux:        r,
+		logger:     logger,
+		transactor: transactor,
+		osp:        osp,
+		user:       user,
+		channelID:  channelID,
 	}, nil
 }
 
@@ -107,7 +130,7 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(client0Flag, "./test/keys/client0.json", "client 0 keystore path")
-	cmd.Flags().String(client1Flag, "./test/keys/client1.json", "client 1 keystore path")
+	cmd.Flags().String(ospFlag, "./test/keys/osp.json", "osp keystore path")
+	cmd.Flags().String(userFlag, "./test/keys/user.json", "user keystore path")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
