@@ -22,6 +22,7 @@ func setupNewSGNEnv() {
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 
+	sgnParams.CelrAddr = tf.E2eProfile.CelrAddr
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
 	// make prepare-sgn-data
