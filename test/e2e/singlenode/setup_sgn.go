@@ -22,10 +22,9 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 			MinValidatorNum:        big.NewInt(1),
 			MinStakingPool:         big.NewInt(100),
 			SidechainGoLiveTimeout: big.NewInt(0),
+			CelrAddr:               tf.E2eProfile.CelrAddr,
 		}
 	}
-
-	sgnParams.CelrAddr = tf.E2eProfile.CelrAddr
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 	updateSGNConfig()
 
