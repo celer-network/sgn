@@ -4,6 +4,7 @@ package multinode
 import (
 	"fmt"
 	"math/big"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func setupNewSGNEnv(sgnParams *tf.SGNParams) {
-	// deploy guard contract
+	log.Infoln("deploy guard contract")
 	if sgnParams == nil {
 		sgnParams = &tf.SGNParams{
 			BlameTimeout:           big.NewInt(50),
@@ -26,16 +27,17 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
-	// make prepare-sgn-data
+	log.Infoln("make prepare-sgn-data")
 	repoRoot, _ := filepath.Abs("../../..")
 	cmd := exec.Command("make", "prepare-sgn-data")
 	cmd.Dir = repoRoot
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
 
-	// update config files of SGN nodes
-	log.Infoln("Updating SGN's config.json")
+	log.Infoln("Updating config files of SGN nodes")
 	for i := 0; /* 3 nodes */ i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
 		viper.SetConfigFile(configPath)
@@ -46,11 +48,14 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 		viper.WriteConfig()
 	}
 
+	log.Infoln("SetContracts")
 	tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
 
-	// make localnet-start-nodes
-	cmd = exec.Command("make", "localnet-start-nodes")
+	log.Infoln("make localnet-up-nodes")
+	cmd = exec.Command("make", "localnet-up-nodes")
 	cmd.Dir = repoRoot
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}

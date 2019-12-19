@@ -65,17 +65,19 @@ prepare-docker-env: build-dockers get-geth build-linux prepare-geth-data
 .PHONY: localnet-start-geth
 localnet-start-geth:
 	docker-compose stop geth
+	docker-compose rm -f geth
 	docker-compose up -d geth
 
 # Run a 3-node sgn testnet locally
-.PHONY: localnet-start-nodes
-localnet-start-nodes: localnet-stop-nodes
+.PHONY: localnet-up-nodes
+localnet-up-nodes: localnet-down-nodes
 	docker-compose up -d sgnnode0 sgnnode1 sgnnode2
 
 # Stop sgn testnet
-.PHONY: localnet-stop-nodes
-localnet-stop-nodes:
+.PHONY: localnet-down-nodes
+localnet-down-nodes:
 	docker-compose stop sgnnode0 sgnnode1 sgnnode2
+	docker-compose rm -f sgnnode0 sgnnode1 sgnnode2
 
 # Stop both geth and sgn testnet
 .PHONY: localnet-down
