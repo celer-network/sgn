@@ -23,7 +23,7 @@ import (
 
 func setUpSubscribe() {
 	log.Infoln("set up new sgn env")
-	setupNewSGNEnv()
+	setupNewSGNEnv(nil)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 

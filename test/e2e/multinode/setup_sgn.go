@@ -13,16 +13,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setupNewSGNEnv() {
+func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	// deploy guard contract
-	sgnParams := &tf.SGNParams{
-		BlameTimeout:           big.NewInt(50),
-		MinValidatorNum:        big.NewInt(1),
-		MinStakingPool:         big.NewInt(100),
-		SidechainGoLiveTimeout: big.NewInt(0),
+	if sgnParams == nil {
+		sgnParams = &tf.SGNParams{
+			BlameTimeout:           big.NewInt(50),
+			MinValidatorNum:        big.NewInt(1),
+			MinStakingPool:         big.NewInt(100),
+			SidechainGoLiveTimeout: big.NewInt(0),
+			CelrAddr:               tf.E2eProfile.CelrAddr,
+		}
 	}
-
-	sgnParams.CelrAddr = tf.E2eProfile.CelrAddr
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
 	// make prepare-sgn-data
