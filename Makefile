@@ -95,6 +95,7 @@ prepare-geth-data:
 .PHONY: prepare-sgn-data
 prepare-sgn-data:
 	rm -rf ./docker-volumes/node*
+	mkdir -p ./docker-volumes
 	cp -r ./test/multi-node-data/node* ./docker-volumes/
 
 # Clean test data
