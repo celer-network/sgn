@@ -23,7 +23,14 @@ import (
 
 func setUpSubscribe() {
 	log.Infoln("set up new sgn env")
-	setupNewSGNEnv(nil)
+	p := &tf.SGNParams{
+		BlameTimeout:           big.NewInt(10),
+		MinValidatorNum:        big.NewInt(0),
+		MinStakingPool:         big.NewInt(0),
+		SidechainGoLiveTimeout: big.NewInt(0),
+		CelrAddr:               tf.E2eProfile.CelrAddr,
+	}
+	setupNewSGNEnv(p)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
