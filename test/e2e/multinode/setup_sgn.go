@@ -27,9 +27,18 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
-	log.Infoln("make prepare-sgn-data")
+	log.Infoln("make localnet-down-nodes")
+	cmd := exec.Command("make", "localnet-down-nodes")
 	repoRoot, _ := filepath.Abs("../../..")
-	cmd := exec.Command("make", "prepare-sgn-data")
+	cmd.Dir = repoRoot
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+
+	log.Infoln("make prepare-sgn-data")
+	cmd = exec.Command("make", "prepare-sgn-data")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
