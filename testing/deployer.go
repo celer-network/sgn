@@ -74,6 +74,10 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
+			SetEthBaseKs("./docker-volumes/geth-env")
+			err = FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&DefaultTestEthClient.Address})
+			ChkErr(err, "fund client0")
+
 			DeployLedgerContract()
 			erc20Addr, _ := DeployERC20Contract()
 

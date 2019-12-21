@@ -38,8 +38,10 @@ const (
 
 // NewRestServer creates a new rest server instance
 func NewRestServer() (*RestServer, error) {
+	log.Infof("New rest server")
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+	viper.Set(sdkFlags.FlagTrustNode, true)
 	cdc := app.MakeCodec()
 	transactor, err := transactor.NewTransactor(
 		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
@@ -55,12 +57,23 @@ func NewRestServer() (*RestServer, error) {
 	}
 
 	osp := &mainchain.EthClient{}
-	osp.SetAuth(viper.GetString(ospFlag), "")
-	osp.SetContracts(viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress))
+	err = osp.SetAuth(viper.GetString(ospFlag), "")
+	if err != nil {
+		return nil, err
+	}
+
+	err = osp.SetContracts(viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress))
+	if err != nil {
+		return nil, err
+	}
 	tf.DefaultTestEthClient = osp
 
 	user := &mainchain.EthClient{}
-	user.SetAuth(viper.GetString(userFlag), "")
+	err = user.SetAuth(viper.GetString(userFlag), "")
+	if err != nil {
+		return nil, err
+	}
+
 	channelID, err := tf.OpenChannel(osp.Address.Bytes(), user.Address.Bytes(), osp.PrivateKey, user.PrivateKey, []byte(viper.GetString(common.FlagConfig)))
 	if err != nil {
 		return nil, err
@@ -130,7 +143,7 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(ospFlag, "./test/keys/osp.json", "osp keystore path")
-	cmd.Flags().String(userFlag, "./test/keys/user.json", "user keystore path")
+	cmd.Flags().String(ospFlag, "./test/keys/client0.json", "osp keystore path")
+	cmd.Flags().String(userFlag, "./test/keys/client1.json", "user keystore path")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }

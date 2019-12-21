@@ -1,24 +1,22 @@
 {
   "eth": {
-    "guardaddress": "0x4ed6ef4f9e13be914e46b49743d000d551332df9",
+    "guardaddress": "0xfc32Be4a504CfD405aAFccDeB0C155F98cf06f13",
     "keystore": "./test/keys/client0.json",
-    "ledgeraddress": "0x1baed8e1166410c1494a107f091cfebb50d491e3",
+    "ledgeraddress": "0x445e5D0f71B5265dd72bf64ACD03Df578Bbee668",
     "passphrase": "",
-    "ws": "wss://ropsten.infura.io/ws"
+    "ws": "ws://127.0.0.1:8546"
   },
   "logcolor": true,
   "loglevel": "debug",
   "loglongfile": true,
   "sgn": {
     "chainid": "sgnchain",
-    "clihome": "PATH/TO/YOU/SGN_CLI_HOME",
+    "clihome": "/Users/zhuxuefeng/.sgncli",
     "gasprice": "",
     "nodeuri": "tcp://localhost:26657",
     "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
     "passphrase": "12341234",
     "pubkey": "cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
-    "transactors": [
-      "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"
-    ]
+    "transactors": ["cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"]
   }
 }

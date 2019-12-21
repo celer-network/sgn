@@ -19,6 +19,14 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
+var (
+	etherBaseKs = EnvDir + "/keystore/etherbase.json"
+)
+
+func SetEthBaseKs(prefix string) {
+	etherBaseKs = prefix + "/keystore/etherbase.json"
+}
+
 func SetupMainchainAndE2eProfile() {
 	err := DefaultTestEthClient.SetClient(EthInstance)
 	ChkErr(err, "failed to connect to the Ethereum")
@@ -103,7 +111,7 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 }
 
 func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey, tokenAddr []byte) (channelId [32]byte, err error) {
-	log.Info("Call openChannel on ledger contract...")
+	log.Info("Call openChannel on ledger contract...", peer0Addr, peer1Addr, tokenAddr)
 	tokenInfo := &entity.TokenInfo{
 		TokenType:    entity.TokenType_ERC20,
 		TokenAddress: tokenAddr,
