@@ -1,8 +1,10 @@
 package osp
 
 import (
+	"math/big"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -32,8 +34,8 @@ type RestServer struct {
 }
 
 const (
-	ospFlag  = "osp"
 	userFlag = "user"
+	ospFlag  = "osp"
 )
 
 // NewRestServer creates a new rest server instance
@@ -56,25 +58,26 @@ func NewRestServer() (*RestServer, error) {
 		return nil, err
 	}
 
-	osp := &mainchain.EthClient{}
-	err = osp.SetAuth(viper.GetString(ospFlag), "")
+	user, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(userFlag), "")
 	if err != nil {
 		return nil, err
 	}
 
-	err = osp.SetContracts(viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress))
-	if err != nil {
-		return nil, err
-	}
-	tf.DefaultTestEthClient = osp
-
-	user := &mainchain.EthClient{}
-	err = user.SetAuth(viper.GetString(userFlag), "")
+	osp, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(ospFlag), "")
 	if err != nil {
 		return nil, err
 	}
 
-	channelID, err := tf.OpenChannel(osp.Address.Bytes(), user.Address.Bytes(), osp.PrivateKey, user.PrivateKey)
+	tf.DefaultTestEthClient = user
+	channelID, err := tf.OpenChannel(user.Address.Bytes(), osp.Address.Bytes(), user.PrivateKey, osp.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Subscribe to sgn")
+	amt := new(big.Int)
+	amt.SetString("1"+strings.Repeat("0", 19), 10)
+	_, err = user.Guard.Subscribe(user.Auth, amt)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +146,7 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(ospFlag, "./test/keys/client0.json", "osp keystore path")
-	cmd.Flags().String(userFlag, "./test/keys/client1.json", "user keystore path")
+	cmd.Flags().String(userFlag, "./test/keys/client0.json", "user keystore path")
+	cmd.Flags().String(ospFlag, "./test/keys/client1.json", "osp keystore path")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
