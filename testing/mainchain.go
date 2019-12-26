@@ -110,11 +110,10 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 	return nil
 }
 
-func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey, tokenAddr []byte) (channelId [32]byte, err error) {
-	log.Info("Call openChannel on ledger contract...", peer0Addr, peer1Addr, tokenAddr)
+func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
+	log.Info("Call openChannel on ledger contract...", peer0Addr, peer1Addr)
 	tokenInfo := &entity.TokenInfo{
-		TokenType:    entity.TokenType_ERC20,
-		TokenAddress: tokenAddr,
+		TokenType: entity.TokenType_ETH,
 	}
 	lowAddrDist := &entity.AccountAmtPair{
 		Account: peer0Addr,

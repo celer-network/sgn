@@ -74,7 +74,7 @@ func NewRestServer() (*RestServer, error) {
 		return nil, err
 	}
 
-	channelID, err := tf.OpenChannel(osp.Address.Bytes(), user.Address.Bytes(), osp.PrivateKey, user.PrivateKey, []byte(viper.GetString(common.FlagConfig)))
+	channelID, err := tf.OpenChannel(osp.Address.Bytes(), user.Address.Bytes(), osp.PrivateKey, user.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
