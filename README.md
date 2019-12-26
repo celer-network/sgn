@@ -22,3 +22,17 @@
 
 - geth log path: docker-volumes/geth-env/geth.log
 - sgn nodeN log path: docker-volumes/nodeN/sgn/sgn.log
+
+### Manual Tests
+
+#### Steps
+
+1. `cp ./test/config/local_config.json ./config.json`
+1. start docker geth container `docker-compose up geth`
+1. `make install-all`
+1. `sgntest deploy`
+1. `sgntest osp`
+1. `sgn start`
+1. `sgncli tx subscribe subscribe 0x6A6d2a97dA1C453a4e099E8054865a0a59728863 --from alice`
+1. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
+1. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "10" }'`
