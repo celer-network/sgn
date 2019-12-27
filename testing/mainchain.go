@@ -27,14 +27,17 @@ func SetEthBaseKs(prefix string) {
 	etherBaseKs = prefix + "/keystore/etherbase.json"
 }
 
-func SetupMainchainAndE2eProfile() {
+// SetupDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
+// Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
+func SetupDefaultTestEthClient() {
 	err := DefaultTestEthClient.SetClient(EthInstance)
 	ChkErr(err, "failed to connect to the Ethereum")
 	// TODO: move keys to testing and make this path not hardcoded
 	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
 	ChkErr(err, "failed to create auth")
+}
 
-	LogBlkNum(DefaultTestEthClient.Client)
+func SetupE2eProfile() {
 	ledgerAddr := DeployLedgerContract()
 	// Deploy sample ERC20 contract (CELR)
 	erc20Addr, erc20 := DeployERC20Contract()

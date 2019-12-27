@@ -44,7 +44,8 @@ func TestMain(m *testing.M) {
 	// first fund client0Addr 100 ETH
 	err = tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund server")
-	tf.SetupMainchainAndE2eProfile()
+	tf.SetupDefaultTestEthClient()
+	tf.SetupE2eProfile()
 
 	// make install sgn and sgncli
 	err = installSgn()
