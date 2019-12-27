@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,9 +51,10 @@ func main() {
 	)
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
+	rootCmd.PersistentFlags().String(common.FlagCLIHome, app.DefaultCLIHome, "directory for cli config and data")
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "NS", app.DefaultNodeHome)
+	executor := cli.PrepareBaseCmd(rootCmd, "SGN", app.DefaultNodeHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)

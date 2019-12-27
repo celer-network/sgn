@@ -20,5 +20,5 @@ const (
 	FlagLogLevel    = "logLevel"
 	FlagLogColor    = "logColor"
 	FlagLogLongFile = "logLongFile"
-	FlagSgnCLIHome  = "sgn.cliHome"
+	FlagCLIHome     = "cli-home"
 )

@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -27,7 +26,9 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 
 	sgnParams.CelrAddr = tf.E2eProfile.CelrAddr
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+
 	updateSGNConfig()
+	viper.Set(common.FlagCLIHome, os.ExpandEnv("$HOME/.sgncli"))
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
@@ -56,9 +57,6 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthWS, tf.EthInstance)
 	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-	path, err := homedir.Expand("~/.sgncli")
-	tf.ChkErr(err, "failed to get sgncli abs path")
-	viper.Set(common.FlagSgnCLIHome, path)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }

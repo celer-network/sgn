@@ -46,7 +46,7 @@ func NewRestServer() (*RestServer, error) {
 	viper.Set(sdkFlags.FlagTrustNode, true)
 	cdc := app.MakeCodec()
 	transactor, err := transactor.NewTransactor(
-		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
+		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[0],
