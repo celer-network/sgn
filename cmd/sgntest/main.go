@@ -25,7 +25,7 @@ func main() {
 
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 
-	executor := cli.PrepareMainCmd(rootCmd, "NS", app.DefaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "SGN", app.DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
