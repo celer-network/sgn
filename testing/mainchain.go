@@ -13,6 +13,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -170,6 +171,45 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
 	return
+}
+
+func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
+	conn := DefaultTestEthClient.Client
+	guardContract := DefaultTestEthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
+	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
+	if err != nil {
+		return err
+	}
+
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "InitializeCandidate")
+	SleepBlocksWithLog(6, "sgn syncing InitializeCandidate event on mainchain")
+	return nil
+}
+
+func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
+	conn := DefaultTestEthClient.Client
+	guardContract := DefaultTestEthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
+	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
+	if err != nil {
+		return err
+	}
+	WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+
+	tx, err = guardContract.Delegate(fromAuth, toEthAddress, amt)
+	if err != nil {
+		return err
+	}
+	WaitMinedWithChk(ctx, conn, tx, 3*BlockDelay, "Delegate to validator")
+	SleepWithLog(10, "sgn syncing Delegate event on mainchain")
+	return nil
 }
 
 func monitorOpenChannel(channelIdChan chan [32]byte) {
