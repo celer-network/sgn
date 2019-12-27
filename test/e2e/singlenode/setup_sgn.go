@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -56,9 +55,6 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthWS, tf.EthInstance)
 	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-	path, err := homedir.Expand("~/.sgncli")
-	tf.ChkErr(err, "failed to get sgncli abs path")
-	viper.Set(common.FlagSgnCLIHome, path)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }
