@@ -74,17 +74,30 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
-			DeployLedgerContract()
-			erc20Addr, _ := DeployERC20Contract()
+			SetEthBaseKs("./docker-volumes/geth-env")
+			err = FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&Client0Addr, &Client1Addr})
+			ChkErr(err, "fund client0 and client1")
 
+			ledgerAddr := DeployLedgerContract()
+			viper.Set(common.FlagEthLedgerAddress, ledgerAddr.String())
+
+			erc20Addr, erc20 := DeployERC20Contract()
 			sgnParams := &SGNParams{
 				BlameTimeout:           big.NewInt(50),
-				MinValidatorNum:        big.NewInt(1),
+				MinValidatorNum:        big.NewInt(0),
 				MinStakingPool:         big.NewInt(100),
 				SidechainGoLiveTimeout: big.NewInt(0),
 				CelrAddr:               erc20Addr,
 			}
-			DeployGuardContract(sgnParams)
+			guardAddr := DeployGuardContract(sgnParams)
+			viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+			viper.WriteConfig()
+
+			amt := new(big.Int)
+			amt.SetString("1"+strings.Repeat("0", 19), 10)
+			tx, err := erc20.Approve(DefaultTestEthClient.Auth, guardAddr, amt)
+			ChkErr(err, "failed to deploy Guard contract")
+			WaitMinedWithChk(context.Background(), DefaultTestEthClient.Client, tx, 0, "approve erc20")
 			return
 		},
 	}
