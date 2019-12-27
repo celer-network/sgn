@@ -30,7 +30,7 @@ type RestServer struct {
 	transactor *transactor.Transactor
 	osp        *mainchain.EthClient
 	user       *mainchain.EthClient
-	channelID  [32]byte
+	channelID  mainchain.CidType
 }
 
 const (
@@ -69,7 +69,7 @@ func NewRestServer() (*RestServer, error) {
 	}
 
 	tf.DefaultTestEthClient = user
-	channelID, err := tf.OpenChannel(user.Address.Bytes(), osp.Address.Bytes(), user.PrivateKey, osp.PrivateKey)
+	channelID, err := tf.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
