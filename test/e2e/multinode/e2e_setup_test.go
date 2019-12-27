@@ -50,7 +50,8 @@ func TestMain(m *testing.M) {
 	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund client0")
 	log.Infoln("set up mainchain")
-	tf.SetupMainchainAndUpdateE2eProfile()
+	tf.SetupDefaultTestEthClient()
+	tf.SetupE2eProfile()
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()

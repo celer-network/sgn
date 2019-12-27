@@ -19,39 +19,37 @@ import (
 	protobuf "github.com/golang/protobuf/proto"
 )
 
-func SetupDefaultTestEthClient(ks, passphrase string) {
-	ec, err := mainchain.NewEthClient(
-		EthInstance,
-		E2eProfile.GuardAddr.String(),
-		E2eProfile.LedgerAddr.String(),
-		ks,
-		passphrase,
-	)
-	ChkErr(err, "setup eth client")
-	DefaultTestEthClient = ec
+var (
+	etherBaseKs = EnvDir + "/keystore/etherbase.json"
+)
+
+func SetEthBaseKs(prefix string) {
+	etherBaseKs = prefix + "/keystore/etherbase.json"
 }
 
-func prepareEtherBaseClient() (
-	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
-	conn, err := ethclient.Dial(EthInstance)
-	if err != nil {
-		return nil, nil, nil, mainchain.Addr{}, err
+// SetupDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
+// Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
+func SetupDefaultTestEthClient() {
+	err := DefaultTestEthClient.SetClient(EthInstance)
+	ChkErr(err, "failed to connect to the Ethereum")
+	// TODO: move keys to testing and make this path not hardcoded
+	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
+	ChkErr(err, "failed to create auth")
+}
+
+func SetupE2eProfile() {
+	ledgerAddr := DeployLedgerContract()
+	// Deploy sample ERC20 contract (CELR)
+	erc20Addr, erc20 := DeployERC20Contract()
+
+	E2eProfile = &TestProfile{
+		// hardcoded values
+		DisputeTimeout: 10,
+		// deployed addresses
+		LedgerAddr:   ledgerAddr,
+		CelrAddr:     erc20Addr,
+		CelrContract: erc20,
 	}
-	log.Infoln("etherBaseKs: ", etherBaseKs)
-	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
-	if err != nil {
-		return nil, nil, nil, mainchain.Addr{}, err
-	}
-	etherBaseAddrStr, err := GetAddressFromKeystore(etherBaseKsBytes)
-	if err != nil {
-		return nil, nil, nil, mainchain.Addr{}, err
-	}
-	etherBaseAddr := mainchain.Hex2Addr(etherBaseAddrStr)
-	auth, err := bind.NewTransactor(strings.NewReader(string(etherBaseKsBytes)), "")
-	if err != nil {
-		return nil, nil, nil, mainchain.Addr{}, err
-	}
-	return conn, auth, context.Background(), etherBaseAddr, nil
 }
 
 func FundAddr(amt string, recipients []*mainchain.Addr) error {
@@ -115,18 +113,17 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 	return nil
 }
 
-func OpenChannel(peer0Addr, peer1Addr []byte, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey, tokenAddr []byte) (channelId [32]byte, err error) {
-	log.Info("Call openChannel on ledger contract...")
+func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
+	log.Info("Call openChannel on ledger contract %s %s", peer0Addr.String(), peer1Addr.String())
 	tokenInfo := &entity.TokenInfo{
-		TokenType:    entity.TokenType_ERC20,
-		TokenAddress: tokenAddr,
+		TokenType: entity.TokenType_ETH,
 	}
 	lowAddrDist := &entity.AccountAmtPair{
-		Account: peer0Addr,
+		Account: peer0Addr.Bytes(),
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	highAddrDist := &entity.AccountAmtPair{
-		Account: peer1Addr,
+		Account: peer1Addr.Bytes(),
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	initializer := &entity.PaymentChannelInitializer{
@@ -198,30 +195,25 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	}
 }
 
-// InitializeDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
-// Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
-func InitializeDefaultTestEthClient() {
-	err := DefaultTestEthClient.SetClient(EthInstance)
-	ChkErr(err, "failed to connect to the Ethereum")
-	// TODO: move keys to testing and make this path not hardcoded
-	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
-	ChkErr(err, "failed to create auth")
-}
-
-func SetupMainchainAndUpdateE2eProfile() {
-	InitializeDefaultTestEthClient()
-
-	LogBlkNum(DefaultTestEthClient.Client)
-	ledgerAddr := DeployLedgerContract()
-	// Deploy sample ERC20 contract (CELR)
-	erc20Addr, erc20 := DeployERC20Contract()
-
-	E2eProfile = &TestProfile{
-		// hardcoded values
-		DisputeTimeout: 10,
-		// deployed addresses
-		LedgerAddr:   ledgerAddr,
-		CelrAddr:     erc20Addr,
-		CelrContract: erc20,
+func prepareEtherBaseClient() (
+	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
+	conn, err := ethclient.Dial(EthInstance)
+	if err != nil {
+		return nil, nil, nil, mainchain.Addr{}, err
 	}
+	log.Infoln("etherBaseKs: ", etherBaseKs)
+	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
+	if err != nil {
+		return nil, nil, nil, mainchain.Addr{}, err
+	}
+	etherBaseAddrStr, err := GetAddressFromKeystore(etherBaseKsBytes)
+	if err != nil {
+		return nil, nil, nil, mainchain.Addr{}, err
+	}
+	etherBaseAddr := mainchain.Hex2Addr(etherBaseAddrStr)
+	auth, err := bind.NewTransactor(strings.NewReader(string(etherBaseKsBytes)), "")
+	if err != nil {
+		return nil, nil, nil, mainchain.Addr{}, err
+	}
+	return conn, auth, context.Background(), etherBaseAddr, nil
 }
