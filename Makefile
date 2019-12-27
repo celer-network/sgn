@@ -59,7 +59,7 @@ get-geth:
 
 .PHONY: build-dockers
 build-dockers:
-	$(MAKE) -C networks/local
+	$(MAKE) -C test/networks/local
 
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env
