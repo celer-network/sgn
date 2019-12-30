@@ -1,24 +1,21 @@
 {
-    "eth": {
-        "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
-        "keystore": "./keys/client0.json",
-        "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
-        "passphrase": "",
-        "ws": "ws://geth:8546"
-    },
-    "logcolor": false,
-    "loglevel": "debug",
-    "loglongfile": true,
-    "sgn": {
-        "chainid": "sgnchain",
-        "gasprice": "",
-        "nodeuri": "tcp://localhost:26657",
-        "operator": "cosmos122w97t8vsa3538fr3ylvz3hvuqxrgpnax8es8f",
-        "passphrase": "12341234",
-        "pubkey": "cosmosvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qhu3vf7",
-        "transactors": [
-            "cosmos190xknjnht45ypumxcq7da4plsnuuvf0ajfselv"
-        ],
-        "clihome": "/sgn/env/sgncli"
-    }
+  "eth": {
+    "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
+    "keystore": "./keys/client0.json",
+    "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
+    "passphrase": "",
+    "ws": "ws://geth:8546"
+  },
+  "logcolor": false,
+  "loglevel": "debug",
+  "loglongfile": true,
+  "sgn": {
+    "chainid": "sgnchain",
+    "gasprice": "",
+    "nodeuri": "tcp://localhost:26657",
+    "operator": "cosmos122w97t8vsa3538fr3ylvz3hvuqxrgpnax8es8f",
+    "passphrase": "12341234",
+    "pubkey": "cosmosvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qhu3vf7",
+    "transactors": ["cosmos190xknjnht45ypumxcq7da4plsnuuvf0ajfselv"]
+  }
 }
