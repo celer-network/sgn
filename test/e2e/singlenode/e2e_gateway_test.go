@@ -56,7 +56,7 @@ func gatewayTest(t *testing.T) {
 	guardContract := tf.DefaultTestEthClient.Guard
 	transactor := tf.NewTransactor(
 		t,
-		viper.GetString(common.FlagCLIHome),
+		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[0],

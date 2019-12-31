@@ -23,9 +23,10 @@ fi
 ## Run binary with all parameters
 ##
 export SGNHOME="/sgn/env/sgn"
+export SGNCLIHOME="/sgn/env/sgncli"
 
 if [ -d "$(dirname "${SGNHOME}"/"${LOG}")" ]; then
-  "${BINARY}" --home "${SGNHOME}" "$@" 2>&1 | tee "${SGNHOME}/${LOG}"
+  "${BINARY}" --cli-home "${SGNCLIHOME}" --home "${SGNHOME}" "$@" 2>&1 | tee "${SGNHOME}/${LOG}"
 else
-  "${BINARY}" --home "${SGNHOME}" "$@"
+  "${BINARY}" --cli-home "${SGNCLIHOME}" --home "${SGNHOME}" "$@"
 fi
