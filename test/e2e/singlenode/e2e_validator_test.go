@@ -49,7 +49,7 @@ func validatorTest(t *testing.T) {
 	ethAddress := tf.DefaultTestEthClient.Address
 	transactor := tf.NewTransactor(
 		t,
-		viper.GetString(CLIHome),
+		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[0],

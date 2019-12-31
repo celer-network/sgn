@@ -61,7 +61,7 @@ func subscribeTest(t *testing.T) {
 	privKey := tf.DefaultTestEthClient.PrivateKey
 	transactor := tf.NewTransactor(
 		t,
-		viper.GetString(CLIHome),
+		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[0],
