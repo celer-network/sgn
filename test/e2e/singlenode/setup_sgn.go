@@ -28,7 +28,6 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
 
 	updateSGNConfig()
-	viper.Set(common.FlagCLIHome, os.ExpandEnv("$HOME/.sgncli"))
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tf.ChkErr(err, "start sidechain")
