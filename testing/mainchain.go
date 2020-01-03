@@ -54,7 +54,7 @@ func prepareEtherBaseClient() (
 	return conn, auth, context.Background(), etherBaseAddr, nil
 }
 
-func FundAddr(amt string, recipients []*mainchain.Addr) error {
+func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
 	if err != nil {
 		return err
@@ -111,6 +111,28 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 				log.Infoln("tx done.", r.String(), "bal:", bal.String())
 			}
 		}
+	}
+	return nil
+}
+
+func FundAccountsWithErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*mainchain.Addr, amount string) error {
+	conn := DefaultTestEthClient.Client
+	ctx := context.Background()
+
+	erc20Contract, err := mainchain.NewERC20(erc20Addr, conn)
+	if err != nil {
+		return err
+	}
+	tokenAmt := new(big.Int)
+	tokenAmt.SetString(amount, 10)
+	for _, addr := range addrs {
+		pendingNonceLock.Lock()
+		tx, err := erc20Contract.Transfer(auth, *addr, tokenAmt)
+		pendingNonceLock.Unlock()
+		if err != nil {
+			return err
+		}
+		mainchain.WaitMined(ctx, conn, tx, 0)
 	}
 	return nil
 }
