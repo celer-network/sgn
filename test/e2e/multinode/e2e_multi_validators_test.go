@@ -96,9 +96,9 @@ func multiValidatorTest(t *testing.T) {
 	// get auth
 	keystoreBytes, err := ioutil.ReadFile(ethKeystore1)
 	tf.ChkTestErr(t, err, "failed to read ethKeystore")
-	key, err := keystore.DecryptKey(keystoreBytes, ethKeystore1Pp)
+	key, err := keystore.DecryptKey(keystoreBytes, ethKeystorePp1)
 	tf.ChkTestErr(t, err, "failed to DecryptKey")
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystore1Pp)
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePp1)
 	tf.ChkTestErr(t, err, "failed to generate auth")
 
 	// sgnAddr
@@ -123,4 +123,35 @@ func multiValidatorTest(t *testing.T) {
 	assert.Equal(t, 2, len(validators), "The length of validators should be 2")
 	assert.True(t, validators[1].Tokens.Equal(sdk.NewIntFromBigInt(amt)), "validator token should be 1000000000000000000")
 	assert.Equal(t, sdk.Bonded, validators[1].Status, "validator should be bonded")
+
+	// get auth
+	keystoreBytes, err = ioutil.ReadFile(ethKeystore2)
+	tf.ChkTestErr(t, err, "failed to read ethKeystore")
+	key, err = keystore.DecryptKey(keystoreBytes, ethKeystorePp2)
+	tf.ChkTestErr(t, err, "failed to DecryptKey")
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePp2)
+	tf.ChkTestErr(t, err, "failed to generate auth")
+
+	// sgnAddr
+	sgnAddr, err = sdk.AccAddressFromBech32(sgnOperator2)
+	tf.ChkTestErr(t, err, "failed to parse sgn address")
+
+	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
+	tf.ChkTestErr(t, err, "failed to AddValidator")
+
+	// check if validators are added
+	log.Info("Query sgn about the candidate and check if it has correct stakes...")
+	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, key.Address.Hex())
+	tf.ChkTestErr(t, err, "failed to queryCandidate")
+	log.Infoln("Query sgn about the validator candidate:", candidate)
+	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperator2, amt) // defined in Candidate.String()
+	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	log.Info("Query sgn about the validator to check if it has correct stakes...")
+	validators, err = validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	tf.ChkTestErr(t, err, "failed to queryValidators")
+	log.Infoln("Query sgn about the validators:\n", validators)
+	assert.Equal(t, 3, len(validators), "The length of validators should be 3")
+	assert.True(t, validators[2].Tokens.Equal(sdk.NewIntFromBigInt(amt)), "validator token should be 1000000000000000000")
+	assert.Equal(t, sdk.Bonded, validators[2].Status, "validator should be bonded")
 }

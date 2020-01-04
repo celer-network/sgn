@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 
 	// fund CELR to each validators
 	log.Infoln("fund each validator 10 million CELR")
-	err = tf.FundAccountsWithErc20(tf.DefaultTestEthClient.Auth, tf.E2eProfile.CelrAddr, []*mainchain.Addr{&addr1}, "1"+strings.Repeat("0", 25))
+	err = tf.FundAccountsWithErc20(tf.DefaultTestEthClient.Auth, tf.E2eProfile.CelrAddr, []*mainchain.Addr{&addr1, &addr2}, "1"+strings.Repeat("0", 25))
 	tf.ChkErr(err, "fund each validator ERC20")
 
 	log.Infoln("run all e2e tests")

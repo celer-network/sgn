@@ -32,9 +32,9 @@ const (
 	ethKeystore2 = "../../keys/client2.json"
 
 	// Ethereum keystore passphrases
-	ethKeystore0Pp = ""
-	ethKeystore1Pp = ""
-	ethKeystore2Pp = ""
+	ethKeystorePp0 = ""
+	ethKeystorePp1 = ""
+	ethKeystorePp2 = ""
 
 	// Ethereum addresses
 	ethAddress0 = "6a6d2a97da1c453a4e099e8054865a0a59728863"
