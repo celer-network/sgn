@@ -31,7 +31,7 @@ func setUpSubscribe() {
 	}
 	setupNewSGNEnv(p)
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
-	addThreeValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
+	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 

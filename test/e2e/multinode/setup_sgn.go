@@ -75,7 +75,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 }
 
-func addThreeValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
+func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator ", i)
 
