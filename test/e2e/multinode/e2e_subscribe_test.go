@@ -30,7 +30,8 @@ func setUpSubscribe() {
 		CelrAddr:               tf.E2eProfile.CelrAddr,
 	}
 	setupNewSGNEnv(p)
-	addThreeValidators(big.NewInt(1000000000000000000))
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	addThreeValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
@@ -73,7 +74,7 @@ func subscribeTest(t *testing.T) {
 
 	log.Infoln("Call subscribe on guard contract...")
 	amt := new(big.Int)
-	amt.SetString("100000000000000000000", 10) // 100 CELR
+	amt.SetString("1"+strings.Repeat("0", 20), 10) // 100 CELR
 	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Approve CELR to Guard contract")

@@ -75,31 +75,31 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 }
 
-func addThreeValidators(amt *big.Int) {
+func addThreeValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
 	for i := 0; i < 3; i++ {
 		log.Infoln("Adding validator ", i)
 
 		// get auth
-		keystoreBytes, err := ioutil.ReadFile(ethKeystores[i])
+		keystoreBytes, err := ioutil.ReadFile(ethkss[i])
 		if err != nil {
 			log.Error(err)
 		}
-		key, err := keystore.DecryptKey(keystoreBytes, ethKeystorePps[i])
+		key, err := keystore.DecryptKey(keystoreBytes, ethpps[i])
 		if err != nil {
 			log.Error(err)
 		}
-		auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePps[i])
+		auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethpps[i])
 		if err != nil {
 			log.Error(err)
 		}
 
 		// get sgnAddr
-		sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[i])
+		sgnAddr, err := sdk.AccAddressFromBech32(sgnops[i])
 		if err != nil {
 			log.Error(err)
 		}
 
-		err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
+		err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amts[i])
 		if err != nil {
 			log.Error(err)
 		}

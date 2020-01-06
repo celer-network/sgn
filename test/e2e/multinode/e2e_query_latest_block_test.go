@@ -14,7 +14,8 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
 	setupNewSGNEnv(nil)
-	addThreeValidators(big.NewInt(1000000000000000000))
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	addThreeValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
