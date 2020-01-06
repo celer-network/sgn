@@ -109,7 +109,7 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 	return nil
 }
 
-func FundAccountsWithErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*mainchain.Addr, amount string) error {
+func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*mainchain.Addr, amount string) error {
 	conn := DefaultTestEthClient.Client
 	ctx := context.Background()
 
