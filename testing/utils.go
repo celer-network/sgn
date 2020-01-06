@@ -124,11 +124,11 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 		return err
 	}
 	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "Approve CELR to Guard contract")
+
 	tx, err = guardContract.Delegate(fromAuth, toEthAddress, amt)
 	if err != nil {
 		return err
 	}
-
 	WaitMinedWithChk(ctx, conn, tx, 3*BlockDelay, "Delegate to validator")
 	SleepWithLog(10, "sgn syncing Delegate event on mainchain")
 	return nil

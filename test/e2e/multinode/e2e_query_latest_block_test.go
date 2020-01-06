@@ -2,6 +2,7 @@ package multinode
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -13,6 +14,8 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
 	setupNewSGNEnv(nil)
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
@@ -32,10 +35,10 @@ func queryLatestBlockTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHome1,
+		sgnCLIHomes[1],
 		sgnChainID,
-		sgnNode1URI,
-		sgnTransactor1,
+		sgnNodeURIs[1],
+		sgnTransactors[1],
 		sgnPassphrase,
 		sgnGasPrice,
 	)

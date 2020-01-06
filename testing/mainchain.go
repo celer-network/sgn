@@ -54,7 +54,7 @@ func prepareEtherBaseClient() (
 	return conn, auth, context.Background(), etherBaseAddr, nil
 }
 
-func FundAddr(amt string, recipients []*mainchain.Addr) error {
+func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
 	if err != nil {
 		return err
@@ -65,21 +65,17 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 	chainID := big.NewInt(883) // Private Mainchain Testnet
 	var gasLimit uint64 = 21000
 	for _, r := range recipients {
-		pendingNonceLock.Lock()
 		nonce, err := conn.PendingNonceAt(ctx, senderAddr)
 		if err != nil {
-			pendingNonceLock.Unlock()
 			return err
 		}
 		gasPrice, err := conn.SuggestGasPrice(ctx)
 		if err != nil {
-			pendingNonceLock.Unlock()
 			return err
 		}
 		tx := types.NewTransaction(nonce, *r, auth.Value, gasLimit, gasPrice, nil)
 		tx, err = auth.Signer(types.NewEIP155Signer(chainID), senderAddr, tx)
 		if err != nil {
-			pendingNonceLock.Unlock()
 			return err
 		}
 		if *r == mainchain.ZeroAddr {
@@ -90,10 +86,8 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 
 		err = conn.SendTransaction(ctx, tx)
 		if err != nil {
-			pendingNonceLock.Unlock()
 			return err
 		}
-		pendingNonceLock.Unlock()
 		ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
 		defer cancel()
 		receipt, err := mainchain.WaitMined(ctx2, conn, tx, 0)
@@ -111,6 +105,26 @@ func FundAddr(amt string, recipients []*mainchain.Addr) error {
 				log.Infoln("tx done.", r.String(), "bal:", bal.String())
 			}
 		}
+	}
+	return nil
+}
+
+func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*mainchain.Addr, amount string) error {
+	conn := DefaultTestEthClient.Client
+	ctx := context.Background()
+
+	erc20Contract, err := mainchain.NewERC20(erc20Addr, conn)
+	if err != nil {
+		return err
+	}
+	tokenAmt := new(big.Int)
+	tokenAmt.SetString(amount, 10)
+	for _, addr := range addrs {
+		tx, err := erc20Contract.Transfer(auth, *addr, tokenAmt)
+		if err != nil {
+			return err
+		}
+		mainchain.WaitMined(ctx, conn, tx, 0)
 	}
 	return nil
 }
