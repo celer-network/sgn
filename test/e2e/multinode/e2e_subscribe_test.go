@@ -14,7 +14,6 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
@@ -31,6 +30,7 @@ func setUpSubscribe() {
 		CelrAddr:               tf.E2eProfile.CelrAddr,
 	}
 	setupNewSGNEnv(p)
+	addThreeValidators(big.NewInt(1000000000000000000))
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
@@ -64,17 +64,16 @@ func subscribeTest(t *testing.T) {
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
-	sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[0])
-	tf.ChkTestErr(t, err, "failed to parse sgn address")
+	validatorNum := 3
 
-	err = tf.InitializeCandidate(auth, sgnAddr)
-	tf.ChkTestErr(t, err, "failed to initialize candidate")
-	amt := new(big.Int)
-	amt.SetString("100000000000000000000", 10) // 100 CELR
-	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
-	tf.ChkTestErr(t, err, "failed to delegate stake")
+	// err = tf.InitializeCandidate(auth, sgnAddr)
+	// tf.ChkTestErr(t, err, "failed to initialize candidate")
+	// err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
+	// tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Infoln("Call subscribe on guard contract...")
+	amt := new(big.Int)
+	amt.SetString("100000000000000000000", 10) // 100 CELR
 	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Approve CELR to Guard contract")
@@ -148,7 +147,8 @@ func subscribeTest(t *testing.T) {
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
-	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, params.RequestCost.String())
+	expectedReward := params.RequestCost.QuoRaw(int64(validatorNum))
+	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, expectedReward.String())
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")
@@ -159,7 +159,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn to check if reward gets signature...")
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
-	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
+	assert.Equal(t, validatorNum, len(reward.Sigs), fmt.Sprintf("The length of reward signatures should be %d", validatorNum))
 
 	log.Infoln("Call redeemReward on guard contract...")
 	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
