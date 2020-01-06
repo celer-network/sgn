@@ -54,17 +54,17 @@ func subscribeTest(t *testing.T) {
 	ledgerContract := tf.DefaultTestEthClient.Ledger
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHome0,
+		sgnCLIHomes[0],
 		sgnChainID,
-		sgnNode0URI,
-		sgnTransactor0,
+		sgnNodeURIs[0],
+		sgnTransactors[0],
 		sgnPassphrase,
 		sgnGasPrice,
 	)
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
-	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
+	sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[0])
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
 	err = tf.InitializeCandidate(auth, sgnAddr)

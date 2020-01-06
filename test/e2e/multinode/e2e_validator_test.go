@@ -45,10 +45,10 @@ func validatorTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHome0,
+		sgnCLIHomes[0],
 		sgnChainID,
-		sgnNode0URI,
-		sgnTransactor0,
+		sgnNodeURIs[0],
+		sgnTransactors[0],
 		sgnPassphrase,
 		sgnGasPrice,
 	)
@@ -57,7 +57,7 @@ func validatorTest(t *testing.T) {
 	/********** Add validator0 **********/
 	auth := tf.DefaultTestEthClient.Auth
 	ethAddress := tf.DefaultTestEthClient.Address
-	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
+	sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[0])
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
 	err = tf.InitializeCandidate(auth, sgnAddr)
@@ -67,7 +67,7 @@ func validatorTest(t *testing.T) {
 	candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, tf.Client0SGNAddrStr, 0) // defined in Candidate.String()
+	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[0], 0) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
@@ -84,7 +84,7 @@ func validatorTest(t *testing.T) {
 	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, tf.Client0SGNAddrStr, amt) // defined in Candidate.String()
+	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[0], amt) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
@@ -97,15 +97,15 @@ func validatorTest(t *testing.T) {
 
 	/********** Add validator1 **********/
 	// get auth
-	keystoreBytes, err := ioutil.ReadFile(ethKeystore1)
+	keystoreBytes, err := ioutil.ReadFile(ethKeystores[1])
 	tf.ChkTestErr(t, err, "failed to read ethKeystore")
-	key, err := keystore.DecryptKey(keystoreBytes, ethKeystorePp1)
+	key, err := keystore.DecryptKey(keystoreBytes, ethKeystorePps[1])
 	tf.ChkTestErr(t, err, "failed to DecryptKey")
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePp1)
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePps[1])
 	tf.ChkTestErr(t, err, "failed to generate auth")
 
 	// get sgnAddr
-	sgnAddr, err = sdk.AccAddressFromBech32(sgnOperator1)
+	sgnAddr, err = sdk.AccAddressFromBech32(sgnOperators[1])
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
 	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
@@ -116,7 +116,7 @@ func validatorTest(t *testing.T) {
 	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, key.Address.Hex())
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperator1, amt) // defined in Candidate.String()
+	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[1], amt) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
@@ -129,15 +129,15 @@ func validatorTest(t *testing.T) {
 
 	/********** Add validator2 **********/
 	// get auth
-	keystoreBytes, err = ioutil.ReadFile(ethKeystore2)
+	keystoreBytes, err = ioutil.ReadFile(ethKeystores[2])
 	tf.ChkTestErr(t, err, "failed to read ethKeystore")
-	key, err = keystore.DecryptKey(keystoreBytes, ethKeystorePp2)
+	key, err = keystore.DecryptKey(keystoreBytes, ethKeystorePps[2])
 	tf.ChkTestErr(t, err, "failed to DecryptKey")
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePp2)
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePps[2])
 	tf.ChkTestErr(t, err, "failed to generate auth")
 
 	// get sgnAddr
-	sgnAddr, err = sdk.AccAddressFromBech32(sgnOperator2)
+	sgnAddr, err = sdk.AccAddressFromBech32(sgnOperators[2])
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
 	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
@@ -148,7 +148,7 @@ func validatorTest(t *testing.T) {
 	candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, key.Address.Hex())
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
-	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperator2, amt) // defined in Candidate.String()
+	expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[2], amt) // defined in Candidate.String()
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
