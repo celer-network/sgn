@@ -3,14 +3,19 @@ package multinode
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/spf13/viper"
 )
 
@@ -67,5 +72,36 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
+	}
+}
+
+func addThreeValidators(amt *big.Int) {
+	for i := 0; i < 3; i++ {
+		log.Infoln("Adding validator ", i)
+
+		// get auth
+		keystoreBytes, err := ioutil.ReadFile(ethKeystores[i])
+		if err != nil {
+			log.Error(err)
+		}
+		key, err := keystore.DecryptKey(keystoreBytes, ethKeystorePps[i])
+		if err != nil {
+			log.Error(err)
+		}
+		auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethKeystorePps[i])
+		if err != nil {
+			log.Error(err)
+		}
+
+		// get sgnAddr
+		sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[i])
+		if err != nil {
+			log.Error(err)
+		}
+
+		err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 }

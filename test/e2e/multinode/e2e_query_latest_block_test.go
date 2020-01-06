@@ -2,6 +2,7 @@ package multinode
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -13,6 +14,7 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
 	setupNewSGNEnv(nil)
+	addThreeValidators(big.NewInt(1000000000000000000))
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
