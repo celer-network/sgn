@@ -126,9 +126,7 @@ func FundAccountsWithErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, ad
 	tokenAmt := new(big.Int)
 	tokenAmt.SetString(amount, 10)
 	for _, addr := range addrs {
-		pendingNonceLock.Lock()
 		tx, err := erc20Contract.Transfer(auth, *addr, tokenAmt)
-		pendingNonceLock.Unlock()
 		if err != nil {
 			return err
 		}
