@@ -76,7 +76,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 }
 
 func addThreeValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
-	for i := 0; i < 3; i++ {
+	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator ", i)
 
 		// get auth
