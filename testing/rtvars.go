@@ -1,8 +1,6 @@
 package testing
 
 import (
-	"sync"
-
 	"github.com/celer-network/sgn/mainchain"
 )
 
@@ -17,5 +15,4 @@ var (
 	E2eProfile *TestProfile
 
 	DefaultTestEthClient = &mainchain.EthClient{}
-	pendingNonceLock     sync.Mutex
 )
