@@ -36,7 +36,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 
 	transactorPool, err := transactor.NewTransactorPool(
-		viper.GetString(common.FlagSgnCLIHome), // app.DefaultCLIHome,
+		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),

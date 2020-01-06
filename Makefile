@@ -10,6 +10,10 @@ install: go.sum
 install-test: go.sum
 	go install $(BUILD_FLAGS) ./cmd/sgntest
 
+install-all: go.sum
+	make install
+	make install-test
+
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
 		GO111MODULE=on go mod verify

@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -26,6 +25,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
 		}
 	}
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+
 	updateSGNConfig()
 
 	sgnProc, err := startSidechain(outRootDir, testName)
@@ -55,15 +55,19 @@ func updateSGNConfig() {
 	viper.Set(common.FlagEthWS, tf.EthInstance)
 	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-	path, err := homedir.Expand("~/.sgncli")
-	tf.ChkErr(err, "failed to get sgncli abs path")
-	viper.Set(common.FlagSgnCLIHome, path)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }
 
 func installSgn() error {
 	cmd := exec.Command("make", "install")
+	// set cmd.Dir under repo root path
+	cmd.Dir, _ = filepath.Abs("../../..")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("cp", "./test/config/local_config.json", "./config.json")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {

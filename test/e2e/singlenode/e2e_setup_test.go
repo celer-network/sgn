@@ -16,10 +16,14 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 )
 
-// root dir with ending / for all files, OutRootDirPrefix + epoch seconds
-// due to testframework etc in a different testing package, we have to define
-// same var in testframework.go and expose a set api
-var outRootDir string
+var (
+	CLIHome = os.ExpandEnv("$HOME/.sgncli")
+
+	// root dir with ending / for all files, OutRootDirPrefix + epoch seconds
+	// due to testframework etc in a different testing package, we have to define
+	// same var in testframework.go and expose a set api
+	outRootDir string
+)
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
 // and teardown. Test specific setup should be done in TestXxx
@@ -44,7 +48,8 @@ func TestMain(m *testing.M) {
 	// first fund client0Addr 100 ETH
 	err = tf.FundAddrsETH("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
 	tf.ChkErr(err, "fund server")
-	tf.SetupMainchainAndUpdateE2eProfile()
+	tf.SetupDefaultTestEthClient()
+	tf.SetupE2eProfile()
 
 	// make install sgn and sgncli
 	err = installSgn()

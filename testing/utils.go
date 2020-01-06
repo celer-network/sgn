@@ -2,21 +2,22 @@ package testing
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	protobuf "github.com/golang/protobuf/proto"
 )
 
 func ChkTestErr(t *testing.T, err error, msg string) {
@@ -94,42 +95,30 @@ func ParseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawM
 	return responseWithHeight.Result, nil
 }
 
-func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
-	conn := DefaultTestEthClient.Client
-	guardContract := DefaultTestEthClient.Guard
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
-	defer cancel()
-
-	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
-	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
+func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) (*chain.SignedSimplexState, error) {
+	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
+		SeqNum:    seqNum,
+		ChannelId: channelId,
+		PeerFrom:  peerFrom,
+	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "InitializeCandidate")
-	SleepBlocksWithLog(6, "sgn syncing InitializeCandidate event on mainchain")
-	return nil
-}
-
-func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
-	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-
-	conn := DefaultTestEthClient.Client
-	guardContract := DefaultTestEthClient.Guard
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
-	defer cancel()
-
-	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
+	sig0, err := mainchain.SignMessage(prvtKey0, simplexPaymentChannelBytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "Approve CELR to Guard contract")
 
-	tx, err = guardContract.Delegate(fromAuth, toEthAddress, amt)
+	sig1, err := mainchain.SignMessage(prvtKey1, simplexPaymentChannelBytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	WaitMinedWithChk(ctx, conn, tx, 3*BlockDelay, "Delegate to validator")
-	SleepWithLog(10, "sgn syncing Delegate event on mainchain")
-	return nil
+
+	signedSimplexStateProto := &chain.SignedSimplexState{
+		SimplexState: simplexPaymentChannelBytes,
+		Sigs:         [][]byte{sig0, sig1},
+	}
+
+	return signedSimplexStateProto, nil
 }

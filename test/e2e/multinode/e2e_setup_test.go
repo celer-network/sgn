@@ -54,7 +54,8 @@ func TestMain(m *testing.M) {
 	tf.ChkErr(err, "fund each validator ETH")
 
 	log.Infoln("set up mainchain")
-	tf.SetupMainchainAndUpdateE2eProfile()
+	tf.SetupDefaultTestEthClient()
+	tf.SetupE2eProfile()
 
 	// fund CELR to each validators
 	log.Infoln("fund each validator 10 million CELR")

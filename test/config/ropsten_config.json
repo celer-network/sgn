@@ -1,12 +1,12 @@
 {
   "eth": {
-    "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
-    "keystore": "./keys/client0.json",
-    "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
+    "guardaddress": "0x4ed6ef4f9e13be914e46b49743d000d551332df9",
+    "keystore": "./test/keys/client0.json",
+    "ledgeraddress": "0x1baed8e1166410c1494a107f091cfebb50d491e3",
     "passphrase": "",
-    "ws": "ws://geth:8546"
+    "ws": "wss://ropsten.infura.io/ws"
   },
-  "logcolor": false,
+  "logcolor": true,
   "loglevel": "debug",
   "loglongfile": true,
   "sgn": {
