@@ -77,7 +77,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 
 func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
-		log.Infoln("Adding validator ", i)
+		log.Infoln("Adding validator", i)
 
 		// get auth
 		keystoreBytes, err := ioutil.ReadFile(ethkss[i])

@@ -55,7 +55,7 @@ func validatorTest(t *testing.T) {
 	amt := big.NewInt(1000000000000000000)
 
 	for i := 0; i < 3; i++ {
-		log.Infoln("Adding validator ", i)
+		log.Infoln("Adding validator", i)
 
 		// get auth
 		keystoreBytes, err := ioutil.ReadFile(ethKeystores[i])
