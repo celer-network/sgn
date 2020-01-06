@@ -53,6 +53,7 @@ func subscribeTest(t *testing.T) {
 	ethAddress := tf.DefaultTestEthClient.Address
 	guardContract := tf.DefaultTestEthClient.Guard
 	ledgerContract := tf.DefaultTestEthClient.Ledger
+	privKey := tf.DefaultTestEthClient.PrivateKey
 	transactor := tf.NewTransactor(
 		t,
 		sgnCLIHomes[0],
@@ -66,11 +67,6 @@ func subscribeTest(t *testing.T) {
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 	validatorNum := 3
-
-	// err = tf.InitializeCandidate(auth, sgnAddr)
-	// tf.ChkTestErr(t, err, "failed to initialize candidate")
-	// err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddress, amt)
-	// tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Infoln("Call subscribe on guard contract...")
 	amt := new(big.Int)
@@ -101,7 +97,7 @@ func subscribeTest(t *testing.T) {
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Prepare for requesting guard...")
-	channelId, err := tf.OpenChannel(ethAddress.Bytes(), mainchain.Hex2Bytes(tf.Client1AddrStr), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey, tf.E2eProfile.CelrAddr.Bytes())
+	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
 	tf.SleepWithLog(10, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
