@@ -2,14 +2,12 @@ package singlenode
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,10 +34,7 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test queryLatestBlock ===========================")
 
-	conn, err := ethclient.Dial(tf.EthInstance)
-	if err != nil {
-		os.Exit(1)
-	}
+	conn := tf.DefaultTestEthClient.Client
 
 	transactor := tf.NewTransactor(
 		t,

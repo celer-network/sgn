@@ -26,6 +26,7 @@ func setUpGateway() []tf.Killable {
 		MinStakingPool:         big.NewInt(0),
 		SidechainGoLiveTimeout: big.NewInt(0),
 		StartGateway:           true,
+		CelrAddr:               tf.E2eProfile.CelrAddr,
 	}
 	res := setupNewSGNEnv(p, "gateway")
 	tf.SleepWithLog(10, "sgn being ready")

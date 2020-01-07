@@ -102,7 +102,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	}
 
 	if !sdk.AccAddress(candidateInfo.SidechainAddr).Equals(msg.Sender) {
-		return res, fmt.Errorf("Sender has different address recorded on mainchain")
+		return res, fmt.Errorf("Sender has different address recorded on mainchain. mainchain record: %x; sender: %x", sdk.AccAddress(candidateInfo.SidechainAddr), msg.Sender)
 	}
 
 	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)

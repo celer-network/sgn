@@ -2,19 +2,20 @@ package multinode
 
 import (
 	"context"
-	"os"
+	"math/big"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
 func setUpQueryLatestBlock() {
 	log.Infoln("set up new sgn env")
-	setupNewSGNEnv()
+	setupNewSGNEnv(nil)
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
@@ -30,17 +31,14 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test queryLatestBlock ===========================")
 
-	conn, err := ethclient.Dial(tf.EthInstance)
-	if err != nil {
-		os.Exit(1)
-	}
+	conn := tf.DefaultTestEthClient.Client
 
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHome1,
+		sgnCLIHomes[1],
 		sgnChainID,
-		sgnNode1URI,
-		sgnTransactor1,
+		sgnNodeURIs[1],
+		sgnTransactors[1],
 		sgnPassphrase,
 		sgnGasPrice,
 	)

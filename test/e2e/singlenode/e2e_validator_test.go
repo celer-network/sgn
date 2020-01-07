@@ -22,6 +22,7 @@ func setUpValidator() []tf.Killable {
 		MinValidatorNum:        big.NewInt(1),
 		MinStakingPool:         big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
+		CelrAddr:               tf.E2eProfile.CelrAddr,
 	}
 	res := setupNewSGNEnv(p, "validator")
 	tf.SleepWithLog(10, "sgn being ready")

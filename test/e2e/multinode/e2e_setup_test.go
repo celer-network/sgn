@@ -46,12 +46,21 @@ func TestMain(m *testing.M) {
 	}
 	tf.SleepWithLog(5, "geth start")
 
-	log.Infoln("first fund client0Addr 100 ETH")
-	err := tf.FundAddr("1"+strings.Repeat("0", 20), []*mainchain.Addr{&tf.Client0Addr})
-	tf.ChkErr(err, "fund client0")
+	log.Infoln("fund each validator's ETH address 100 ETH")
+	addr0 := mainchain.Hex2Addr(ethAddresses[0])
+	addr1 := mainchain.Hex2Addr(ethAddresses[1])
+	addr2 := mainchain.Hex2Addr(ethAddresses[2])
+	err := tf.FundAddrsETH("1"+strings.Repeat("0", 20), []*mainchain.Addr{&addr0, &addr1, &addr2})
+	tf.ChkErr(err, "fund each validator ETH")
+
 	log.Infoln("set up mainchain")
 	tf.SetupDefaultTestEthClient()
 	tf.SetupE2eProfile()
+
+	// fund CELR to each validators
+	log.Infoln("fund each validator 10 million CELR")
+	err = tf.FundAddrsErc20(tf.DefaultTestEthClient.Auth, tf.E2eProfile.CelrAddr, []*mainchain.Addr{&addr1, &addr2}, "1"+strings.Repeat("0", 25))
+	tf.ChkErr(err, "fund each validator ERC20")
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()
