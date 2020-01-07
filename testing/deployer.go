@@ -96,7 +96,7 @@ func DeployCommand() *cobra.Command {
 			amt := new(big.Int)
 			amt.SetString("1"+strings.Repeat("0", 19), 10)
 			tx, err := erc20.Approve(DefaultTestEthClient.Auth, guardAddr, amt)
-			ChkErr(err, "failed to deploy Guard contract")
+			ChkErr(err, "failed to approve erc20")
 			WaitMinedWithChk(context.Background(), DefaultTestEthClient.Client, tx, 0, "approve erc20")
 			return
 		},

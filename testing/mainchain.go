@@ -226,6 +226,20 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 	return nil
 }
 
+func AddValidator(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, sgnAddr sdk.AccAddress, amt *big.Int) error {
+	err := InitializeCandidate(fromAuth, sgnAddr)
+	if err != nil {
+		return err
+	}
+
+	err = DelegateStake(celrContract, guardAddr, fromAuth, toEthAddress, amt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func monitorOpenChannel(channelIdChan chan [32]byte) {
 	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
 	sub, err := DefaultTestEthClient.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)

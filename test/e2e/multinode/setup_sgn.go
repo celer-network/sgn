@@ -78,30 +78,38 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
-
-		// get auth
-		keystoreBytes, err := ioutil.ReadFile(ethkss[i])
-		if err != nil {
-			log.Error(err)
-		}
-		key, err := keystore.DecryptKey(keystoreBytes, ethpps[i])
-		if err != nil {
-			log.Error(err)
-		}
-		auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethpps[i])
-		if err != nil {
-			log.Error(err)
-		}
-
-		// get sgnAddr
-		sgnAddr, err := sdk.AccAddressFromBech32(sgnops[i])
-		if err != nil {
-			log.Error(err)
-		}
-
-		err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amts[i])
+		err := addValidator(ethkss[i], ethpps[i], sgnops[i], amts[i])
 		if err != nil {
 			log.Error(err)
 		}
 	}
+}
+
+func addValidator(ethks string, ethpp string, sgnop string, amt *big.Int) error {
+	// get auth
+	keystoreBytes, err := ioutil.ReadFile(ethks)
+	if err != nil {
+		return err
+	}
+	key, err := keystore.DecryptKey(keystoreBytes, ethpp)
+	if err != nil {
+		return err
+	}
+	auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethpp)
+	if err != nil {
+		return err
+	}
+
+	// get sgnAddr
+	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
+	if err != nil {
+		return err
+	}
+
+	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
