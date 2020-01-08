@@ -75,6 +75,16 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 }
 
+func shutdownNode(node string) {
+	log.Infoln("shutdown node", node)
+	cmd := exec.Command("docker-compose", "stop", node)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+}
+
 func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)

@@ -61,7 +61,7 @@ func NewPenalty(nonce uint64, reason string, validatorAddr string) Penalty {
 
 // implement fmt.Stringer
 func (p Penalty) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, Reason: %s`, p.Nonce, p.Reason))
+	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: %s`, p.Nonce, p.ValidatorAddr, p.Reason))
 }
 
 func (p Penalty) GenerateProtoBytes() {
