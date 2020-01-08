@@ -1,13 +1,14 @@
 package multinode
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/stretchr/testify/assert"
 )
 
 func setUpSlash() {
@@ -48,13 +49,16 @@ func slashTest(t *testing.T) {
 	)
 
 	shutdownNode("sgnnode2")
-	tf.SleepWithLog(10, "shutdown node2")
+	tf.SleepWithLog(60, "wait for slash")
 
-	for {
-		height, _ := rpc.GetChainHeight(transactor.CliCtx)
-		log.Infoln("latest height", height)
-		penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, 1)
-		log.Errorln(penalty, err)
-		tf.SleepWithLog(10, "check height")
-	}
+	nonce := uint64(1)
+	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
+	tf.ChkTestErr(t, err, "failed to query penalty")
+
+	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, ethAddresses[2])
+	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, ethAddresses[2])
+	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	// assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 }

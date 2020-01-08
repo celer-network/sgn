@@ -29,6 +29,10 @@ func NewAccountAmtPair(account string, amount sdk.Int) AccountAmtPair {
 	}
 }
 
+func (amp AccountAmtPair) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`Account: %s, Amount: %v`, amp.Account, amp.Amount))
+}
+
 type AccountFractionPair struct {
 	Account  string  `json:"account"`
 	Fraction sdk.Dec `json:"percent"`
