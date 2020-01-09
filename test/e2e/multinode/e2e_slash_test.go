@@ -34,6 +34,7 @@ func TestE2ESlash(t *testing.T) {
 	})
 }
 
+// Test penalty slash when a validator is offline
 func slashTest(t *testing.T) {
 	log.Infoln("===================================================================")
 	log.Infoln("======================== Test slash ===========================")
@@ -49,7 +50,7 @@ func slashTest(t *testing.T) {
 	)
 
 	shutdownNode("sgnnode2")
-	tf.SleepWithLog(20, "wait for slash")
+	tf.SleepWithLog(15, "wait for slash")
 
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
