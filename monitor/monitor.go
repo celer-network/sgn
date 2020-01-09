@@ -2,10 +2,8 @@ package monitor
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -13,9 +11,11 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/rpc/client"
+	tTypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -64,7 +64,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 }
 
 func (m *EthMonitor) monitorBlockHead() {
-	headerChan := make(chan *types.Header)
+	headerChan := make(chan *ethTypes.Header)
 	sub, err := m.ethClient.Client.SubscribeNewHead(context.Background(), headerChan)
 	if err != nil {
 		log.Errorln("SubscribeNewHead err", err)
@@ -195,7 +195,8 @@ func (m *EthMonitor) monitorIntendSettle() {
 }
 
 func (m *EthMonitor) monitorWithdrawReward() {
-	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(event sdk.StringEvent) {
+	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
+		event := sdk.StringifyEvent(e)
 		if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
 			m.handleInitiateWithdrawReward(event.Attributes[1].Value)
 		}
@@ -203,7 +204,8 @@ func (m *EthMonitor) monitorWithdrawReward() {
 }
 
 func (m *EthMonitor) monitorSlash() {
-	m.monitorTendermintEvent(slashEvent, func(event sdk.StringEvent) {
+	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
+		event := sdk.StringifyEvent(e)
 		if event.Attributes[0].Value == slash.ActionPenalty {
 			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
 			if err != nil {
@@ -219,55 +221,31 @@ func (m *EthMonitor) monitorSlash() {
 	})
 }
 
-func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event sdk.StringEvent)) {
-	var searchTxsResult *sdk.SearchTxsResult
-	var txs []sdk.TxResponse
-	var err error
+func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
+	client := client.NewHTTP(m.transactor.CliCtx.NodeURI, "/websocket")
+	err := client.Start()
+	if err != nil {
+		log.Errorln("Fail to start ws client", err)
+		return
+	}
+	defer client.Stop()
 
-	for {
-		eventRecordedRaw := m.db.Get(GetSgnEventKey(eventTag))
-		isInitialLaunch := len(eventRecordedRaw) == 0
-		eventRecorded := 0
-		initPage := 1
-		if !isInitialLaunch {
-			eventRecorded = int(binary.BigEndian.Uint64(eventRecordedRaw))
-			initPage = eventRecorded/txsPageLimit + 1
-		}
-		page := initPage
+	txs, err := client.Subscribe(context.Background(), "monitor", slashEvent)
+	if err != nil {
+		log.Errorln("ws client subscribe error", err)
+		return
+	}
 
-		for ; ; page++ {
-			searchTxsResult, err = authUtils.QueryTxsByEvents(m.transactor.CliCtx, []string{eventTag}, page, txsPageLimit)
-			if err != nil {
-				log.Errorln("QueryTxsByEvents err", err)
-				break
+	for e := range txs {
+		switch data := e.Data.(type) {
+		case tTypes.EventDataNewBlock:
+			for _, event := range data.ResultBeginBlock.Events {
+				handleEvent(event)
 			}
-
-			// first time will skip existing events
-			if isInitialLaunch {
-				break
-			}
-
-			txs = searchTxsResult.Txs
-			if page == initPage {
-				txs = txs[eventRecorded%txsPageLimit:]
-			}
-
-			for _, tx := range txs {
-				for _, event := range tx.Events {
-					handleEvent(event)
-				}
-			}
-
-			// Check if it is necessary to query next page
-			if searchTxsResult.PageNumber >= searchTxsResult.PageTotal {
-				break
+		case tTypes.EventDataTx:
+			for _, event := range data.TxResult.Result.Events {
+				handleEvent(event)
 			}
 		}
-
-		if err == nil {
-			m.db.Set(GetSgnEventKey(eventTag), sdk.Uint64ToBigEndian(uint64(searchTxsResult.TotalCount)))
-		}
-
-		time.Sleep(txsPullInterval * time.Second)
 	}
 }

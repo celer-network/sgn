@@ -104,7 +104,6 @@ func (m *EthMonitor) processPenaltyQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewPenaltyEventFromBytes(iterator.Value())
-		log.Infoln("process penalty event", event.nonce)
 		m.db.Delete(iterator.Key())
 		m.processPenalty(event)
 	}

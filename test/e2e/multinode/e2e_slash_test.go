@@ -49,9 +49,9 @@ func slashTest(t *testing.T) {
 	)
 
 	shutdownNode("sgnnode2")
-	tf.SleepWithLog(60, "wait for slash")
+	tf.SleepWithLog(20, "wait for slash")
 
-	nonce := uint64(1)
+	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	tf.ChkTestErr(t, err, "failed to query penalty")
 
@@ -60,5 +60,5 @@ func slashTest(t *testing.T) {
 
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, ethAddresses[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	// assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
+	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 }
