@@ -230,7 +230,7 @@ func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(ev
 	}
 	defer client.Stop()
 
-	txs, err := client.Subscribe(context.Background(), "monitor", slashEvent)
+	txs, err := client.Subscribe(context.Background(), "monitor", eventTag)
 	if err != nil {
 		log.Errorln("ws client subscribe error", err)
 		return
