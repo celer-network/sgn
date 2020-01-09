@@ -187,14 +187,14 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 	return
 }
 
-func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress) error {
+func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int) error {
 	conn := DefaultTestEthClient.Client
 	guardContract := DefaultTestEthClient.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
 	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
-	tx, err := guardContract.InitializeCandidate(auth, big.NewInt(1), sgnAddr.Bytes())
+	tx, err := guardContract.InitializeCandidate(auth, minSelfStake, sgnAddr.Bytes())
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 }
 
 func AddValidator(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, sgnAddr sdk.AccAddress, amt *big.Int) error {
-	err := InitializeCandidate(fromAuth, sgnAddr)
+	err := InitializeCandidate(fromAuth, sgnAddr, big.NewInt(1))
 	if err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingCli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -180,6 +181,27 @@ func QueryValidators(cliCtx context.CLIContext, storeName string) (validators st
 	for _, kv := range resKVs {
 		validators = append(validators, stakingTypes.MustUnmarshalValidator(cliCtx.Codec, kv.Value))
 	}
+	return
+}
+
+// cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj e.g. for addStr
+func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string) (validator stakingTypes.Validator, err error) {
+	addr, err := sdk.ValAddressFromBech32(addrStr)
+	if err != nil {
+		return
+	}
+
+	res, _, err := cliCtx.QueryStore(stakingTypes.GetValidatorKey(addr), storeName)
+	if err != nil {
+		return
+	}
+
+	if len(res) == 0 {
+		err = fmt.Errorf("No validator found with address %s", addr)
+		return
+	}
+
+	validator = stakingTypes.MustUnmarshalValidator(cliCtx.Codec, res)
 	return
 }
 

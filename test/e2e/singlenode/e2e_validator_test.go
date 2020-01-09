@@ -61,7 +61,7 @@ func validatorTest(t *testing.T) {
 	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
-	err = tf.InitializeCandidate(auth, sgnAddr)
+	err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(1))
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")

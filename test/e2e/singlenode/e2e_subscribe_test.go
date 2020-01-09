@@ -75,7 +75,7 @@ func subscribeTest(t *testing.T) {
 	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
-	err = tf.InitializeCandidate(auth, sgnAddr)
+	err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(1))
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
