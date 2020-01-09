@@ -187,6 +187,23 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 	return
 }
 
+func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *big.Int) error {
+	conn := DefaultTestEthClient.Client
+	guardContract := DefaultTestEthClient.Guard
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+
+	log.Info("Call intendWithdraw on guard contract using the validator eth address...")
+	tx, err := guardContract.IntendWithdraw(auth, candidateAddr, amt)
+	if err != nil {
+		return err
+	}
+
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "IntendWithdraw")
+	SleepBlocksWithLog(16, "sgn syncing IntendWithdraw event on mainchain")
+	return nil
+}
+
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int) error {
 	conn := DefaultTestEthClient.Client
 	guardContract := DefaultTestEthClient.Guard
