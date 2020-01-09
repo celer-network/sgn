@@ -270,7 +270,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	)
 
 	app.mm.SetOrderBeginBlockers()
-	app.mm.SetOrderEndBlockers(staking.ModuleName, subscribe.ModuleName, validator.ModuleName, cron.ModuleName)
+	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
