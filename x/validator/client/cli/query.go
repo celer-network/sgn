@@ -184,7 +184,7 @@ func QueryValidators(cliCtx context.CLIContext, storeName string) (validators st
 	return
 }
 
-// cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj e.g. for addStr
+// addrStr should in the format like cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
 func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string) (validator stakingTypes.Validator, err error) {
 	addr, err := sdk.ValAddressFromBech32(addrStr)
 	if err != nil {

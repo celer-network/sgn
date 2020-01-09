@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -76,7 +77,7 @@ func validatorTest(t *testing.T) {
 		tf.ChkTestErr(t, err, "failed to queryCandidate")
 		log.Infoln("Query sgn about the validator candidate:", candidate)
 		expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[i], 0) // defined in Candidate.String()
-		assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+		assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 
 		err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, keyAddr, amts[i])
 		tf.ChkTestErr(t, err, "failed to delegate stake")
@@ -86,22 +87,25 @@ func validatorTest(t *testing.T) {
 		tf.ChkTestErr(t, err, "failed to queryDelegator")
 		log.Infoln("Query sgn about the validator delegator:", delegator)
 		expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, mainchain.Addr2Hex(keyAddr), amts[i]) // defined in Delegator.String()
-		assert.Equal(t, expectedRes, delegator.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+		assert.Equal(t, expectedRes, delegator.String(), "The expected result should be: "+expectedRes)
 
 		log.Info("Query sgn about the candidate to check if it has correct stakes...")
 		candidate, err = validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, keyAddr.Hex())
 		tf.ChkTestErr(t, err, "failed to queryCandidate")
 		log.Infoln("Query sgn about the validator candidate:", candidate)
 		expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[i], amts[i]) // defined in Candidate.String()
-		assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+		assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 
 		log.Info("Query sgn about the validator to check if it has correct stakes...")
 		validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
 		tf.ChkTestErr(t, err, "failed to queryValidators")
 		log.Infoln("Query sgn about the validators:\n", validators)
-		assert.Equal(t, i+1, len(validators), fmt.Sprintf("The length of validators should be \"%d\"", i+1))
-		assert.Equal(t, sdk.NewIntFromBigInt(amts[i]), validators[i].Tokens, "validator token should be 1000000000000000000")
-		assert.Equal(t, sdk.Bonded, validators[i].Status, "validator should be bonded")
+		assert.Equal(t, i+1, len(validators), "The length of validators should be: "+strconv.Itoa(i+1))
+		validator, err := validator.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[i])
+		tf.ChkTestErr(t, err, "failed to queryValidator")
+		log.Infoln("Query sgn about the validator:\n", validator)
+		assert.Equal(t, sdk.NewIntFromBigInt(amts[i]), validator.Tokens, "validator token should be "+amts[i].String())
+		assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
 	}
 
 	// fail to add a validator 2 because it doesn't have enough delegation
@@ -119,7 +123,7 @@ func validatorTest(t *testing.T) {
 	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 2, len(validators), fmt.Sprintf("The length of validators should be \"%d\"", 2))
+	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
 
 	// correctly add validator 2 with enough delegation
 	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, keyAddr, amts[2])
@@ -128,11 +132,8 @@ func validatorTest(t *testing.T) {
 	validators, err = validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 3, len(validators), fmt.Sprintf("The length of validators should be \"%d\"", 3))
-
-	sgnAddrTest := "cosmosvaloper122w97t8vsa3538fr3ylvz3hvuqxrgpnarnd9t6" // for test
-	// validator, err := validator.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperators[2])
-	validator, err := validator.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnAddrTest)
+	assert.Equal(t, 3, len(validators), "The length of validators should be: 3")
+	validator, err := validator.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
 	tf.ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
 	assert.Equal(t, sdk.NewIntFromBigInt(big.NewInt(0).Add(initialDelegation, amts[2])), validator.Tokens, "validator token should be 1000000000000000001")
