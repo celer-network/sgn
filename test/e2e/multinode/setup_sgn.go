@@ -59,11 +59,6 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 		tf.ChkErr(err, "failed to read config")
 		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-
-		if i == 0 {
-			viper.Set(common.FlagStartMonitor, false)
-		}
-
 		viper.WriteConfig()
 	}
 
@@ -80,9 +75,27 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 }
 
-func shutdownNode(node string) {
+func shutdownNode(node uint) {
 	log.Infoln("shutdown node", node)
-	cmd := exec.Command("docker-compose", "stop", node)
+	cmd := exec.Command("docker-compose", "stop", fmt.Sprintf("sgnnode%d", node))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+}
+
+func turnOffMonitor(node uint) {
+	log.Infoln("turn off node monitor", node)
+
+	configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", node)
+	viper.SetConfigFile(configPath)
+	err := viper.ReadInConfig()
+	tf.ChkErr(err, "failed to read config")
+	viper.Set(common.FlagStartMonitor, false)
+	viper.WriteConfig()
+
+	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

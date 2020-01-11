@@ -68,7 +68,7 @@ func (p Penalty) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: %s`, p.Nonce, p.ValidatorAddr, p.Reason))
 }
 
-func (p Penalty) GenerateProtoBytes() {
+func (p *Penalty) GenerateProtoBytes() {
 	var penalizedDelegators []*sgn.AccountAmtPair
 	var beneficiaries []*sgn.AccountAmtPair
 	totalPenalty := sdk.ZeroInt()

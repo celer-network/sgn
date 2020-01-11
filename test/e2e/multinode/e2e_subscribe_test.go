@@ -34,6 +34,7 @@ func setUpSubscribe() {
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
 	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
+	turnOffMonitor(0)
 }
 
 func TestE2ESubscribe(t *testing.T) {
@@ -100,7 +101,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Prepare for requesting guard...")
 	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
-	tf.SleepWithLog(10, "wait channelId to be in secure state")
+	tf.SleepWithLog(15, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
@@ -157,7 +158,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn to check if reward gets signature...")
 	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
-	assert.Equal(t, validatorNum, len(reward.Sigs), fmt.Sprintf("The length of reward signatures should be %d", validatorNum))
+	assert.Equal(t, 2, len(reward.Sigs), fmt.Sprintf("The length of reward signatures should be %d", 2))
 
 	log.Infoln("Call redeemReward on guard contract...")
 	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
@@ -175,6 +176,8 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, ethAddresses[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	assert.Equal(t, 3, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 3"))
+	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
+	ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[1]))
+	assert.Equal(t, "990000000000000000", ci.StakingPool.String(), fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 }

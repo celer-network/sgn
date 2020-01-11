@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/slash"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,17 +51,19 @@ func slashTest(t *testing.T) {
 		sgnGasPrice,
 	)
 
-	shutdownNode("sgnnode2")
+	shutdownNode(2)
 	tf.SleepWithLog(20, "wait for slash")
 
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	tf.ChkTestErr(t, err, "failed to query penalty")
-
 	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, ethAddresses[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, ethAddresses[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Greater(t, len(penalty.PenaltyProtoBytes), 0, fmt.Sprintf("The length of penaltyProtoBytes should be larger than 0"))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
+
+	ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
+	assert.Equal(t, "99000000000000000", ci.StakingPool.String(), fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
 }
