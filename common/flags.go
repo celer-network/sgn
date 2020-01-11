@@ -17,8 +17,10 @@ const (
 	FlagSgnNodeURI     = "sgn.nodeURI"
 	FlagSgnGasPrice    = "sgn.gasPrice"
 
-	FlagLogLevel    = "logLevel"
-	FlagLogColor    = "logColor"
-	FlagLogLongFile = "logLongFile"
-	FlagCLIHome     = "cli-home"
+	FlagLogLevel     = "logLevel"
+	FlagLogColor     = "logColor"
+	FlagLogLongFile  = "logLongFile"
+	FlagStartMonitor = "startMonitor"
+
+	FlagCLIHome = "cli-home"
 )

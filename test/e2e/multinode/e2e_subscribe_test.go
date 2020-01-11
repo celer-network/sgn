@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	tf "github.com/celer-network/sgn/testing"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -81,7 +82,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubscribe)
-	tf.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
+	tf.SleepWithLog(20, "sgn syncing Subscribe balance from mainchain")
 
 	log.Infoln("Query sgn about the subscription info...")
 	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
@@ -125,7 +126,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateArrayBytes")
 	tx, err = ledgerContract.IntendSettle(auth, signedSimplexStateArrayBytes)
 	tf.ChkTestErr(t, err, "failed to IntendSettle")
-	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "IntendSettle")
+	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay+tf.DisputeTimeout/3, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
 	tf.SleepWithLog(15, "sgn submitting state proof")
@@ -165,4 +166,15 @@ func subscribeTest(t *testing.T) {
 	rsr, err := guardContract.RedeemedServiceReward(&bind.CallOpts{}, ethAddress)
 	tf.ChkTestErr(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
+
+	log.Infoln("Query sgn to check penalty")
+	nonce := uint64(0)
+	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
+	tf.ChkTestErr(t, err, "failed to query penalty")
+	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, ethAddresses[0])
+	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, ethAddresses[0])
+	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, 3, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 3"))
+
 }

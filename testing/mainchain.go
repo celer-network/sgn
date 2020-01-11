@@ -149,7 +149,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 			},
 		},
 		OpenDeadline:   1000000,
-		DisputeTimeout: 100,
+		DisputeTimeout: DisputeTimeout,
 	}
 	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
 	if err != nil {

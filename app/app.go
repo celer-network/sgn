@@ -121,6 +121,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
+	viper.SetDefault(common.FlagStartMonitor, true)
 
 	ethClient, err = mainchain.NewEthClient(
 		viper.GetString(common.FlagEthWS),
@@ -391,6 +392,10 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(ctx sdk.Context) {
+	if !viper.GetBool(common.FlagStartMonitor) {
+		return
+	}
+
 	transactor, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
 		ctx.ChainID(),

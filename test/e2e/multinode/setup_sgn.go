@@ -52,13 +52,18 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	}
 
 	log.Infoln("Updating config files of SGN nodes")
-	for i := 0; /* 3 nodes */ i < 3; i++ {
+	for i := 0; i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
 		viper.SetConfigFile(configPath)
 		err := viper.ReadInConfig()
 		tf.ChkErr(err, "failed to read config")
-		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr.String())
+		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
+
+		if i == 0 {
+			viper.Set(common.FlagStartMonitor, false)
+		}
+
 		viper.WriteConfig()
 	}
 

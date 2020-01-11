@@ -200,6 +200,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	request.GuardTxHash = msg.GuardTxHash
 	keeper.SetRequest(ctx, msg.ChannelId, request)
 
+	log.Infoln("guard index", guardIndex)
 	// punish corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
