@@ -100,14 +100,14 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Prepare for requesting guard...")
 	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
-	tf.SleepWithLog(15, "wait channelId to be in secure state")
+	tf.SleepWithLog(30, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgRequestGuard)
-	tf.SleepWithLog(20, "sgn processes request guard")
+	tf.SleepWithLog(5, "sgn processes request guard")
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
@@ -177,5 +177,5 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
 	ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
-	assert.Equal(t, "990000000000000000", ci.StakingPool.String(), fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
+	assert.Equal(t, "99000000000000000", ci.StakingPool.String(), fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
 }
