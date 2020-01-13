@@ -12,7 +12,7 @@ import (
 )
 
 func setUpQueryLatestBlock() {
-	log.Infoln("set up new sgn env")
+	log.Infoln("Set up new sgn env")
 	setupNewSGNEnv(nil)
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
 	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)

@@ -13,8 +13,6 @@ var (
 	PusherKeyPrefix = []byte{0x03} // Key prefix for pusher
 
 	PenaltyKeyPrefix = []byte{0x04} // Key prefix for penalty
-
-	SgnEventKeyPrefix = []byte{0x05} // Key prefix for sgn event
 )
 
 // get event key from log
@@ -35,9 +33,4 @@ func GetPusherKey(log types.Log) []byte {
 // get penalty key from nonce
 func GetPenaltyKey(nonce uint64) []byte {
 	return append(PenaltyKeyPrefix, sdk.Uint64ToBigEndian(nonce)...)
-}
-
-// get sgn event key from log
-func GetSgnEventKey(name string) []byte {
-	return append(SgnEventKeyPrefix, []byte(name)...)
 }

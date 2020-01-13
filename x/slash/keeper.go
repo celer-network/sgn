@@ -146,9 +146,6 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	// Amount of slashing = slash slashFactor * power at time of infraction
 	amount := sdk.TokensFromConsensusPower(power)
 	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
-	log.Infof("failed validator %s slashed by %s with slash factor of %s",
-		failedValidator.GetOperator(), slashAmount, slashFactor.String())
-
 	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {
 		log.Errorln("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
@@ -164,6 +161,9 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	penalty.Beneficiaries = beneficiaries
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
+
+	log.Infof("Failed validator %s slashed by %s with slash factor of %s",
+		failedValidator.GetOperator(), slashAmount, slashFactor.String())
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

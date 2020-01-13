@@ -174,6 +174,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+	log.Infoln("guard index", guardIndex, blockNumberDiff)
 
 	var rewardValidator sdk.AccAddress
 	if guardIndex < len(requestGuards) {
@@ -200,13 +201,14 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	request.GuardTxHash = msg.GuardTxHash
 	keeper.SetRequest(ctx, msg.ChannelId, request)
 
-	log.Infoln("guard index", guardIndex)
 	// punish corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
 
-	return res, nil
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}, nil
 }
 
 func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {

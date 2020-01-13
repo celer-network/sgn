@@ -31,10 +31,10 @@ func setUpSubscribe() {
 		CelrAddr:               tf.E2eProfile.CelrAddr,
 	}
 	setupNewSGNEnv(p)
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
 	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
-	tf.SleepWithLog(10, "sgn syncing")
-	turnOffMonitor(0)
+	tf.SleepWithLog(60, "sgn syncing")
+	turnOffMonitor(2)
 }
 
 func TestE2ESubscribe(t *testing.T) {
@@ -68,7 +68,6 @@ func subscribeTest(t *testing.T) {
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
-	validatorNum := 3
 
 	log.Infoln("Call subscribe on guard contract...")
 	amt := new(big.Int)
@@ -83,7 +82,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubscribe)
-	tf.SleepWithLog(20, "sgn syncing Subscribe balance from mainchain")
+	tf.SleepWithLog(30, "sgn syncing Subscribe balance from mainchain")
 
 	log.Infoln("Query sgn about the subscription info...")
 	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
@@ -108,7 +107,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgRequestGuard)
-	tf.SleepWithLog(5, "sgn processes request guard")
+	tf.SleepWithLog(20, "sgn processes request guard")
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
@@ -146,8 +145,7 @@ func subscribeTest(t *testing.T) {
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
-	expectedReward := params.RequestCost.QuoRaw(int64(validatorNum))
-	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, expectedReward.String())
+	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, "476190476190476190")
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")
@@ -172,12 +170,12 @@ func subscribeTest(t *testing.T) {
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	tf.ChkTestErr(t, err, "failed to query penalty")
-	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, ethAddresses[0])
+	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, ethAddresses[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, ethAddresses[0])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, ethAddresses[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
-	ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[1]))
+	ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
 	assert.Equal(t, "990000000000000000", ci.StakingPool.String(), fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 }

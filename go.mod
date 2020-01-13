@@ -45,6 +45,7 @@ require (
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.32.8
 	github.com/tendermint/tm-db v0.2.0
+	github.com/thoas/go-funk v0.5.0
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
