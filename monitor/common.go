@@ -40,7 +40,6 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum ui
 	requestGuards := request.RequestGuards
 	blockNumberDiff := latestBlockNum - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
-	log.Infoln("request guard index", guardIndex, blockNumberDiff, m.transactor.Key.GetAddress(), requestGuards)
 
 	// All other validators need to guard
 	if guardIndex >= uint64(len(requestGuards)) {

@@ -174,7 +174,6 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
-	log.Infoln("guard index", guardIndex, blockNumberDiff)
 
 	var rewardValidator sdk.AccAddress
 	if guardIndex < len(requestGuards) {
