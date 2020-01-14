@@ -98,7 +98,7 @@ func validatorTest(t *testing.T) {
 		assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 
 		log.Info("Query sgn about the validators to check if it has correct stakes...")
-		validators, err := sgnval.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+		validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 		tf.ChkTestErr(t, err, "failed to queryValidators")
 		log.Infoln("Query sgn about the validators:\n", validators)
 		assert.Equal(t, i+1, len(validators), "The length of validators should be: "+strconv.Itoa(i+1))
@@ -121,7 +121,7 @@ func validatorTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about validators to check if validator 2 is not added...")
-	validators, err := sgnval.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
@@ -130,7 +130,7 @@ func validatorTest(t *testing.T) {
 	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 	log.Info("Query sgn about the validators to check if it has correct stakes...")
-	validators, err = sgnval.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	validators, err = sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, 3, len(validators), "The length of validators should be: 3")
@@ -140,16 +140,16 @@ func validatorTest(t *testing.T) {
 	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 1000000000000000000")
 	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
 
-	log.Infoln("---------- It should normally remove validator 2 by intendWithdraw ----------")
+	log.Infoln("---------- It should successfully remove validator 2 caused by intendWithdraw ----------")
 	err = tf.IntendWithdraw(auth, ethAddr, amts[2])
 	tf.ChkTestErr(t, err, "failed to intendWithdraw stake")
 	log.Info("Query sgn about the validators to check if it has correct stakes...")
-	validators, err = sgnval.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	validators, err = sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
 	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
-	assert.Error(t, err, "Should not query removed validator successfully")
+	assert.Equal(t, sdk.Unbonding, validator.Status, "validator should be unbonding")
 
 	// normally add back validator 1
 }

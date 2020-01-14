@@ -90,7 +90,7 @@ func validatorTest(t *testing.T) {
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
-	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	validators, err := validator.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:", validators)
 	assert.Equal(t, 1, len(validators), "The length of validators should be 1")
