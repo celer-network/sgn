@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingCli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -170,7 +171,7 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	return
 }
 
-// QueryValidators is an interface for convenience to query validators in staking module
+// QueryValidators is an interface for convenience to query (all) validators in staking module
 func QueryValidators(cliCtx context.CLIContext, storeName string) (validators stakingTypes.Validators, err error) {
 	resKVs, _, err := cliCtx.QuerySubspace(stakingTypes.ValidatorsKey, storeName)
 	if err != nil {
@@ -180,6 +181,43 @@ func QueryValidators(cliCtx context.CLIContext, storeName string) (validators st
 	for _, kv := range resKVs {
 		validators = append(validators, stakingTypes.MustUnmarshalValidator(cliCtx.Codec, kv.Value))
 	}
+	return
+}
+
+// QueryBondedValidators is an interface for convenience to query bonded validators in staking module
+func QueryBondedValidators(cliCtx context.CLIContext, storeName string) (validators stakingTypes.Validators, err error) {
+	allValidators, err := QueryValidators(cliCtx, storeName)
+	if err != nil {
+		return
+	}
+
+	for _, val := range allValidators {
+		if val.Status == sdk.Bonded {
+			validators = append(validators, val)
+		}
+	}
+
+	return
+}
+
+// addrStr should in the format like cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
+func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string) (validator stakingTypes.Validator, err error) {
+	addr, err := sdk.ValAddressFromBech32(addrStr)
+	if err != nil {
+		return
+	}
+
+	res, _, err := cliCtx.QueryStore(stakingTypes.GetValidatorKey(addr), storeName)
+	if err != nil {
+		return
+	}
+
+	if len(res) == 0 {
+		err = fmt.Errorf("No validator found with address %s", addr)
+		return
+	}
+
+	validator = stakingTypes.MustUnmarshalValidator(cliCtx.Codec, res)
 	return
 }
 

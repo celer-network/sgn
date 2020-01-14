@@ -61,7 +61,7 @@ func validatorTest(t *testing.T) {
 	sgnAddr, err := sdk.AccAddressFromBech32(tf.Client0SGNAddrStr)
 	tf.ChkTestErr(t, err, "failed to parse sgn address")
 
-	err = tf.InitializeCandidate(auth, sgnAddr)
+	err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(1))
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Info("Query sgn about the validator candidate...")
@@ -90,7 +90,7 @@ func validatorTest(t *testing.T) {
 	assert.Equal(t, expectedRes, candidate.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Info("Query sgn about the validator to check if it has correct stakes...")
-	validators, err := validator.CLIQueryValidators(transactor.CliCtx, staking.RouterKey)
+	validators, err := validator.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:", validators)
 	assert.Equal(t, 1, len(validators), "The length of validators should be 1")
