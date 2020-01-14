@@ -151,7 +151,7 @@ func validatorTest(t *testing.T) {
 	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
 	assert.Equal(t, sdk.Unbonding, validator.Status, "validator should be unbonding")
 
-	// normally add back validator 1
+	// TODO: normally add back validator 1
 }
 
 func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
