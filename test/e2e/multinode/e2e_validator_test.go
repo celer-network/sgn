@@ -58,6 +58,7 @@ func validatorTest(t *testing.T) {
 	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
 
 	// add two validators, 0 and 1
+	log.Infoln("---------- It should add two validators successfully ----------")
 	for i := 0; i < 2; i++ {
 		log.Infoln("Adding validator", i)
 
@@ -108,7 +109,7 @@ func validatorTest(t *testing.T) {
 		assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
 	}
 
-	// fail to add a validator 2 because it doesn't have enough delegation
+	log.Infoln("---------- It should fail to add validator 2 without enough delegation ----------")
 	ethAddr, auth, err := getAuth(ethKeystores[2], ethKeystorePps[2])
 	tf.ChkTestErr(t, err, "failed to get auth")
 	sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[2])
@@ -125,7 +126,7 @@ func validatorTest(t *testing.T) {
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
 
-	// correctly add validator 2 with enough delegation
+	log.Infoln("---------- It should correctly add validator 2 with enough delegation ----------")
 	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 	log.Info("Query sgn about the validators to check if it has correct stakes...")
@@ -139,7 +140,7 @@ func validatorTest(t *testing.T) {
 	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 1000000000000000000")
 	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
 
-	// normally remove validator 2 by intendWithdraw
+	log.Infoln("---------- It should normally remove validator 2 by intendWithdraw ----------")
 	err = tf.IntendWithdraw(auth, ethAddr, amts[2])
 	tf.ChkTestErr(t, err, "failed to intendWithdraw stake")
 	log.Info("Query sgn about the validators to check if it has correct stakes...")
@@ -150,11 +151,7 @@ func validatorTest(t *testing.T) {
 	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
 	assert.Error(t, err, "Should not query removed validator successfully")
 
-	// normally remove validator 1 by intendWithdraw
-
 	// normally add back validator 1
-
-	// if a validator with more than 1/3 staking quit, the chain should halt. - validator 0
 }
 
 func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
