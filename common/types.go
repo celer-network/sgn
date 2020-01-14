@@ -21,7 +21,7 @@ func NewSig(signer string, sig []byte) Sig {
 
 // implement fmt.Stringer
 func (r Sig) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Sig: %x,`, r.Sig))
+	return strings.TrimSpace(fmt.Sprintf(`Signer: %s, Sig: %x,`, r.Signer, r.Sig))
 }
 
 func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) (newSigs []Sig, err error) {

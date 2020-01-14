@@ -205,7 +205,9 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
 
-	return res, nil
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}, nil
 }
 
 func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {

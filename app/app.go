@@ -121,6 +121,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
+	viper.SetDefault(common.FlagStartMonitor, true)
 
 	ethClient, err = mainchain.NewEthClient(
 		viper.GetString(common.FlagEthWS),
@@ -265,11 +266,12 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		staking.NewAppModule(app.stakingKeeper, distr.Keeper{}, app.accountKeeper, app.supplyKeeper),
 		cron.NewAppModule(app.cronKeeper, app.bankKeeper),
 		global.NewAppModule(app.globalKeeper, app.bankKeeper),
+		slash.NewAppModule(app.slashKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers()
+	app.mm.SetOrderBeginBlockers(slash.ModuleName)
 	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
@@ -281,6 +283,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		genutil.ModuleName,
 		cron.ModuleName,
 		global.ModuleName,
+		slash.ModuleName,
 		subscribe.ModuleName,
 		validator.ModuleName,
 	)
@@ -312,6 +315,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keyParams,
 		app.keyCron,
 		app.keyGlobal,
+		app.keySlash,
 		app.keySubscribe,
 		app.keyValidator,
 	)
@@ -388,6 +392,10 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(ctx sdk.Context) {
+	if !viper.GetBool(common.FlagStartMonitor) {
+		return
+	}
+
 	transactor, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
 		ctx.ChainID(),

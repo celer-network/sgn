@@ -101,7 +101,7 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 				log.Info("Current block number:", head.Number.String())
 			} else {
 				bal, _ := conn.BalanceAt(ctx, *r, nil)
-				log.Infoln("tx done.", r.String(), "bal:", bal.String())
+				log.Infoln("Tx done.", r.String(), "bal:", bal.String())
 			}
 		}
 	}
@@ -149,7 +149,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 			},
 		},
 		OpenDeadline:   1000000,
-		DisputeTimeout: 100,
+		DisputeTimeout: DisputeTimeout,
 	}
 	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
 	if err != nil {
@@ -286,7 +286,7 @@ func prepareEtherBaseClient() (
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
 	}
-	log.Infoln("etherBaseKs: ", etherBaseKs)
+	log.Infoln("EtherBaseKs: ", etherBaseKs)
 	etherBaseKsBytes, err := ioutil.ReadFile(etherBaseKs)
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err

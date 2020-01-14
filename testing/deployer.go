@@ -79,7 +79,7 @@ func DeployCommand() *cobra.Command {
 			ChkErr(err, "fund client0 and client1")
 
 			ledgerAddr := DeployLedgerContract()
-			viper.Set(common.FlagEthLedgerAddress, ledgerAddr.String())
+			viper.Set(common.FlagEthLedgerAddress, ledgerAddr)
 
 			erc20Addr, erc20 := DeployERC20Contract()
 			sgnParams := &SGNParams{
@@ -90,7 +90,7 @@ func DeployCommand() *cobra.Command {
 				CelrAddr:               erc20Addr,
 			}
 			guardAddr := DeployGuardContract(sgnParams)
-			viper.Set(common.FlagEthGuardAddress, guardAddr.String())
+			viper.Set(common.FlagEthGuardAddress, guardAddr)
 			viper.WriteConfig()
 
 			amt := new(big.Int)

@@ -38,7 +38,7 @@ func (m *EthMonitor) processEventQueue() {
 			continue
 		}
 
-		log.Infoln("process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
+		log.Infoln("Process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -66,7 +66,7 @@ func (m *EthMonitor) processPullerQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		log.Infoln("process puller event", event.Name)
+		log.Infoln("Process puller event", event.Name)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -88,7 +88,7 @@ func (m *EthMonitor) processPusherQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		log.Infoln("process pusher event", event.Name)
+		log.Infoln("Process pusher event", event.Name)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
@@ -104,7 +104,6 @@ func (m *EthMonitor) processPenaltyQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewPenaltyEventFromBytes(iterator.Value())
-		log.Infoln("process penalty event", event.nonce)
 		m.db.Delete(iterator.Key())
 		m.processPenalty(event)
 	}
@@ -133,6 +132,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	}
 
 	if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
+		log.Infof("Not valid guard at current mainchain block")
 		event := NewEvent(IntendSettle, intendSettle.Raw)
 		m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 		return
@@ -160,8 +160,9 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 	log.Infof("IntendSettle tx hash %x", tx.Hash())
 	// TODO: 1) bockDelay, 2) may need a better way than wait mined,
 	mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+
+	log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
 	msg := subscribe.NewMsgGuardProof(channelId, intendSettle.Raw.TxHash.Hex(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
-	log.Infof("Add MsgGuardProof %x to transacto msgQueue", tx.Hash())
 	m.transactor.AddTxMsg(msg)
 }
 

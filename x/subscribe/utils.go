@@ -9,7 +9,9 @@ import (
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/thoas/go-funk"
 )
 
 func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
@@ -52,6 +54,7 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 
 func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	validators := keeper.validatorKeeper.GetValidators(ctx)
+	validators = funk.Reverse(validators).([]staking.Validator)
 	requestGuardId := keeper.GetRequestGuardId(ctx)
 	requestGuardCount := keeper.RequestGuardCount(ctx)
 	requestGuards := []sdk.AccAddress{}
