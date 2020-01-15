@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"io/ioutil"
+	"math"
 	"math/big"
 	"strings"
 
@@ -148,7 +149,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 				lowAddrDist, highAddrDist,
 			},
 		},
-		OpenDeadline:   ^uint64(0),
+		OpenDeadline:   math.MaxUint64,
 		DisputeTimeout: DisputeTimeout,
 	}
 	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
