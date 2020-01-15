@@ -1,6 +1,7 @@
 package osp
 
 import (
+	"context"
 	"math/big"
 	"net"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/x/subscribe"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/gorilla/mux"
@@ -77,10 +79,14 @@ func NewRestServer() (*RestServer, error) {
 	log.Infof("Subscribe to sgn")
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 19), 10)
-	_, err = user.Guard.Subscribe(user.Auth, amt)
+	tx, err := user.Guard.Subscribe(user.Auth, amt)
 	if err != nil {
 		return nil, err
 	}
+	tf.WaitMinedWithChk(context.Background(), user.Client, tx, tf.BlockDelay, "Subscribe on Guard contract")
+
+	msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), transactor.Key.GetAddress())
+	transactor.AddTxMsg(msgSubscribe)
 
 	return &RestServer{
 		Mux:        r,
