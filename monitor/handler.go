@@ -14,8 +14,8 @@ import (
 )
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
+	log.Infoln("Catch new mainchain block", header.Number)
 	if !m.isPuller() {
-		log.Infoln("Catch new mainchain block", header.Number)
 		return
 	}
 
