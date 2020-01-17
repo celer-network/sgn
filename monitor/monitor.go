@@ -134,92 +134,35 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 }
 
 func (m *EthMonitor) monitorDelegate() {
-	delegateChan := make(chan *mainchain.GuardDelegate)
-
-	sub, err := m.ethClient.Guard.WatchDelegate(nil, delegateChan, nil, []mainchain.Addr{m.ethClient.Address})
-	if err != nil {
-		log.Errorln("WatchDelegate err", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchDelegate err", err)
-		case delegate := <-delegateChan:
-			event := NewEvent(Delegate, delegate.Raw)
-			m.db.Set(GetEventKey(delegate.Raw), event.MustMarshal())
-			log.Infof("Catch event GuardDelegate, delegator %x, candidate %x, new stake %s, pool %s",
-				delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
-		}
-	}
+	m.ms.Monitor(string(Delegate), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		event := NewEvent(Delegate, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+		log.Infof("Catch event Delegate, tx hash: %v", eLog.TxHash)
+	})
 }
 
 func (m *EthMonitor) monitorValidatorChange() {
-	validatorChangeChan := make(chan *mainchain.GuardValidatorChange)
-	sub, err := m.ethClient.Guard.WatchValidatorChange(nil, validatorChangeChan, nil, nil)
-	if err != nil {
-		log.Errorln("WatchValidatorChange err", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchValidatorChange err", err)
-		case validatorChange := <-validatorChangeChan:
-			event := NewEvent(ValidatorChange, validatorChange.Raw)
-			m.db.Set(GetEventKey(validatorChange.Raw), event.MustMarshal())
-			log.Infof("Catch event GuardValidatorChange, addr %x, change type %d",
-				validatorChange.EthAddr, validatorChange.ChangeType)
-		}
-	}
+	m.ms.Monitor(string(ValidatorChange), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		event := NewEvent(ValidatorChange, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+		log.Infof("Catch event ValidatorChange, tx hash: %v", eLog.TxHash)
+	})
 }
 
 func (m *EthMonitor) monitorIntendWithdraw() {
-	intendWithdrawChan := make(chan *mainchain.GuardIntendWithdraw)
-	sub, err := m.ethClient.Guard.WatchIntendWithdraw(nil, intendWithdrawChan, nil, nil)
-	if err != nil {
-		log.Errorln("WatchIntendWithdraw err", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchIntendWithdraw err", err)
-		case intendWithdraw := <-intendWithdrawChan:
-			event := NewEvent(IntendWithdraw, intendWithdraw.Raw)
-			m.db.Set(GetEventKey(intendWithdraw.Raw), event.MustMarshal())
-			log.Infof("Catch event GuardIntendWithdraw, delegator %x, candidate %x, withdraw %s, time %s",
-				intendWithdraw.Delegator, intendWithdraw.Candidate, intendWithdraw.WithdrawAmount.String(), intendWithdraw.ProposedTime.String())
-		}
-	}
+	m.ms.Monitor(string(IntendWithdraw), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		event := NewEvent(IntendWithdraw, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+		log.Infof("Catch event IntendWithdraw, tx hash: %v", eLog.TxHash)
+	})
 }
 
 func (m *EthMonitor) monitorIntendSettle() {
-	intendSettleChan := make(chan *mainchain.CelerLedgerIntendSettle)
-	sub, err := m.ethClient.Ledger.WatchIntendSettle(nil, intendSettleChan, nil)
-	if err != nil {
-		log.Errorln("WatchIntendSettle err", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchIntendSettle err", err)
-		case intendSettle := <-intendSettleChan:
-			event := NewEvent(IntendSettle, intendSettle.Raw)
-			m.db.Set(GetEventKey(intendSettle.Raw), event.MustMarshal())
-			log.Infof("Catch event CelerLedgerIntendSettle, channel ID %x, seqnums %s %s",
-				intendSettle.ChannelId, intendSettle.SeqNums[0].String(), intendSettle.SeqNums[1].String())
-		}
-	}
+	m.ms.Monitor(string(IntendSettle), m.ledgerContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		event := NewEvent(IntendSettle, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
+	})
 }
 
 func (m *EthMonitor) monitorWithdrawReward() {

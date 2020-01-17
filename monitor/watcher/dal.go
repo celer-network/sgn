@@ -11,20 +11,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/celer-network/goutils/log"
-)
-
-const (
-	// wyre transfer id to status string, client side only
-	wyreXferStatus = "wxs" // wyre transfer id -> status
-
-	// OSP only. to avoid handling concurrent openchan requests
-	openChannelTs = "oct" // peer@token -> OpenChannelTs
-
-	transactionalMaxRetry   = 10
-	transactionalRetryDelay = 10 * time.Millisecond
 )
 
 var (
