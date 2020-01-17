@@ -8,6 +8,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
@@ -15,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
@@ -34,13 +36,15 @@ var (
 )
 
 type EthMonitor struct {
-	ethClient   *mainchain.EthClient
-	transactor  *transactor.Transactor
-	db          *dbm.GoLevelDB
-	ms          *Service
-	pubkey      string
-	transactors []string
-	isValidator bool
+	ethClient      *mainchain.EthClient
+	transactor     *transactor.Transactor
+	db             *dbm.GoLevelDB
+	ms             *watcher.Service
+	guardContract  *watcher.BoundContract
+	ledgerContract *watcher.BoundContract
+	pubkey         string
+	transactors    []string
+	isValidator    bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, pubkey string, transactors []string) {
@@ -50,18 +54,18 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		log.Fatalln("New monitor db err", err)
 	}
 
-	st, err := NewKVStoreSQL("sqlite3", filepath.Join(dataDir, "watch.db"))
+	st, err := watcher.NewKVStoreSQL("sqlite3", filepath.Join(dataDir, "watch.db"))
 	if err != nil {
 		log.Fatalln("New watch db err", err)
 	}
 
-	dal := NewDAL(st)
-	ws := NewWatchService(ethClient.Client, dal, pollingInterval)
+	dal := watcher.NewDAL(st)
+	ws := watcher.NewWatchService(ethClient.Client, dal, pollingInterval)
 	if ws == nil {
 		log.Fatalln("Cannot create watch service")
 	}
 
-	ms := NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
+	ms := watcher.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
 	ms.Init()
 
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
@@ -69,14 +73,26 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		log.Fatalln("GetCandidateInfo err", err)
 	}
 
+	guardContract, err := watcher.NewBoundContract(ethClient.Client, ethClient.GuardAddress, mainchain.GuardABI)
+	if err != nil {
+		log.Fatalln("guardContract err", err)
+	}
+
+	ledgerContract, err := watcher.NewBoundContract(ethClient.Client, ethClient.LedgerAddress, mainchain.CelerLedgerABI)
+	if err != nil {
+		log.Fatalln("ledgerContract err", err)
+	}
+
 	m := EthMonitor{
-		ethClient:   ethClient,
-		transactor:  transactor,
-		db:          db,
-		ms:          ms,
-		pubkey:      pubkey,
-		transactors: transactors,
-		isValidator: mainchain.IsBonded(candidateInfo),
+		ethClient:      ethClient,
+		transactor:     transactor,
+		db:             db,
+		ms:             ms,
+		guardContract:  guardContract,
+		ledgerContract: ledgerContract,
+		pubkey:         pubkey,
+		transactors:    transactors,
+		isValidator:    mainchain.IsBonded(candidateInfo),
 	}
 
 	go m.monitorBlockHead()
@@ -110,25 +126,11 @@ func (m *EthMonitor) monitorBlockHead() {
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
-	initializeCandidateChan := make(chan *mainchain.GuardInitializeCandidate)
-	sub, err := m.ethClient.Guard.WatchInitializeCandidate(nil, initializeCandidateChan, nil)
-	if err != nil {
-		log.Errorln("WatchInitializeCandidate err:", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchInitializeCandidate err: ", err)
-		case initializeCandidate := <-initializeCandidateChan:
-			event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
-			m.db.Set(GetEventKey(initializeCandidate.Raw), event.MustMarshal())
-			log.Infof("Catch event InitializeCandidate, candidate %x, min self stake %s, sidechain addr %x",
-				initializeCandidate.Candidate, initializeCandidate.MinSelfStake.String(), initializeCandidate.SidechainAddr)
-		}
-	}
+	m.ms.Monitor(string(InitializeCandidate), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		event := NewEvent(InitializeCandidate, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+		log.Infof("Catch event InitializeCandidate, tx hash: %v", eLog.TxHash)
+	})
 }
 
 func (m *EthMonitor) monitorDelegate() {

@@ -2,7 +2,7 @@
 //
 // Support the KVStore interface using a SQL database server.
 
-package monitor
+package watcher
 
 import (
 	"database/sql"

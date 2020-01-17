@@ -7,7 +7,7 @@
 // This guarantees that the application does not miss log events that
 // occur while the application is not running.
 
-package monitor
+package watcher
 
 import (
 	"container/list"

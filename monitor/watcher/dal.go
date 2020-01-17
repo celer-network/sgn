@@ -5,7 +5,7 @@
 // * Construct table keys from object attribute(s).
 // * Use the appropriate Go data types when fetching stored values.
 
-package monitor
+package watcher
 
 import (
 	"database/sql"

@@ -1,6 +1,6 @@
 // Copyright 2018 Celer Network
 
-package monitor
+package watcher
 
 import (
 	"container/heap"
