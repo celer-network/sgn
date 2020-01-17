@@ -6,9 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/celer-network/goCeler/monitor"
-	"github.com/celer-network/goCeler/storage"
-	"github.com/celer-network/goCeler/watcher"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
@@ -40,7 +37,7 @@ type EthMonitor struct {
 	ethClient   *mainchain.EthClient
 	transactor  *transactor.Transactor
 	db          *dbm.GoLevelDB
-	ms          *monitor.Service
+	ms          *Service
 	pubkey      string
 	transactors []string
 	isValidator bool
@@ -53,18 +50,18 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		log.Fatalln("New monitor db err", err)
 	}
 
-	st, err := storage.NewKVStoreLocal(filepath.Join(dataDir, "watch"), false)
+	st, err := NewKVStoreSQL("sqlite3", filepath.Join(dataDir, "watch.db"))
 	if err != nil {
 		log.Fatalln("New watch db err", err)
 	}
 
-	dal := storage.NewDAL(st)
-	ws := watcher.NewWatchService(ethClient.Client, dal, pollingInterval)
+	dal := NewDAL(st)
+	ws := NewWatchService(ethClient.Client, dal, pollingInterval)
 	if ws == nil {
 		log.Fatalln("Cannot create watch service")
 	}
 
-	ms := monitor.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
+	ms := NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
 	ms.Init()
 
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)

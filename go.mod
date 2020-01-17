@@ -10,19 +10,23 @@ require (
 	github.com/celer-network/goutils v0.1.1
 	github.com/cosmos/cosmos-sdk v0.37.5
 	github.com/elastic/gosigar v0.10.5 // indirect
-	github.com/ethereum/go-ethereum v1.9.1
+	github.com/ethereum/go-ethereum v1.9.6
 	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
 	github.com/golang/protobuf v1.3.2
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.0
 	github.com/graph-gophers/graphql-go v0.0.0-20191115155744-f33e81362277 // indirect
 	github.com/influxdata/influxdb v1.7.9 // indirect
+	github.com/lib/pq v1.2.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
+	github.com/mattn/go-sqlite3 v2.0.2+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/oschwald/maxminddb-golang v1.5.0 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
+	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.32.8
 	github.com/tendermint/tm-db v0.2.0
