@@ -3,16 +3,22 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strconv"
 
+	"github.com/celer-network/goCeler/monitor"
+	"github.com/celer-network/goCeler/storage"
+	"github.com/celer-network/goCeler/watcher"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
 	tTypes "github.com/tendermint/tendermint/types"
@@ -22,6 +28,7 @@ import (
 const (
 	txsPageLimit    = 30
 	txsPullInterval = 5 // interval in seconds of pulling sidechain events
+	pollingInterval = 10
 )
 
 var (
@@ -33,12 +40,33 @@ type EthMonitor struct {
 	ethClient   *mainchain.EthClient
 	transactor  *transactor.Transactor
 	db          *dbm.GoLevelDB
+	ms          *monitor.Service
 	pubkey      string
 	transactors []string
 	isValidator bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, db *dbm.GoLevelDB, pubkey string, transactors []string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, pubkey string, transactors []string) {
+	dataDir := filepath.Join(viper.GetString(flags.FlagHome), "data")
+	db, err := dbm.NewGoLevelDB("monitor", dataDir)
+	if err != nil {
+		log.Fatalln("New monitor db err", err)
+	}
+
+	st, err := storage.NewKVStoreLocal(filepath.Join(dataDir, "watch"), false)
+	if err != nil {
+		log.Fatalln("New watch db err", err)
+	}
+
+	dal := storage.NewDAL(st)
+	ws := watcher.NewWatchService(ethClient.Client, dal, pollingInterval)
+	if ws == nil {
+		log.Fatalln("Cannot create watch service")
+	}
+
+	ms := monitor.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
+	ms.Init()
+
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
 		log.Fatalln("GetCandidateInfo err", err)
@@ -48,6 +76,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		ethClient:   ethClient,
 		transactor:  transactor,
 		db:          db,
+		ms:          ms,
 		pubkey:      pubkey,
 		transactors: transactors,
 		isValidator: mainchain.IsBonded(candidateInfo),
