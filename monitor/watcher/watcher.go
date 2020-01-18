@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celer-network/goutils/log"
+	clog "github.com/celer-network/goutils/log"
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -34,12 +34,6 @@ var (
 	ErrWatchServiceClosed = errors.New("Watch service closed")
 	ErrWatcherTimeout     = errors.New("Watcher timeout")
 )
-
-// LogEventID tracks the position of a watch event in the event log.
-type LogEventID struct {
-	BlockNumber uint64 // Number of the block containing the event
-	Index       int64  // Index of the event within the block
-}
 
 // WatchService holds the active watchers and their connections
 // to the Ethereum client and the KVStore persistence layer that
@@ -88,10 +82,11 @@ type WatchClient interface {
 // WatchDAL is an interface for the watch-specific API of the KVStore
 // data access layer.
 type WatchDAL interface {
-	InsertMonitor(event string, blockNum uint64, blockIdx int64, restart bool) error
-	GetMonitorBlock(event string) (uint64, int64, bool, error)
-	UpdateMonitorBlock(event string, blockNum uint64, blockIdx int64) error
-	UpsertMonitorBlock(event string, blockNum uint64, blockIdx int64, restart bool) error
+	GetLogEventWatch(name string) (*LogEventID, error)
+	PutLogEventWatch(name string, id *LogEventID) error
+	DeleteLogEventWatch(name string) error
+	HasLogEventWatch(name string) (bool, error)
+	GetAllLogEventWatchKeys() ([]string, error)
 }
 
 // Create a watch service.
@@ -134,7 +129,7 @@ func (ws *WatchService) watchBlkNum() {
 	for {
 		select {
 		case <-ws.quit:
-			log.Debugln("watchBlkNum: quit")
+			clog.Debugln("watchBlkNum: quit")
 			return
 
 		case <-ticker.C:
@@ -147,7 +142,7 @@ func (ws *WatchService) watchBlkNum() {
 func (ws *WatchService) updateBlockNumber() {
 	head, err := ws.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		log.Traceln("cannot fetch on-chain block number:", err)
+		clog.Traceln("cannot fetch on-chain block number:", err)
 		return
 	}
 
@@ -159,7 +154,7 @@ func (ws *WatchService) updateBlockNumber() {
 	}
 	topBlkNum = ws.blkNum
 	ws.mu.Unlock()
-	log.Tracef("top block #: %d, on-chain #: %d", topBlkNum, blkNum)
+	clog.Tracef("top block #: %d, on-chain #: %d", topBlkNum, blkNum)
 }
 
 // Return the most recent on-chain block number.
@@ -276,7 +271,7 @@ func (w *Watch) watchLogEvents(reset bool) {
 	// Set the ID of the last log event acknowledged by the app (if any).
 	// It is used to resume the watch from where the application left off.
 	w.setWatchLastID(reset)
-	log.Debugf("watchLogEvents: start %s from %d", w.name, w.fromBlock)
+	clog.Debugf("watchLogEvents: start %s from %d", w.name, w.fromBlock)
 
 	// The polling interval is computed in relation to block polling.
 	polling := w.blkInterval * w.service.polling
@@ -288,7 +283,7 @@ func (w *Watch) watchLogEvents(reset bool) {
 
 		select {
 		case <-w.service.quit:
-			log.Debugln("watchLogEvents: quit:", w.name)
+			clog.Debugln("watchLogEvents: quit:", w.name)
 			return
 
 		case <-ticker.C:
@@ -296,7 +291,7 @@ func (w *Watch) watchLogEvents(reset bool) {
 		}
 	}
 
-	log.Debugln("watchLogEvents: closed:", w.name)
+	clog.Debugln("watchLogEvents: closed:", w.name)
 }
 
 // Set the ID of the last log event acknowledged by the app (if any).
@@ -319,40 +314,32 @@ func (w *Watch) setWatchLastID(reset bool) {
 	w.lastID = nil
 	w.fromBlock = 0
 
-	blockNum, blockIdx, found, err := w.service.dal.GetMonitorBlock(w.name)
-	if err == nil && found && !reset {
-		if blockIdx != notBlockIndex {
-			// This is a real ACK ID from the app.
-			w.lastID = &LogEventID{
-				BlockNumber: blockNum,
-				Index:       blockIdx,
+	exist, err := w.service.dal.HasLogEventWatch(w.name)
+	if err == nil && exist && !reset {
+		if id, err2 := w.service.dal.GetLogEventWatch(w.name); err2 == nil {
+			if id.Index != notBlockIndex {
+				// This is a real ACK ID from the app.
+				w.lastID = id
 			}
-		}
 
-		// Ignore the query's "FromBlock" and start from this block.
-		w.fromBlock = blockNum
+			// Ignore the query's "FromBlock" and start from this block.
+			w.fromBlock = id.BlockNumber
+		}
 		return
 	}
 
-	// No previously persisted resume pointer (or "reset", or some DB error).
-	// Remember this starting block number to resume from in case of a crash.
+	// No previously persisted resume pointer.  Remember this first-time
+	// starting block number to resume from in case of a crash.
 	if w.query.FromBlock != nil {
 		w.fromBlock = w.query.FromBlock.Uint64()
 	}
-
-	if err != nil {
-		log.Warnln("resume pointer overwritten:", w.name, err)
-		err = w.service.dal.UpsertMonitorBlock(w.name,
-			w.fromBlock, notBlockIndex, false)
-	} else if found {
-		err = w.service.dal.UpdateMonitorBlock(w.name,
-			w.fromBlock, notBlockIndex)
-	} else {
-		err = w.service.dal.InsertMonitor(w.name,
-			w.fromBlock, notBlockIndex, false)
+	lastID := LogEventID{
+		BlockNumber: w.fromBlock,
+		Index:       notBlockIndex,
 	}
+	err = w.service.dal.PutLogEventWatch(w.name, &lastID)
 	if err != nil {
-		log.Warnln("cannot persist resume pointer:", w.name, err)
+		clog.Warnln("cannot persist 1st time resume pointer:", w.name, err)
 	}
 }
 
@@ -363,7 +350,7 @@ func (w *Watch) fetchLogEvents() {
 	// beyond the desired block delay (to protect from on-chain reorg).
 	blkNum := w.service.GetBlockNumber()
 	if w.fromBlock+w.blkDelay > blkNum {
-		log.Tracef("skip log fetching: %s: want %d, delay %d, blk %d", w.name, w.fromBlock, w.blkDelay, blkNum)
+		clog.Tracef("skip log fetching: %s: want %d, delay %d, blk %d", w.name, w.fromBlock, w.blkDelay, blkNum)
 		return
 	}
 
@@ -377,11 +364,11 @@ func (w *Watch) fetchLogEvents() {
 	w.query.FromBlock = new(big.Int).SetUint64(w.fromBlock)
 	w.query.ToBlock = new(big.Int).SetUint64(toBlock)
 
-	log.Tracef("fetch logs: %s: [%d-%d]", w.name, w.fromBlock, toBlock)
+	clog.Tracef("fetch logs: %s: [%d-%d]", w.name, w.fromBlock, toBlock)
 
 	logs, err := w.service.client.FilterLogs(ctx, w.query)
 	if err != nil {
-		log.Tracef("cannot fetch logs: %s: [%d-%d]: %s", w.name, w.fromBlock, toBlock, err)
+		clog.Tracef("cannot fetch logs: %s: [%d-%d]: %s", w.name, w.fromBlock, toBlock, err)
 		return
 	}
 
@@ -415,7 +402,7 @@ func (w *Watch) fetchLogEvents() {
 		w.fromBlock = maxBlock + 1
 	}
 
-	log.Tracef("added %d logs to queue: %s: next from %d", count, w.name, w.fromBlock)
+	clog.Tracef("added %d logs to queue: %s: next from %d", count, w.name, w.fromBlock)
 }
 
 // Return true if the log event ID is strictly greater than the last ID.
@@ -501,7 +488,7 @@ func (w *Watch) Ack() error {
 		return fmt.Errorf("last event log received already ACKed")
 	}
 
-	if err := w.service.dal.UpdateMonitorBlock(w.name, w.ackID.BlockNumber, w.ackID.Index); err != nil {
+	if err := w.service.dal.PutLogEventWatch(w.name, &w.ackID); err != nil {
 		return err
 	}
 	w.ackWait = false

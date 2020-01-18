@@ -54,7 +54,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		log.Fatalln("New monitor db err", err)
 	}
 
-	st, err := watcher.NewKVStoreSQL("sqlite3", filepath.Join(dataDir, "watch.db"))
+	st, err := watcher.NewKVStoreLocal(filepath.Join(dataDir, "watch"), false)
 	if err != nil {
 		log.Fatalln("New watch db err", err)
 	}

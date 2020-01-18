@@ -8,31 +8,16 @@
 package watcher
 
 import (
-	"database/sql"
 	"errors"
-	"fmt"
+)
 
-	"github.com/celer-network/goutils/log"
+const (
+	logEventWatch = "lew" // event name -> LogEventID
 )
 
 var (
 	ErrNoRows = errors.New("No rows matched in the database")
 )
-
-// Transaction is the interface implemented by the local and remote stores.
-type Transaction interface {
-	Commit() error
-	Discard()
-	ConvertError(err error) error
-	Put(table, key string, value interface{}) error
-	Get(table, key string, value interface{}) error
-	Delete(table, key string) error
-	Has(table, key string) (bool, error)
-	GetKeysByPrefix(table, prefix string) ([]string, error)
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
 
 // KVStore is the interface implemented by the local store (LevelDB
 // wrapper) and by the remote store (gRPC calls to a store server).
@@ -44,9 +29,18 @@ type KVStore interface {
 	Delete(table, key string) error
 	Has(table, key string) (bool, error)
 	GetKeysByPrefix(table, prefix string) ([]string, error)
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
+}
+
+// Transaction is the interface implemented by the local and remote stores.
+type Transaction interface {
+	Commit() error
+	Discard()
+	ConvertError(err error) error
+	Put(table, key string, value interface{}) error
+	Get(table, key string, value interface{}) error
+	Delete(table, key string) error
+	Has(table, key string) (bool, error)
+	GetKeysByPrefix(table, prefix string) ([]string, error)
 }
 
 type DAL struct {
@@ -61,12 +55,6 @@ type Storage interface {
 	GetKeysByPrefix(table, prefix string) ([]string, error)
 }
 
-type SqlStorage interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
 func NewDAL(store KVStore) *DAL {
 	dal := &DAL{
 		st: store,
@@ -74,90 +62,44 @@ func NewDAL(store KVStore) *DAL {
 	return dal
 }
 
-func (d *DAL) InsertMonitor(event string, blockNum uint64, blockIdx int64, restart bool) error {
-	return insertMonitor(d.st, event, blockNum, blockIdx, restart)
+func getLogEventWatch(st Storage, name string) (*LogEventID, error) {
+	var id LogEventID
+	err := st.Get(logEventWatch, name, &id)
+	return &id, err
 }
 
-func (d *DAL) GetMonitorBlock(event string) (uint64, int64, bool, error) {
-	return getMonitorBlock(d.st, event)
+func putLogEventWatch(st Storage, name string, id *LogEventID) error {
+	return st.Put(logEventWatch, name, id)
 }
 
-func (d *DAL) UpdateMonitorBlock(event string, blockNum uint64, blockIdx int64) error {
-	return updateMonitorBlock(d.st, event, blockNum, blockIdx)
+func deleteLogEventWatch(st Storage, name string) error {
+	return st.Delete(logEventWatch, name)
 }
 
-func (d *DAL) UpsertMonitorBlock(event string, blockNum uint64, blockIdx int64, restart bool) error {
-	return upsertMonitorBlock(d.st, event, blockNum, blockIdx, restart)
+func hasLogEventWatch(st Storage, name string) (bool, error) {
+	return st.Has(logEventWatch, name)
 }
 
-func insertMonitor(
-	st SqlStorage,
-	event string,
-	blockNum uint64,
-	blockIdx int64,
-	restart bool) error {
-	q := `INSERT INTO monitor (event, blocknum, blockidx, restart)
-		VALUES ($1, $2, $3, $4)`
-	res, err := st.Exec(q, event, blockNum, blockIdx, restart)
-	return chkExec(res, err, 1, "insertMonitor")
+func getAllLogEventWatchKeys(st Storage) ([]string, error) {
+	return st.GetKeysByPrefix(logEventWatch, "")
 }
 
-func getMonitorBlock(st SqlStorage, event string) (uint64, int64, bool, error) {
-	var blockNum uint64
-	var blockIdx int64
-	q := `SELECT blocknum, blockidx FROM monitor WHERE event = $1`
-	err := st.QueryRow(q, event).Scan(&blockNum, &blockIdx)
-	found, err := chkQueryRow(err)
-	return blockNum, blockIdx, found, err
+func (d *DAL) GetLogEventWatch(name string) (*LogEventID, error) {
+	return getLogEventWatch(d.st, name)
 }
 
-func updateMonitorBlock(
-	st SqlStorage,
-	event string,
-	blockNum uint64,
-	blockIdx int64) error {
-	q := `UPDATE monitor SET blocknum = $1, blockidx = $2 WHERE event = $3`
-	res, err := st.Exec(q, blockNum, blockIdx, event)
-	return chkExec(res, err, 1, "updateMonitorBlock")
+func (d *DAL) PutLogEventWatch(name string, id *LogEventID) error {
+	return putLogEventWatch(d.st, name, id)
 }
 
-func upsertMonitorBlock(
-	st SqlStorage,
-	event string,
-	blockNum uint64,
-	blockIdx int64,
-	restart bool) error {
-	q := `INSERT INTO monitor (event, blocknum, blockidx, restart)
-		VALUES ($1, $2, $3, $4) ON CONFLICT (event) DO UPDATE
-		SET blocknum = excluded.blocknum, blockidx = excluded.blockidx`
-	res, err := st.Exec(q, event, blockNum, blockIdx, restart)
-	return chkExec(res, err, 1, "upsertMonitorBlock")
+func (d *DAL) DeleteLogEventWatch(name string) error {
+	return deleteLogEventWatch(d.st, name)
 }
 
-func chkExec(res sql.Result, err error, want int64, caller string) error {
-	var got int64
-	if err == nil {
-		got, err = res.RowsAffected()
-		if err == nil && got != want {
-			if got == 0 {
-				// Wrap ErrNoRows with additional info.
-				err = fmt.Errorf("%s: invalid SQL #rows: %d != %d: %w", caller, got, want, ErrNoRows)
-			} else {
-				err = fmt.Errorf("%s: invalid SQL #rows: %d != %d", caller, got, want)
-			}
-		}
-	}
-	return err
+func (d *DAL) HasLogEventWatch(name string) (bool, error) {
+	return hasLogEventWatch(d.st, name)
 }
 
-func chkQueryRow(err error) (bool, error) {
-	found := false
-	if err == nil {
-		found = true
-	} else if err == sql.ErrNoRows {
-		err = nil
-	} else {
-		log.Debugln("chkQueryRow SQL error:", err)
-	}
-	return found, err
+func (d *DAL) GetAllLogEventWatchKeys() ([]string, error) {
+	return getAllLogEventWatchKeys(d.st)
 }

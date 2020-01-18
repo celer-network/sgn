@@ -1,368 +1,203 @@
-// Copyright 2019 Celer Network
+// Copyright 2018-2019 Celer Network
 //
-// Support the KVStore interface using a SQL database server.
+// This is a wrapper on top of a Go LevelDB implementation.
+// It is a layer that hides the namespace partitioning of the key space
+// into tables and handles initialization scenarios.
 
 package watcher
 
 import (
-	"database/sql"
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"strings"
+	"time"
 
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
-)
-
-var sqlSchemaCmds = [...]string{
-	"CREATE TABLE IF NOT EXISTS keyvals ( key TEXT PRIMARY KEY NOT NULL, tbl TEXT NOT NULL, val BYTEA NOT NULL );",
-	"CREATE INDEX kvs_tbl_idx ON keyvals (tbl);",
-	"CREATE TABLE IF NOT EXISTS channels ( cid TEXT PRIMARY KEY NOT NULL, peer TEXT NOT NULL, token TEXT NOT NULL, ledger TEXT NOT NULL, state INT NOT NULL, statets TIMESTAMPTZ NOT NULL, opents TIMESTAMPTZ NOT NULL, openresp BYTEA, onchainbalance BYTEA, basesn INT NOT NULL, lastusedsn INT NOT NULL, lastackedsn INT NOT NULL, lastnackedsn INT NOT NULL, selfsimplex BYTEA, peersimplex BYTEA, UNIQUE (peer, token) );",
-	"CREATE INDEX chan_ledger_idx ON channels (ledger);",
-	"CREATE TABLE IF NOT EXISTS closedchannels ( cid TEXT PRIMARY KEY NOT NULL, peer TEXT NOT NULL, token TEXT NOT NULL, opents TIMESTAMPTZ NOT NULL, closets TIMESTAMPTZ NOT NULL );",
-	"CREATE INDEX cc_peer_token_idx ON closedchannels (peer, token);",
-	"CREATE TABLE IF NOT EXISTS payments ( payid TEXT PRIMARY KEY NOT NULL, pay BYTEA, paynote BYTEA, incid TEXT NOT NULL, instate INT NOT NULL, outcid TEXT NOT NULL, outstate INT NOT NULL, src TEXT NOT NULL, dest TEXT NOT NULL, createts TIMESTAMPTZ NOT NULL );",
-	"CREATE INDEX pay_src_idx ON payments (src);",
-	"CREATE INDEX pay_dest_idx ON payments (dest);",
-	"CREATE INDEX pay_ts_idx ON payments (createts);",
-	"CREATE TABLE IF NOT EXISTS paydelegation ( payid TEXT PRIMARY KEY NOT NULL REFERENCES payments (payid) ON UPDATE CASCADE ON DELETE CASCADE, dest TEXT NOT NULL, status INT NOT NULL, payidout TEXT, delegator TEXT );",
-	"CREATE INDEX paydel_dest_idx ON paydelegation (dest);",
-	"CREATE TABLE IF NOT EXISTS secrets ( hash TEXT PRIMARY KEY NOT NULL, preimage TEXT NOT NULL, payid TEXT NOT NULL, UNIQUE (hash, payid) );",
-	"CREATE TABLE IF NOT EXISTS tcb ( addr TEXT NOT NULL, token TEXT NOT NULL, deposit TEXT NOT NULL, UNIQUE (addr, token) );",
-	"CREATE TABLE IF NOT EXISTS monitor ( event TEXT PRIMARY KEY NOT NULL, blocknum INT NOT NULL, blockidx INT NOT NULL, restart BOOL NOT NULL );",
-	"CREATE TABLE IF NOT EXISTS routing ( dest TEXT NOT NULL, token TEXT NOT NULL, cid TEXT NOT NULL, UNIQUE (dest, token) );",
-	"CREATE TABLE IF NOT EXISTS osps ( addr TEXT PRIMARY KEY NOT NULL );",
-	"CREATE TABLE IF NOT EXISTS edges ( token TEXT NOT NULL, cid TEXT NOT NULL, addr1 TEXT NOT NULL, addr2 TEXT NOT NULL, UNIQUE (token, cid) );",
-	"CREATE TABLE IF NOT EXISTS peers ( peer TEXT PRIMARY KEY NOT NULL, server TEXT NOT NULL, activecids TEXT NOT NULL,  delegateproof BYTEA );",
-	"CREATE TABLE IF NOT EXISTS desttokens ( dest TEXT NOT NULL, token TEXT NOT NULL, osps TEXT NOT NULL,  openchanblknum INT NOT NULL, UNIQUE (dest, token) );",
-	"CREATE TABLE IF NOT EXISTS chanmessages ( cid TEXT NOT NULL, seqnum INT NOT NULL, msg BYTEA, UNIQUE (cid, seqnum) );",
-	"CREATE TABLE IF NOT EXISTS chanmigration ( cid TEXT NOT NULL REFERENCES channels (cid) ON DELETE CASCADE, toledger TEXT NOT NULL, deadline INT NOT NULL, onchainreq BYTEA, state INT NOT NULL, ts TIMESTAMPTZ NOT NULL, UNIQUE (cid, toledger) );",
-	"CREATE INDEX mg_toledger_state_idx ON chanmigration (toledger, state);",
-}
-
-var (
-	ErrNilValue   = errors.New("Value cannot be nil")
-	ErrTxConflict = errors.New("Transaction conflict")
+	"github.com/celer-network/goutils/log"
+	"github.com/syndtr/goleveldb/leveldb"
+	dberrors "github.com/syndtr/goleveldb/leveldb/errors"
+	"github.com/syndtr/goleveldb/leveldb/iterator"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const (
-	separator = "|" // reserved character for keys construction
+	separator     = "|" // reserved character for keys construction
+	versionPrefix = "v" // table prefix for tracking data versions
+	noVersion     = ""  // handle old store data before versioning
 )
 
-type KVStoreSQL struct {
-	driver string  // database driver
-	info   string  // database connection info
-	crdb   bool    // database is CockroachDB
-	db     *sql.DB // database access object
+var (
+	ErrTxConflict = errors.New("Transaction conflict")
+	ErrTxInvalid  = errors.New("Invalid transaction")
+	ErrReadOnly   = errors.New("Cannot modify read-only store")
+)
+
+type KVStoreLocal struct {
+	rootDir  string      // store root directory
+	readOnly bool        // read-only mode
+	db       *leveldb.DB // DB handle
 }
 
-type TransactionSQL struct {
-	store *KVStoreSQL // remote store handle
-	dbTx  *sql.Tx     // database transaction
+type TransactionLocal struct {
+	store *KVStoreLocal        // local store handle
+	itx   *leveldb.Transaction // inner transaction
 }
 
-type dbOrTx interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
-// Create a new remote K/V store.
-func NewKVStoreSQL(driver, info string) (*KVStoreSQL, error) {
-	s := &KVStoreSQL{
-		driver: driver,
-		info:   info,
-		crdb:   true,
+// Create a new local K/V store at the given root directory.
+func NewKVStoreLocal(rootDir string, readOnly bool) (*KVStoreLocal, error) {
+	if rootDir == "" {
+		return nil, fmt.Errorf("rootDir is not specified")
 	}
 
-	// Special check for SQLite on the client: if the file
-	// does not already exist, then initialize its schema.
-	// Note: in the "sqlite3" case "info" is the file path.
-	initSchema := false
-	if driver == "sqlite3" {
-		s.crdb = false
-		if ok, err := exists(info); err != nil {
-			return nil, err
-		} else if !ok {
-			initSchema = true
-			dir := path.Dir(info)
-			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-				return nil, err
-			}
+	if mode, err := os.Stat(rootDir); err == nil && !mode.IsDir() {
+		return nil, fmt.Errorf("rootDir %s is not a directory", rootDir)
+	}
+
+	var opts *opt.Options
+	if readOnly {
+		opts = &opt.Options{
+			ErrorIfMissing: true,
+			ReadOnly:       true,
 		}
 	}
 
-	db, err := sql.Open(driver, info)
+	db, err := leveldb.OpenFile(rootDir, opts)
 	if err != nil {
-		return nil, err
-	}
+		if readOnly {
+			return nil, err
+		}
 
-	s.db = db
-
-	// Initialize the database schema if needed.
-	if initSchema {
-		for _, cmd := range sqlSchemaCmds {
-			_, err = db.Exec(cmd)
-			if err != nil {
-				db.Close()
-				return nil, err
-			}
+		// Try to recover from corrupted DB files.
+		if dberrors.IsCorrupted(err) {
+			db, err = leveldb.RecoverFile(rootDir, nil)
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
 
+	s := &KVStoreLocal{
+		rootDir:  rootDir,
+		readOnly: readOnly,
+		db:       db,
+	}
 	return s, nil
 }
 
-// Close the remote K/V store.
-func (s *KVStoreSQL) Close() {
+// Close the local K/V store.
+func (s *KVStoreLocal) Close() {
 	if s.db != nil {
 		s.db.Close()
 		s.db = nil
-		s.driver = ""
-		s.info = ""
+		s.rootDir = ""
 	}
 }
 
-func (s *KVStoreSQL) put(db dbOrTx, table, key string, value interface{}) error {
+// Marshal the data into a byte-array if it is not one already.
+func marshal(val interface{}) ([]byte, error) {
+	switch v := val.(type) {
+	case []byte:
+		return v, nil
+	default:
+		return json.Marshal(val)
+	}
+}
+
+func unmarshal(src []byte, dest interface{}) error {
+	switch v := dest.(type) {
+	case *[]byte:
+		*v = append([]byte(nil), src...)
+		return nil
+	default:
+		return json.Unmarshal(src, dest)
+	}
+}
+
+// Store a key/value pair within a table's namespace.
+func (s *KVStoreLocal) Put(table, key string, value interface{}) error {
+	if s.readOnly {
+		return ErrReadOnly
+	}
 	if err := checkTableKey(table, key); err != nil {
 		return err
 	}
 	if value == nil {
-		return ErrNilValue
+		return fmt.Errorf("value cannot be nil")
 	}
 
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-
-	q := `INSERT INTO keyvals (key, tbl, val) VALUES ($1, $2, $3)
-		ON CONFLICT (key) DO UPDATE SET val = excluded.val`
-	_, err = db.Exec(q, storeKey(table, key), table, data)
-	return err
-}
-
-func (s *KVStoreSQL) get(db dbOrTx, table, key string, value interface{}) error {
-	if err := checkTableKey(table, key); err != nil {
-		return err
-	}
-	if value == nil {
-		return ErrNilValue
-	}
-
-	var data []byte
-	q := "SELECT val FROM keyvals WHERE key = $1"
-	err := db.QueryRow(q, storeKey(table, key)).Scan(&data)
+	data, err := marshal(value)
 	if err == nil {
-		err = json.Unmarshal(data, value)
+		sKey := storeKey(table, key)
+		err = s.db.Put([]byte(sKey), data, nil)
 	}
 	return err
 }
 
-func (s *KVStoreSQL) del(db dbOrTx, table, key string) error {
+// Extract the value of the given key within a table's namespace into
+// the given variable.
+func (s *KVStoreLocal) Get(table, key string, value interface{}) error {
+	if err := checkTableKey(table, key); err != nil {
+		return err
+	}
+	if value == nil {
+		return fmt.Errorf("value cannot be nil")
+	}
+
+	sKey := storeKey(table, key)
+	data, err := s.db.Get([]byte(sKey), nil)
+	if err == nil {
+		err = unmarshal(data, value)
+	}
+	return err
+}
+
+// Delete the entry for a key within a table's namespace.
+func (s *KVStoreLocal) Delete(table, key string) error {
+	if s.readOnly {
+		return ErrReadOnly
+	}
 	if err := checkTableKey(table, key); err != nil {
 		return err
 	}
 
-	q := "DELETE FROM keyvals WHERE key = $1"
-	_, err := db.Exec(q, storeKey(table, key))
-	return err
+	sKey := storeKey(table, key)
+	return s.db.Delete([]byte(sKey), nil)
 }
 
-func (s *KVStoreSQL) has(db dbOrTx, table, key string) (bool, error) {
+// Check if an entry exists for the given key within a table's namespace.
+func (s *KVStoreLocal) Has(table, key string) (bool, error) {
 	if err := checkTableKey(table, key); err != nil {
 		return false, err
 	}
 
-	var data int
-	q := "SELECT 1 FROM keyvals WHERE key = $1"
-	err := db.QueryRow(q, storeKey(table, key)).Scan(&data)
-	if err == nil {
-		return true, nil
-	} else if err == sql.ErrNoRows {
-		return false, nil
-	}
-	return false, err
+	sKey := storeKey(table, key)
+	return s.db.Has([]byte(sKey), nil)
 }
 
-func (s *KVStoreSQL) getKeys(db dbOrTx, table, prefix string) ([]string, error) {
+// Return all keys for a given table and key prefix. The key prefix
+// can be the empty string, which returns all keys within the table.
+func (s *KVStoreLocal) GetKeysByPrefix(table, prefix string) ([]string, error) {
 	if err := checkTableKey(table, " "); err != nil {
 		return nil, err
 	}
 
-	var params []interface{}
+	storePrefix := []byte(table + separator + prefix)
+	iter := s.db.NewIterator(util.BytesPrefix(storePrefix), nil)
+	return getKeysByIter(iter)
+}
 
-	// For an empty prefix the query uses only the indexed "tbl" table.
-	q := "SELECT key FROM keyvals WHERE tbl = $1"
-	params = append(params, table)
-
-	if prefix != "" {
-		// Further filtering on the keys using LIKE prefix matching.
-		q += " AND key LIKE $2"
-		like := storeKey(table, prefix) + "%"
-		params = append(params, like)
-	}
-	q += " ORDER BY key"
-
-	rows, err := db.Query(q, params...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
+// Helper function to extract and return keys from a storage iterator.
+func getKeysByIter(iter iterator.Iterator) ([]string, error) {
 	var keys []string
-	for rows.Next() {
-		var key string
-		if err = rows.Scan(&key); err != nil {
-			return nil, err
-		}
-
-		_, key = tableKey([]byte(key))
-		keys = append(keys, key)
+	for iter.Next() {
+		_, k := tableKey(iter.Key())
+		keys = append(keys, k)
 	}
-
-	return keys, nil
-}
-
-func (s *KVStoreSQL) Put(table, key string, value interface{}) error {
-	return s.put(s.db, table, key, value)
-}
-
-func (s *KVStoreSQL) Get(table, key string, value interface{}) error {
-	return s.get(s.db, table, key, value)
-}
-
-func (s *KVStoreSQL) Delete(table, key string) error {
-	return s.del(s.db, table, key)
-}
-
-func (s *KVStoreSQL) Has(table, key string) (bool, error) {
-	return s.has(s.db, table, key)
-}
-
-func (s *KVStoreSQL) GetKeysByPrefix(table, prefix string) ([]string, error) {
-	return s.getKeys(s.db, table, prefix)
-}
-
-func (s *KVStoreSQL) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return s.db.Exec(query, args...)
-}
-
-func (s *KVStoreSQL) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return s.db.Query(query, args...)
-}
-
-func (s *KVStoreSQL) QueryRow(query string, args ...interface{}) *sql.Row {
-	return s.db.QueryRow(query, args...)
-}
-
-func (s *KVStoreSQL) OpenTransaction() (Transaction, error) {
-	dbTx, err := s.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-
-	if s.crdb {
-		_, err = dbTx.Exec("SAVEPOINT cockroach_restart")
-		if err != nil {
-			dbTx.Rollback()
-			return nil, err
-		}
-	}
-
-	tx := &TransactionSQL{
-		store: s,
-		dbTx:  dbTx,
-	}
-	return tx, nil
-}
-
-func (tx *TransactionSQL) Discard() {
-	if tx.dbTx != nil {
-		err := tx.dbTx.Rollback()
-		if err == nil {
-			tx.dbTx = nil
-		}
-	}
-}
-
-func (tx *TransactionSQL) ConvertError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	// Special re-mapping of this error back to transaction conflict.
-	var patterns []string
-	if tx.store.crdb {
-		patterns = []string{"retry transaction", "restart transaction",
-			"current transaction is aborted", "40001", "cr000"}
-	} else {
-		patterns = []string{"database is locked"}
-	}
-
-	errMsg := strings.ToLower(err.Error())
-	for _, pat := range patterns {
-		if strings.Contains(errMsg, pat) {
-			return ErrTxConflict
-		}
-	}
-
-	return err
-}
-
-func (tx *TransactionSQL) Commit() error {
-	var err error
-	if tx.store.crdb {
-		// For CockroachDB, both "release savepoint" and the follow-up
-		// "commit" may fail.  The commit after a successful "release"
-		// is not a NOP.
-		_, err = tx.dbTx.Exec("RELEASE SAVEPOINT cockroach_restart")
-	}
-
-	if err == nil {
-		err = tx.dbTx.Commit()
-		if err == nil {
-			tx.dbTx = nil
-			return nil
-		}
-	}
-
-	return tx.ConvertError(err)
-}
-
-func (tx *TransactionSQL) Put(table, key string, value interface{}) error {
-	return tx.store.put(tx.dbTx, table, key, value)
-}
-
-func (tx *TransactionSQL) Get(table, key string, value interface{}) error {
-	return tx.store.get(tx.dbTx, table, key, value)
-}
-
-func (tx *TransactionSQL) Delete(table, key string) error {
-	return tx.store.del(tx.dbTx, table, key)
-}
-
-func (tx *TransactionSQL) Has(table, key string) (bool, error) {
-	return tx.store.has(tx.dbTx, table, key)
-}
-
-func (tx *TransactionSQL) GetKeysByPrefix(table, prefix string) ([]string, error) {
-	return tx.store.getKeys(tx.dbTx, table, prefix)
-}
-
-func (tx *TransactionSQL) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return tx.dbTx.Exec(query, args...)
-}
-
-func (tx *TransactionSQL) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return tx.dbTx.Query(query, args...)
-}
-
-func (tx *TransactionSQL) QueryRow(query string, args ...interface{}) *sql.Row {
-	return tx.dbTx.QueryRow(query, args...)
+	iter.Release()
+	return keys, iter.Error()
 }
 
 // Check if the table and key parameters are valid.
@@ -389,12 +224,148 @@ func tableKey(skey []byte) (string, string) {
 	return parts[0], parts[1]
 }
 
-func exists(fpath string) (bool, error) {
-	_, err := os.Stat(fpath)
-	if err == nil || os.IsExist(err) {
-		return true, nil
-	} else if os.IsNotExist(err) {
-		return false, nil
+// keysHash computes a hash for a list of keys.
+func keysHash(keys []string) (string, error) {
+	var hash string
+	data, err := json.Marshal(keys)
+	if err == nil {
+		hash = fmt.Sprintf("%x", md5.Sum(data))
 	}
-	return false, err
+	return hash, err
+}
+
+// Start a store transaction.
+func (s *KVStoreLocal) OpenTransaction() (Transaction, error) {
+	if s.readOnly {
+		return nil, ErrReadOnly
+	}
+
+	itx, err := s.db.OpenTransaction()
+	if err != nil {
+		return nil, err
+	}
+
+	tx := &TransactionLocal{
+		store: s,
+		itx:   itx,
+	}
+	return tx, nil
+}
+
+// Discard a transaction.
+func (tx *TransactionLocal) Discard() {
+	if tx.store == nil {
+		return
+	}
+
+	if tx.itx != nil {
+		tx.itx.Discard()
+	}
+
+	tx.store = nil
+	tx.itx = nil
+}
+
+func tsNow() int64 {
+	return time.Now().UnixNano() / 1000 // usec
+}
+
+func (tx *TransactionLocal) ConvertError(err error) error {
+	return err
+}
+
+// Commit a transaction.
+func (tx *TransactionLocal) Commit() error {
+	if tx.store == nil || tx.itx == nil {
+		log.Traceln("commit: invalid transaction")
+		return ErrTxInvalid
+	}
+
+	defer tx.Discard()
+	return tx.itx.Commit()
+}
+
+// In a transaction, store a key/value pair within a table's namespace.
+func (tx *TransactionLocal) Put(table, key string, value interface{}) error {
+	if tx.store == nil || tx.itx == nil {
+		return ErrTxInvalid
+	}
+	if err := checkTableKey(table, key); err != nil {
+		return err
+	}
+	if value == nil {
+		return fmt.Errorf("value cannot be nil")
+	}
+
+	data, err := marshal(value)
+	if err == nil {
+		sKey := storeKey(table, key)
+		err = tx.itx.Put([]byte(sKey), data, nil)
+	}
+	return err
+}
+
+// In a transaction, extract the value of the given key within a table's
+// namespace into the given variable.
+func (tx *TransactionLocal) Get(table, key string, value interface{}) error {
+	if tx.store == nil || tx.itx == nil {
+		return ErrTxInvalid
+	}
+	if err := checkTableKey(table, key); err != nil {
+		return err
+	}
+	if value == nil {
+		return fmt.Errorf("value cannot be nil")
+	}
+
+	sKey := storeKey(table, key)
+	data, err := tx.itx.Get([]byte(sKey), nil)
+	if err == nil {
+		err = unmarshal(data, value)
+	}
+	return err
+}
+
+// In a transaction, delete the entry for a key within a table's namespace.
+func (tx *TransactionLocal) Delete(table, key string) error {
+	if tx.store == nil || tx.itx == nil {
+		return ErrTxInvalid
+	}
+	if err := checkTableKey(table, key); err != nil {
+		return err
+	}
+
+	sKey := storeKey(table, key)
+	return tx.itx.Delete([]byte(sKey), nil)
+}
+
+// In a transaction, check if an entry exists for the given key within
+// a table's namespace.
+func (tx *TransactionLocal) Has(table, key string) (bool, error) {
+	if tx.store == nil || tx.itx == nil {
+		return false, ErrTxInvalid
+	}
+	if err := checkTableKey(table, key); err != nil {
+		return false, err
+	}
+
+	sKey := storeKey(table, key)
+	return tx.itx.Has([]byte(sKey), nil)
+}
+
+// In a transaction, return all keys for a given table and key prefix.
+// The key prefix can be the empty string, which returns all keys within
+// the table.
+func (tx *TransactionLocal) GetKeysByPrefix(table, prefix string) ([]string, error) {
+	if tx.store == nil || tx.itx == nil {
+		return nil, ErrTxInvalid
+	}
+	if err := checkTableKey(table, " "); err != nil {
+		return nil, err
+	}
+
+	// Fetch the matching keys from the DB.
+	storePrefix := table + separator + prefix
+	iter := tx.itx.NewIterator(util.BytesPrefix([]byte(storePrefix)), nil)
+	return getKeysByIter(iter)
 }
