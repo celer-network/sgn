@@ -185,9 +185,9 @@ func (k Keeper) GetReward(ctx sdk.Context, ethAddress string) (Reward, bool) {
 }
 
 // Sets the Reward metadata for ethAddress
-func (k Keeper) SetReward(ctx sdk.Context, ethAddress string, reward Reward) {
+func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRewardKey(ethAddress), k.cdc.MustMarshalBinaryBare(reward))
+	store.Set(GetRewardKey(reward.Receiver), k.cdc.MustMarshalBinaryBare(reward))
 }
 
 // HandleServiceReward distributes rewards to a candidate and its delegators
@@ -200,6 +200,6 @@ func (k Keeper) HandleServiceReward(ctx sdk.Context, rewardCandidate Candidate, 
 
 		rewardAmt := totalReward.Mul(delegator.DelegatedStake).Quo(rewardCandidate.StakingPool)
 		reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
-		k.SetReward(ctx, delegator.EthAddress, reward)
+		k.SetReward(ctx, reward)
 	}
 }

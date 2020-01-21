@@ -94,6 +94,7 @@ func turnOffMonitor(node uint) {
 	tf.ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagStartMonitor, false)
 	viper.WriteConfig()
+	viper.Set(common.FlagStartMonitor, true)
 
 	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))
 	cmd.Stdout = os.Stdout

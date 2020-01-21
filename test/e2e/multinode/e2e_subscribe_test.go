@@ -76,7 +76,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay+2, "Subscribe on Guard contract")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
@@ -144,7 +144,7 @@ func subscribeTest(t *testing.T) {
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
-	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, "476190476190476190")
+	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %d, ServiceReward: %s`, mainchain.Addr2Hex(ethAddress), 0, "476190476190476190")
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")
