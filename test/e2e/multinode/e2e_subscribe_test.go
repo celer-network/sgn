@@ -33,7 +33,6 @@ func setUpSubscribe() {
 	setupNewSGNEnv(p)
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
 	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
-	tf.SleepWithLog(60, "sgn syncing")
 	turnOffMonitor(2)
 }
 
@@ -74,15 +73,15 @@ func subscribeTest(t *testing.T) {
 	amt.SetString("1"+strings.Repeat("0", 20), 10) // 100 CELR
 	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Approve CELR to Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay+2, "Subscribe on Guard contract")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubscribe)
-	tf.SleepWithLog(30, "sgn syncing Subscribe balance from mainchain")
+	tf.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	log.Infoln("Query sgn about the subscription info...")
 	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
@@ -100,7 +99,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Prepare for requesting guard...")
 	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
-	tf.SleepWithLog(30, "wait channelId to be in secure state")
+	tf.SleepWithLog(20, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
@@ -145,7 +144,7 @@ func subscribeTest(t *testing.T) {
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
-	expectedRes = fmt.Sprintf(`MiningReward: %d, ServiceReward: %s`, 0, "476190476190476190")
+	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %d, ServiceReward: %s`, mainchain.Addr2Hex(ethAddress), 0, "476190476190476190")
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")

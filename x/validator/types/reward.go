@@ -31,7 +31,7 @@ func NewReward(receiver string) Reward {
 
 // implement fmt.Stringer
 func (r Reward) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`MiningReward: %v, ServiceReward: %v`, r.MiningReward, r.ServiceReward))
+	return strings.TrimSpace(fmt.Sprintf(`Receiver: %s, MiningReward: %v, ServiceReward: %v`, r.Receiver, r.MiningReward, r.ServiceReward))
 }
 
 // Check if have new reward added

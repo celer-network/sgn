@@ -203,7 +203,7 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 	}
 
 	reward.InitateWithdraw()
-	keeper.SetReward(ctx, msg.EthAddress, reward)
+	keeper.SetReward(ctx, reward)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			ModuleName,
@@ -241,7 +241,7 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 		return res, fmt.Errorf("Failed to add sig: %s", err)
 	}
 
-	keeper.SetReward(ctx, msg.EthAddress, reward)
+	keeper.SetReward(ctx, reward)
 	return res, nil
 }
 

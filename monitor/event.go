@@ -18,26 +18,26 @@ const (
 )
 
 // Wrapper for ethereum Event
-type Event struct {
+type EventWrapper struct {
 	Name EventName `json:"name"`
 	Log  types.Log `json:"log"`
 }
 
-func NewEvent(name EventName, l types.Log) Event {
-	return Event{
+func NewEvent(name EventName, l types.Log) EventWrapper {
+	return EventWrapper{
 		Name: name,
 		Log:  l,
 	}
 }
 
-func NewEventFromBytes(input []byte) Event {
-	event := Event{}
+func NewEventFromBytes(input []byte) EventWrapper {
+	event := EventWrapper{}
 	event.MustUnMarshal(input)
 	return event
 }
 
 // Marshal event into json bytes
-func (e Event) MustMarshal() []byte {
+func (e EventWrapper) MustMarshal() []byte {
 	res, err := json.Marshal(&e)
 	if err != nil {
 		panic(err)
@@ -47,14 +47,14 @@ func (e Event) MustMarshal() []byte {
 }
 
 // Unmarshal json bytes to event
-func (e *Event) MustUnMarshal(input []byte) {
+func (e *EventWrapper) MustUnMarshal(input []byte) {
 	err := json.Unmarshal(input, e)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (e Event) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
+func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
 	var err error
 	switch e.Name {
 	case InitializeCandidate:

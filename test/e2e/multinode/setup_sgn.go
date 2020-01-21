@@ -20,7 +20,7 @@ import (
 )
 
 func setupNewSGNEnv(sgnParams *tf.SGNParams) {
-	log.Infoln("deploy guard contract")
+	log.Infoln("Deploy guard contract")
 	if sgnParams == nil {
 		sgnParams = &tf.SGNParams{
 			BlameTimeout:           big.NewInt(50),
@@ -56,7 +56,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
 		viper.SetConfigFile(configPath)
 		err := viper.ReadInConfig()
-		tf.ChkErr(err, "failed to read config")
+		tf.ChkErr(err, "Failed to read config")
 		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
 		viper.WriteConfig()
@@ -76,7 +76,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 }
 
 func shutdownNode(node uint) {
-	log.Infoln("shutdown node", node)
+	log.Infoln("Shutdown node", node)
 	cmd := exec.Command("docker-compose", "stop", fmt.Sprintf("sgnnode%d", node))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -86,14 +86,15 @@ func shutdownNode(node uint) {
 }
 
 func turnOffMonitor(node uint) {
-	log.Infoln("turn off node monitor", node)
+	log.Infoln("Turn off node monitor", node)
 
 	configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", node)
 	viper.SetConfigFile(configPath)
 	err := viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
+	tf.ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagStartMonitor, false)
 	viper.WriteConfig()
+	viper.Set(common.FlagStartMonitor, true)
 
 	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))
 	cmd.Stdout = os.Stdout
@@ -107,9 +108,7 @@ func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*bi
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
 		err := addValidator(ethkss[i], ethpps[i], sgnops[i], amts[i])
-		if err != nil {
-			log.Error(err)
-		}
+		tf.ChkErr(err, "Failed to add validator")
 	}
 }
 
