@@ -50,8 +50,6 @@ func (m *EthMonitor) processEventQueue() {
 			m.handleValidatorChange(e)
 		case *mainchain.GuardIntendWithdraw:
 			m.handleIntendWithdraw(e)
-		case *mainchain.CelerLedgerIntendSettle:
-			m.handleIntendSettle(e)
 		}
 	}
 }
@@ -120,50 +118,68 @@ func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.G
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
 	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	channelId := intendSettle.ChannelId[:]
-	request, err := m.getRequest(channelId)
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
 	if err != nil {
-		log.Errorln("Query request err", err)
+		log.Errorln("Query StateSeqNumMap err", err)
 		return
 	}
 
-	if request.GuardTxHash != "" {
-		log.Errorln("Request has been fulfilled")
-		return
+	for i := 0; i < 2; i++ {
+		peerFrom := mainchain.Addr2Hex(addresses[i])
+		request, err := m.getRequest(channelId, peerFrom)
+		if err != nil {
+			log.Errorln("Query request err", err)
+			return
+		}
+
+		if request.GuardTxHash != "" {
+			log.Errorln("Request has been fulfilled")
+			return
+		}
+
+		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+			log.Infoln("Ignore the intendSettle event with a larger seqNum")
+			return
+		}
+
+		if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
+			log.Infof("Not valid guard at current mainchain block")
+			event := NewEvent(IntendSettle, intendSettle.Raw)
+			m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
+			return
+		}
+
+		var signedSimplexState chain.SignedSimplexState
+		err = protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+		if err != nil {
+			log.Errorln("Unmarshal SignedSimplexState error:", err)
+			return
+		}
+
+		signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+			SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
+		})
+		if err != nil {
+			log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
+			return
+		}
+
+		// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
+		tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
+		if err != nil {
+			log.Errorln("intendSettle err", err)
+			return
+		}
+
+		log.Infof("IntendSettle tx hash %x", tx.Hash())
+		// TODO: 1) bockDelay, 2) may need a better way than wait mined,
+		mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+
+		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
+		msg := subscribe.NewMsgGuardProof(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
+		m.transactor.AddTxMsg(msg)
 	}
 
-	if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
-		log.Infof("Not valid guard at current mainchain block")
-		event := NewEvent(IntendSettle, intendSettle.Raw)
-		m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
-		return
-	}
-
-	var signedSimplexState chain.SignedSimplexState
-	err = protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
-	if err != nil {
-		log.Errorln("Unmarshal SignedSimplexState error:", err)
-		return
-	}
-	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
-		SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
-	})
-	if err != nil {
-		log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
-		return
-	}
-	// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
-	tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
-	if err != nil {
-		log.Errorln("intendSettle err", err)
-		return
-	}
-	log.Infof("IntendSettle tx hash %x", tx.Hash())
-	// TODO: 1) bockDelay, 2) may need a better way than wait mined,
-	mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
-
-	log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-	msg := subscribe.NewMsgGuardProof(channelId, intendSettle.Raw.TxHash.Hex(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {

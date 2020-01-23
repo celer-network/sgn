@@ -67,12 +67,12 @@ func QuerySubscription(cliCtx context.CLIContext, queryRoute, ethAddress string)
 // GetCmdRequest queries request info
 func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "request [channelId]",
+		Use:   "request [channelId] [peerFrom]",
 		Short: "query request info associated with the channelId",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			request, err := QueryRequest(cliCtx, queryRoute, mainchain.Hex2Bytes(args[0]))
+			request, err := QueryRequest(cliCtx, queryRoute, mainchain.Hex2Bytes(args[0]), args[1])
 			if err != nil {
 				log.Errorln("query error", err)
 				return err
@@ -84,8 +84,8 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query request info
-func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte) (request types.Request, err error) {
-	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryRequestParams(channelId))
+func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte, peerFrom string) (request types.Request, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryRequestParams(channelId, peerFrom))
 	if err != nil {
 		return
 	}

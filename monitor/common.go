@@ -38,9 +38,14 @@ func (m *EthMonitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 // Is the current node the guard to submit state proof
 func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
+	// FIX: temprary fix
+	if latestBlockNum < eventBlockNumber {
+		return false
+	}
 	blockNumberDiff := latestBlockNum - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
+	log.Infoln("IsRequestGuard", latestBlockNum, eventBlockNumber, guardIndex, requestGuards)
 	// All other validators need to guard
 	if guardIndex >= uint64(len(requestGuards)) {
 		return true
@@ -49,8 +54,8 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum ui
 	return requestGuards[guardIndex].Equals(m.transactor.Key.GetAddress())
 }
 
-func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.transactor.CliCtx, subscribe.RouterKey, channelId)
+func (m *EthMonitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
+	return subscribe.CLIQueryRequest(m.transactor.CliCtx, subscribe.RouterKey, channelId, peerFrom)
 }
 
 func (m *EthMonitor) getLatestBlock() (global.Block, error) {
