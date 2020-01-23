@@ -111,7 +111,7 @@ type MsgGuardProof struct {
 func NewMsgGuardProof(channelId []byte, peerFrom string, triggerTxHash, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
 	return MsgGuardProof{
 		ChannelId:     channelId,
-		PeerFrom:      peerFrom,
+		PeerFrom:      mainchain.FormatAddrHex(peerFrom),
 		TriggerTxHash: triggerTxHash,
 		GuardTxHash:   guardTxHash,
 		Sender:        sender,
