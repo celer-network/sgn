@@ -126,7 +126,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 
 	for i := 0; i < 2; i++ {
 		peerFrom := mainchain.Addr2Hex(addresses[i])
-		request, err := m.getRequest(channelId, mainchain.Addr2Hex(addresses[i]))
+		request, err := m.getRequest(channelId, peerFrom)
 		if err != nil {
 			log.Errorln("Query request err", err)
 			return

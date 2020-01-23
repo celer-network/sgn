@@ -109,7 +109,7 @@ func subscribeTest(t *testing.T) {
 	tf.SleepWithLog(5, "sgn processes request guard")
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	// TxHash now should be empty
@@ -129,7 +129,7 @@ func subscribeTest(t *testing.T) {
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
 	tf.SleepWithLog(15, "sgn submitting state proof")
-	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:])
+	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
