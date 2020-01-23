@@ -53,9 +53,9 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
 	}
 
-	request, found := keeper.GetRequest(ctx, params.ChannelId)
+	request, found := keeper.GetRequest(ctx, params.ChannelId, params.PeerFrom)
 	if !found {
-		log.Errorf("Params info ChannelId %x not found", params.ChannelId)
+		log.Errorf("Params info ChannelId %x, PeerFrom %s not found", params.ChannelId, params.PeerFrom)
 		return nil, sdk.ErrInternal("Could not find corresponding request")
 	}
 

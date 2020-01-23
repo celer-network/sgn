@@ -101,15 +101,17 @@ func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 // MsgGuardProof defines a Subscribe message
 type MsgGuardProof struct {
 	ChannelId     []byte         `json:"channelId"`
+	PeerFrom      string         `json:"peerFrom"`
 	TriggerTxHash string         `json:"triggerTxHash"` // intendSettle tx with lower sequence number
 	GuardTxHash   string         `json:"guardTxHash"`   // intendSettle tx to guard user's state proof
 	Sender        sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgGuardProof is a constructor function for MsgGuardProof
-func NewMsgGuardProof(channelId []byte, triggerTxHash, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
+func NewMsgGuardProof(channelId []byte, peerFrom string, triggerTxHash, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
 	return MsgGuardProof{
 		ChannelId:     channelId,
+		PeerFrom:      peerFrom,
 		TriggerTxHash: triggerTxHash,
 		GuardTxHash:   guardTxHash,
 		Sender:        sender,

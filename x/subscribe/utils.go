@@ -15,7 +15,8 @@ import (
 )
 
 func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
-	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId)
+	peerFromAddr := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
+	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId, peerFromAddr)
 	if !found {
 		channelId := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
 
@@ -34,7 +35,6 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 		}
 
 		peerAddrs := []string{mainchain.Addr2Hex(addresses[0]), mainchain.Addr2Hex(addresses[1])}
-		peerFromAddr := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
 		var peerFromIndex uint8
 		if peerAddrs[0] == peerFromAddr {
 			peerFromIndex = uint8(0)
@@ -46,7 +46,7 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 
 		seqNum := seqNums[peerFromIndex].Uint64()
 		requestGuards := getRequestGuards(ctx, keeper)
-		request = NewRequest(seqNum, peerAddrs, peerFromIndex, disputeTimeout.Uint64(), requestGuards)
+		request = NewRequest(simplexPaymentChannel.ChannelId, seqNum, peerAddrs, peerFromIndex, disputeTimeout.Uint64(), requestGuards)
 	}
 
 	return request, nil
@@ -75,12 +75,12 @@ func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 	}
 
 	for i := 0; i < 2; i++ {
-		addr, err := mainchain.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[0])
+		addr, err := mainchain.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[i])
 		if err != nil {
 			return fmt.Errorf("RecoverSigner err: %s", err)
 		}
 
-		if request.PeerAddresses[0] != mainchain.Addr2Hex(addr) {
+		if request.PeerAddresses[i] != mainchain.Addr2Hex(addr) {
 			return errors.New("invalid sig")
 		}
 	}

@@ -128,7 +128,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 
 	request.SeqNum = simplexPaymentChannel.SeqNum
 	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
-	keeper.SetRequest(ctx, simplexPaymentChannel.ChannelId, request)
+	keeper.SetRequest(ctx, request)
 
 	return res, nil
 }
@@ -144,7 +144,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
 
 	res := sdk.Result{}
-	request, found := keeper.GetRequest(ctx, msg.ChannelId)
+	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
 	if !found {
 		return res, fmt.Errorf("Cannot find request for channel ID")
 	}
@@ -198,7 +198,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	// set tx hashes
 	request.TriggerTxHash = msg.TriggerTxHash
 	request.GuardTxHash = msg.GuardTxHash
-	keeper.SetRequest(ctx, msg.ChannelId, request)
+	keeper.SetRequest(ctx, request)
 
 	// punish corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {

@@ -76,24 +76,6 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 	}
 }
 
-func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	log.Infof("New intend settle %x", intendSettle.ChannelId)
-	request, err := m.getRequest(intendSettle.ChannelId[:])
-	// TODO: a "not found" error should be regarded as a normal situation for not-guarded channels
-	if err != nil {
-		log.Errorln("Query request err", err)
-		return
-	}
-
-	if intendSettle.SeqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-		log.Infoln("Ignore the intendSettle event with a larger seqNum")
-		return
-	}
-
-	event := NewEvent(IntendSettle, intendSettle.Raw)
-	m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
-}
-
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Infoln("New initiate withdraw", ethAddr)
 

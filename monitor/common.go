@@ -49,8 +49,8 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum ui
 	return requestGuards[guardIndex].Equals(m.transactor.Key.GetAddress())
 }
 
-func (m *EthMonitor) getRequest(channelId []byte) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.transactor.CliCtx, subscribe.RouterKey, channelId)
+func (m *EthMonitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
+	return subscribe.CLIQueryRequest(m.transactor.CliCtx, subscribe.RouterKey, channelId, peerFrom)
 }
 
 func (m *EthMonitor) getLatestBlock() (global.Block, error) {

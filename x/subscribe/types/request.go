@@ -8,6 +8,7 @@ import (
 )
 
 type Request struct {
+	ChannelId               []byte           `json:"channelId"`
 	SeqNum                  uint64           `json:"seqNum"`
 	PeerAddresses           []string         `json:"peerAddresses"`
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
@@ -18,14 +19,19 @@ type Request struct {
 	GuardTxHash             string           `json:"guardTxHash"`
 }
 
-func NewRequest(seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestGuards []sdk.AccAddress) Request {
+func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestGuards []sdk.AccAddress) Request {
 	return Request{
+		ChannelId:      channelId,
 		SeqNum:         seqNum,
 		PeerAddresses:  peerAddresses,
 		PeerFromIndex:  peerFromIndex,
 		DisputeTimeout: disputeTimeout,
 		RequestGuards:  requestGuards,
 	}
+}
+
+func (r Request) GetPeerAddress() string {
+	return r.PeerAddresses[r.PeerFromIndex]
 }
 
 // implement fmt.Stringer

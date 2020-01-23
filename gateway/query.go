@@ -29,7 +29,7 @@ func (rs *RestServer) registerQueryRoutes() {
 	).Methods("GET")
 
 	rs.Mux.HandleFunc(
-		"/subscribe/request/{channelId}",
+		"/subscribe/request/{channelId}/{peerFrom}",
 		guardRequestHandlerFn(rs),
 	).Methods("GET")
 
@@ -84,8 +84,9 @@ func guardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		channelId := mainchain.Hex2Bytes(vars["channelId"])
+		peerFrom := vars["peerFrom"]
 		transactor := rs.transactorPool.GetTransactor()
-		request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId)
+		request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId, peerFrom)
 		postProcessResponse(w, transactor.CliCtx, request, err)
 	}
 }

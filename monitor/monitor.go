@@ -160,7 +160,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 func (m *EthMonitor) monitorIntendSettle() {
 	m.ms.Monitor(string(IntendSettle), m.ledgerContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		event := NewEvent(IntendSettle, eLog)
-		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+		m.db.Set(GetPusherKey(eLog), event.MustMarshal())
 		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
 	})
 }
