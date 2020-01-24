@@ -42,8 +42,6 @@ func (m *EthMonitor) processEventQueue() {
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
-		case *mainchain.GuardInitializeCandidate:
-			m.handleInitializeCandidate(e)
 		case *mainchain.GuardDelegate:
 			m.handleDelegate(e)
 		case *mainchain.GuardValidatorChange:
@@ -108,8 +106,13 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
+	_, err := validator.CLIQueryCandidate(m.transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
+	if err == nil {
+		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
+		return
+	}
 
+	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
 	msg := validator.NewMsgInitializeCandidate(
 		mainchain.Addr2Hex(initializeCandidate.Candidate), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
@@ -179,7 +182,6 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		msg := subscribe.NewMsgGuardProof(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
 	}
-
 }
 
 func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
@@ -187,11 +189,12 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 
 	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.nonce)))
 	if err != nil {
-		log.Errorln("get usedPenaltyNonce err", err)
+		log.Errorln("Get usedPenaltyNonce err", err)
 		return
 	}
 
 	if used {
+		log.Infof("Penalty %d has been used", penaltyEvent.nonce)
 		return
 	}
 
