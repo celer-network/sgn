@@ -149,6 +149,8 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
+
 	msg := validator.NewMsgSyncDelegator(
 		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
