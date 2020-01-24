@@ -13,6 +13,7 @@ const (
 	QuerySecureBlockNum = types.QuerySecureBlockNum
 	QueryEpoch          = types.QueryEpoch
 	QueryParameters     = types.QueryParameters
+	TypeMsgSyncBlock    = types.TypeMsgSyncBlock
 )
 
 var (

@@ -30,6 +30,7 @@ const (
 )
 
 var (
+	syncBlockEvent              = fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, global.TypeMsgSyncBlock)
 	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
@@ -105,6 +106,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
 	go m.monitorIntendSettle()
+	go m.monitorSyncBlock()
 	go m.monitorWithdrawReward()
 	go m.monitorSlash()
 }
@@ -124,7 +126,6 @@ func (m *EthMonitor) monitorBlockHead() {
 			log.Errorln("SubscribeNewHead err", err)
 		case header := <-headerChan:
 			go m.handleNewBlock(header)
-			go m.processQueue()
 		}
 	}
 }
@@ -166,6 +167,12 @@ func (m *EthMonitor) monitorIntendSettle() {
 		event := NewEvent(IntendSettle, eLog)
 		m.db.Set(GetPusherKey(eLog), event.MustMarshal())
 		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
+	})
+}
+
+func (m *EthMonitor) monitorSyncBlock() {
+	m.monitorTendermintEvent(syncBlockEvent, func(e abci.Event) {
+		m.processQueue()
 	})
 }
 
