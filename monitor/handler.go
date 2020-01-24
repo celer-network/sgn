@@ -31,12 +31,6 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	m.transactor.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Handle InitializeCandidate event for candidate %x", initializeCandidate.Candidate)
-	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
-	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
-}
-
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
 		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
@@ -155,6 +149,8 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
+
 	msg := validator.NewMsgSyncDelegator(
 		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
