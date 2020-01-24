@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -25,8 +26,6 @@ import (
 )
 
 const (
-	txsPageLimit    = 30
-	txsPullInterval = 5 // interval in seconds of pulling sidechain events
 	pollingInterval = 10
 )
 
@@ -65,7 +64,12 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		log.Fatalln("Cannot create watch service")
 	}
 
-	ms := watcher.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
+	params, err := global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
+	if err != nil {
+		log.Fatalln("Query global params err", err)
+	}
+
+	ms := watcher.NewService(ws, params.ConfirmationCount /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
 	ms.Init()
 
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
@@ -127,33 +131,45 @@ func (m *EthMonitor) monitorBlockHead() {
 
 func (m *EthMonitor) monitorInitializeCandidate() {
 	m.ms.Monitor(string(InitializeCandidate), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		event := NewEvent(InitializeCandidate, eLog)
-		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 		log.Infof("Catch event InitializeCandidate, tx hash: %v", eLog.TxHash)
+		event := NewEvent(InitializeCandidate, eLog)
+		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 	})
 }
 
 func (m *EthMonitor) monitorDelegate() {
 	m.ms.Monitor(string(Delegate), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		event := NewEvent(Delegate, eLog)
-		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 		log.Infof("Catch event Delegate, tx hash: %v", eLog.TxHash)
+		delegate, err := m.ethClient.Guard.ParseDelegate(eLog)
+		if err != nil {
+			log.Errorln("ParseDelegate err", err)
+			return
+		}
+		m.handleDelegate(delegate)
 	})
 }
 
 func (m *EthMonitor) monitorValidatorChange() {
 	m.ms.Monitor(string(ValidatorChange), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		event := NewEvent(ValidatorChange, eLog)
-		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 		log.Infof("Catch event ValidatorChange, tx hash: %v", eLog.TxHash)
+		validatorChange, err := m.ethClient.Guard.ParseValidatorChange(eLog)
+		if err != nil {
+			log.Errorln("ParseValidatorChange err", err)
+			return
+		}
+		m.handleValidatorChange(validatorChange)
 	})
 }
 
 func (m *EthMonitor) monitorIntendWithdraw() {
 	m.ms.Monitor(string(IntendWithdraw), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		event := NewEvent(IntendWithdraw, eLog)
-		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 		log.Infof("Catch event IntendWithdraw, tx hash: %v", eLog.TxHash)
+		intendWithdraw, err := m.ethClient.Guard.ParseIntendWithdraw(eLog)
+		if err != nil {
+			log.Errorln("ParseIntendWithdraw err", err)
+			return
+		}
+		m.handleIntendWithdraw(intendWithdraw)
 	})
 }
 
