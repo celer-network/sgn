@@ -9,10 +9,9 @@ for filename in filenames:
 
 def readnext(f):
     line = f.readline()
-    if (len(line) > 24 and line[1] != '[' and line[24] == '|') or line == "":
-        return line.rstrip('\n')
-    else:
-        return readnext(f)
+    while not ((len(line) > 24 and line[1] != '[' and line[24] == '|') or line == ""):
+        line = f.readline()
+    return line.rstrip('\n')
 
 def select(lines):
     time, line, index = "", "", -1
