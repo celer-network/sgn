@@ -98,23 +98,76 @@ func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-// MsgGuardProof defines a Subscribe message
-type MsgGuardProof struct {
+// MsgIntendSettle defines a Subscribe message
+type MsgIntendSettle struct {
 	ChannelId     []byte         `json:"channelId"`
 	PeerFrom      string         `json:"peerFrom"`
 	TriggerTxHash string         `json:"triggerTxHash"` // intendSettle tx with lower sequence number
-	GuardTxHash   string         `json:"guardTxHash"`   // intendSettle tx to guard user's state proof
 	Sender        sdk.AccAddress `json:"sender"`
 }
 
-// NewMsgGuardProof is a constructor function for MsgGuardProof
-func NewMsgGuardProof(channelId []byte, peerFrom string, triggerTxHash, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
-	return MsgGuardProof{
+// NewMsgIntendSettle is a constructor function for MsgIntendSettle
+func NewMsgIntendSettle(channelId []byte, peerFrom string, triggerTxHash string, sender sdk.AccAddress) MsgIntendSettle {
+	return MsgIntendSettle{
 		ChannelId:     channelId,
 		PeerFrom:      mainchain.FormatAddrHex(peerFrom),
 		TriggerTxHash: triggerTxHash,
-		GuardTxHash:   guardTxHash,
 		Sender:        sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgIntendSettle) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgIntendSettle) Type() string { return "intend_settle" }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgIntendSettle) ValidateBasic() sdk.Error {
+	if len(msg.ChannelId) == 0 {
+		return sdk.ErrUnknownRequest("channelId cannot be empty")
+	}
+
+	if msg.PeerFrom == "" {
+		return sdk.ErrUnknownRequest("peerFrom cannot be empty")
+	}
+
+	if msg.TriggerTxHash == "" {
+		return sdk.ErrUnknownRequest("obsolete tx hash cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdk.ErrInvalidAddress(msg.Sender.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgIntendSettle) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgIntendSettle) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// MsgGuardProof defines a Subscribe message
+type MsgGuardProof struct {
+	ChannelId   []byte         `json:"channelId"`
+	PeerFrom    string         `json:"peerFrom"`
+	GuardTxHash string         `json:"guardTxHash"` // intendSettle tx to guard user's state proof
+	Sender      sdk.AccAddress `json:"sender"`
+}
+
+// NewMsgGuardProof is a constructor function for MsgGuardProof
+func NewMsgGuardProof(channelId []byte, peerFrom string, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
+	return MsgGuardProof{
+		ChannelId:   channelId,
+		PeerFrom:    mainchain.FormatAddrHex(peerFrom),
+		GuardTxHash: guardTxHash,
+		Sender:      sender,
 	}
 }
 
@@ -130,8 +183,8 @@ func (msg MsgGuardProof) ValidateBasic() sdk.Error {
 		return sdk.ErrUnknownRequest("channelId cannot be empty")
 	}
 
-	if msg.TriggerTxHash == "" {
-		return sdk.ErrUnknownRequest("obsolete tx hash cannot be empty")
+	if msg.PeerFrom == "" {
+		return sdk.ErrUnknownRequest("peerFrom cannot be empty")
 	}
 
 	if msg.GuardTxHash == "" {

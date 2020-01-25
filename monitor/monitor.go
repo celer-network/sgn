@@ -65,12 +65,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 		log.Fatalln("Cannot create watch service")
 	}
 
-	params, err := global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
-	if err != nil {
-		log.Fatalln("Query global params err", err)
-	}
-
-	ms := watcher.NewService(ws, params.ConfirmationCount /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
+	ms := watcher.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
 	ms.Init()
 
 	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
@@ -165,7 +160,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 func (m *EthMonitor) monitorIntendSettle() {
 	m.ms.Monitor(string(IntendSettle), m.ledgerContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		event := NewEvent(IntendSettle, eLog)
-		m.db.Set(GetPusherKey(eLog), event.MustMarshal())
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
 	})
 }
