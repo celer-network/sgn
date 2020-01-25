@@ -1,72 +1,38 @@
 #! /usr/bin/env python
-import os
-from collections import deque
+import os, glob
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+filenames = glob.glob(dir_path+"/../../../docker-volumes/node*/sgn/sgn.log")
+files = []
+for filename in filenames:
+    files.append(open(filename, "r"))
 
-f0 = open(dir_path+"/../../../docker-volumes/node0/sgn/sgn.log", "r").readlines()
-f1 = open(dir_path+"/../../../docker-volumes/node1/sgn/sgn.log", "r").readlines()
-f2 = open(dir_path+"/../../../docker-volumes/node2/sgn/sgn.log", "r").readlines()
-
-def readnext(lines, n):
-    if n > len(lines) - 1:
-        return "", n
-    line = lines[n]
-    if len(line) > 24 and line[1] != '[' and line[24] == '|':
-        return line, n+1
+def readnext(f):
+    line = f.readline()
+    if (len(line) > 24 and line[1] != '[' and line[24] == '|') or line == "":
+        return line.rstrip('\n')
     else:
-        return readnext(lines, n+1)
-
-def filter(log):
-    queue = deque()
-    n = 0
-    while 1:
-        line, n = readnext(log, n)
-        if len(line) > 0:
-            queue.append(line.rstrip('\n'))
-        if n > len(log) - 1:
-            return queue
+        return readnext(f)
 
 def select(lines):
-    time = ""
-    line = ""
-    index = -1
+    time, line, index = "", "", -1
     for i in range(len(lines)):
-        if len(lines[i]) < 24:
-            continue
         t = lines[i][:23]
-        if time == "":
-            line = lines[i]
-            time = t
-            index = i
-        else:      
-            if t < time:
-                line = lines[i]
-                time = t
-                index = i
+        if t != "" and (time == "" or t < time):
+            line, time, index = lines[i], t, i
     return line, index
 
-def merge(logs):
+def merge(files):
     mergelog = []
     lines = []
-    for log in logs:
-        lines.append(log.popleft())
+    for f in files:
+        lines.append(readnext(f))
     while 1:
         line, index = select(lines)
         if index == -1:
             break
-        mergelog.append("n%d: %s"%(index, line))
-        if len(logs[index]) == 0:
-            lines[index] = ""
-        else:
-            lines[index] = logs[index].popleft()
-    return mergelog
+        print("n%d: %s"%(index, line))
+        lines[index] = readnext(files[index])
 
 if __name__ == '__main__':
-    log0 = filter(f0)
-    log1 = filter(f1)
-    log2 = filter(f2)
-
-    mergelog = merge([log0, log1, log2])
-    for l in mergelog:
-        print(l)
+    merge(files)
