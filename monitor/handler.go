@@ -86,12 +86,12 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		request, err := m.getRequest(channelId, peerFrom)
 		if err != nil {
 			log.Errorln("Query request err", err)
-			return
+			continue
 		}
 
 		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
 			log.Infoln("Ignore the intendSettle event with a larger seqNum")
-			return
+			continue
 		}
 
 		doGuard = true
@@ -100,6 +100,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 	}
 
 	if doGuard {
+		log.Infof("Push intend settle %x to pusher queue", channelId)
 		event := NewEvent(IntendSettle, intendSettle.Raw)
 		m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 	}
