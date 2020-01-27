@@ -89,6 +89,11 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 			continue
 		}
 
+		if request.TriggerTxHash != "" {
+			log.Infoln("The intendSettle event has been recorded on sgn")
+			continue
+		}
+
 		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
 			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
 			continue
