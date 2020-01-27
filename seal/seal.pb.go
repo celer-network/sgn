@@ -5,8 +5,9 @@ package seal
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
 	math "math"
+
+	proto "github.com/golang/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -112,6 +113,7 @@ type MsgLog struct {
 	DelegatorAddr        string   `protobuf:"bytes,10,opt,name=delegator_addr,json=delegatorAddr,proto3" json:"delegator_addr,omitempty"`
 	SlashNonce           uint64   `protobuf:"varint,11,opt,name=slash_nonce,json=slashNonce,proto3" json:"slash_nonce,omitempty"`
 	BlockNum             uint64   `protobuf:"varint,12,opt,name=block_num,json=blockNum,proto3" json:"block_num,omitempty"`
+	PeerFrom             string   `protobuf:"bytes,13,opt,name=peer_from,json=peerFrom,proto3" json:"peer_from,omitempty"`
 	Sender               string   `protobuf:"bytes,99,opt,name=sender,proto3" json:"sender,omitempty"`
 	ExecutionTimeMs      float64  `protobuf:"fixed64,100,opt,name=execution_time_ms,json=executionTimeMs,proto3" json:"execution_time_ms,omitempty"`
 	Error                []string `protobuf:"bytes,101,rep,name=error,proto3" json:"error,omitempty"`

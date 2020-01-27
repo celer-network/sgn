@@ -136,6 +136,7 @@ func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, 
 	logEntry.Sender = msg.Sender.String()
 	logEntry.TriggerTxHash = msg.TriggerTxHash
 	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.PeerFrom = msg.PeerFrom
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
@@ -164,6 +165,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	logEntry.Sender = msg.Sender.String()
 	logEntry.GuardTxHash = msg.GuardTxHash
 	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.PeerFrom = msg.PeerFrom
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
