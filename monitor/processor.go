@@ -48,8 +48,6 @@ func (m *EthMonitor) processEventQueue() {
 			m.handleValidatorChange(e)
 		case *mainchain.GuardIntendWithdraw:
 			m.handleIntendWithdraw(e)
-		case *mainchain.CelerLedgerIntendSettle:
-			m.handleIntendSettle(e)
 		}
 	}
 }
@@ -70,6 +68,8 @@ func (m *EthMonitor) processPullerQueue() {
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
 			m.processInitializeCandidate(e)
+		case *mainchain.CelerLedgerIntendSettle:
+			m.handleIntendSettle(e)
 		}
 	}
 }
