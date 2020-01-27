@@ -95,7 +95,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		}
 
 		doGuard = true
-		msg := subscribe.NewMsgGuardProof(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
+		msg := subscribe.NewMsgIntendSettle(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
 	}
 
