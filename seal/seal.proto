@@ -25,7 +25,7 @@ message MsgLog {
     string delegator_addr = 10;
     uint64 slash_nonce = 11;
     uint64 block_num = 12;
-    string peer_from = 13;
+    string chan_peer_from = 13;
 
     string sender = 99;
     double execution_time_ms = 100;

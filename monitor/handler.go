@@ -81,8 +81,8 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		return
 	}
 
-	for i := 0; i < 2; i++ {
-		peerFrom := mainchain.Addr2Hex(addresses[i])
+	for _, addr := range addresses {
+		peerFrom := mainchain.Addr2Hex(addr)
 		request, err := m.getRequest(channelId, peerFrom)
 		if err != nil {
 			log.Errorln("Query request err", err)
@@ -90,7 +90,7 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 		}
 
 		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-			log.Infoln("Ignore the intendSettle event with a larger seqNum")
+			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
 			continue
 		}
 
