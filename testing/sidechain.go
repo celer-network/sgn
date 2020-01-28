@@ -16,6 +16,7 @@ type SGNParams struct {
 	MinStakingPool         *big.Int
 	SidechainGoLiveTimeout *big.Int
 	StartGateway           bool
+	MaxValidatorNum        *big.Int
 }
 
 func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase, sgnGasPrice string) *transactor.Transactor {

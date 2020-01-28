@@ -28,6 +28,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 			MinStakingPool:         big.NewInt(100),
 			SidechainGoLiveTimeout: big.NewInt(0),
 			CelrAddr:               tf.E2eProfile.CelrAddr,
+			MaxValidatorNum:        big.NewInt(11),
 		}
 	}
 	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
