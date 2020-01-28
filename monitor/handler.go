@@ -74,7 +74,6 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	channelId := intendSettle.ChannelId[:]
 	log.Infof("New intend settle %x", channelId)
-	doGuard := false
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
@@ -99,15 +98,8 @@ func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerInten
 			continue
 		}
 
-		doGuard = true
 		msg := subscribe.NewMsgIntendSettle(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
-	}
-
-	if doGuard {
-		log.Infof("Push intend settle %x to pusher queue", channelId)
-		event := NewEvent(IntendSettle, intendSettle.Raw)
-		m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
 	}
 }
 

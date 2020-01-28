@@ -42,8 +42,8 @@ type EthMonitor struct {
 	ms             *watcher.Service
 	guardContract  *watcher.BoundContract
 	ledgerContract *watcher.BoundContract
-	pubkey         string
 	transactors    []string
+	pubkey         string
 	isValidator    bool
 }
 
@@ -159,9 +159,10 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 
 func (m *EthMonitor) monitorIntendSettle() {
 	m.ms.Monitor(string(IntendSettle), m.ledgerContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
 		event := NewEvent(IntendSettle, eLog)
 		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
-		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
+		m.db.Set(GetPusherKey(eLog), event.MustMarshal())
 	})
 }
 

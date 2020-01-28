@@ -75,12 +75,6 @@ func (m *EthMonitor) processPullerQueue() {
 }
 
 func (m *EthMonitor) processPusherQueue() {
-	latestBlock, err := m.getLatestBlock()
-	if err != nil {
-		log.Errorln("Query latestBlock err", err)
-		return
-	}
-
 	iterator := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
 	defer iterator.Close()
 
@@ -91,7 +85,7 @@ func (m *EthMonitor) processPusherQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(e, latestBlock.Number)
+			m.processIntendSettle(e)
 		}
 	}
 }
@@ -120,7 +114,7 @@ func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.G
 	m.transactor.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
+func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	channelId := intendSettle.ChannelId[:]
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
@@ -147,7 +141,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 			continue
 		}
 
-		if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
+		if !m.isRequestGuard(request, intendSettle.Raw.BlockNumber) {
 			log.Infof("Not valid guard at current mainchain block")
 			event := NewEvent(IntendSettle, intendSettle.Raw)
 			m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
