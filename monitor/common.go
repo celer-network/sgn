@@ -36,12 +36,16 @@ func (m *EthMonitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 }
 
 // Is the current node the guard to submit state proof
-func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
+func (m *EthMonitor) isRequestGuard(request subscribe.Request, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
-	blockNumberDiff := latestBlockNum - eventBlockNumber
+	if len(requestGuards) == 0 {
+		return false
+	}
+
+	blockNumberDiff := m.ms.GetCurrentBlockNumber().Uint64() - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
-	log.Infoln("IsRequestGuard", latestBlockNum, eventBlockNumber, guardIndex, requestGuards)
+	log.Infoln("IsRequestGuard", m.ms.GetCurrentBlockNumber().Uint64(), eventBlockNumber, guardIndex, requestGuards)
 	// All other validators need to guard
 	if guardIndex >= uint64(len(requestGuards)) {
 		return true

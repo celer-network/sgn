@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
+	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -67,6 +68,38 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate) {
 		m.syncValidator(intendWithdraw.Candidate)
+	}
+}
+
+func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+	channelId := intendSettle.ChannelId[:]
+	log.Infof("New intend settle %x", channelId)
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
+	if err != nil {
+		log.Errorln("Query StateSeqNumMap err", err)
+		return
+	}
+
+	for _, addr := range addresses {
+		peerFrom := mainchain.Addr2Hex(addr)
+		request, err := m.getRequest(channelId, peerFrom)
+		if err != nil {
+			log.Errorln("Query request err", err)
+			continue
+		}
+
+		if request.TriggerTxHash != "" {
+			log.Infoln("The intendSettle event has been recorded on sgn")
+			continue
+		}
+
+		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
+			continue
+		}
+
+		msg := subscribe.NewMsgIntendSettle(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
+		m.transactor.AddTxMsg(msg)
 	}
 }
 
