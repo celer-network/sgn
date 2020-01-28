@@ -38,7 +38,7 @@ func (m *EthMonitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 // Is the current node the guard to submit state proof
 func (m *EthMonitor) isRequestGuard(request subscribe.Request, latestBlockNum uint64, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
-	if len(requestGuards) == 0 {
+	if len(requestGuards) == 0 || latestBlockNum < eventBlockNumber {
 		return false
 	}
 

@@ -100,19 +100,19 @@ func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 
 // MsgIntendSettle defines a Subscribe message
 type MsgIntendSettle struct {
-	ChannelId     []byte         `json:"channelId"`
-	PeerFrom      string         `json:"peerFrom"`
-	TriggerTxHash string         `json:"triggerTxHash"` // intendSettle tx with lower sequence number
-	Sender        sdk.AccAddress `json:"sender"`
+	ChannelId []byte         `json:"channelId"`
+	PeerFrom  string         `json:"peerFrom"`
+	TxHash    string         `json:"txHash"` // intendSettle tx with lower sequence number
+	Sender    sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgIntendSettle is a constructor function for MsgIntendSettle
-func NewMsgIntendSettle(channelId []byte, peerFrom string, triggerTxHash string, sender sdk.AccAddress) MsgIntendSettle {
+func NewMsgIntendSettle(channelId []byte, peerFrom string, txHash string, sender sdk.AccAddress) MsgIntendSettle {
 	return MsgIntendSettle{
-		ChannelId:     channelId,
-		PeerFrom:      mainchain.FormatAddrHex(peerFrom),
-		TriggerTxHash: triggerTxHash,
-		Sender:        sender,
+		ChannelId: channelId,
+		PeerFrom:  mainchain.FormatAddrHex(peerFrom),
+		TxHash:    txHash,
+		Sender:    sender,
 	}
 }
 
@@ -132,7 +132,7 @@ func (msg MsgIntendSettle) ValidateBasic() sdk.Error {
 		return sdk.ErrUnknownRequest("peerFrom cannot be empty")
 	}
 
-	if msg.TriggerTxHash == "" {
+	if msg.TxHash == "" {
 		return sdk.ErrUnknownRequest("obsolete tx hash cannot be empty")
 	}
 
@@ -155,19 +155,19 @@ func (msg MsgIntendSettle) GetSigners() []sdk.AccAddress {
 
 // MsgGuardProof defines a Subscribe message
 type MsgGuardProof struct {
-	ChannelId   []byte         `json:"channelId"`
-	PeerFrom    string         `json:"peerFrom"`
-	GuardTxHash string         `json:"guardTxHash"` // intendSettle tx to guard user's state proof
-	Sender      sdk.AccAddress `json:"sender"`
+	ChannelId []byte         `json:"channelId"`
+	PeerFrom  string         `json:"peerFrom"`
+	TxHash    string         `json:"txHash"` // intendSettle tx to guard user's state proof
+	Sender    sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgGuardProof is a constructor function for MsgGuardProof
-func NewMsgGuardProof(channelId []byte, peerFrom string, guardTxHash string, sender sdk.AccAddress) MsgGuardProof {
+func NewMsgGuardProof(channelId []byte, peerFrom string, txHash string, sender sdk.AccAddress) MsgGuardProof {
 	return MsgGuardProof{
-		ChannelId:   channelId,
-		PeerFrom:    mainchain.FormatAddrHex(peerFrom),
-		GuardTxHash: guardTxHash,
-		Sender:      sender,
+		ChannelId: channelId,
+		PeerFrom:  mainchain.FormatAddrHex(peerFrom),
+		TxHash:    txHash,
+		Sender:    sender,
 	}
 }
 
@@ -187,7 +187,7 @@ func (msg MsgGuardProof) ValidateBasic() sdk.Error {
 		return sdk.ErrUnknownRequest("peerFrom cannot be empty")
 	}
 
-	if msg.GuardTxHash == "" {
+	if msg.TxHash == "" {
 		return sdk.ErrUnknownRequest("guard tx hash cannot be empty")
 	}
 
