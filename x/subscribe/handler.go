@@ -134,7 +134,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.TriggerTxHash = msg.TriggerTxHash
+	logEntry.TriggerTxHash = msg.TxHash
 	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
 	logEntry.ChanPeerFrom = msg.PeerFrom
 
@@ -145,12 +145,12 @@ func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, 
 	}
 
 	_, err := validateIntendSettle(
-		"Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
+		"Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return res, err
 	}
 
-	request.TriggerTxHash = msg.TriggerTxHash
+	request.TriggerTxHash = msg.TxHash
 	request.RequestGuards = getRequestGuards(ctx, keeper)
 	keeper.SetRequest(ctx, request)
 
@@ -163,7 +163,7 @@ func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, 
 func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.GuardTxHash = msg.GuardTxHash
+	logEntry.GuardTxHash = msg.TxHash
 	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
 	logEntry.ChanPeerFrom = msg.PeerFrom
 
@@ -184,7 +184,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	}
 
 	guardLog, err := validateIntendSettle(
-		"Guard", keeper.ethClient, mainchain.Hex2Hash(msg.GuardTxHash), mainchain.Bytes2Cid(msg.ChannelId))
+		"Guard", keeper.ethClient, mainchain.Hex2Hash(msg.TxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return res, err
 	}
@@ -209,7 +209,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		rewardValidator = request.RequestGuards[guardIndex]
 	} else {
 		// get mainchain tx sender in the last stage for rewarding
-		guardEthAddrStr, err := mainchain.GetTxSender(keeper.ethClient.Client, msg.GuardTxHash)
+		guardEthAddrStr, err := mainchain.GetTxSender(keeper.ethClient.Client, msg.TxHash)
 		if err != nil {
 			return res, fmt.Errorf("GetTxSender err: %s", err)
 		}
@@ -224,7 +224,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		guardIndex = len(requestGuards)
 	}
 
-	request.GuardTxHash = msg.GuardTxHash
+	request.GuardTxHash = msg.TxHash
 	keeper.SetRequest(ctx, request)
 
 	// punish corresponding guards and reward corresponding validator
