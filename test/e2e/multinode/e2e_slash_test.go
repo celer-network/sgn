@@ -21,6 +21,7 @@ func setUpSlash() {
 		MinStakingPool:         big.NewInt(0),
 		SidechainGoLiveTimeout: big.NewInt(0),
 		CelrAddr:               tf.E2eProfile.CelrAddr,
+		MaxValidatorNum:        big.NewInt(11),
 	}
 	setupNewSGNEnv(p)
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
