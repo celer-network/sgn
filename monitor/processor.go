@@ -16,40 +16,10 @@ import (
 )
 
 func (m *EthMonitor) processQueue() {
-	m.processPullerQueue()
 	m.processEventQueue()
+	m.processPullerQueue()
 	m.processPusherQueue()
 	m.processPenaltyQueue()
-}
-
-func (m *EthMonitor) processEventQueue() {
-	secureBlockNum, err := m.getSecureBlockNum()
-	if err != nil {
-		log.Errorln("Query secureBlockNum err", err)
-		return
-	}
-
-	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		event := NewEventFromBytes(iterator.Value())
-		if secureBlockNum < event.Log.BlockNumber {
-			continue
-		}
-
-		log.Infoln("Process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
-		m.db.Delete(iterator.Key())
-
-		switch e := event.ParseEvent(m.ethClient).(type) {
-		case *mainchain.GuardDelegate:
-			m.handleDelegate(e)
-		case *mainchain.GuardValidatorChange:
-			m.handleValidatorChange(e)
-		case *mainchain.GuardIntendWithdraw:
-			m.handleIntendWithdraw(e)
-		}
-	}
 }
 
 func (m *EthMonitor) processPullerQueue() {

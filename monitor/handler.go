@@ -9,9 +9,40 @@ import (
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 )
+
+func (m *EthMonitor) processEventQueue() {
+	secureBlockNum, err := m.getSecureBlockNum()
+	if err != nil {
+		log.Errorln("Query secureBlockNum err", err)
+		return
+	}
+
+	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
+		}
+
+		log.Infoln("Process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.GuardDelegate:
+			m.handleDelegate(e)
+		case *mainchain.GuardValidatorChange:
+			m.handleValidatorChange(e)
+		case *mainchain.GuardIntendWithdraw:
+			m.handleIntendWithdraw(e)
+		}
+	}
+}
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	log.Infoln("Catch new mainchain block", header.Number)
