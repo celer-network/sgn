@@ -67,9 +67,9 @@ func (m *EthMonitor) processPullerQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
-			m.processInitializeCandidate(e)
+			m.syncInitializeCandidate(e)
 		case *mainchain.CelerLedgerIntendSettle:
-			m.handleIntendSettle(e)
+			m.syncIntendSettle(e)
 		}
 	}
 }
@@ -85,23 +85,27 @@ func (m *EthMonitor) processPusherQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.CelerLedgerIntendSettle:
-			m.processIntendSettle(e)
+			m.guardIntendSettle(e)
 		}
 	}
 }
 
 func (m *EthMonitor) processPenaltyQueue() {
+	if !m.isPusher() {
+		return
+	}
+
 	iterator := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewPenaltyEventFromBytes(iterator.Value())
 		m.db.Delete(iterator.Key())
-		m.processPenalty(event)
+		m.submitPenalty(event)
 	}
 }
 
-func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
+func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
 	_, err := validator.CLIQueryCandidate(m.transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
 	if err == nil {
 		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
@@ -114,45 +118,37 @@ func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.G
 	m.transactor.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
-	channelId := intendSettle.ChannelId[:]
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
-	if err != nil {
-		log.Errorln("Query StateSeqNumMap err", err)
-		return
-	}
-
-	for _, addr := range addresses {
-		peerFrom := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(channelId, peerFrom)
-		if err != nil {
-			log.Errorln("Query request err", err)
-			continue
+func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+	m.processIntendSettle(intendSettle, func(request subscribe.Request) {
+		if request.TriggerTxHash != "" {
+			log.Infoln("The intendSettle event has been synced on sgn")
+			return
 		}
 
+		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
+		m.transactor.AddTxMsg(msg)
+	})
+}
+
+func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+	m.processIntendSettle(intendSettle, func(request subscribe.Request) {
 		if request.GuardTxHash != "" {
 			log.Errorln("Request has been fulfilled")
-			continue
-		}
-
-		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-			log.Infoln("Ignore the intendSettle event with a larger seqNum")
-			continue
+			return
 		}
 
 		if !m.isRequestGuard(request, intendSettle.Raw.BlockNumber) {
 			log.Infof("Not valid guard at current mainchain block")
 			event := NewEvent(IntendSettle, intendSettle.Raw)
 			m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
-			continue
+			return
 		}
 
 		var signedSimplexState chain.SignedSimplexState
-		err = protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+		err := protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 		if err != nil {
 			log.Errorln("Unmarshal SignedSimplexState error:", err)
-			continue
+			return
 		}
 
 		signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
@@ -160,27 +156,26 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		})
 		if err != nil {
 			log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
-			continue
+			return
 		}
 
 		// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
 		tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
 		if err != nil {
 			log.Errorln("intendSettle err", err)
-			continue
+			return
 		}
 
-		log.Infof("IntendSettle tx hash %x", tx.Hash())
 		// TODO: 1) bockDelay, 2) may need a better way than wait mined,
 		mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		msg := subscribe.NewMsgGuardProof(channelId, peerFrom, tx.Hash().Hex(), m.transactor.Key.GetAddress())
+		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
-	}
+	})
 }
 
-func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
+func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.nonce)
 
 	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.nonce)))
@@ -208,4 +203,30 @@ func (m *EthMonitor) processPenalty(penaltyEvent PenaltyEvent) {
 	}
 
 	log.Infoln("Punish tx detail", tx)
+}
+
+func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, cb func(request subscribe.Request)) {
+	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
+	channelId := intendSettle.ChannelId[:]
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
+	if err != nil {
+		log.Errorln("Query StateSeqNumMap err", err)
+		return
+	}
+
+	for _, addr := range addresses {
+		peerFrom := mainchain.Addr2Hex(addr)
+		request, err := m.getRequest(channelId, peerFrom)
+		if err != nil {
+			log.Errorln("Query request err", err)
+			continue
+		}
+
+		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
+			continue
+		}
+
+		cb(request)
+	}
 }
