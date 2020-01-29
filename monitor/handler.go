@@ -63,6 +63,11 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
+	if delegate.Candidate != m.ethClient.Address {
+		log.Infof("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
+		return
+	}
+
 	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
 		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 	m.syncDelegator(delegate.Candidate, delegate.Delegator)
