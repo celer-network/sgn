@@ -131,42 +131,42 @@ func (m *EthMonitor) monitorBlockHead() {
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
-	m.ms.Monitor(string(InitializeCandidate), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event InitializeCandidate, tx hash: %v", eLog.TxHash)
+	m.ms.Monitor(string(InitializeCandidate), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event InitializeCandidate, tx hash: %x", eLog.TxHash)
 		event := NewEvent(InitializeCandidate, eLog)
 		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 	})
 }
 
 func (m *EthMonitor) monitorDelegate() {
-	m.ms.Monitor(string(Delegate), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event Delegate, tx hash: %v", eLog.TxHash)
+	m.ms.Monitor(string(Delegate), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
 		event := NewEvent(Delegate, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 	})
 }
 
 func (m *EthMonitor) monitorValidatorChange() {
-	m.ms.Monitor(string(ValidatorChange), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event ValidatorChange, tx hash: %v", eLog.TxHash)
+	m.ms.Monitor(string(ValidatorChange), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
 		event := NewEvent(ValidatorChange, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 	})
 }
 
 func (m *EthMonitor) monitorIntendWithdraw() {
-	m.ms.Monitor(string(IntendWithdraw), m.guardContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event IntendWithdraw, tx hash: %v", eLog.TxHash)
+	m.ms.Monitor(string(IntendWithdraw), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event IntendWithdraw, tx hash: %x", eLog.TxHash)
 		event := NewEvent(IntendWithdraw, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 	})
 }
 
 func (m *EthMonitor) monitorIntendSettle() {
-	m.ms.Monitor(string(IntendSettle), m.ledgerContract, nil, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	m.ms.Monitor(string(IntendSettle), m.ledgerContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		event := NewEvent(IntendSettle, eLog)
 		m.db.Set(GetPusherKey(eLog), event.MustMarshal())
-		log.Infof("Catch event IntendSettle, tx hash: %v", eLog.TxHash)
+		log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
 	})
 }
 
