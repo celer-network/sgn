@@ -14,9 +14,9 @@
 #### Steps
 
 1. Start Docker daemon
-2. cd to repo's root folder and run
+2. cd to repo's root folder and run the following command (`sudo` may be required)
 
-   `go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e/multinode`
+   `go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinode`
 
 #### Test Logs
 
