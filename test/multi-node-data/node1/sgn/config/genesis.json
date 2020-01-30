@@ -20,7 +20,7 @@
     "global": {
       "params": {
         "epochLength": "10",
-        "blkTimeDiffLower": "2",
+        "blkTimeDiffLower": "1",
         "blkTimeDiffUpper": "8",
         "confirmationCount": "2"
       }

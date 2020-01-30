@@ -52,7 +52,13 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 		return
 	}
 
-	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+1) * time.Second)
+	params, err := m.getGlobalParams()
+	if err != nil {
+		log.Errorln("Query global params", err)
+		return
+	}
+
+	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
 	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
