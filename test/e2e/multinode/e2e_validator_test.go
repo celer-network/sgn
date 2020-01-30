@@ -35,7 +35,7 @@ func setUpValidator(maxValidatorNum *big.Int) {
 
 func TestE2EValidator(t *testing.T) {
 	t.Run("e2e-validator", func(t *testing.T) {
-		t.Run("validatorTest", validatorTest)
+		// t.Run("validatorTest", validatorTest)
 		t.Run("replaceValidatorTest", replaceValidatorTest)
 	})
 }
@@ -202,13 +202,19 @@ func replaceValidatorTest(t *testing.T) {
 	log.Info("Query sgn about the validators to check if it has correct stakes...")
 	validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
-
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
-	validator, err := sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
+
+	validator, err := sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[1])
 	tf.ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 1000000000000000000")
+	assert.Equal(t, sdk.NewIntFromBigInt(amts[1]), validator.Tokens, "validator token should be 1000000000000000000")
+	assert.Equal(t, sdk.Unbonding, validator.Status, "validator should be unbonding")
+
+	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
+	tf.ChkTestErr(t, err, "failed to queryValidator")
+	log.Infoln("Query sgn about the validator:\n", validator)
+	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 2000000000000000000")
 	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
 }
 
