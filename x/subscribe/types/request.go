@@ -19,14 +19,13 @@ type Request struct {
 	GuardTxHash             string           `json:"guardTxHash"`
 }
 
-func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64, requestGuards []sdk.AccAddress) Request {
+func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64) Request {
 	return Request{
 		ChannelId:      channelId,
 		SeqNum:         seqNum,
 		PeerAddresses:  peerAddresses,
 		PeerFromIndex:  peerFromIndex,
 		DisputeTimeout: disputeTimeout,
-		RequestGuards:  requestGuards,
 	}
 }
 

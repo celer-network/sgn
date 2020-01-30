@@ -1,10 +1,8 @@
 package subscribe
 
 import (
-	"context"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -12,9 +10,7 @@ import (
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
@@ -33,6 +29,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			res, err = handleMsgSubscribe(ctx, keeper, msg, logEntry)
 		case MsgRequestGuard:
 			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
+		case MsgIntendSettle:
+			res, err = handleMsgIntendSettle(ctx, keeper, msg, logEntry)
 		case MsgGuardProof:
 			res, err = handleMsgGuardProof(ctx, keeper, msg, logEntry)
 		default:
@@ -133,15 +131,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	return res, nil
 }
 
-// Handle a message to submit guard proof
-// Currently only supports that the validator sends out a tx purely for one intendSettle.
-// (not call it via a contract or put multiple calls in one tx)
-func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.TriggerTxHash = msg.TriggerTxHash
-	logEntry.GuardTxHash = msg.GuardTxHash
+	logEntry.TriggerTxHash = msg.TxHash
 	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.ChanPeerFrom = msg.PeerFrom
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
@@ -149,14 +144,47 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		return res, fmt.Errorf("Cannot find request for channel ID")
 	}
 
+	_, err := validateIntendSettle(
+		"Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TxHash), mainchain.Bytes2Cid(msg.ChannelId))
+	if err != nil {
+		return res, err
+	}
+
+	request.TriggerTxHash = msg.TxHash
+	request.RequestGuards = getRequestGuards(ctx, keeper)
+	keeper.SetRequest(ctx, request)
+
+	return res, nil
+}
+
+// Handle a message to submit guard proof
+// Currently only supports that the validator sends out a tx purely for one intendSettle.
+// (not call it via a contract or put multiple calls in one tx)
+func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.GuardTxHash = msg.TxHash
+	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.ChanPeerFrom = msg.PeerFrom
+
+	res := sdk.Result{}
+	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
+	if !found {
+		return res, fmt.Errorf("Cannot find request for channel ID")
+	}
+
+	if request.TriggerTxHash == "" {
+		return res, fmt.Errorf("IntendSettle Trigger event has not been submitted")
+	}
+
 	triggerLog, err := validateIntendSettle(
-		"Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
+		"Trigger", keeper.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return res, err
 	}
 
 	guardLog, err := validateIntendSettle(
-		"Guard", keeper.ethClient, mainchain.Hex2Hash(msg.GuardTxHash), mainchain.Bytes2Cid(msg.ChannelId))
+		"Guard", keeper.ethClient, mainchain.Hex2Hash(msg.TxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return res, err
 	}
@@ -174,13 +202,14 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+	log.Infoln("guard", guardIndex, guardLog.BlockNumber, triggerLog.BlockNumber)
 
 	var rewardValidator sdk.AccAddress
 	if guardIndex < len(requestGuards) {
 		rewardValidator = request.RequestGuards[guardIndex]
 	} else {
 		// get mainchain tx sender in the last stage for rewarding
-		guardEthAddrStr, err := mainchain.GetTxSender(keeper.ethClient.Client, msg.GuardTxHash)
+		guardEthAddrStr, err := mainchain.GetTxSender(keeper.ethClient.Client, msg.TxHash)
 		if err != nil {
 			return res, fmt.Errorf("GetTxSender err: %s", err)
 		}
@@ -195,9 +224,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		guardIndex = len(requestGuards)
 	}
 
-	// set tx hashes
-	request.TriggerTxHash = msg.TriggerTxHash
-	request.GuardTxHash = msg.GuardTxHash
+	request.GuardTxHash = msg.TxHash
 	keeper.SetRequest(ctx, request)
 
 	// punish corresponding guards and reward corresponding validator
@@ -208,47 +235,4 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}, nil
-}
-
-func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
-	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
-	if err != nil {
-		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
-	}
-	if receipt.Status != mainchain.TxSuccess {
-		return nil, fmt.Errorf(txType+"Tx failed. Error: %w", err)
-	}
-	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle event is the last one
-
-	// check ledger contract
-	if log.Address != ethClient.LedgerAddress {
-		return nil, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
-	}
-	// check event type
-	if log.Topics[0] != intendSettleEventSig {
-		return nil, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
-	}
-	// check channel ID
-	if log.Topics[1] != cid {
-		return nil, fmt.Errorf(txType+"Tx's channel ID is wrong. Error: %w", err)
-	}
-
-	return log, nil
-}
-
-func validateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
-	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
-	if err != nil {
-		return fmt.Errorf("Failed to parse CelerLedgerABI: %w", err)
-	}
-	var intendSettle mainchain.CelerLedgerIntendSettle
-	err = ledgerABI.Unpack(&intendSettle, "IntendSettle", logDate)
-	if err != nil {
-		return fmt.Errorf("Failed to unpack IntendSettle event: %w", err)
-	}
-	if intendSettle.SeqNums[seqNumIndex].Uint64() != expectedNum {
-		return fmt.Errorf("Unexpected seqNum of IntendSettle event. SeqNumIndex: %d, expected: %d, actual: %d", seqNumIndex, expectedNum, intendSettle.SeqNums[seqNumIndex].Uint64())
-	}
-
-	return nil
 }

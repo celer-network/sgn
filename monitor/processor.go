@@ -68,17 +68,13 @@ func (m *EthMonitor) processPullerQueue() {
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.GuardInitializeCandidate:
 			m.processInitializeCandidate(e)
+		case *mainchain.CelerLedgerIntendSettle:
+			m.handleIntendSettle(e)
 		}
 	}
 }
 
 func (m *EthMonitor) processPusherQueue() {
-	latestBlock, err := m.getLatestBlock()
-	if err != nil {
-		log.Errorln("Query latestBlock err", err)
-		return
-	}
-
 	iterator := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
 	defer iterator.Close()
 
@@ -89,7 +85,7 @@ func (m *EthMonitor) processPusherQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.CelerLedgerIntendSettle:
-			go m.processIntendSettle(e, latestBlock.Number)
+			m.processIntendSettle(e)
 		}
 	}
 }
@@ -118,7 +114,7 @@ func (m *EthMonitor) processInitializeCandidate(initializeCandidate *mainchain.G
 	m.transactor.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, latestBlockNum uint64) {
+func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	channelId := intendSettle.ChannelId[:]
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
@@ -127,36 +123,36 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		return
 	}
 
-	for i := 0; i < 2; i++ {
-		peerFrom := mainchain.Addr2Hex(addresses[i])
+	for _, addr := range addresses {
+		peerFrom := mainchain.Addr2Hex(addr)
 		request, err := m.getRequest(channelId, peerFrom)
 		if err != nil {
 			log.Errorln("Query request err", err)
-			return
+			continue
 		}
 
 		if request.GuardTxHash != "" {
 			log.Errorln("Request has been fulfilled")
-			return
+			continue
 		}
 
 		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
 			log.Infoln("Ignore the intendSettle event with a larger seqNum")
-			return
+			continue
 		}
 
-		if !m.isRequestGuard(request, latestBlockNum, intendSettle.Raw.BlockNumber) {
+		if !m.isRequestGuard(request, intendSettle.Raw.BlockNumber) {
 			log.Infof("Not valid guard at current mainchain block")
 			event := NewEvent(IntendSettle, intendSettle.Raw)
 			m.db.Set(GetPusherKey(intendSettle.Raw), event.MustMarshal())
-			return
+			continue
 		}
 
 		var signedSimplexState chain.SignedSimplexState
 		err = protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 		if err != nil {
 			log.Errorln("Unmarshal SignedSimplexState error:", err)
-			return
+			continue
 		}
 
 		signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
@@ -164,14 +160,14 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		})
 		if err != nil {
 			log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
-			return
+			continue
 		}
 
 		// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
 		tx, err := m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
 		if err != nil {
 			log.Errorln("intendSettle err", err)
-			return
+			continue
 		}
 
 		log.Infof("IntendSettle tx hash %x", tx.Hash())
@@ -179,7 +175,7 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		msg := subscribe.NewMsgGuardProof(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
+		msg := subscribe.NewMsgGuardProof(channelId, peerFrom, tx.Hash().Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
 	}
 }
