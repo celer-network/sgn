@@ -1,9 +1,12 @@
 package osp
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"math/big"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -16,6 +19,7 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -32,48 +36,56 @@ type RestServer struct {
 	transactor *transactor.Transactor
 	osp        *mainchain.EthClient
 	user       *mainchain.EthClient
+	cdc        *codec.Codec
 	channelID  mainchain.CidType
+	gateway    string
 }
 
 const (
-	userFlag = "user"
-	ospFlag  = "osp"
+	userFlag    = "user"
+	ospFlag     = "osp"
+	gatewayFlag = "gateway"
 )
 
 // NewRestServer creates a new rest server instance
-func NewRestServer() (*RestServer, error) {
+func NewRestServer() (rs *RestServer, err error) {
 	log.Infof("New rest server")
 	r := mux.NewRouter()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 	viper.Set(sdkFlags.FlagTrustNode, true)
 	cdc := app.MakeCodec()
-	transactor, err := transactor.NewTransactor(
-		viper.GetString(sdkFlags.FlagHome),
-		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[0],
-		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
-		cdc,
-	)
-	if err != nil {
-		return nil, err
+	gateway := viper.GetString(gatewayFlag)
+	var ts *transactor.Transactor
+
+	if gateway == "" {
+		ts, err = transactor.NewTransactor(
+			viper.GetString(sdkFlags.FlagHome),
+			viper.GetString(common.FlagSgnChainID),
+			viper.GetString(common.FlagSgnNodeURI),
+			viper.GetStringSlice(common.FlagSgnTransactors)[0],
+			viper.GetString(common.FlagSgnPassphrase),
+			viper.GetString(common.FlagSgnGasPrice),
+			cdc,
+		)
+		if err != nil {
+			return
+		}
 	}
 
 	user, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(userFlag), "")
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	osp, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(ospFlag), "")
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	tf.DefaultTestEthClient = user
 	channelID, err := tf.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	log.Infof("Subscribe to sgn")
@@ -81,20 +93,36 @@ func NewRestServer() (*RestServer, error) {
 	amt.SetString("1"+strings.Repeat("0", 19), 10)
 	tx, err := user.Guard.Subscribe(user.Auth, amt)
 	if err != nil {
-		return nil, err
+		return
 	}
 	tf.WaitMinedWithChk(context.Background(), user.Client, tx, tf.BlockDelay, "Subscribe on Guard contract")
 
-	msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), transactor.Key.GetAddress())
-	transactor.AddTxMsg(msgSubscribe)
+	if gateway == "" {
+		msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), ts.Key.GetAddress())
+		ts.AddTxMsg(msgSubscribe)
+	} else {
+		reqBody, err := json.Marshal(map[string]string{
+			"ethAddr": user.Address.Hex(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		_, err = http.Post(rs.gateway+"/subscribe/subscribe",
+			"application/json", bytes.NewBuffer(reqBody))
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &RestServer{
 		Mux:        r,
 		logger:     logger,
-		transactor: transactor,
+		transactor: ts,
+		cdc:        cdc,
 		osp:        osp,
 		user:       user,
 		channelID:  channelID,
+		gateway:    gateway,
 	}, nil
 }
 
@@ -154,5 +182,6 @@ func ServeCommand() *cobra.Command {
 
 	cmd.Flags().String(userFlag, "./test/keys/client0.json", "user keystore path")
 	cmd.Flags().String(ospFlag, "./test/keys/client1.json", "osp keystore path")
+	cmd.Flags().String(gatewayFlag, "", "gateway url")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
