@@ -89,7 +89,8 @@ func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.Guar
 }
 
 func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	m.processIntendSettle(intendSettle, func(request subscribe.Request) {
+	requests := m.processIntendSettle(intendSettle)
+	for _, request := range requests {
 		if request.TriggerTxHash != "" {
 			log.Infoln("The intendSettle event has been synced on sgn")
 			return
@@ -97,11 +98,12 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 
 		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
-	})
+	}
 }
 
 func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	m.processIntendSettle(intendSettle, func(request subscribe.Request) {
+	requests := m.processIntendSettle(intendSettle)
+	for _, request := range requests {
 		if request.GuardTxHash != "" {
 			log.Errorln("Request has been fulfilled")
 			return
@@ -142,7 +144,7 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
 		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
 		m.transactor.AddTxMsg(msg)
-	})
+	}
 }
 
 func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
@@ -175,7 +177,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Punish tx detail", tx)
 }
 
-func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, cb func(request subscribe.Request)) {
+func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (requests []subscribe.Request) {
 	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	channelId := intendSettle.ChannelId[:]
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
@@ -197,6 +199,8 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 			continue
 		}
 
-		cb(request)
+		requests = append(requests, request)
 	}
+
+	return requests
 }
