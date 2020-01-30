@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
@@ -12,6 +13,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/spf13/viper"
 )
 
 func (m *EthMonitor) processEventQueue() {
@@ -50,13 +52,7 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 		return
 	}
 
-	params, err := m.getGlobalParams()
-	if err != nil {
-		log.Errorln("Query global params", err)
-		return
-	}
-
-	time.Sleep(time.Duration(params.BlkTimeDiffLower+1) * time.Second)
+	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+1) * time.Second)
 	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
 	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
