@@ -8,11 +8,41 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 )
+
+func (m *EthMonitor) processEventQueue() {
+	secureBlockNum, err := m.getSecureBlockNum()
+	if err != nil {
+		log.Errorln("Query secureBlockNum err", err)
+		return
+	}
+
+	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
+		}
+
+		log.Infoln("Process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.GuardDelegate:
+			m.handleDelegate(e)
+		case *mainchain.GuardValidatorChange:
+			m.handleValidatorChange(e)
+		case *mainchain.GuardIntendWithdraw:
+			m.handleIntendWithdraw(e)
+		}
+	}
+}
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	log.Infoln("Catch new mainchain block", header.Number)
@@ -33,6 +63,11 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
+	if delegate.Candidate != m.ethClient.Address {
+		log.Infof("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
+		return
+	}
+
 	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
 		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 	m.syncDelegator(delegate.Candidate, delegate.Delegator)
@@ -68,38 +103,6 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate) {
 		m.syncValidator(intendWithdraw.Candidate)
-	}
-}
-
-func (m *EthMonitor) handleIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
-	channelId := intendSettle.ChannelId[:]
-	log.Infof("New intend settle %x", channelId)
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
-	if err != nil {
-		log.Errorln("Query StateSeqNumMap err", err)
-		return
-	}
-
-	for _, addr := range addresses {
-		peerFrom := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(channelId, peerFrom)
-		if err != nil {
-			log.Errorln("Query request err", err)
-			continue
-		}
-
-		if request.TriggerTxHash != "" {
-			log.Infoln("The intendSettle event has been recorded on sgn")
-			continue
-		}
-
-		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
-			continue
-		}
-
-		msg := subscribe.NewMsgIntendSettle(channelId, peerFrom, intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
-		m.transactor.AddTxMsg(msg)
 	}
 }
 
