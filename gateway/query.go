@@ -16,37 +16,37 @@ func (rs *RestServer) registerQueryRoutes() {
 	rs.Mux.HandleFunc(
 		"/global/latestBlock",
 		latestBlockHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/params",
 		subscribeParamsHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/subscription/{ethAddr}",
 		subscriptionHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/request/{channelId}/{peerFrom}",
 		guardRequestHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 
 	rs.Mux.HandleFunc(
 		"/validator/candidate/{ethAddr}",
 		candidateHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 
 	rs.Mux.HandleFunc(
 		"/validator/reward/{ethAddr}",
 		rewardHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 
 	rs.Mux.HandleFunc(
 		"/validator/rewardRequest/{ethAddr}",
 		rewardRequestHandlerFn(rs),
-	).Methods("GET")
+	).Methods(http.MethodGet)
 }
 
 // http request handler to query latest block

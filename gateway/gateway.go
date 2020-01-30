@@ -57,6 +57,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 
 	r := mux.NewRouter()
+	r.Use(mux.CORSMethodMiddleware(r))
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 
 	return &RestServer{
