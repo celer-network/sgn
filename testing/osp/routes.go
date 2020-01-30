@@ -15,12 +15,12 @@ func (rs *RestServer) registerRoutes() {
 	rs.Mux.HandleFunc(
 		"/requestGuard",
 		postRequestGuardHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost)
 
 	rs.Mux.HandleFunc(
 		"/intendSettle",
 		postIntendSettleHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost)
 }
 
 type (
