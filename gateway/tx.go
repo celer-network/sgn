@@ -16,27 +16,27 @@ func (rs *RestServer) registerTxRoutes() {
 	rs.Mux.HandleFunc(
 		"/subscribe/subscribe",
 		postSubscribeHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/request",
 		postRequestGuardHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/initializeCandidate",
 		postInitializeCandidateHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/syncDelegator",
 		postSyncDelegatorHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/withdrawReward",
 		postWithdrawRewardHandlerFn(rs),
-	).Methods("POST")
+	).Methods(http.MethodPost, http.MethodOptions)
 }
 
 type (
@@ -118,6 +118,11 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 
 func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		var req WithdrawRewardRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
