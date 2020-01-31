@@ -17,7 +17,8 @@ var (
 
 // get event key from log
 func GetEventKey(log types.Log) []byte {
-	return append(EventKeyPrefix, log.TxHash.Bytes()...)
+	logIndexBytes := sdk.Uint64ToBigEndian(uint64(log.Index))
+	return append(EventKeyPrefix, append(log.TxHash.Bytes(), logIndexBytes...)...)
 }
 
 // get puller key from log
