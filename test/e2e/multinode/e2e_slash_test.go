@@ -53,7 +53,7 @@ func slashTest(t *testing.T) {
 	)
 
 	shutdownNode(2)
-	tf.SleepWithLog(60, "wait for slash")
+	tf.SleepWithLog(30, "wait for slash")
 
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
