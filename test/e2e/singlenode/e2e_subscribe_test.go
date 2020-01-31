@@ -30,6 +30,7 @@ func setUpSubscribe() []tf.Killable {
 		MinStakingPool:         big.NewInt(0),
 		SidechainGoLiveTimeout: big.NewInt(0),
 		CelrAddr:               tf.E2eProfile.CelrAddr,
+		MaxValidatorNum:        big.NewInt(11),
 	}
 	res := setupNewSGNEnv(p, "subscribe")
 	tf.SleepWithLog(10, "sgn being ready")

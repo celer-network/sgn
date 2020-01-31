@@ -49,7 +49,7 @@ func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
 
 func DeployGuardContract(sgnParams *SGNParams) mainchain.Addr {
 	ctx := context.Background()
-	guardAddr, tx, _, err := mainchain.DeployGuard(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout)
+	guardAddr, tx, _, err := mainchain.DeployGuard(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout, sgnParams.MaxValidatorNum)
 	ChkErr(err, "failed to deploy Guard contract")
 	WaitMinedWithChk(ctx, DefaultTestEthClient.Client, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
@@ -95,6 +95,7 @@ func DeployCommand() *cobra.Command {
 				MinStakingPool:         big.NewInt(100),
 				SidechainGoLiveTimeout: big.NewInt(0),
 				CelrAddr:               erc20Addr,
+				MaxValidatorNum:        big.NewInt(10),
 			}
 			guardAddr := DeployGuardContract(sgnParams)
 			viper.Set(common.FlagEthGuardAddress, guardAddr)

@@ -9,9 +9,40 @@ import (
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 )
+
+func (m *EthMonitor) processEventQueue() {
+	secureBlockNum, err := m.getSecureBlockNum()
+	if err != nil {
+		log.Errorln("Query secureBlockNum err", err)
+		return
+	}
+
+	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		event := NewEventFromBytes(iterator.Value())
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
+		}
+
+		log.Infoln("Process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
+		m.db.Delete(iterator.Key())
+
+		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.GuardDelegate:
+			m.handleDelegate(e)
+		case *mainchain.GuardValidatorChange:
+			m.handleValidatorChange(e)
+		case *mainchain.GuardIntendWithdraw:
+			m.handleIntendWithdraw(e)
+		}
+	}
+}
 
 func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	log.Infoln("Catch new mainchain block", header.Number)
@@ -31,13 +62,12 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 	m.transactor.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) handleInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	log.Infof("Handle InitializeCandidate event for candidate %x", initializeCandidate.Candidate)
-	event := NewEvent(InitializeCandidate, initializeCandidate.Raw)
-	m.db.Set(GetPullerKey(initializeCandidate.Raw), event.MustMarshal())
-}
-
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
+	if delegate.Candidate != m.ethClient.Address {
+		log.Infof("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
+		return
+	}
+
 	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
 		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 	m.syncDelegator(delegate.Candidate, delegate.Delegator)
@@ -155,6 +185,8 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
+
 	msg := validator.NewMsgSyncDelegator(
 		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)

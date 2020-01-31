@@ -6,6 +6,10 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
+const (
+	TypeMsgSyncBlock = "sync_block"
+)
+
 // MsgSyncBlock defines a SyncBlock message
 type MsgSyncBlock struct {
 	BlockNumber uint64         `json:"blockNumber"`
@@ -24,7 +28,7 @@ func NewMsgSyncBlock(blockNumber uint64, sender sdk.AccAddress) MsgSyncBlock {
 func (msg MsgSyncBlock) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgSyncBlock) Type() string { return "sync_block" }
+func (msg MsgSyncBlock) Type() string { return TypeMsgSyncBlock }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgSyncBlock) ValidateBasic() sdk.Error {

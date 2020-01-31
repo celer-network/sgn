@@ -27,6 +27,7 @@ func setUpValidator() {
 		MinStakingPool:         big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
 		CelrAddr:               tf.E2eProfile.CelrAddr,
+		MaxValidatorNum:        big.NewInt(11),
 	}
 	setupNewSGNEnv(p)
 	tf.SleepWithLog(10, "sgn being ready")

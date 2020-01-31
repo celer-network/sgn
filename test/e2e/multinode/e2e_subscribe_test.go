@@ -29,6 +29,7 @@ func setUpSubscribe() {
 		MinStakingPool:         big.NewInt(0),
 		SidechainGoLiveTimeout: big.NewInt(0),
 		CelrAddr:               tf.E2eProfile.CelrAddr,
+		MaxValidatorNum:        big.NewInt(11),
 	}
 	setupNewSGNEnv(p)
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
@@ -76,7 +77,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay+2, "Subscribe on Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, 2*tf.BlockDelay, "Subscribe on Guard contract")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
@@ -99,7 +100,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Prepare for requesting guard...")
 	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
-	tf.SleepWithLog(20, "wait channelId to be in secure state")
+	tf.SleepWithLog(30, "wait channelId to be in secure state")
 	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
@@ -128,7 +129,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay+tf.DisputeTimeout/3, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	tf.SleepWithLog(15, "sgn submitting state proof")
+	tf.SleepWithLog(25, "sgn submitting state proof")
 	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
