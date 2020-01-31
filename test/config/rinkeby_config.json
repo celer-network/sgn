@@ -1,10 +1,10 @@
 {
   "eth": {
-    "guardaddress": "0xb6d4ed8acc2b4ab7c0546825183b15b22b9d1471",
+    "guardaddress": "0xbd733c283ea44c3233fd58a9f628b038e5405519",
     "keystore": "./test/keys/client0.json",
-    "ledgeraddress": "0x9792262134fa919965217dabadf8442d5912d658",
+    "ledgeraddress": "0xdc474d2c99510aab91c2b1573476f2a45cb87bcb",
     "passphrase": "",
-    "ws": "wss://rinkeby.infura.io/ws"
+    "ws": "wss://rinkeby.infura.io/ws/"
   },
   "logcolor": true,
   "loglevel": "debug",
