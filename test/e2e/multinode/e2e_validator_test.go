@@ -2,10 +2,8 @@ package multinode
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -14,8 +12,6 @@ import (
 	sgnval "github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +31,7 @@ func setUpValidator(maxValidatorNum *big.Int) {
 
 func TestE2EValidator(t *testing.T) {
 	t.Run("e2e-validator", func(t *testing.T) {
-		// t.Run("validatorTest", validatorTest)
+		t.Run("validatorTest", validatorTest)
 		t.Run("replaceValidatorTest", replaceValidatorTest)
 	})
 }
@@ -173,32 +169,13 @@ func replaceValidatorTest(t *testing.T) {
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
 
 	// add two validators, 0 and 1
-	for i := 0; i < 2; i++ {
-		log.Infoln("Adding validator", i)
-
-		// get auth
-		ethAddr, auth, err := getAuth(ethKeystores[i], ethKeystorePps[i])
-		tf.ChkTestErr(t, err, "failed to get auth")
-
-		// get sgnAddr
-		sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[i])
-		tf.ChkTestErr(t, err, "failed to parse sgn address")
-
-		err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(1))
-		tf.ChkTestErr(t, err, "failed to initialize candidate")
-		err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, amts[i])
-		tf.ChkTestErr(t, err, "failed to delegate stake")
-	}
+	addValidators(ethKeystores[:2], ethKeystorePps[:2], sgnOperators[:2], amts[:2])
 
 	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
-	ethAddr, auth, err := getAuth(ethKeystores[2], ethKeystorePps[2])
-	tf.ChkTestErr(t, err, "failed to get auth")
-	sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[2])
-	tf.ChkTestErr(t, err, "failed to parse sgn address")
-	err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(10))
-	tf.ChkTestErr(t, err, "failed to initialize candidate")
-	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, amts[2])
-	tf.ChkTestErr(t, err, "failed to delegate stake")
+	err := addValidator(ethKeystores[2], ethKeystorePps[2], sgnOperators[2], amts[2])
+	tf.ChkTestErr(t, err, "failed to add validator")
+	tf.SleepWithLog(30, "wait for validator replacement")
+
 	log.Info("Query sgn about the validators to check if it has correct stakes...")
 	validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 	tf.ChkTestErr(t, err, "failed to queryValidators")
@@ -216,22 +193,4 @@ func replaceValidatorTest(t *testing.T) {
 	log.Infoln("Query sgn about the validator:\n", validator)
 	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 2000000000000000000")
 	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
-}
-
-func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
-	keystoreBytes, err := ioutil.ReadFile(ks)
-	if err != nil {
-		return
-	}
-	key, err := keystore.DecryptKey(keystoreBytes, pp)
-	if err != nil {
-		return
-	}
-	addr = key.Address
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), pp)
-	if err != nil {
-		return
-	}
-
-	return
 }

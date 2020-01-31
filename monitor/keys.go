@@ -1,8 +1,6 @@
 package monitor
 
 import (
-	"encoding/binary"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -19,9 +17,8 @@ var (
 
 // get event key from log
 func GetEventKey(log types.Log) []byte {
-	logIndexBytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(logIndexBytes, uint64(log.Index))
-	return append(EventKeyPrefix, append(log.TxHash.Bytes(), logIndexBytes[:]...)...)
+	logIndexBytes := sdk.Uint64ToBigEndian(uint64(log.Index))
+	return append(EventKeyPrefix, append(log.TxHash.Bytes(), logIndexBytes...)...)
 }
 
 // get puller key from log

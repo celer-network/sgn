@@ -12,6 +12,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -115,15 +116,7 @@ func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*bi
 
 func addValidator(ethks string, ethpp string, sgnop string, amt *big.Int) error {
 	// get auth
-	keystoreBytes, err := ioutil.ReadFile(ethks)
-	if err != nil {
-		return err
-	}
-	key, err := keystore.DecryptKey(keystoreBytes, ethpp)
-	if err != nil {
-		return err
-	}
-	auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), ethpp)
+	addr, auth, err := getAuth(ethks, ethpp)
 	if err != nil {
 		return err
 	}
@@ -134,10 +127,28 @@ func addValidator(ethks string, ethpp string, sgnop string, amt *big.Int) error 
 		return err
 	}
 
-	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, key.Address, sgnAddr, amt)
+	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, addr, sgnAddr, amt)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
+	keystoreBytes, err := ioutil.ReadFile(ks)
+	if err != nil {
+		return
+	}
+	key, err := keystore.DecryptKey(keystoreBytes, pp)
+	if err != nil {
+		return
+	}
+	addr = key.Address
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), pp)
+	if err != nil {
+		return
+	}
+
+	return
 }
