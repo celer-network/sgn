@@ -24,7 +24,12 @@ func NewTransactorPool(cliHome, chainID string, cdc *codec.Codec) *TransactorPoo
 	}
 }
 
-// Add a transactor to the pool
+// Add transactors to the pool
+func (tp *TransactorPool) AddTransactor(transactor *Transactor) {
+	tp.transactors = append(tp.transactors, transactor)
+}
+
+// Add transactors to the pool
 func (tp *TransactorPool) AddTransactors(nodeURI, passphrase, gasPrice string, ts []string) error {
 	var transactors []*Transactor
 	for _, t := range ts {

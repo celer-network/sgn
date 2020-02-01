@@ -131,14 +131,10 @@ func (t *Transactor) start() {
 
 func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
 	logEntry.MsgNum = uint32(t.msgQueue.Len())
-	var msgs []sdk.Msg
-	for t.msgQueue.Len() != 0 {
-		msg := t.msgQueue.PopFront().(sdk.Msg)
-		logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
-		msgs = append(msgs, msg)
-	}
+	msg := t.msgQueue.PopFront().(sdk.Msg)
+	logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 
-	txBytes, err := t.signTx(msgs)
+	txBytes, err := t.signTx([]sdk.Msg{msg})
 	if err != nil {
 		return nil, fmt.Errorf("signTx err: %s", err)
 	}

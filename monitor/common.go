@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
@@ -9,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/spf13/viper"
 )
 
 func (m *EthMonitor) isPuller() bool {
@@ -75,11 +77,14 @@ func (m *EthMonitor) getGlobalParams() (global.Params, error) {
 	return global.CLIQueryParams(m.operator.CliCtx, global.RouterKey)
 }
 
-func (m *EthMonitor) sendSgnTx(msg sdk.Msg) {
-	transactor := m.tsPool.GetTransactor()
-	if transactor == nil {
-		transactor = m.operator
+func (m *EthMonitor) addTransactorsToPool() {
+	err := m.tsPool.AddTransactors(
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+		viper.GetStringSlice(common.FlagSgnTransactors),
+	)
+	if err != nil {
+		log.Errorln("Fail to add transactors", err)
 	}
-
-	transactor.AddTxMsg(msg)
 }

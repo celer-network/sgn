@@ -44,8 +44,6 @@ type EthMonitor struct {
 	ms             *watcher.Service
 	guardContract  *watcher.BoundContract
 	ledgerContract *watcher.BoundContract
-	transactors    []string
-	pubkey         string
 	isValidator    bool
 }
 
@@ -93,9 +91,12 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 		ms:             ms,
 		guardContract:  guardContract,
 		ledgerContract: ledgerContract,
-		pubkey:         viper.GetString(common.FlagSgnPubKey),
-		transactors:    viper.GetStringSlice(common.FlagSgnTransactors),
 		isValidator:    mainchain.IsBonded(candidateInfo),
+	}
+
+	tsPool.AddTransactor(m.operator)
+	if viper.GetBool(common.FlagSgnSeedNode) {
+		m.addTransactorsToPool()
 	}
 
 	go m.monitorBlockHead()
