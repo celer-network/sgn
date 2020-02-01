@@ -16,13 +16,19 @@ import (
 )
 
 func (m *EthMonitor) processQueue() {
-	m.processEventQueue()
-	m.processPullerQueue()
+	secureBlockNum, err := m.getSecureBlockNum()
+	if err != nil {
+		log.Errorln("Query secureBlockNum err", err)
+		return
+	}
+
+	m.processEventQueue(secureBlockNum)
+	m.processPullerQueue(secureBlockNum)
 	m.processPusherQueue()
 	m.processPenaltyQueue()
 }
 
-func (m *EthMonitor) processPullerQueue() {
+func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 	if !m.isPuller() {
 		return
 	}
@@ -32,6 +38,10 @@ func (m *EthMonitor) processPullerQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
+		}
+
 		log.Infoln("Process puller event", event.Name)
 		m.db.Delete(iterator.Key())
 

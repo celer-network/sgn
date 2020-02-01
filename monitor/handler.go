@@ -16,13 +16,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (m *EthMonitor) processEventQueue() {
-	secureBlockNum, err := m.getSecureBlockNum()
-	if err != nil {
-		log.Errorln("Query secureBlockNum err", err)
-		return
-	}
-
+func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
 	defer iterator.Close()
 

@@ -59,6 +59,10 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 		return res, fmt.Errorf("Failed to query candidate profile: %s", err)
 	}
 
+	if !candidateInfo.Initialized {
+		return res, fmt.Errorf("Candidate has not been initialized")
+	}
+
 	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
 	account := keeper.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
