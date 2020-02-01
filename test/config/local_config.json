@@ -17,6 +17,7 @@
     "passphrase": "12341234",
     "pubkey": "cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
     "transactors": ["cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"],
-    "timeoutCommit": 2
+    "timeoutCommit": 2,
+    "seedNode": true
   }
 }
