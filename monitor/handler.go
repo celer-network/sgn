@@ -125,9 +125,8 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 		return
 	}
 
-	transactor := m.tsPool.GetTransactor()
-	msg := validator.NewMsgSignReward(ethAddr, sig, transactor.Key.GetAddress())
-	transactor.AddTxMsg(msg)
+	msg := validator.NewMsgSignReward(ethAddr, sig, m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
@@ -145,9 +144,8 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 		return
 	}
 
-	transactor := m.tsPool.GetTransactor()
-	msg := slash.NewMsgSignPenalty(nonce, sig, transactor.Key.GetAddress())
-	transactor.AddTxMsg(msg)
+	msg := slash.NewMsgSignPenalty(nonce, sig, m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate) {
