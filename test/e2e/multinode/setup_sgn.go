@@ -3,20 +3,15 @@ package multinode
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	tf "github.com/celer-network/sgn/testing"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/spf13/viper"
 )
 
@@ -133,22 +128,4 @@ func addValidator(ethks string, ethpp string, sgnop string, amt *big.Int) error 
 	}
 
 	return nil
-}
-
-func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
-	keystoreBytes, err := ioutil.ReadFile(ks)
-	if err != nil {
-		return
-	}
-	key, err := keystore.DecryptKey(keystoreBytes, pp)
-	if err != nil {
-		return
-	}
-	addr = key.Address
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), pp)
-	if err != nil {
-		return
-	}
-
-	return
 }

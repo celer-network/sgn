@@ -21,6 +21,6 @@ const (
 	DefaultTimeout   = 60 * time.Second
 	waitMinedTimeout = 180 * time.Second
 
-	BlockDelay     = 5
+	BlockDelay     = 1
 	DisputeTimeout = 100
 )
