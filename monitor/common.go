@@ -12,23 +12,23 @@ import (
 )
 
 func (m *EthMonitor) isPuller() bool {
-	puller, err := validator.CLIQueryPuller(m.transactor.CliCtx, validator.StoreKey)
+	puller, err := validator.CLIQueryPuller(m.operator.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Errorln("Get puller err", err)
 		return false
 	}
 
-	return puller.ValidatorAddr.Equals(m.transactor.Key.GetAddress())
+	return puller.ValidatorAddr.Equals(m.operator.Key.GetAddress())
 }
 
 func (m *EthMonitor) isPusher() bool {
-	pusher, err := validator.CLIQueryPusher(m.transactor.CliCtx, validator.StoreKey)
+	pusher, err := validator.CLIQueryPusher(m.operator.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Errorln("Get pusher err", err)
 		return false
 	}
 
-	return pusher.ValidatorAddr.Equals(m.transactor.Key.GetAddress())
+	return pusher.ValidatorAddr.Equals(m.operator.Key.GetAddress())
 }
 
 func (m *EthMonitor) isPullerOrOwner(candidate mainchain.Addr) bool {
@@ -51,26 +51,35 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, eventBlockNumber 
 		return true
 	}
 
-	return requestGuards[guardIndex].Equals(m.transactor.Key.GetAddress())
+	return requestGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
 func (m *EthMonitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.transactor.CliCtx, subscribe.RouterKey, channelId, peerFrom)
+	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, peerFrom)
 }
 
 func (m *EthMonitor) getLatestBlock() (global.Block, error) {
-	return global.CLIQueryLatestBlock(m.transactor.CliCtx, global.RouterKey)
+	return global.CLIQueryLatestBlock(m.operator.CliCtx, global.RouterKey)
 }
 
 func (m *EthMonitor) getSecureBlockNum() (uint64, error) {
-	return global.CLIQuerySecureBlockNum(m.transactor.CliCtx, global.RouterKey)
+	return global.CLIQuerySecureBlockNum(m.operator.CliCtx, global.RouterKey)
 }
 
 func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
-	accGetter := types.NewAccountRetriever(m.transactor.CliCtx)
+	accGetter := types.NewAccountRetriever(m.operator.CliCtx)
 	return accGetter.GetAccount(addr)
 }
 
 func (m *EthMonitor) getGlobalParams() (global.Params, error) {
-	return global.CLIQueryParams(m.transactor.CliCtx, global.RouterKey)
+	return global.CLIQueryParams(m.operator.CliCtx, global.RouterKey)
+}
+
+func (m *EthMonitor) sendSgnTx(msg sdk.Msg) {
+	transactor := m.tsPool.GetTransactor()
+	if transactor == nil {
+		transactor = m.operator
+	}
+
+	transactor.AddTxMsg(msg)
 }

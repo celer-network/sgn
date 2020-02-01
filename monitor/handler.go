@@ -60,8 +60,8 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 
 	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
 	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
-	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.operator.Key.GetAddress())
+	m.sendSgnTx(msg)
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
@@ -111,7 +111,7 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Infoln("New initiate withdraw", ethAddr)
 
-	reward, err := validator.CLIQueryReward(m.transactor.CliCtx, validator.StoreKey, ethAddr)
+	reward, err := validator.CLIQueryReward(m.operator.CliCtx, validator.StoreKey, ethAddr)
 	if err != nil {
 		log.Errorln("Query reward err", err)
 		return
@@ -123,14 +123,14 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 		return
 	}
 
-	msg := validator.NewMsgSignReward(ethAddr, sig, m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := validator.NewMsgSignReward(ethAddr, sig, m.operator.Key.GetAddress())
+	m.sendSgnTx(msg)
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
 	log.Infoln("New Penalty", nonce)
 
-	penalty, err := slash.CLIQueryPenalty(m.transactor.CliCtx, slash.StoreKey, nonce)
+	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, nonce)
 	if err != nil {
 		log.Errorln("Query penalty err", err)
 		return
@@ -142,8 +142,8 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 		return
 	}
 
-	msg := slash.NewMsgSignPenalty(nonce, sig, m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := slash.NewMsgSignPenalty(nonce, sig, m.operator.Key.GetAddress())
+	m.sendSgnTx(msg)
 }
 
 func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate) {
@@ -175,21 +175,20 @@ func (m *EthMonitor) claimValidator() {
 	}
 
 	msg := validator.NewMsgClaimValidator(
-		mainchain.Addr2Hex(m.ethClient.Address), m.pubkey, transactors, m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
-
+		mainchain.Addr2Hex(m.ethClient.Address), m.pubkey, transactors, m.operator.Key.GetAddress())
+	m.sendSgnTx(msg)
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	log.Infof("SyncValidator %x", address)
-	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.operator.Key.GetAddress())
+	m.sendSgnTx(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
 
 	msg := validator.NewMsgSyncDelegator(
-		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.operator.Key.GetAddress())
+	m.sendSgnTx(msg)
 }

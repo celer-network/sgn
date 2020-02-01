@@ -35,14 +35,17 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	transactorPool, err := transactor.NewTransactorPool(
+	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
+		cdc,
+	)
+
+	err = transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 		viper.GetStringSlice(common.FlagSgnTransactors),
-		cdc,
 	)
 	if err != nil {
 		return nil, err

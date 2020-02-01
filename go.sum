@@ -41,6 +41,7 @@ github.com/celer-network/cChannel-eth-go v0.12.6 h1:1y2YMcpKJTu0wKeeLwZjU7CdHtUf
 github.com/celer-network/cChannel-eth-go v0.12.6/go.mod h1:ptr/594TGFAw8aQWoNR5mg94JG1rS6Q4aXN0kKcYeUU=
 github.com/celer-network/goutils v0.1.1 h1:hbc8B2AMPWHLg/3bpwZLUF+ljq4zt5lSmQexMDDh9fQ=
 github.com/celer-network/goutils v0.1.1/go.mod h1:ABL+egL00e9q0oBbL3hs8C0dM8VHH9JPD2Q0UJ4AODI=
+github.com/celer-network/goutils v0.1.2 h1:2RojhL7Z2hH1sIjucHgJvTSQLjzfLEyvnU3cpL5Buxg=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/cp v1.1.1 h1:nCb6ZLdB7NRaqsm91JtQTAme2SKJzXVsdPIPkyJr1MU=
 github.com/cespare/cp v1.1.1/go.mod h1:SOGHArjBr4JWaSDEVpWpo/hNg6RoKrls6Oh40hiwW+s=

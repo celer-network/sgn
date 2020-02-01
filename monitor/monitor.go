@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
@@ -37,7 +38,8 @@ var (
 
 type EthMonitor struct {
 	ethClient      *mainchain.EthClient
-	transactor     *transactor.Transactor
+	operator       *transactor.Transactor
+	tsPool         *transactor.TransactorPool
 	db             *dbm.GoLevelDB
 	ms             *watcher.Service
 	guardContract  *watcher.BoundContract
@@ -47,7 +49,7 @@ type EthMonitor struct {
 	isValidator    bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, pubkey string, transactors []string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, tsPool *transactor.TransactorPool) {
 	dataDir := filepath.Join(viper.GetString(flags.FlagHome), "data")
 	db, err := dbm.NewGoLevelDB("monitor", dataDir)
 	if err != nil {
@@ -85,13 +87,14 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 
 	m := EthMonitor{
 		ethClient:      ethClient,
-		transactor:     transactor,
+		operator:       operator,
+		tsPool:         tsPool,
 		db:             db,
 		ms:             ms,
 		guardContract:  guardContract,
 		ledgerContract: ledgerContract,
-		pubkey:         pubkey,
-		transactors:    transactors,
+		pubkey:         viper.GetString(common.FlagSgnPubKey),
+		transactors:    viper.GetStringSlice(common.FlagSgnTransactors),
 		isValidator:    mainchain.IsBonded(candidateInfo),
 	}
 
@@ -200,7 +203,7 @@ func (m *EthMonitor) monitorSlash() {
 }
 
 func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client := client.NewHTTP(m.transactor.CliCtx.NodeURI, "/websocket")
+	client := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
 	err := client.Start()
 	if err != nil {
 		log.Errorln("Fail to start ws client", err)
