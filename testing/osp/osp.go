@@ -62,7 +62,7 @@ func NewRestServer() (rs *RestServer, err error) {
 			viper.GetString(sdkFlags.FlagHome),
 			viper.GetString(common.FlagSgnChainID),
 			viper.GetString(common.FlagSgnNodeURI),
-			viper.GetStringSlice(common.FlagSgnTransactors)[0],
+			viper.GetString(common.FlagSgnOperator),
 			viper.GetString(common.FlagSgnPassphrase),
 			viper.GetString(common.FlagSgnGasPrice),
 			cdc,
