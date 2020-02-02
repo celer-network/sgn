@@ -67,8 +67,6 @@ func subscribeTest(t *testing.T) {
 		sgnGasPrice,
 	)
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
-	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
-	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
 	log.Infoln("Add validators...")
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
@@ -186,7 +184,7 @@ func subscribeTest(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
-	assert.Equal(t, 2, len(reward.Sigs), fmt.Sprintf("The length of reward signatures should be %d", 2))
+	assert.Equal(t, 2, len(reward.Sigs), "The length of reward signatures should be 2")
 
 	log.Infoln("Call redeemReward on guard contract...")
 	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
@@ -206,6 +204,16 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
-	ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
-	assert.Equal(t, "99000000000000000", ci.StakingPool.String(), fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+	log.Infoln("Query onchain staking pool")
+	var poolAmt string
+	for retry := 0; retry < 30; retry++ {
+		ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
+		poolAmt = ci.StakingPool.String()
+		if poolAmt == "99000000000000000" {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	assert.Equal(t, "99000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+
 }
