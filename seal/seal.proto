@@ -30,4 +30,5 @@ message MsgLog {
     string sender = 99;
     double execution_time_ms = 100;
     repeated string error = 101;
+    repeated string warn = 102;
 }

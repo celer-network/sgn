@@ -171,7 +171,6 @@ func (m *EthMonitor) claimValidator() {
 	msg := validator.NewMsgClaimValidator(
 		mainchain.Addr2Hex(m.ethClient.Address), m.pubkey, transactors, m.transactor.Key.GetAddress())
 	m.transactor.AddTxMsg(msg)
-
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {

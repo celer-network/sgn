@@ -6,10 +6,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	tf "github.com/celer-network/sgn/testing"
-	sgnval "github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/stretchr/testify/assert"
 )
 
 func setUpValidator(maxValidatorNum *big.Int) {
@@ -58,7 +55,7 @@ func validatorTest(t *testing.T) {
 		// get auth
 		ethAddr, auth, err := getAuth(ethKeystores[i], ethKeystorePps[i])
 		tf.ChkTestErr(t, err, "failed to get auth")
-		addCandidateAndStake(t, transactor, ethAddr, auth, sgnOperators[i], sgnOperatorValAddrs[i], amts[i], big.NewInt(1), true)
+		addCandidateWithStake(t, transactor, ethAddr, auth, sgnOperators[i], sgnOperatorValAddrs[i], amts[i], big.NewInt(1), true)
 		checkValidatorNum(t, transactor, i+1)
 	}
 
@@ -66,7 +63,7 @@ func validatorTest(t *testing.T) {
 	ethAddr, auth, err := getAuth(ethKeystores[2], ethKeystorePps[2])
 	tf.ChkTestErr(t, err, "failed to get auth")
 	initialDelegation := big.NewInt(1)
-	addCandidateAndStake(t, transactor, ethAddr, auth, sgnOperators[2], sgnOperatorValAddrs[2], initialDelegation, big.NewInt(10), false)
+	addCandidateWithStake(t, transactor, ethAddr, auth, sgnOperators[2], sgnOperatorValAddrs[2], initialDelegation, big.NewInt(10), false)
 	log.Info("Query sgn about validators to check if validator 2 is not added...")
 	checkValidatorNum(t, transactor, 2)
 
@@ -74,7 +71,7 @@ func validatorTest(t *testing.T) {
 	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 	checkValidatorNum(t, transactor, 3)
-	checkValidator(t, transactor, sgnOperatorValAddrs[2], amts[2])
+	checkValidator(t, transactor, sgnOperatorValAddrs[2], amts[2], sdk.Bonded)
 
 	log.Infoln("---------- It should successfully remove validator 2 caused by intendWithdraw ----------")
 	err = tf.IntendWithdraw(auth, ethAddr, amts[2])
@@ -104,28 +101,14 @@ func replaceValidatorTest(t *testing.T) {
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
 
 	// add two validators, 0 and 1
-	addValidators(ethKeystores[:2], ethKeystorePps[:2], sgnOperators[:2], amts[:2])
+	addValidators(t, transactor, ethKeystores[:2], ethKeystorePps[:2], sgnOperators[:2], sgnOperatorValAddrs[:2], amts[:2])
 
 	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
-	err := addValidator(ethKeystores[2], ethKeystorePps[2], sgnOperators[2], amts[2])
-	tf.ChkTestErr(t, err, "failed to add validator")
-	tf.SleepWithLog(30, "wait for validator replacement")
+	ethAddr, auth, err := getAuth(ethKeystores[2], ethKeystorePps[2])
+	tf.ChkTestErr(t, err, "failed to get auth")
+	addCandidateWithStake(t, transactor, ethAddr, auth, sgnOperators[2], sgnOperatorValAddrs[2], amts[2], big.NewInt(1), true)
 
-	log.Info("Query sgn about the validators to check if it has correct stakes...")
-	validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
-	tf.ChkTestErr(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
-
-	validator, err := sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[1])
-	tf.ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, sdk.NewIntFromBigInt(amts[1]), validator.Tokens, "validator token should be 1000000000000000000")
-	assert.Equal(t, sdk.Unbonding, validator.Status, "validator should be unbonding")
-
-	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
-	tf.ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 2000000000000000000")
-	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
+	log.Info("Query sgn about the validators...")
+	checkValidatorNum(t, transactor, 2)
+	checkValidator(t, transactor, sgnOperatorValAddrs[1], amts[1], sdk.Unbonding)
 }

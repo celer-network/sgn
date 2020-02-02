@@ -101,7 +101,7 @@ func turnOffMonitor(node uint) {
 	}
 }
 
-func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
+func addValidatorsDeprecated(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
 		err := addValidator(ethkss[i], ethpps[i], sgnops[i], amts[i])

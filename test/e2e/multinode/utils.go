@@ -41,7 +41,16 @@ func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err e
 	return
 }
 
-func addCandidateAndStake(t *testing.T, transactor *transactor.Transactor,
+func addValidators(t *testing.T, transactor *transactor.Transactor, ethkss, ethpps, sgnops, sgnopAddrs []string, amts []*big.Int) {
+	for i := 0; i < len(ethkss); i++ {
+		log.Infoln("Adding validator", i)
+		ethAddr, auth, err := getAuth(ethkss[i], ethpps[i])
+		tf.ChkTestErr(t, err, "failed to get auth")
+		addCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], sgnopAddrs[i], amts[i], big.NewInt(1), true)
+	}
+}
+
+func addCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ethAddr mainchain.Addr, auth *bind.TransactOpts,
 	sgnop, sgnopAddr string,
 	amt *big.Int, minAmt *big.Int,
@@ -70,7 +79,7 @@ func addCandidateAndStake(t *testing.T, transactor *transactor.Transactor,
 
 	if isValidator {
 		log.Info("Query sgn about the validators to check if it has correct stakes...")
-		checkValidator(t, transactor, sgnopAddr, amt)
+		checkValidator(t, transactor, sgnopAddr, amt, sdk.Bonded)
 	}
 }
 
@@ -83,7 +92,7 @@ func checkDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 		if err == nil && expectedRes == delegator.String() {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 	}
 	tf.ChkTestErr(t, err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator's delegator:", delegator)
@@ -99,27 +108,27 @@ func checkCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 		if err == nil && expectedRes == candidate.String() {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 	}
 	tf.ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }
 
-func checkValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expAmt *big.Int) {
+func checkValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expAmt *big.Int, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < 30; retry++ {
 		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnopAddr)
-		if err == nil && validator.Status == sdk.Bonded && validator.Tokens.BigInt().Cmp(expAmt) == 0 {
+		if err == nil && validator.Status == expStatus && validator.Tokens.BigInt().Cmp(expAmt) == 0 {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 	}
 	tf.ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
 	assert.Equal(t, expAmt.String(), validator.Tokens.String(), "validator token should be "+expAmt.String())
-	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
+	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
 func checkValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expStatus sdk.BondStatus) {
@@ -130,11 +139,11 @@ func checkValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop
 		if err == nil && validator.Status == expStatus {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 	}
 	tf.ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, expStatus, validator.Status, "validator should be bonded")
+	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
 func checkValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum int) {
@@ -145,9 +154,22 @@ func checkValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum i
 		if err == nil && len(validators) == expNum {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 	}
 	tf.ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, expNum, len(validators), "The length of validators should be: "+strconv.Itoa(expNum))
+}
+
+func sdkStatusName(status sdk.BondStatus) string {
+	switch status {
+	case sdk.Unbonded:
+		return "Unbonded"
+	case sdk.Unbonding:
+		return "Unbonding"
+	case sdk.Bonded:
+		return "Bonded"
+	default:
+		return "Invalid"
+	}
 }

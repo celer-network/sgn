@@ -33,7 +33,7 @@ func setUpSubscribe() {
 	}
 	setupNewSGNEnv(p)
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	addValidators(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
+	addValidatorsDeprecated(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	turnOffMonitor(2)
 }
 
