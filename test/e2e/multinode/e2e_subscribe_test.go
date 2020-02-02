@@ -61,7 +61,7 @@ func subscribeTest(t *testing.T) {
 		sgnCLIHomes[0],
 		sgnChainID,
 		sgnNodeURIs[0],
-		sgnTransactors[0],
+		sgnOperators[0],
 		sgnPassphrase,
 		sgnGasPrice,
 	)

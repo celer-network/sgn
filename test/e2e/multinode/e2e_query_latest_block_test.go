@@ -38,7 +38,7 @@ func queryLatestBlockTest(t *testing.T) {
 		sgnCLIHomes[1],
 		sgnChainID,
 		sgnNodeURIs[1],
-		sgnTransactors[1],
+		sgnOperators[1],
 		sgnPassphrase,
 		sgnGasPrice,
 	)
