@@ -24,8 +24,6 @@ func setUpSlash() {
 		MaxValidatorNum:        big.NewInt(11),
 	}
 	setupNewSGNEnv(p)
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	addValidatorsDeprecated(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
@@ -51,6 +49,9 @@ func slashTest(t *testing.T) {
 		sgnPassphrase,
 		sgnGasPrice,
 	)
+
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
+	addValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
 
 	shutdownNode(2)
 	tf.SleepWithLog(30, "wait for slash")

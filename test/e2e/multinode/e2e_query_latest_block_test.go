@@ -14,8 +14,6 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("Set up new sgn env")
 	setupNewSGNEnv(nil)
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
-	addValidatorsDeprecated(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
 	tf.SleepWithLog(10, "sgn syncing")
 }
 
@@ -42,6 +40,9 @@ func queryLatestBlockTest(t *testing.T) {
 		sgnPassphrase,
 		sgnGasPrice,
 	)
+
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	addValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")

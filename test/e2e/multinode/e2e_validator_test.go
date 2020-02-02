@@ -99,7 +99,6 @@ func replaceValidatorTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
-
 	// add two validators, 0 and 1
 	addValidators(t, transactor, ethKeystores[:2], ethKeystorePps[:2], sgnOperators[:2], sgnOperatorValAddrs[:2], amts[:2])
 
