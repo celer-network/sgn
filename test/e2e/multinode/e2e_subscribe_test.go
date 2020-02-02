@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
+	tc "github.com/celer-network/sgn/test/e2e/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
@@ -71,7 +72,7 @@ func subscribeTest(t *testing.T) {
 
 	log.Infoln("Add validators...")
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	addValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
+	tc.AddValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
 	turnOffMonitor(2)
 
 	log.Infoln("Open channel...")

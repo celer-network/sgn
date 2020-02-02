@@ -7,6 +7,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	tc "github.com/celer-network/sgn/test/e2e/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -51,7 +52,7 @@ func slashTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	addValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
+	tc.AddValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
 
 	shutdownNode(2)
 	tf.SleepWithLog(30, "wait for slash")

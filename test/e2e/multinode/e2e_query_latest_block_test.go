@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
+	tc "github.com/celer-network/sgn/test/e2e/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,7 @@ func queryLatestBlockTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
-	addValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
+	tc.AddValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")

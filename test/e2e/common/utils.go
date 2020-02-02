@@ -1,4 +1,4 @@
-package multinode
+package testcommon
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
+func GetAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
 	keystoreBytes, err := ioutil.ReadFile(ks)
 	if err != nil {
 		return
@@ -41,16 +41,16 @@ func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err e
 	return
 }
 
-func addValidators(t *testing.T, transactor *transactor.Transactor, ethkss, ethpps, sgnops, sgnopAddrs []string, amts []*big.Int) {
+func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, ethpps, sgnops, sgnopAddrs []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
-		ethAddr, auth, err := getAuth(ethkss[i], ethpps[i])
+		ethAddr, auth, err := GetAuth(ethkss[i], ethpps[i])
 		tf.ChkTestErr(t, err, "failed to get auth")
-		addCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], sgnopAddrs[i], amts[i], big.NewInt(1), true)
+		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], sgnopAddrs[i], amts[i], big.NewInt(1), true)
 	}
 }
 
-func addCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
+func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ethAddr mainchain.Addr, auth *bind.TransactOpts,
 	sgnop, sgnopAddr string,
 	amt *big.Int, minAmt *big.Int,
@@ -65,25 +65,25 @@ func addCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	tf.ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Infof("Query sgn about the validator candidate %s ...", ethAddr.Hex())
-	checkCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
+	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
 
 	// self delegate stake
 	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, amt)
 	tf.ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
-	checkDelegator(t, transactor, ethAddr, ethAddr, amt)
+	CheckDelegator(t, transactor, ethAddr, ethAddr, amt)
 
 	log.Info("Query sgn about the candidate to check if it has correct stakes...")
-	checkCandidate(t, transactor, ethAddr, sgnop, amt)
+	CheckCandidate(t, transactor, ethAddr, sgnop, amt)
 
 	if isValidator {
 		log.Info("Query sgn about the validators to check if it has correct stakes...")
-		checkValidator(t, transactor, sgnopAddr, amt, sdk.Bonded)
+		CheckValidator(t, transactor, sgnopAddr, amt, sdk.Bonded)
 	}
 }
 
-func checkDelegator(t *testing.T, transactor *transactor.Transactor, validatorAddr, delegatorAddr mainchain.Addr, expAmt *big.Int) {
+func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAddr, delegatorAddr mainchain.Addr, expAmt *big.Int) {
 	var delegator vtypes.Delegator
 	var err error
 	expectedRes := fmt.Sprintf(`EthAddress: %s, DelegatedStake: %s`, mainchain.Addr2Hex(delegatorAddr), expAmt) // defined in Delegator.String()
@@ -99,7 +99,7 @@ func checkDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 	assert.Equal(t, expectedRes, delegator.String(), "The expected result should be: "+expectedRes)
 }
 
-func checkCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, sgnop string, expAmt *big.Int) {
+func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, sgnop string, expAmt *big.Int) {
 	var candidate vtypes.Candidate
 	var err error
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %s`, sgnop, expAmt) // defined in Candidate.String()
@@ -115,7 +115,7 @@ func checkCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }
 
-func checkValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expAmt *big.Int, expStatus sdk.BondStatus) {
+func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expAmt *big.Int, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < 30; retry++ {
@@ -131,7 +131,7 @@ func checkValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr s
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
-func checkValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expStatus sdk.BondStatus) {
+func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < 30; retry++ {
@@ -146,7 +146,7 @@ func checkValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
-func checkValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum int) {
+func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum int) {
 	var validators stypes.Validators
 	var err error
 	for retry := 0; retry < 30; retry++ {
