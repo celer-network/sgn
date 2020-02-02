@@ -83,10 +83,9 @@ func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.Guar
 	}
 
 	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
-	transactor := m.tsPool.GetTransactor()
 	msg := validator.NewMsgInitializeCandidate(
 		mainchain.Addr2Hex(initializeCandidate.Candidate), m.operator.Key.GetAddress())
-	transactor.AddTxMsg(msg)
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
@@ -97,9 +96,8 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 			return
 		}
 
-		transactor := m.tsPool.GetTransactor()
 		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.operator.Key.GetAddress())
-		transactor.AddTxMsg(msg)
+		m.operator.AddTxMsg(msg)
 	}
 }
 
@@ -144,9 +142,8 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		transactor := m.tsPool.GetTransactor()
 		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.operator.Key.GetAddress())
-		transactor.AddTxMsg(msg)
+		m.operator.AddTxMsg(msg)
 	}
 }
 

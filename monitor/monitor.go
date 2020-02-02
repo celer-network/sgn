@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
@@ -39,7 +38,7 @@ var (
 type EthMonitor struct {
 	ethClient      *mainchain.EthClient
 	operator       *transactor.Transactor
-	tsPool         *transactor.TransactorPool
+	transactor     *transactor.Transactor
 	db             *dbm.GoLevelDB
 	ms             *watcher.Service
 	guardContract  *watcher.BoundContract
@@ -47,7 +46,7 @@ type EthMonitor struct {
 	isValidator    bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, tsPool *transactor.TransactorPool) {
+func NewEthMonitor(ethClient *mainchain.EthClient, operator, ts *transactor.Transactor) {
 	dataDir := filepath.Join(viper.GetString(flags.FlagHome), "data")
 	db, err := dbm.NewGoLevelDB("monitor", dataDir)
 	if err != nil {
@@ -86,17 +85,12 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	m := EthMonitor{
 		ethClient:      ethClient,
 		operator:       operator,
-		tsPool:         tsPool,
+		transactor:     ts,
 		db:             db,
 		ms:             ms,
 		guardContract:  guardContract,
 		ledgerContract: ledgerContract,
 		isValidator:    mainchain.IsBonded(candidateInfo),
-	}
-
-	tsPool.AddTransactor(m.operator)
-	if viper.GetBool(common.FlagSgnSeedNode) {
-		m.addTransactorsToPool()
 	}
 
 	go m.monitorBlockHead()
