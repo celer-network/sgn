@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -14,6 +15,7 @@ import (
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
+	stypes "github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -32,9 +34,6 @@ func setUpSubscribe() {
 		MaxValidatorNum:        big.NewInt(11),
 	}
 	setupNewSGNEnv(p)
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	addValidatorsDeprecated(ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
-	turnOffMonitor(2)
 }
 
 func TestE2ESubscribe(t *testing.T) {
@@ -56,6 +55,7 @@ func subscribeTest(t *testing.T) {
 	guardContract := tf.DefaultTestEthClient.Guard
 	ledgerContract := tf.DefaultTestEthClient.Ledger
 	privKey := tf.DefaultTestEthClient.PrivateKey
+
 	transactor := tf.NewTransactor(
 		t,
 		sgnCLIHomes[0],
@@ -69,6 +69,15 @@ func subscribeTest(t *testing.T) {
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
+	log.Infoln("Add validators...")
+	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
+	addValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
+	turnOffMonitor(2)
+
+	log.Infoln("Open channel...")
+	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
+	tf.ChkTestErr(t, err, "failed to open channel")
+
 	log.Infoln("Call subscribe on guard contract...")
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10) // 100 CELR
@@ -77,18 +86,25 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
-	tf.WaitMinedWithChk(ctx, conn, tx, 2*tf.BlockDelay, "Subscribe on Guard contract")
+	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
+	time.Sleep(20 * time.Second)
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubscribe)
-	tf.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
 	log.Infoln("Query sgn about the subscription info...")
-	subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
+	var subscription stypes.Subscription
+	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
+	for retry := 0; retry < 30; retry++ {
+		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
+		if err == nil && expectedRes == subscription.String() {
+			break
+		}
+		time.Sleep(time.Second)
+	}
 	tf.ChkTestErr(t, err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
-	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	// Query sgn to check if epoch has correct fee
@@ -97,24 +113,27 @@ func subscribeTest(t *testing.T) {
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	log.Infoln("Prepare for requesting guard...")
-	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
-	tf.ChkTestErr(t, err, "failed to open channel")
-	tf.SleepWithLog(30, "wait channelId to be in secure state")
+	log.Infoln("Request guard...")
 	signedSimplexStateProto, err := tf.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), tf.DefaultTestEthClient.PrivateKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgRequestGuard)
-	tf.SleepWithLog(5, "sgn processes request guard")
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
-	tf.ChkTestErr(t, err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
+	var request stypes.Request
 	// TxHash now should be empty
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
+	for retry := 0; retry < 30; retry++ {
+		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
+		if err == nil && expectedRes == request.String() {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	tf.ChkTestErr(t, err, "failed to query request on sgn")
+	log.Infoln("Query sgn about the request info:", request.String())
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
@@ -126,16 +145,21 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to get signedSimplexStateArrayBytes")
 	tx, err = ledgerContract.IntendSettle(auth, signedSimplexStateArrayBytes)
 	tf.ChkTestErr(t, err, "failed to IntendSettle")
-	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay+tf.DisputeTimeout/3, "IntendSettle")
+	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	tf.SleepWithLog(25, "sgn submitting state proof")
-	request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
-	tf.ChkTestErr(t, err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
 	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkTestErr(t, err, "failed to compile regexp")
+	for retry := 0; retry < 60; retry++ {
+		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
+		if err == nil && r.MatchString(strings.ToLower(request.String())) {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+	tf.ChkTestErr(t, err, "failed to query request on sgn")
+	log.Infoln("Query sgn about the request info:", request.String())
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
 
 	log.Infoln("Query sgn to check if it gets the correct reward info (without sigs)...")
@@ -151,10 +175,15 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Send tx on sidechain to withdraw reward...")
 	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgWithdrawReward)
-	tf.SleepWithLog(15, "sgn withdrawing reward")
 
 	log.Infoln("Query sgn to check if reward gets signature...")
-	reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
+	for retry := 0; retry < 30; retry++ {
+		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
+		if err == nil && len(reward.Sigs) == 2 {
+			break
+		}
+		time.Sleep(time.Second)
+	}
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	assert.Equal(t, 2, len(reward.Sigs), fmt.Sprintf("The length of reward signatures should be %d", 2))
 
@@ -166,6 +195,7 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 
+	time.Sleep(10 * time.Second)
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)

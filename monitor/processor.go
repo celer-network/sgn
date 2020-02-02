@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
@@ -149,7 +150,15 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		// TODO: 1) bockDelay, 2) may need a better way than wait mined,
-		mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+		res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+		if err != nil {
+			log.Errorln("intendSettle WaitMined err", err, tx.Hash().Hex())
+			return
+		}
+		if res.Status != ethtypes.ReceiptStatusSuccessful {
+			log.Errorln("intendSettle failed", tx.Hash().Hex())
+			return
+		}
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
 		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
@@ -183,8 +192,23 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		return
 	}
+	log.Infoln("Punish tx submitted", tx.Hash().Hex())
 
-	log.Infoln("Punish tx detail", tx)
+	go m.waitPunishMined(tx)
+}
+
+func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
+	// TODO: blockdelay
+	res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+	if err != nil {
+		log.Errorln("Punish tx WaitMined err", err, tx.Hash().Hex())
+		return
+	}
+	if res.Status != ethtypes.ReceiptStatusSuccessful {
+		log.Errorln("Punish tx failed", tx.Hash().Hex())
+		return
+	}
+	log.Infoln("Punish tx mined", tx.Hash().Hex())
 }
 
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (requests []subscribe.Request) {
@@ -200,7 +224,6 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		peerFrom := mainchain.Addr2Hex(addr)
 		request, err := m.getRequest(channelId, peerFrom)
 		if err != nil {
-			log.Errorln("Query request err", err)
 			continue
 		}
 

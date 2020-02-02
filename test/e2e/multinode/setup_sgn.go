@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tf "github.com/celer-network/sgn/testing"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 )
 
@@ -99,33 +98,4 @@ func turnOffMonitor(node uint) {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-}
-
-func addValidatorsDeprecated(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
-	for i := 0; i < len(ethkss); i++ {
-		log.Infoln("Adding validator", i)
-		err := addValidator(ethkss[i], ethpps[i], sgnops[i], amts[i])
-		tf.ChkErr(err, "Failed to add validator")
-	}
-}
-
-func addValidator(ethks string, ethpp string, sgnop string, amt *big.Int) error {
-	// get auth
-	addr, auth, err := getAuth(ethks, ethpp)
-	if err != nil {
-		return err
-	}
-
-	// get sgnAddr
-	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
-	if err != nil {
-		return err
-	}
-
-	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, addr, sgnAddr, amt)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

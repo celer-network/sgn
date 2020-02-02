@@ -3,7 +3,6 @@ package subscribe
 import (
 	"fmt"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,7 +54,6 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 
 	request, found := keeper.GetRequest(ctx, params.ChannelId, params.PeerFrom)
 	if !found {
-		log.Errorf("Params info ChannelId %x, PeerFrom %s not found", params.ChannelId, params.PeerFrom)
 		return nil, sdk.ErrInternal("Could not find corresponding request")
 	}
 
