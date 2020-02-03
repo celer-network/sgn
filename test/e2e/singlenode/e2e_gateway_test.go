@@ -78,6 +78,7 @@ func gatewayTest(t *testing.T) {
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to subscribe on mainchain")
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
+	tf.SleepWithLog(10, "passing subscribe event block delay")
 
 	msg := map[string]interface{}{
 		"ethAddr": ethAddress.Hex(),

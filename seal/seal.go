@@ -38,6 +38,8 @@ func CommitMsgLog(entry *MsgLog) {
 	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
 	if len(entry.Error) > 0 {
 		log.Errorln("MsgLog:", entry)
+	} else if len(entry.Warn) > 0 {
+		log.Warnln("MsgLog:", entry)
 	} else {
 		log.Infoln("MsgLog:", entry)
 	}

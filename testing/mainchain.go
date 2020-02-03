@@ -201,7 +201,6 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 	}
 
 	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "IntendWithdraw")
-	SleepBlocksWithLog(16, "sgn syncing IntendWithdraw event on mainchain")
 	return nil
 }
 
@@ -218,7 +217,6 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	}
 
 	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "InitializeCandidate")
-	SleepBlocksWithLog(15, "sgn syncing InitializeCandidate event on mainchain")
 	return nil
 }
 
@@ -239,21 +237,7 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, 3*BlockDelay, "Delegate to validator")
-	return nil
-}
-
-func AddValidator(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, sgnAddr sdk.AccAddress, amt *big.Int) error {
-	err := InitializeCandidate(fromAuth, sgnAddr, big.NewInt(1))
-	if err != nil {
-		return err
-	}
-
-	err = DelegateStake(celrContract, guardAddr, fromAuth, toEthAddress, amt)
-	if err != nil {
-		return err
-	}
-
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "Delegate to validator")
 	return nil
 }
 
