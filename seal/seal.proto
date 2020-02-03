@@ -26,8 +26,10 @@ message MsgLog {
     uint64 slash_nonce = 11;
     uint64 block_num = 12;
     string chan_peer_from = 13;
+    string deposit = 14;
 
     string sender = 99;
     double execution_time_ms = 100;
     repeated string error = 101;
+    repeated string warn = 102;
 }

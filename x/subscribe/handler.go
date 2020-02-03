@@ -62,6 +62,7 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEnt
 	if err != nil {
 		return res, fmt.Errorf("Failed to query subscription desposit: %s", err)
 	}
+	logEntry.Deposit = deposit.String()
 
 	subscription, found := keeper.GetSubscription(ctx, msg.EthAddress)
 	if !found {

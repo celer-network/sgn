@@ -41,6 +41,7 @@ github.com/celer-network/cChannel-eth-go v0.12.6 h1:1y2YMcpKJTu0wKeeLwZjU7CdHtUf
 github.com/celer-network/cChannel-eth-go v0.12.6/go.mod h1:ptr/594TGFAw8aQWoNR5mg94JG1rS6Q4aXN0kKcYeUU=
 github.com/celer-network/goutils v0.1.1 h1:hbc8B2AMPWHLg/3bpwZLUF+ljq4zt5lSmQexMDDh9fQ=
 github.com/celer-network/goutils v0.1.1/go.mod h1:ABL+egL00e9q0oBbL3hs8C0dM8VHH9JPD2Q0UJ4AODI=
+github.com/celer-network/goutils v0.1.2 h1:2RojhL7Z2hH1sIjucHgJvTSQLjzfLEyvnU3cpL5Buxg=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/cp v1.1.1 h1:nCb6ZLdB7NRaqsm91JtQTAme2SKJzXVsdPIPkyJr1MU=
 github.com/cespare/cp v1.1.1/go.mod h1:SOGHArjBr4JWaSDEVpWpo/hNg6RoKrls6Oh40hiwW+s=
@@ -310,6 +311,7 @@ github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570/go.mod h1:8
 github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 h1:njlZPzLwU639dk2kqnCPPv+wNjq7Xb6EfUxe/oX0/NM=
 github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3/go.mod h1:hpGUWaI9xL8pRQCTXQgocU38Qw1g0Us7n5PxxTwTCYU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.1.1 h1:2vfRuCMp5sSVIDSqO8oNnWJq7mPa6KVP3iPIwFBuy8A=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
