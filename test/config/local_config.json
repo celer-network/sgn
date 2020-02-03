@@ -20,7 +20,6 @@
       "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
       "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
     ],
-    "timeoutCommit": 2,
-    "seedNode": true
+    "timeoutCommit": 2
   }
 }
