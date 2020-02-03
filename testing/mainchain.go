@@ -99,7 +99,7 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 		} else {
 			if *r == mainchain.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)
-				log.Info("Current block number:", head.Number.String())
+				log.Infoln("Current block number:", head.Number.String())
 			} else {
 				bal, _ := conn.BalanceAt(ctx, *r, nil)
 				log.Infoln("Tx done.", r.String(), "bal:", bal.String())
@@ -130,7 +130,7 @@ func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*
 }
 
 func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
-	log.Info("Call openChannel on ledger contract %s %s", peer0Addr.String(), peer1Addr.String())
+	log.Infof("Call openChannel on ledger contract %s %s", peer0Addr.String(), peer1Addr.String())
 	tokenInfo := &entity.TokenInfo{
 		TokenType: entity.TokenType_ETH,
 	}
