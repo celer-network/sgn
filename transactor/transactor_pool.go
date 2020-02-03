@@ -9,30 +9,49 @@ import (
 type TransactorPool struct {
 	transactors []*Transactor
 	index       uint64
+	cliHome     string
+	chainID     string
+	cdc         *codec.Codec
 }
 
-func NewTransactorPool(cliHome, chainID, nodeURI, passphrase, gasPrice string, ts []string, cdc *codec.Codec) (*TransactorPool, error) {
+func NewTransactorPool(cliHome, chainID string, cdc *codec.Codec) *TransactorPool {
+	return &TransactorPool{
+		transactors: []*Transactor{},
+		index:       0,
+		cliHome:     cliHome,
+		chainID:     chainID,
+		cdc:         cdc,
+	}
+}
+
+// Add transactors to the pool
+func (tp *TransactorPool) AddTransactor(transactor *Transactor) {
+	tp.transactors = append(tp.transactors, transactor)
+}
+
+// Add transactors to the pool
+func (tp *TransactorPool) AddTransactors(nodeURI, passphrase, gasPrice string, ts []string) error {
 	var transactors []*Transactor
 	for _, t := range ts {
-		transactor, err := NewTransactor(cliHome, chainID, nodeURI, t, passphrase, gasPrice, cdc)
+		transactor, err := NewTransactor(tp.cliHome, tp.chainID, nodeURI, t, passphrase, gasPrice, tp.cdc)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		transactors = append(transactors, transactor)
 	}
 
-	transactorPool := &TransactorPool{
-		transactors: transactors,
-		index:       0,
-	}
-
-	return transactorPool, nil
+	tp.transactors = append(tp.transactors, transactors...)
+	return nil
 }
 
 // Get a transactor from the pool
-func (t *TransactorPool) GetTransactor() *Transactor {
-	transactor := t.transactors[t.index%uint64(len(t.transactors))]
-	atomic.AddUint64(&t.index, 1)
+func (tp *TransactorPool) GetTransactor() *Transactor {
+	if len(tp.transactors) == 0 {
+		return nil
+	}
+
+	transactor := tp.transactors[tp.index%uint64(len(tp.transactors))]
+	atomic.AddUint64(&tp.index, 1)
 	return transactor
 }

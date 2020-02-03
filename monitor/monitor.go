@@ -37,17 +37,16 @@ var (
 
 type EthMonitor struct {
 	ethClient      *mainchain.EthClient
-	transactor     *transactor.Transactor
+	operator       *transactor.Transactor
+	blockSyncer    *transactor.Transactor
 	db             *dbm.GoLevelDB
 	ms             *watcher.Service
 	guardContract  *watcher.BoundContract
 	ledgerContract *watcher.BoundContract
-	transactors    []string
-	pubkey         string
 	isValidator    bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transactor, pubkey string, transactors []string) {
+func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transactor.Transactor) {
 	dataDir := filepath.Join(viper.GetString(flags.FlagHome), "data")
 	db, err := dbm.NewGoLevelDB("monitor", dataDir)
 	if err != nil {
@@ -85,13 +84,12 @@ func NewEthMonitor(ethClient *mainchain.EthClient, transactor *transactor.Transa
 
 	m := EthMonitor{
 		ethClient:      ethClient,
-		transactor:     transactor,
+		operator:       operator,
+		blockSyncer:    blockSyncer,
 		db:             db,
 		ms:             ms,
 		guardContract:  guardContract,
 		ledgerContract: ledgerContract,
-		pubkey:         pubkey,
-		transactors:    transactors,
 		isValidator:    mainchain.IsBonded(candidateInfo),
 	}
 
@@ -200,7 +198,7 @@ func (m *EthMonitor) monitorSlash() {
 }
 
 func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client := client.NewHTTP(m.transactor.CliCtx.NodeURI, "/websocket")
+	client := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
 	err := client.Start()
 	if err != nil {
 		log.Errorln("Fail to start ws client", err)

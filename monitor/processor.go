@@ -87,7 +87,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	_, err := validator.CLIQueryCandidate(m.transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
+	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
 	if err == nil {
 		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
 		return
@@ -95,8 +95,8 @@ func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.Guar
 
 	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
 	msg := validator.NewMsgInitializeCandidate(
-		mainchain.Addr2Hex(initializeCandidate.Candidate), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+		mainchain.Addr2Hex(initializeCandidate.Candidate), m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
@@ -107,8 +107,8 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 			return
 		}
 
-		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
-		m.transactor.AddTxMsg(msg)
+		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.operator.Key.GetAddress())
+		m.operator.AddTxMsg(msg)
 	}
 }
 
@@ -161,8 +161,8 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
-		m.transactor.AddTxMsg(msg)
+		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.operator.Key.GetAddress())
+		m.operator.AddTxMsg(msg)
 	}
 }
 
@@ -180,7 +180,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
+	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.operator.CliCtx, slash.StoreKey, penaltyEvent.nonce)
 	if err != nil {
 		log.Errorln("QueryPenaltyRequest err", err)
 		return

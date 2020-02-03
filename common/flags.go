@@ -17,6 +17,7 @@ const (
 	FlagSgnNodeURI       = "sgn.nodeURI"
 	FlagSgnGasPrice      = "sgn.gasPrice"
 	FlagSgnTimeoutCommit = "sgn.timeoutCommit"
+	FlagSgnSeedNode      = "sgn.seedNode"
 
 	FlagLogLevel     = "logLevel"
 	FlagLogColor     = "logColor"
