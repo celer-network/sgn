@@ -13,10 +13,13 @@ import (
 const pullerDuration = 10
 const pusherDuration = 10
 
+var miningReward = sdk.NewInt(1000000000000000000)
+
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
 	setPuller(ctx, req, keeper)
 	setPusher(ctx, keeper)
+	keeper.DistributeMiningReward(ctx, miningReward)
 
 	return applyAndReturnValidatorSetUpdates(ctx, keeper)
 }

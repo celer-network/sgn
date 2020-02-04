@@ -1,10 +1,7 @@
 package subscribe
 
 import (
-	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -19,35 +16,9 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	}
 
 	if latestEpoch.TotalFee.IsPositive() {
-		distributeReward(ctx, keeper, latestEpoch)
+		keeper.validatorKeeper.DistributeServiceReward(ctx, latestEpoch.TotalFee)
 	}
 
 	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
 	keeper.globalKeeper.SetLatestEpoch(ctx, newEpoch)
-}
-
-// Calculate reward distribution to each delegator
-func distributeReward(ctx sdk.Context, keeper Keeper, epoch global.Epoch) {
-	validators := keeper.validatorKeeper.GetValidators(ctx)
-	totalStake := sdk.ZeroInt()
-	var candidates []validator.Candidate
-
-	for _, validator := range validators {
-		ethAddr := mainchain.FormatAddrHex(validator.Description.Identity)
-		if ethAddr == "" {
-			log.Errorf("Miss eth address for validator %x", validator.OperatorAddress)
-			continue
-		}
-		candidate, found := keeper.validatorKeeper.GetCandidate(ctx, ethAddr)
-
-		if found {
-			totalStake = totalStake.Add(candidate.StakingPool)
-			candidates = append(candidates, candidate)
-		}
-	}
-
-	for _, candidate := range candidates {
-		totalReward := epoch.TotalFee.Mul(candidate.StakingPool).Quo(totalStake)
-		keeper.validatorKeeper.HandleServiceReward(ctx, candidate, totalReward)
-	}
 }

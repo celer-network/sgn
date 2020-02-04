@@ -13,3 +13,13 @@ func GetCandidateInfoFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress st
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, mainchain.Hex2Addr(ethAddress))
 }
+
+func GetCandidatesTotalStake(candidates []Candidate) sdk.Int {
+	totalStake := sdk.ZeroInt()
+
+	for _, candidate := range candidates {
+		totalStake = totalStake.Add(candidate.StakingPool)
+	}
+
+	return totalStake
+}
