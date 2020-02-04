@@ -10,6 +10,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
+type RewardType int
+
+const (
+	ServiceReward = iota
+	MiningReward
+)
+
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	storeKey      sdk.StoreKey // Unexposed key to access store from sdk.Context
@@ -191,8 +198,8 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 	store.Set(GetRewardKey(reward.Receiver), k.cdc.MustMarshalBinaryBare(reward))
 }
 
-// DistributeServiceReward distributes service rewards to candidates and their delegators
-func (k Keeper) DistributeServiceReward(ctx sdk.Context, totalReward sdk.Int) {
+// DistributeServiceReward distributes rewards to candidates and their delegators
+func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardType RewardType) {
 	candidates := k.GetValidatorCandidates(ctx)
 	totalStake := GetCandidatesTotalStake(candidates)
 
@@ -201,23 +208,13 @@ func (k Keeper) DistributeServiceReward(ctx sdk.Context, totalReward sdk.Int) {
 		for _, delegator := range candidate.Delegators {
 			reward, _ := k.GetReward(ctx, delegator.EthAddress)
 			rewardAmt := candidateReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-			reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
-			k.SetReward(ctx, reward)
-		}
-	}
-}
 
-// DistributeMiningReward distributes mining rewards to candidates and their delegators
-func (k Keeper) DistributeMiningReward(ctx sdk.Context, totalReward sdk.Int) {
-	candidates := k.GetValidatorCandidates(ctx)
-	totalStake := GetCandidatesTotalStake(candidates)
-
-	for _, candidate := range candidates {
-		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
-		for _, delegator := range candidate.Delegators {
-			reward, _ := k.GetReward(ctx, delegator.EthAddress)
-			rewardAmt := candidateReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-			reward.MiningReward = reward.MiningReward.Add(rewardAmt)
+			switch rewardType {
+			case ServiceReward:
+				reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
+			case MiningReward:
+				reward.MiningReward = reward.MiningReward.Add(rewardAmt)
+			}
 			k.SetReward(ctx, reward)
 		}
 	}

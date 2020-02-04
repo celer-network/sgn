@@ -2,6 +2,7 @@ package subscribe
 
 import (
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -16,7 +17,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	}
 
 	if latestEpoch.TotalFee.IsPositive() {
-		keeper.validatorKeeper.DistributeServiceReward(ctx, latestEpoch.TotalFee)
+		keeper.validatorKeeper.DistributeReward(ctx, latestEpoch.TotalFee, validator.ServiceReward)
 	}
 
 	newEpoch := global.NewEpoch(latestEpoch.Id.AddRaw(1), now)
