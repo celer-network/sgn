@@ -235,7 +235,7 @@ func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate)
 		}
 		candidate, found := k.GetCandidate(ctx, ethAddr)
 
-		if found {
+		if found && candidate.StakingPool.IsPositive() {
 			candidates = append(candidates, candidate)
 		}
 	}
