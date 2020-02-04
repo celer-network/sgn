@@ -15,21 +15,35 @@ message TransactorLog {
 message MsgLog {
     string type = 1;
     string eth_address = 2;
-    string chan_id = 3;
-    uint64 chan_seq_num = 4;
-    string trigger_tx_hash = 5;
-    string guard_tx_hash = 6;
-    string pub_key = 7;
-    repeated string transactor = 8;
-    string candidate_addr = 9;
-    string delegator_addr = 10;
-    uint64 slash_nonce = 11;
-    uint64 block_num = 12;
-    string chan_peer_from = 13;
-    string deposit = 14;
+    string pub_key = 3;
+    repeated string transactor = 4;
+    string candidate_addr = 5;
+    string delegator_addr = 6;
+    ChannelInfo chan_info = 7;
+    Penalty penalty = 8;
+    uint64 block_num = 9;
+    string deposit = 10;
 
     string sender = 99;
     double execution_time_ms = 100;
     repeated string error = 101;
     repeated string warn = 102;
+}
+
+message ChannelInfo {
+    string chan_id = 1;
+    string peer_from = 2;
+    uint64 seq_num = 3;
+    string trigger_tx_hash = 4;
+    string guard_tx_hash = 5;
+    repeated string guards = 6;
+    uint32 guard_index = 7;
+    uint64 trigger_blknum = 8;
+    uint64 guard_blknum = 9;
+}
+
+message Penalty {
+    uint64 nonce = 1;
+    string validator = 2;
+    string reason = 3;
 }

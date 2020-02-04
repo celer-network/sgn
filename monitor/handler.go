@@ -123,13 +123,12 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
-	log.Infoln("New Penalty", nonce)
-
 	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, nonce)
 	if err != nil {
-		log.Errorln("Query penalty err", err)
+		log.Errorf("Query penalty %d err %s", nonce, err)
 		return
 	}
+	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, nonce)
 
 	sig, err := m.ethClient.SignMessage(penalty.PenaltyProtoBytes)
 	if err != nil {
