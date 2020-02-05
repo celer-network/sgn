@@ -34,18 +34,16 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err := cmd.Run()
+	tf.ChkErr(err, "Failed to make localnet-down-nodes")
 
 	log.Infoln("make prepare-sgn-data")
 	cmd = exec.Command("make", "prepare-sgn-data")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err = cmd.Run()
+	tf.ChkErr(err, "Failed to make prepare-sgn-data")
 
 	log.Infoln("Updating config files of SGN nodes")
 	for i := 0; i < 3; i++ {
@@ -55,20 +53,21 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 		tf.ChkErr(err, "Failed to read config")
 		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-		viper.WriteConfig()
+		err = viper.WriteConfig()
+		tf.ChkErr(err, "Failed to write config")
 	}
 
 	log.Infoln("SetContracts")
-	tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+	err = tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+	tf.ChkErr(err, "Failed to SetContracts")
 
 	log.Infoln("make localnet-up-nodes")
 	cmd = exec.Command("make", "localnet-up-nodes")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err = cmd.Run()
+	tf.ChkErr(err, "Failed to make localnet-up-nodes")
 }
 
 func shutdownNode(node uint) {
@@ -89,7 +88,8 @@ func turnOffMonitor(node uint) {
 	err := viper.ReadInConfig()
 	tf.ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagStartMonitor, false)
-	viper.WriteConfig()
+	err = viper.WriteConfig()
+	tf.ChkErr(err, "Failed to write config")
 	viper.Set(common.FlagStartMonitor, true)
 
 	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))
