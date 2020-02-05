@@ -1,4 +1,4 @@
-package testing
+package testcommon
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	protobuf "github.com/golang/protobuf/proto"
@@ -39,6 +42,35 @@ func ChkTxStatus(s uint64, txname string) {
 		log.Fatalln(txname, "tx failed")
 	}
 	log.Infoln(txname, "tx success")
+}
+
+func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
+	keystoreBytes, err := ioutil.ReadFile(ksfile)
+	if err != nil {
+		return
+	}
+	key, err := keystore.DecryptKey(keystoreBytes, "")
+	if err != nil {
+		return
+	}
+	addr = key.Address
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), "")
+	if err != nil {
+		return
+	}
+	return
+}
+
+func GetEthPrivateKey(ksfile string) (*ecdsa.PrivateKey, error) {
+	keystoreBytes, err := ioutil.ReadFile(ksfile)
+	if err != nil {
+		return nil, err
+	}
+	key, err := keystore.DecryptKey(keystoreBytes, "")
+	if err != nil {
+		return nil, err
+	}
+	return key.PrivateKey, nil
 }
 
 func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,

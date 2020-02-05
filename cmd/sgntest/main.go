@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/testing"
-	"github.com/celer-network/sgn/testing/osp"
+	tc "github.com/celer-network/sgn/test/common"
+	"github.com/celer-network/sgn/test/osp"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 )
@@ -19,7 +19,7 @@ func main() {
 
 	// Construct Root Command
 	rootCmd.AddCommand(
-		testing.DeployCommand(),
+		tc.DeployCommand(),
 		osp.ServeCommand(),
 	)
 

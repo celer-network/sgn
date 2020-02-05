@@ -10,33 +10,33 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/spf13/viper"
 )
 
-func setupNewSGNEnv(sgnParams *tf.SGNParams, testName string) []tf.Killable {
+func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 	if sgnParams == nil {
-		sgnParams = &tf.SGNParams{
+		sgnParams = &tc.SGNParams{
 			BlameTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MinStakingPool:         big.NewInt(100),
 			SidechainGoLiveTimeout: big.NewInt(0),
-			CelrAddr:               tf.E2eProfile.CelrAddr,
+			CelrAddr:               tc.E2eProfile.CelrAddr,
 			MaxValidatorNum:        big.NewInt(11),
 		}
 	}
-	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+	tc.E2eProfile.GuardAddr = tc.DeployGuardContract(sgnParams)
 
 	updateSGNConfig()
 
 	sgnProc, err := startSidechain(outRootDir, testName)
-	tf.ChkErr(err, "start sidechain")
-	tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+	tc.ChkErr(err, "start sidechain")
+	tc.DefaultTestEthClient.SetContracts(tc.E2eProfile.GuardAddr.String(), tc.E2eProfile.LedgerAddr.String())
 
-	killable := []tf.Killable{sgnProc}
+	killable := []tc.Killable{sgnProc}
 	if sgnParams.StartGateway {
 		gatewayProc, err := StartGateway(outRootDir, testName)
-		tf.ChkErr(err, "start gateway")
+		tc.ChkErr(err, "start gateway")
 		killable = append(killable, gatewayProc)
 	}
 
@@ -48,14 +48,14 @@ func updateSGNConfig() {
 
 	viper.SetConfigFile("../../../config.json")
 	err := viper.ReadInConfig()
-	tf.ChkErr(err, "failed to read config")
+	tc.ChkErr(err, "failed to read config")
 
 	clientKeystore, err := filepath.Abs("../../keys/client0.json")
-	tf.ChkErr(err, "get client keystore path")
+	tc.ChkErr(err, "get client keystore path")
 
-	viper.Set(common.FlagEthWS, tf.EthInstance)
-	viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
-	viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
+	viper.Set(common.FlagEthWS, tc.EthInstance)
+	viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
+	viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
 }

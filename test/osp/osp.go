@@ -15,7 +15,7 @@ import (
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
@@ -83,8 +83,8 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
-	tf.DefaultTestEthClient = user
-	channelID, err := tf.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
+	tc.DefaultTestEthClient = user
+	channelID, err := tc.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
 	if err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	if err != nil {
 		return
 	}
-	tf.WaitMinedWithChk(context.Background(), user.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(context.Background(), user.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
 
 	if gateway == "" {
 		msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), ts.Key.GetAddress())

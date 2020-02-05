@@ -13,7 +13,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 )
 
 var (
@@ -33,27 +33,27 @@ func TestMain(m *testing.M) {
 	common.EnableLogLongFile()
 
 	// mkdir out root
-	outRootDir = fmt.Sprintf("%s%d/", tf.OutRootDirPrefix, time.Now().Unix())
+	outRootDir = fmt.Sprintf("%s%d/", tc.OutRootDirPrefix, time.Now().Unix())
 	err := os.MkdirAll(outRootDir, os.ModePerm)
-	tf.ChkErr(err, "creating root dir")
+	tc.ChkErr(err, "creating root dir")
 	log.Infoln("Using folder:", outRootDir)
 	// set testing pkg level path
 	// start geth, not waiting for it to be fully ready. also watch geth proc
 	// if geth exits with non-zero, os.Exit(1)
 	ethProc, err := startMainchain()
-	tf.ChkErr(err, "starting mainchain")
-	tf.SleepWithLog(2, "starting mainchain")
+	tc.ChkErr(err, "starting mainchain")
+	tc.SleepWithLog(2, "starting mainchain")
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
-	err = tf.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{mainchain.Hex2Addr(tf.EthAddresses[0])})
-	tf.ChkErr(err, "fund server")
-	tf.SetupDefaultTestEthClient()
-	tf.SetupE2eProfile()
+	err = tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{mainchain.Hex2Addr(tc.EthAddresses[0])})
+	tc.ChkErr(err, "fund server")
+	tc.SetupDefaultTestEthClient()
+	tc.SetupE2eProfile()
 
 	// make install sgn and sgncli
 	err = installSgn()
-	tf.ChkErr(err, "installing sgn and sgncli")
+	tc.ChkErr(err, "installing sgn and sgncli")
 
 	// run all e2e tests
 	ret := m.Run()

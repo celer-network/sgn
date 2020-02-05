@@ -1,18 +1,14 @@
 package testcommon
 
 import (
-	"crypto/ecdsa"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/transactor"
 	sgnval "github.com/celer-network/sgn/x/validator"
 	vtypes "github.com/celer-network/sgn/x/validator/types"
@@ -20,44 +16,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/stretchr/testify/assert"
 )
-
-func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
-	keystoreBytes, err := ioutil.ReadFile(ksfile)
-	if err != nil {
-		return
-	}
-	key, err := keystore.DecryptKey(keystoreBytes, "")
-	if err != nil {
-		return
-	}
-	addr = key.Address
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), "")
-	if err != nil {
-		return
-	}
-	return
-}
-
-func GetEthPrivateKey(ksfile string) (*ecdsa.PrivateKey, error) {
-	keystoreBytes, err := ioutil.ReadFile(ksfile)
-	if err != nil {
-		return nil, err
-	}
-	key, err := keystore.DecryptKey(keystoreBytes, "")
-	if err != nil {
-		return nil, err
-	}
-	return key.PrivateKey, nil
-}
 
 func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
 		ethAddr, auth, err := GetAuth(ethkss[i])
-		tf.ChkTestErr(t, err, "failed to get auth")
+		ChkTestErr(t, err, "failed to get auth")
 		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], amts[i], big.NewInt(1), true)
 	}
 }
@@ -68,18 +34,18 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 
 	// get sgnAddr
 	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
-	tf.ChkTestErr(t, err, "failed to parse sgn address")
+	ChkTestErr(t, err, "failed to parse sgn address")
 
 	// add candidate
-	err = tf.InitializeCandidate(auth, sgnAddr, minAmt)
-	tf.ChkTestErr(t, err, "failed to initialize candidate")
+	err = InitializeCandidate(auth, sgnAddr, minAmt)
+	ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Infof("Query sgn about the validator candidate %s ...", ethAddr.Hex())
 	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
 
 	// self delegate stake
-	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, amt)
-	tf.ChkTestErr(t, err, "failed to delegate stake")
+	err = DelegateStake(E2eProfile.CelrContract, E2eProfile.GuardAddr, auth, ethAddr, amt)
+	ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
 	CheckDelegator(t, transactor, ethAddr, ethAddr, amt)
@@ -104,7 +70,7 @@ func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 		}
 		time.Sleep(2 * time.Second)
 	}
-	tf.ChkTestErr(t, err, "failed to queryDelegator")
+	ChkTestErr(t, err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator's delegator:", delegator)
 	assert.Equal(t, expectedRes, delegator.String(), "The expected result should be: "+expectedRes)
 }
@@ -120,7 +86,7 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 		}
 		time.Sleep(2 * time.Second)
 	}
-	tf.ChkTestErr(t, err, "failed to queryCandidate")
+	ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }
@@ -135,7 +101,7 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop strin
 		}
 		time.Sleep(2 * time.Second)
 	}
-	tf.ChkTestErr(t, err, "failed to queryValidator")
+	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
 	assert.Equal(t, expAmt.String(), validator.Tokens.String(), "validator token should be "+expAmt.String())
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
@@ -151,7 +117,7 @@ func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop
 		}
 		time.Sleep(2 * time.Second)
 	}
-	tf.ChkTestErr(t, err, "failed to queryValidator")
+	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
@@ -166,7 +132,7 @@ func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum i
 		}
 		time.Sleep(2 * time.Second)
 	}
-	tf.ChkTestErr(t, err, "failed to queryValidators")
+	ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, expNum, len(validators), "The length of validators should be: "+strconv.Itoa(expNum))
 }

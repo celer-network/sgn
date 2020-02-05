@@ -5,23 +5,22 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	tc "github.com/celer-network/sgn/test/e2e/common"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func setUpValidator(maxValidatorNum *big.Int) {
 	log.Infoln("set up new sgn env")
-	p := &tf.SGNParams{
+	p := &tc.SGNParams{
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(1),
 		MinStakingPool:         big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tf.E2eProfile.CelrAddr,
+		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        maxValidatorNum,
 	}
 	setupNewSGNEnv(p)
-	tf.SleepWithLog(10, "sgn being ready")
+	tc.SleepWithLog(10, "sgn being ready")
 }
 
 func TestE2EValidator(t *testing.T) {
@@ -36,14 +35,14 @@ func validatorTest(t *testing.T) {
 	log.Info("======================== Test validator ===========================")
 	setUpValidator(big.NewInt(11))
 
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
-		tf.SgnCLIHome,
-		tf.SgnChainID,
-		tf.SgnNodeURI,
-		tf.SgnCLIAddr,
-		tf.SgnPassphrase,
-		tf.SgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 
 	// delegation ratio. V0 : V1 : V2 = 2 : 1 : 1
@@ -54,32 +53,32 @@ func validatorTest(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		log.Infoln("Adding validator", i)
 		// get auth
-		ethAddr, auth, err := tc.GetAuth(tf.EthKeystores[i])
-		tf.ChkTestErr(t, err, "failed to get auth")
-		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tf.SgnOperators[i], amts[i], big.NewInt(1), true)
+		ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[i])
+		tc.ChkTestErr(t, err, "failed to get auth")
+		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[i], amts[i], big.NewInt(1), true)
 		tc.CheckValidatorNum(t, transactor, i+1)
 	}
 
 	log.Infoln("---------- It should fail to add validator 2 without enough delegation ----------")
-	ethAddr, auth, err := tc.GetAuth(tf.EthKeystores[2])
-	tf.ChkTestErr(t, err, "failed to get auth")
+	ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[2])
+	tc.ChkTestErr(t, err, "failed to get auth")
 	initialDelegation := big.NewInt(1)
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tf.SgnOperators[2], initialDelegation, big.NewInt(10), false)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], initialDelegation, big.NewInt(10), false)
 	log.Info("Query sgn about validators to check if validator 2 is not added...")
 	tc.CheckValidatorNum(t, transactor, 2)
 
 	log.Infoln("---------- It should correctly add validator 2 with enough delegation ----------")
-	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
-	tf.ChkTestErr(t, err, "failed to delegate stake")
+	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
+	tc.ChkTestErr(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)
-	tc.CheckValidator(t, transactor, tf.SgnOperators[2], amts[2], sdk.Bonded)
+	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
 
 	log.Infoln("---------- It should successfully remove validator 2 caused by intendWithdraw ----------")
-	err = tf.IntendWithdraw(auth, ethAddr, amts[2])
-	tf.ChkTestErr(t, err, "failed to intendWithdraw stake")
+	err = tc.IntendWithdraw(auth, ethAddr, amts[2])
+	tc.ChkTestErr(t, err, "failed to intendWithdraw stake")
 	log.Info("Query sgn about the validators to check if it has correct number of validators...")
 	tc.CheckValidatorNum(t, transactor, 2)
-	tc.CheckValidatorStatus(t, transactor, tf.SgnOperators[2], sdk.Unbonding)
+	tc.CheckValidatorStatus(t, transactor, tc.SgnOperators[2], sdk.Unbonding)
 
 	// TODO: normally add back validator 1
 }
@@ -89,26 +88,26 @@ func replaceValidatorTest(t *testing.T) {
 	log.Info("========================  Test replacing validator ===========================")
 	setUpValidator(big.NewInt(2))
 
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
-		tf.SgnCLIHome,
-		tf.SgnChainID,
-		tf.SgnNodeURI,
-		tf.SgnCLIAddr,
-		tf.SgnPassphrase,
-		tf.SgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
 	// add two validators, 0 and 1
-	tc.AddValidators(t, transactor, tf.EthKeystores[:2], tf.SgnOperators[:2], amts[:2])
+	tc.AddValidators(t, transactor, tc.EthKeystores[:2], tc.SgnOperators[:2], amts[:2])
 
 	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
-	ethAddr, auth, err := tc.GetAuth(tf.EthKeystores[2])
-	tf.ChkTestErr(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tf.SgnOperators[2], amts[2], big.NewInt(1), true)
+	ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[2])
+	tc.ChkTestErr(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], amts[2], big.NewInt(1), true)
 
 	log.Info("Query sgn about the validators...")
 	tc.CheckValidatorNum(t, transactor, 2)
-	tc.CheckValidator(t, transactor, tf.SgnOperators[1], amts[1], sdk.Unbonding)
+	tc.CheckValidator(t, transactor, tc.SgnOperators[1], amts[1], sdk.Unbonding)
 }

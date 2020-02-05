@@ -1,6 +1,5 @@
 // Copyright 2018 Celer Network
-
-package testing
+package testcommon
 
 import (
 	"os"

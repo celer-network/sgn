@@ -1,4 +1,4 @@
-package testing
+package testcommon
 
 import (
 	"github.com/celer-network/sgn/mainchain"
