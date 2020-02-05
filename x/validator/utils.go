@@ -23,13 +23,3 @@ func InitAccount(ctx sdk.Context, keeper Keeper, accAddress sdk.AccAddress) {
 		keeper.accountKeeper.SetAccount(ctx, account)
 	}
 }
-
-func GetCandidatesTotalStake(candidates []Candidate) sdk.Int {
-	totalStake := sdk.ZeroInt()
-
-	for _, candidate := range candidates {
-		totalStake = totalStake.Add(candidate.StakingPool)
-	}
-
-	return totalStake
-}
