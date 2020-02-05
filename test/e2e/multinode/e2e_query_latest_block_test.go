@@ -43,7 +43,7 @@ func queryLatestBlockTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
-	tc.AddValidators(t, transactor, tc.EthKeystores[:], tc.EthKeystorePps[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.EthKeystores[:], tc.SgnOperators[:], amts)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")

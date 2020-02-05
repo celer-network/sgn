@@ -54,14 +54,14 @@ func validatorTest(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		log.Infoln("Adding validator", i)
 		// get auth
-		ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[i], tc.EthKeystorePps[i])
+		ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[i])
 		tf.ChkTestErr(t, err, "failed to get auth")
 		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[i], amts[i], big.NewInt(1), true)
 		tc.CheckValidatorNum(t, transactor, i+1)
 	}
 
 	log.Infoln("---------- It should fail to add validator 2 without enough delegation ----------")
-	ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[2], tc.EthKeystorePps[2])
+	ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[2])
 	tf.ChkTestErr(t, err, "failed to get auth")
 	initialDelegation := big.NewInt(1)
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], initialDelegation, big.NewInt(10), false)
@@ -101,10 +101,10 @@ func replaceValidatorTest(t *testing.T) {
 
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
 	// add two validators, 0 and 1
-	tc.AddValidators(t, transactor, tc.EthKeystores[:2], tc.EthKeystorePps[:2], tc.SgnOperators[:2], amts[:2])
+	tc.AddValidators(t, transactor, tc.EthKeystores[:2], tc.SgnOperators[:2], amts[:2])
 
 	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
-	ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[2], tc.EthKeystorePps[2])
+	ethAddr, auth, err := tc.GetAuth(tc.EthKeystores[2])
 	tf.ChkTestErr(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], amts[2], big.NewInt(1), true)
 

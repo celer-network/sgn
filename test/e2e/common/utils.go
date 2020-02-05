@@ -23,28 +23,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func GetAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
-	keystoreBytes, err := ioutil.ReadFile(ks)
+func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
+	keystoreBytes, err := ioutil.ReadFile(ksfile)
 	if err != nil {
 		return
 	}
-	key, err := keystore.DecryptKey(keystoreBytes, pp)
+	key, err := keystore.DecryptKey(keystoreBytes, "")
 	if err != nil {
 		return
 	}
 	addr = key.Address
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), pp)
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), "")
 	if err != nil {
 		return
 	}
-
 	return
 }
 
-func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, ethpps, sgnops []string, amts []*big.Int) {
+func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
-		ethAddr, auth, err := GetAuth(ethkss[i], ethpps[i])
+		ethAddr, auth, err := GetAuth(ethkss[i])
 		tf.ChkTestErr(t, err, "failed to get auth")
 		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], amts[i], big.NewInt(1), true)
 	}
