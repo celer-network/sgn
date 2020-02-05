@@ -54,10 +54,10 @@ func NewParams(epochLength, blkTimeDiffLower, blkTimeDiffUpper int64, confirmati
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeyEpochLength, &p.EpochLength},
-		{KeyBlkTimeDiffLower, &p.BlkTimeDiffLower},
-		{KeyBlkTimeDiffUpper, &p.BlkTimeDiffUpper},
-		{KeyConfirmationCount, &p.ConfirmationCount},
+		{Key: KeyEpochLength, Value: &p.EpochLength},
+		{Key: KeyBlkTimeDiffLower, Value: &p.BlkTimeDiffLower},
+		{Key: KeyBlkTimeDiffUpper, Value: &p.BlkTimeDiffUpper},
+		{Key: KeyConfirmationCount, Value: &p.ConfirmationCount},
 	}
 }
 
