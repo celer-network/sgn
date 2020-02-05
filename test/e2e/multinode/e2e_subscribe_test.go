@@ -80,9 +80,13 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Call subscribe on guard contract...")
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10) // 100 CELR
-	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
+	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, new(big.Int).Mul(amt, big.NewInt(2)))
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+
+	_, err = guardContract.ContributeToMiningPool(auth, amt)
+	tf.ChkTestErr(t, err, "failed to call ContributeToMiningPool of Guard contract")
+
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
@@ -168,7 +172,8 @@ func subscribeTest(t *testing.T) {
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
 	tf.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
-	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %d, ServiceReward: %s`, mainchain.Addr2Hex(ethAddress), 0, "476190476190476190")
+	assert.True(t, reward.MiningReward.IsPositive(), "Minging reward should be larger than 0")
+	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`, mainchain.Addr2Hex(ethAddress), reward.MiningReward.String(), "476190476190476190")
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")
