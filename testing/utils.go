@@ -33,7 +33,7 @@ func ChkErr(err error, msg string) {
 	}
 }
 
-// if status isn't 1 (sucess), log.Fatal
+// if status isn't 1 (success), log.Fatal
 func ChkTxStatus(s uint64, txname string) {
 	if s != 1 {
 		log.Fatalln(txname, "tx failed")

@@ -96,7 +96,8 @@ func DeployCommand() *cobra.Command {
 			}
 			guardAddr := DeployGuardContract(sgnParams)
 			viper.Set(common.FlagEthGuardAddress, guardAddr)
-			viper.WriteConfig()
+			err = viper.WriteConfig()
+			ChkErr(err, "failed to write config")
 
 			if ws == EthInstance {
 				amt := new(big.Int)

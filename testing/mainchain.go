@@ -124,7 +124,10 @@ func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []m
 		if err != nil {
 			return err
 		}
-		mainchain.WaitMined(ctx, conn, tx, 0)
+		_, err = mainchain.WaitMined(ctx, conn, tx, 0)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
