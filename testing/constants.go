@@ -14,7 +14,7 @@ const (
 	SgnPassphrase = "12341234"
 	SgnGasPrice   = ""
 	SgnNodeURI    = "tcp://localhost:26657"
-	SgnTransactor = "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
+	SgnCLIAddr    = "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
 	SgnCLIHome    = "../../../docker-volumes/node0/sgncli"
 
 	SgnBlockInterval = 1

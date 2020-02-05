@@ -61,7 +61,7 @@ func subscribeTest(t *testing.T) {
 		tf.SgnCLIHome,
 		tf.SgnChainID,
 		tf.SgnNodeURI,
-		tf.SgnTransactor,
+		tf.SgnCLIAddr,
 		tf.SgnPassphrase,
 		tf.SgnGasPrice,
 	)
