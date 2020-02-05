@@ -69,7 +69,7 @@ func subscribeTest(t *testing.T) {
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnOperator),
+		viper.GetStringSlice(common.FlagSgnTransactors)[1],
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
