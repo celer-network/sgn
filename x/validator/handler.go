@@ -74,12 +74,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	}
 
 	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
-	account := keeper.accountKeeper.GetAccount(ctx, accAddress)
-	if account == nil {
-		log.Infof("Set new account %x for candidate %s", accAddress, msg.EthAddress)
-		account = keeper.accountKeeper.NewAccountWithAddress(ctx, accAddress)
-		keeper.accountKeeper.SetAccount(ctx, account)
-	}
+	InitAccount(ctx, keeper, accAddress)
 
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
@@ -144,6 +139,10 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
 
 	candidate.Transactors = msg.Transactors
+	for _, transactor := range candidate.Transactors {
+		InitAccount(ctx, keeper, transactor)
+	}
+
 	keeper.SetCandidate(ctx, msg.EthAddress, candidate)
 
 	return okRes, nil

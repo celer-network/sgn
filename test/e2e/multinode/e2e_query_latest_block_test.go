@@ -34,10 +34,10 @@ func queryLatestBlockTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHomes[1],
+		sgnCLIHome,
 		sgnChainID,
-		sgnNodeURIs[1],
-		sgnOperators[1],
+		sgnNodeURI,
+		sgnTransactor,
 		sgnPassphrase,
 		sgnGasPrice,
 	)

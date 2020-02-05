@@ -45,10 +45,10 @@ func slashTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHomes[0],
+		sgnCLIHome,
 		sgnChainID,
-		sgnNodeURIs[0],
-		sgnOperators[0],
+		sgnNodeURI,
+		sgnTransactor,
 		sgnPassphrase,
 		sgnGasPrice,
 	)
