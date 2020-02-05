@@ -11,10 +11,10 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	tc "github.com/celer-network/sgn/test/e2e/common"
 	tf "github.com/celer-network/sgn/testing"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -65,7 +65,8 @@ func gatewayTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
-	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
+	Client1PrivKey, err := tc.GetEthPrivateKey(tf.EthKeystores[1])
+	tf.ChkTestErr(t, err, "failed to get client 1 private key")
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 

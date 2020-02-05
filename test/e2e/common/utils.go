@@ -1,6 +1,7 @@
 package testcommon
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -38,6 +39,18 @@ func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err e
 		return
 	}
 	return
+}
+
+func GetEthPrivateKey(ksfile string) (*ecdsa.PrivateKey, error) {
+	keystoreBytes, err := ioutil.ReadFile(ksfile)
+	if err != nil {
+		return nil, err
+	}
+	key, err := keystore.DecryptKey(keystoreBytes, "")
+	if err != nil {
+		return nil, err
+	}
+	return key.PrivateKey, nil
 }
 
 func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, sgnops []string, amts []*big.Int) {

@@ -54,7 +54,7 @@ func SetupE2eProfile() {
 	}
 }
 
-func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
+func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
 	if err != nil {
 		return err
@@ -73,12 +73,12 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 		if err != nil {
 			return err
 		}
-		tx := types.NewTransaction(nonce, *r, auth.Value, gasLimit, gasPrice, nil)
+		tx := types.NewTransaction(nonce, r, auth.Value, gasLimit, gasPrice, nil)
 		tx, err = auth.Signer(types.NewEIP155Signer(chainID), senderAddr, tx)
 		if err != nil {
 			return err
 		}
-		if *r == mainchain.ZeroAddr {
+		if r == mainchain.ZeroAddr {
 			log.Info("Advancing block")
 		} else {
 			log.Infof("Sending %s wei from %x to %x, nonce %d. tx: %x", amt, senderAddr, r, nonce, tx.Hash())
@@ -97,11 +97,11 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 		if receipt.Status != 1 {
 			log.Errorf("tx failed. tx hash: %x", receipt.TxHash)
 		} else {
-			if *r == mainchain.ZeroAddr {
+			if r == mainchain.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)
 				log.Infoln("Current block number:", head.Number.String())
 			} else {
-				bal, _ := conn.BalanceAt(ctx, *r, nil)
+				bal, _ := conn.BalanceAt(ctx, r, nil)
 				log.Infoln("Tx done.", r.String(), "bal:", bal.String())
 			}
 		}
@@ -109,7 +109,7 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 	return nil
 }
 
-func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*mainchain.Addr, amount string) error {
+func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount string) error {
 	conn := DefaultTestEthClient.Client
 	ctx := context.Background()
 
@@ -120,7 +120,7 @@ func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*
 	tokenAmt := new(big.Int)
 	tokenAmt.SetString(amount, 10)
 	for _, addr := range addrs {
-		tx, err := erc20Contract.Transfer(auth, *addr, tokenAmt)
+		tx, err := erc20Contract.Transfer(auth, addr, tokenAmt)
 		if err != nil {
 			return err
 		}

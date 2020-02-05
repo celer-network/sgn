@@ -34,16 +34,16 @@ func queryLatestBlockTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		tc.SgnCLIHome,
-		tc.SgnChainID,
-		tc.SgnNodeURI,
-		tc.SgnTransactor,
-		tc.SgnPassphrase,
-		tc.SgnGasPrice,
+		tf.SgnCLIHome,
+		tf.SgnChainID,
+		tf.SgnNodeURI,
+		tf.SgnTransactor,
+		tf.SgnPassphrase,
+		tf.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
-	tc.AddValidators(t, transactor, tc.EthKeystores[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tf.EthKeystores[:], tf.SgnOperators[:], amts)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")

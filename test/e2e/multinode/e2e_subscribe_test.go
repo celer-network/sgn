@@ -19,7 +19,6 @@ import (
 	stypes "github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 )
@@ -59,22 +58,23 @@ func subscribeTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		tc.SgnCLIHome,
-		tc.SgnChainID,
-		tc.SgnNodeURI,
-		tc.SgnTransactor,
-		tc.SgnPassphrase,
-		tc.SgnGasPrice,
+		tf.SgnCLIHome,
+		tf.SgnChainID,
+		tf.SgnNodeURI,
+		tf.SgnTransactor,
+		tf.SgnPassphrase,
+		tf.SgnGasPrice,
 	)
-	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
+	Client1PrivKey, err := tc.GetEthPrivateKey(tf.EthKeystores[1])
+	tf.ChkTestErr(t, err, "failed to get client 1 private key")
 
 	log.Infoln("Add validators...")
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	tc.AddValidators(t, transactor, tc.EthKeystores[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tf.EthKeystores[:], tf.SgnOperators[:], amts)
 	turnOffMonitor(2)
 
 	log.Infoln("Open channel...")
-	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
+	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.EthAddresses[1]), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
@@ -127,7 +127,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	var request stypes.Request
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tf.EthAddresses[0], tf.EthAddresses[1], 0, signedSimplexStateBytes)
 	for retry := 0; retry < 30; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -151,7 +151,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tf.EthAddresses[0], tf.EthAddresses[1], 0, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < 60; retry++ {
@@ -203,16 +203,16 @@ func subscribeTest(t *testing.T) {
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	tf.ChkTestErr(t, err, "failed to query penalty")
-	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.EthAddresses[2])
+	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tf.EthAddresses[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.EthAddresses[2])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tf.EthAddresses[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < 30; retry++ {
-		ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.EthAddresses[2]))
+		ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tf.EthAddresses[2]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "99000000000000000" {
 			break

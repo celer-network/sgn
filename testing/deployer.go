@@ -14,10 +14,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	privateNet = "ws://127.0.0.1:8546"
-)
-
 func DeployLedgerContract() mainchain.Addr {
 	ctx := context.Background()
 	channelAddrBundle := deploy.DeployAll(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, ctx, 0)
@@ -79,9 +75,10 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
-			if ws == privateNet {
+			if ws == EthInstance {
 				SetEthBaseKs("./docker-volumes/geth-env")
-				err = FundAddrsETH("1"+strings.Repeat("0", 20), []*mainchain.Addr{&Client0Addr, &Client1Addr})
+				err = FundAddrsETH("1"+strings.Repeat("0", 20),
+					[]mainchain.Addr{mainchain.Hex2Addr(EthAddresses[0]), mainchain.Hex2Addr(EthAddresses[1])})
 				ChkErr(err, "fund client0 and client1")
 			}
 
@@ -101,7 +98,7 @@ func DeployCommand() *cobra.Command {
 			viper.Set(common.FlagEthGuardAddress, guardAddr)
 			viper.WriteConfig()
 
-			if ws == privateNet {
+			if ws == EthInstance {
 				amt := new(big.Int)
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
 				tx, err := erc20.Approve(DefaultTestEthClient.Auth, guardAddr, amt)

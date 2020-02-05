@@ -19,7 +19,6 @@ import (
 	stypes "github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	protobuf "github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -73,14 +72,15 @@ func subscribeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
-	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
+	Client1PrivKey, err := tc.GetEthPrivateKey(tf.EthKeystores[1])
+	tf.ChkTestErr(t, err, "failed to get client 1 private key")
 
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
-	tc.AddCandidateWithStake(t, transactor, ethAddress, auth, tf.Client0SGNAddrStr, amt, big.NewInt(1), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddress, auth, tf.SgnOperators[0], amt, big.NewInt(1), true)
 
 	log.Infoln("Open channel...")
-	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)
+	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.EthAddresses[1]), privKey, Client1PrivKey)
 	tf.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
@@ -131,7 +131,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	var request stypes.Request
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tf.EthAddresses[0], tf.EthAddresses[1], 0, signedSimplexStateBytes)
 	for retry := 0; retry < 30; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -155,7 +155,7 @@ func subscribeTest(t *testing.T) {
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tf.Client0AddrStr, tf.Client1AddrStr, 0, signedSimplexStateBytes)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tf.EthAddresses[0], tf.EthAddresses[1], 0, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tf.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < 60; retry++ {
