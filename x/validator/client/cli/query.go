@@ -200,14 +200,15 @@ func QueryBondedValidators(cliCtx context.CLIContext, storeName string) (validat
 	return
 }
 
-// addrStr should in the format like cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
+// addrStr should be bech32 cosmos account address with previs cosmos
 func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string) (validator stakingTypes.Validator, err error) {
-	addr, err := sdk.ValAddressFromBech32(addrStr)
+	addr, err := sdk.AccAddressFromBech32(addrStr)
 	if err != nil {
+		log.Error(err)
 		return
 	}
 
-	res, _, err := cliCtx.QueryStore(stakingTypes.GetValidatorKey(addr), storeName)
+	res, _, err := cliCtx.QueryStore(stakingTypes.GetValidatorKey(sdk.ValAddress(addr)), storeName)
 	if err != nil {
 		return
 	}

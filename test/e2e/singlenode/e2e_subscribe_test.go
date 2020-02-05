@@ -77,7 +77,7 @@ func subscribeTest(t *testing.T) {
 
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
-	tc.AddCandidateWithStake(t, transactor, ethAddress, auth, tf.Client0SGNAddrStr, tf.Client0SGNValAddrStr, amt, big.NewInt(1), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddress, auth, tf.Client0SGNAddrStr, amt, big.NewInt(1), true)
 
 	log.Infoln("Open channel...")
 	channelId, err := tf.OpenChannel(ethAddress, mainchain.Hex2Addr(tf.Client1AddrStr), privKey, Client1PrivKey)

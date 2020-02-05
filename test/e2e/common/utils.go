@@ -41,20 +41,18 @@ func GetAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err e
 	return
 }
 
-func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, ethpps, sgnops, sgnopAddrs []string, amts []*big.Int) {
+func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, ethpps, sgnops []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
 		ethAddr, auth, err := GetAuth(ethkss[i], ethpps[i])
 		tf.ChkTestErr(t, err, "failed to get auth")
-		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], sgnopAddrs[i], amts[i], big.NewInt(1), true)
+		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], amts[i], big.NewInt(1), true)
 	}
 }
 
 func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ethAddr mainchain.Addr, auth *bind.TransactOpts,
-	sgnop, sgnopAddr string,
-	amt *big.Int, minAmt *big.Int,
-	isValidator bool) {
+	sgnop string, amt *big.Int, minAmt *big.Int, isValidator bool) {
 
 	// get sgnAddr
 	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
@@ -79,7 +77,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 
 	if isValidator {
 		log.Info("Query sgn about the validators to check if it has correct stakes...")
-		CheckValidator(t, transactor, sgnopAddr, amt, sdk.Bonded)
+		CheckValidator(t, transactor, sgnop, amt, sdk.Bonded)
 	}
 }
 
@@ -115,11 +113,11 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }
 
-func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expAmt *big.Int, expStatus sdk.BondStatus) {
+func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop string, expAmt *big.Int, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < 30; retry++ {
-		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnopAddr)
+		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnop)
 		if err == nil && validator.Status == expStatus && validator.Tokens.BigInt().Cmp(expAmt) == 0 {
 			break
 		}
@@ -131,11 +129,11 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnopAddr s
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
-func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnopAddr string, expStatus sdk.BondStatus) {
+func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop string, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < 30; retry++ {
-		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnopAddr)
+		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnop)
 		if err == nil && validator.Status == expStatus {
 			break
 		}

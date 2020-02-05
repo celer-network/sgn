@@ -55,6 +55,6 @@ func validatorTest(t *testing.T) {
 	)
 	amt := big.NewInt(1000000000000000000)
 
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tf.Client0SGNAddrStr, tf.Client0SGNValAddrStr, amt, big.NewInt(1), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tf.Client0SGNAddrStr, amt, big.NewInt(1), true)
 	tc.CheckValidatorNum(t, transactor, 1)
 }
