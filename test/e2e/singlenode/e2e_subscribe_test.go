@@ -84,9 +84,13 @@ func subscribeTest(t *testing.T) {
 	tf.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
-	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, amt)
+	tx, err := tf.E2eProfile.CelrContract.Approve(auth, tf.E2eProfile.GuardAddr, new(big.Int).Mul(amt, big.NewInt(2)))
 	tf.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+
+	_, err = guardContract.ContributeToMiningPool(auth, amt)
+	tf.ChkTestErr(t, err, "failed to call ContributeToMiningPool of Guard contract")
+
 	tx, err = guardContract.Subscribe(auth, amt)
 	tf.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
 	tf.WaitMinedWithChk(ctx, conn, tx, tf.BlockDelay, "Subscribe on Guard contract")
