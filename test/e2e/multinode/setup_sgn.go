@@ -49,7 +49,7 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	for i := 0; i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
 		viper.SetConfigFile(configPath)
-		err := viper.ReadInConfig()
+		err = viper.ReadInConfig()
 		tf.ChkErr(err, "Failed to read config")
 		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
 		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
