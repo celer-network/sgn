@@ -35,7 +35,7 @@ type TestProfile struct {
 func TearDown(tokill []Killable) {
 	log.Info("Tear down Killables ing...")
 	for _, p := range tokill {
-		p.Kill()
+		ChkErr(p.Kill(), "kill process error")
 	}
 }
 
@@ -50,9 +50,9 @@ func StartProcess(name string, args ...string) *os.Process {
 	return cmd.Process
 }
 
-func KillProcess(process *os.Process) {
-	process.Kill()
-	process.Release()
+func KillProcess(p *os.Process) {
+	ChkErr(p.Kill(), "kill process error")
+	ChkErr(p.Release(), "kill release error")
 }
 
 func ChkTestErr(t *testing.T, err error, msg string) {
