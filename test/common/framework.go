@@ -4,9 +4,19 @@ package testcommon
 import (
 	"os"
 	"os/exec"
+	"testing"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+)
+
+// runtime variables, will be initialized before each test
+var (
+	// E2eProfile will be updated and used for each test
+	// not support parallel tests
+	E2eProfile *TestProfile
+
+	DefaultTestEthClient = &mainchain.EthClient{}
 )
 
 // Killable is object that has Kill() func
@@ -43,4 +53,17 @@ func StartProcess(name string, args ...string) *os.Process {
 func KillProcess(process *os.Process) {
 	process.Kill()
 	process.Release()
+}
+
+func ChkTestErr(t *testing.T, err error, msg string) {
+	if err != nil {
+		log.Errorln(msg, err)
+		t.FailNow()
+	}
+}
+
+func ChkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalln(msg, err)
+	}
 }

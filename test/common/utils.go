@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -22,27 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	protobuf "github.com/golang/protobuf/proto"
 )
-
-func ChkTestErr(t *testing.T, err error, msg string) {
-	if err != nil {
-		log.Errorln(msg, err)
-		t.FailNow()
-	}
-}
-
-func ChkErr(err error, msg string) {
-	if err != nil {
-		log.Fatalln(msg, err)
-	}
-}
-
-// if status isn't 1 (success), log.Fatal
-func ChkTxStatus(s uint64, txname string) {
-	if s != 1 {
-		log.Fatalln(txname, "tx failed")
-	}
-	log.Infoln(txname, "tx success")
-}
 
 func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
 	keystoreBytes, err := ioutil.ReadFile(ksfile)
@@ -79,7 +57,10 @@ func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
 	defer cancel()
 	receipt, err := mainchain.WaitMined(ctx2, conn, tx, BlockDelay)
 	ChkErr(err, "WaitMined error")
-	ChkTxStatus(receipt.Status, txname)
+	if receipt.Status != ethtypes.ReceiptStatusSuccessful {
+		log.Fatalln(txname, "tx failed")
+	}
+	log.Infoln(txname, "tx success")
 }
 
 func LogBlkNum(conn *ethclient.Client) {
