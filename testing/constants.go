@@ -9,7 +9,7 @@ const (
 	OutRootDirPrefix = "/tmp/celer_e2e_"
 	EnvDir           = "../../env"
 
-	EthInstance = "ws://127.0.0.1:8546"
+	LocalGeth = "ws://127.0.0.1:8546"
 
 	// etherbase and client addr/sgn addr/priv key in hex
 	Client0AddrStr       = "6a6d2a97da1c453a4e099e8054865a0a59728863"

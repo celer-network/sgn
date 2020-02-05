@@ -32,7 +32,7 @@ func SetEthBaseKs(prefix string) {
 // SetupDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
 // Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
 func SetupDefaultTestEthClient() {
-	err := DefaultTestEthClient.SetClient(EthInstance)
+	err := DefaultTestEthClient.SetClient(LocalGeth)
 	ChkErr(err, "failed to connect to the Ethereum")
 	// TODO: move keys to testing and make this path not hardcoded
 	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
@@ -266,7 +266,7 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 
 func prepareEtherBaseClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
-	conn, err := ethclient.Dial(EthInstance)
+	conn, err := ethclient.Dial(LocalGeth)
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
 	}
