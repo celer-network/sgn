@@ -14,7 +14,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	tc "github.com/celer-network/sgn/test/common"
-	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/subscribe"
 	stypes "github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/celer-network/sgn/x/validator"
