@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	tc "github.com/celer-network/sgn/test/e2e/common"
 	tf "github.com/celer-network/sgn/testing"
 )
 
@@ -47,9 +48,9 @@ func TestMain(m *testing.M) {
 	tf.SleepWithLog(5, "geth start")
 
 	log.Infoln("fund each validator's ETH address 100 ETH")
-	addr0 := mainchain.Hex2Addr(ethAddresses[0])
-	addr1 := mainchain.Hex2Addr(ethAddresses[1])
-	addr2 := mainchain.Hex2Addr(ethAddresses[2])
+	addr0 := mainchain.Hex2Addr(tc.EthAddresses[0])
+	addr1 := mainchain.Hex2Addr(tc.EthAddresses[1])
+	addr2 := mainchain.Hex2Addr(tc.EthAddresses[2])
 	err := tf.FundAddrsETH("1"+strings.Repeat("0", 20), []*mainchain.Addr{&addr0, &addr1, &addr2})
 	tf.ChkErr(err, "fund each validator ETH")
 

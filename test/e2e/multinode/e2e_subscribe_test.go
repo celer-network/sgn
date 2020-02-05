@@ -59,18 +59,18 @@ func subscribeTest(t *testing.T) {
 
 	transactor := tf.NewTransactor(
 		t,
-		sgnCLIHome,
-		sgnChainID,
-		sgnNodeURI,
-		sgnTransactor,
-		sgnPassphrase,
-		sgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnTransactor,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 	Client1PrivKey, _ := crypto.HexToECDSA(tf.Client1Priv)
 
 	log.Infoln("Add validators...")
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	tc.AddValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.EthKeystores[:], tc.EthKeystorePps[:], tc.SgnOperators[:], amts)
 	turnOffMonitor(2)
 
 	log.Infoln("Open channel...")
@@ -203,16 +203,16 @@ func subscribeTest(t *testing.T) {
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	tf.ChkTestErr(t, err, "failed to query penalty")
-	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, ethAddresses[2])
+	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.EthAddresses[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, ethAddresses[2])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.EthAddresses[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < 30; retry++ {
-		ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
+		ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.EthAddresses[2]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "99000000000000000" {
 			break
