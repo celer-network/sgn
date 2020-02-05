@@ -46,8 +46,8 @@ func NewParams(requestGuardCount uint64, requestCost sdk.Int) Params {
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeyRequestGuardCount, &p.RequestGuardCount},
-		{KeyRequestCost, &p.RequestCost},
+		{Key: KeyRequestGuardCount, Value: &p.RequestGuardCount},
+		{Key: KeyRequestCost, Value: &p.RequestCost},
 	}
 }
 

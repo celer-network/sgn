@@ -1,12 +1,20 @@
 package validator
 
 import (
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+)
+
+type RewardType int
+
+const (
+	ServiceReward = iota
+	MiningReward
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
@@ -175,7 +183,7 @@ func (k Keeper) GetReward(ctx sdk.Context, ethAddress string) (Reward, bool) {
 	rewardKey := GetRewardKey(ethAddress)
 
 	if !store.Has(rewardKey) {
-		return Reward{}, false
+		return NewReward(ethAddress), false
 	}
 
 	var reward Reward
@@ -190,16 +198,48 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 	store.Set(GetRewardKey(reward.Receiver), k.cdc.MustMarshalBinaryBare(reward))
 }
 
-// HandleServiceReward distributes rewards to a candidate and its delegators
-func (k Keeper) HandleServiceReward(ctx sdk.Context, rewardCandidate Candidate, totalReward sdk.Int) {
-	for _, delegator := range rewardCandidate.Delegators {
-		reward, found := k.GetReward(ctx, delegator.EthAddress)
-		if !found {
-			reward = NewReward(delegator.EthAddress)
-		}
+// DistributeServiceReward distributes rewards to candidates and their delegators
+func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardType RewardType) {
+	candidates := k.GetValidatorCandidates(ctx)
+	totalStake := sdk.ZeroInt()
 
-		rewardAmt := totalReward.Mul(delegator.DelegatedStake).Quo(rewardCandidate.StakingPool)
-		reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
-		k.SetReward(ctx, reward)
+	for _, candidate := range candidates {
+		totalStake = totalStake.Add(candidate.StakingPool)
 	}
+
+	for _, candidate := range candidates {
+		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
+		for _, delegator := range candidate.Delegators {
+			reward, _ := k.GetReward(ctx, delegator.EthAddress)
+			rewardAmt := candidateReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+
+			switch rewardType {
+			case ServiceReward:
+				reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
+			case MiningReward:
+				reward.MiningReward = reward.MiningReward.Add(rewardAmt)
+			}
+			k.SetReward(ctx, reward)
+		}
+	}
+}
+
+// GetValidatorCandidates get candidates info for current validators
+func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate) {
+	validators := k.GetValidators(ctx)
+
+	for _, validator := range validators {
+		ethAddr := mainchain.FormatAddrHex(validator.Description.Identity)
+		if ethAddr == "" {
+			log.Errorf("Miss eth address for validator %x", validator.OperatorAddress)
+			continue
+		}
+		candidate, found := k.GetCandidate(ctx, ethAddr)
+
+		if found && candidate.StakingPool.IsPositive() {
+			candidates = append(candidates, candidate)
+		}
+	}
+
+	return
 }
