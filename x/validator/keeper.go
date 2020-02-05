@@ -201,7 +201,11 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 // DistributeServiceReward distributes rewards to candidates and their delegators
 func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardType RewardType) {
 	candidates := k.GetValidatorCandidates(ctx)
-	totalStake := GetCandidatesTotalStake(candidates)
+	totalStake := sdk.ZeroInt()
+
+	for _, candidate := range candidates {
+		totalStake = totalStake.Add(candidate.StakingPool)
+	}
 
 	for _, candidate := range candidates {
 		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
