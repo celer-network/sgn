@@ -42,9 +42,10 @@ type RestServer struct {
 }
 
 const (
-	userFlag    = "user"
-	ospFlag     = "osp"
-	gatewayFlag = "gateway"
+	userFlag       = "user"
+	ospFlag        = "osp"
+	gatewayFlag    = "gateway"
+	blockDelayFlag = "blockDelay"
 )
 
 // NewRestServer creates a new rest server instance
@@ -95,7 +96,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	if err != nil {
 		return
 	}
-	tf.WaitMinedWithChk(context.Background(), user.Client, tx, tf.BlockDelay, "Subscribe on Guard contract")
+	tf.WaitMinedWithChk(context.Background(), user.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
 
 	if gateway == "" {
 		msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), ts.Key.GetAddress())
@@ -183,5 +184,6 @@ func ServeCommand() *cobra.Command {
 	cmd.Flags().String(userFlag, "./test/keys/client0.json", "user keystore path")
 	cmd.Flags().String(ospFlag, "./test/keys/client1.json", "osp keystore path")
 	cmd.Flags().String(gatewayFlag, "", "gateway url")
+	cmd.Flags().Uint64(blockDelayFlag, 5, "block delay")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
