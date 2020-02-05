@@ -128,7 +128,7 @@ func NewRestServer() (rs *RestServer, err error) {
 }
 
 // Start starts the rest server
-func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) (err error) {
+func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) error {
 	server.TrapSignal(func() {
 		err := rs.listener.Close()
 		log.Errorln("error closing listener err", err)
@@ -139,9 +139,10 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
+	var err error
 	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
-		return
+		return err
 	}
 	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 
