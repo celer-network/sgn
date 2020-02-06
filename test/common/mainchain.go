@@ -35,7 +35,7 @@ func SetupDefaultTestEthClient() {
 	err := DefaultTestEthClient.SetClient(EthInstance)
 	ChkErr(err, "failed to connect to the Ethereum")
 	// TODO: move keys to testing and make this path not hardcoded
-	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
+	err = DefaultTestEthClient.SetAuth("../../keys/ethnode0.json", "")
 	ChkErr(err, "failed to create auth")
 }
 
