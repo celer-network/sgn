@@ -182,8 +182,8 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(userFlag, "./test/keys/ethnode0.json", "user keystore path")
-	cmd.Flags().String(ospFlag, "./test/keys/ethnode1.json", "osp keystore path")
+	cmd.Flags().String(userFlag, "./test/keys/ethks0.json", "user keystore path")
+	cmd.Flags().String(ospFlag, "./test/keys/ethks1.json", "osp keystore path")
 	cmd.Flags().String(gatewayFlag, "", "gateway url")
 	cmd.Flags().Uint64(blockDelayFlag, 5, "block delay")
 	return sdkFlags.RegisterRestServerFlags(cmd)

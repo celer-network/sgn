@@ -1,7 +1,7 @@
 {
   "eth": {
     "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
-    "keystore": "./keys/ethnode2.json",
+    "keystore": "./keys/ethks2.json",
     "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
     "passphrase": "",
     "ws": "ws://geth:8546"

@@ -50,7 +50,7 @@ func updateSGNConfig() {
 	err := viper.ReadInConfig()
 	tc.ChkErr(err, "failed to read config")
 
-	clientKeystore, err := filepath.Abs("../../keys/ethnode0.json")
+	clientKeystore, err := filepath.Abs("../../keys/ethks0.json")
 	tc.ChkErr(err, "get client keystore path")
 
 	viper.Set(common.FlagEthWS, tc.LocalGeth)
