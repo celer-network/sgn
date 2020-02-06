@@ -83,7 +83,7 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
-	tc.DefaultTestEthClient = user
+	tc.DefaultEthClient = user
 	channelID, err := tc.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
 	if err != nil {
 		return

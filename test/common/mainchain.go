@@ -24,11 +24,10 @@ import (
 var (
 	etherBaseKs = EnvDir + "/keystore/etherbase.json"
 
-	EtherBase = &mainchain.EthClient{}
-	Client0   = &mainchain.EthClient{}
-	Client1   = &mainchain.EthClient{}
-
-	DefaultTestEthClient = &mainchain.EthClient{}
+	EtherBase        = &mainchain.EthClient{}
+	Client0          = &mainchain.EthClient{}
+	Client1          = &mainchain.EthClient{}
+	DefaultEthClient = &mainchain.EthClient{}
 )
 
 func SetEthBaseKs(prefix string) {
@@ -41,7 +40,7 @@ func SetupEthClients() {
 	EtherBase = setupEthClient(etherBaseKs)
 	Client0 = setupEthClient(ClientEthKs[0])
 	Client1 = setupEthClient(ClientEthKs[1])
-	DefaultTestEthClient = setupEthClient("../../keys/ethks0.json")
+	DefaultEthClient = Client0
 }
 
 func setupEthClient(ksfile string) *mainchain.EthClient {
@@ -64,10 +63,6 @@ func SetContracts(guardAddr, ledgerAddr mainchain.Addr) error {
 		return err
 	}
 	err = Client1.SetContracts(guardAddr.String(), ledgerAddr.String())
-	if err != nil {
-		return err
-	}
-	err = DefaultTestEthClient.SetContracts(guardAddr.String(), ledgerAddr.String())
 	if err != nil {
 		return err
 	}

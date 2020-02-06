@@ -65,12 +65,12 @@ func DeployCommand() *cobra.Command {
 			}
 
 			ws := viper.GetString(common.FlagEthWS)
-			err = DefaultTestEthClient.SetClient(ws)
+			err = DefaultEthClient.SetClient(ws)
 			if err != nil {
 				return
 			}
 
-			err = DefaultTestEthClient.SetAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
+			err = DefaultEthClient.SetAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
 			if err != nil {
 				return
 			}
@@ -102,9 +102,9 @@ func DeployCommand() *cobra.Command {
 			if ws == LocalGeth {
 				amt := new(big.Int)
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
-				tx, err := erc20.Approve(DefaultTestEthClient.Auth, guardAddr, amt)
+				tx, err := erc20.Approve(DefaultEthClient.Auth, guardAddr, amt)
 				ChkErr(err, "failed to approve erc20")
-				WaitMinedWithChk(context.Background(), DefaultTestEthClient.Client, tx, 0, "approve erc20")
+				WaitMinedWithChk(context.Background(), DefaultEthClient.Client, tx, 0, "approve erc20")
 			}
 
 			return nil
