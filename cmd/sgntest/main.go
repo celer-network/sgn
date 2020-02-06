@@ -20,6 +20,7 @@ func main() {
 	// Construct Root Command
 	rootCmd.AddCommand(
 		tc.DeployCommand(),
+		tc.AccountsCommand(),
 		osp.ServeCommand(),
 	)
 

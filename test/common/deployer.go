@@ -75,7 +75,7 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
-			if ws == EthInstance {
+			if ws == LocalGeth {
 				SetEthBaseKs("./docker-volumes/geth-env")
 				err = FundAddrsETH("1"+strings.Repeat("0", 20),
 					[]mainchain.Addr{mainchain.Hex2Addr(EthAddresses[0]), mainchain.Hex2Addr(EthAddresses[1])})
@@ -99,7 +99,7 @@ func DeployCommand() *cobra.Command {
 			err = viper.WriteConfig()
 			ChkErr(err, "failed to write config")
 
-			if ws == EthInstance {
+			if ws == LocalGeth {
 				amt := new(big.Int)
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
 				tx, err := erc20.Approve(DefaultTestEthClient.Auth, guardAddr, amt)
@@ -107,7 +107,7 @@ func DeployCommand() *cobra.Command {
 				WaitMinedWithChk(context.Background(), DefaultTestEthClient.Client, tx, 0, "approve erc20")
 			}
 
-			return
+			return nil
 		},
 	}
 
