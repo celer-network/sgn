@@ -119,6 +119,7 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "content-type")
 		if r.Method == http.MethodOptions {
 			return
 		}
