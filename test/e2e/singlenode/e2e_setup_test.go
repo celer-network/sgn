@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund client0Addr 100 ETH
-	err = tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{mainchain.Hex2Addr(tc.EthAddresses[0])})
+	err = tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{mainchain.Hex2Addr(tc.ValEthAddrs[0])})
 	tc.ChkErr(err, "fund server")
 	tc.SetupDefaultTestEthClient()
 	tc.SetupE2eProfile()

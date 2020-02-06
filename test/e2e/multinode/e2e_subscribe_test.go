@@ -64,16 +64,16 @@ func subscribeTest(t *testing.T) {
 		tc.SgnPassphrase,
 		tc.SgnGasPrice,
 	)
-	Client1PrivKey, err := tc.GetEthPrivateKey(tc.EthKeystores[1])
+	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
 	tc.ChkTestErr(t, err, "failed to get client 1 private key")
 
 	log.Infoln("Add validators...")
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	tc.AddValidators(t, transactor, tc.EthKeystores[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
 	turnOffMonitor(2)
 
 	log.Infoln("Open channel...")
-	channelId, err := tc.OpenChannel(ethAddress, mainchain.Hex2Addr(tc.EthAddresses[1]), privKey, Client1PrivKey)
+	channelId, err := tc.OpenChannel(ethAddress, mainchain.Hex2Addr(tc.ValEthAddrs[1]), privKey, Client1PrivKey)
 	tc.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
@@ -126,7 +126,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	var request stypes.Request
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.EthAddresses[0], tc.EthAddresses[1], 0, signedSimplexStateBytes)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.ValEthAddrs[0], tc.ValEthAddrs[1], 0, signedSimplexStateBytes)
 	for retry := 0; retry < 30; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -150,7 +150,7 @@ func subscribeTest(t *testing.T) {
 	tc.WaitMinedWithChk(ctx, conn, tx, tc.BlockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tc.EthAddresses[0], tc.EthAddresses[1], 0, signedSimplexStateBytes)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tc.ValEthAddrs[0], tc.ValEthAddrs[1], 0, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < 60; retry++ {
@@ -202,16 +202,16 @@ func subscribeTest(t *testing.T) {
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	tc.ChkTestErr(t, err, "failed to query penalty")
-	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.EthAddresses[2])
+	expectedRes = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.EthAddresses[2])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.ValEthAddrs[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < 30; retry++ {
-		ci, _ := tc.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.EthAddresses[2]))
+		ci, _ := tc.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "99000000000000000" {
 			break

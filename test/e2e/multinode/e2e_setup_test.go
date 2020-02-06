@@ -47,9 +47,9 @@ func TestMain(m *testing.M) {
 	tc.SleepWithLog(5, "geth start")
 
 	log.Infoln("fund each validator's ETH address 100 ETH")
-	addr0 := mainchain.Hex2Addr(tc.EthAddresses[0])
-	addr1 := mainchain.Hex2Addr(tc.EthAddresses[1])
-	addr2 := mainchain.Hex2Addr(tc.EthAddresses[2])
+	addr0 := mainchain.Hex2Addr(tc.ValEthAddrs[0])
+	addr1 := mainchain.Hex2Addr(tc.ValEthAddrs[1])
+	addr2 := mainchain.Hex2Addr(tc.ValEthAddrs[2])
 	err := tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{addr0, addr1, addr2})
 	tc.ChkErr(err, "fund each validator ETH")
 

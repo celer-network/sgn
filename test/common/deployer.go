@@ -78,7 +78,7 @@ func DeployCommand() *cobra.Command {
 			if ws == LocalGeth {
 				SetEthBaseKs("./docker-volumes/geth-env")
 				err = FundAddrsETH("1"+strings.Repeat("0", 20),
-					[]mainchain.Addr{mainchain.Hex2Addr(EthAddresses[0]), mainchain.Hex2Addr(EthAddresses[1])})
+					[]mainchain.Addr{mainchain.Hex2Addr(ValEthAddrs[0]), mainchain.Hex2Addr(ValEthAddrs[1])})
 				ChkErr(err, "fund client0 and client1")
 			}
 

@@ -71,7 +71,7 @@ func subscribeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
-	Client1PrivKey, err := tc.GetEthPrivateKey(tc.EthKeystores[1])
+	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
 	tc.ChkTestErr(t, err, "failed to get client 1 private key")
 
 	amt := new(big.Int)
@@ -79,7 +79,7 @@ func subscribeTest(t *testing.T) {
 	tc.AddCandidateWithStake(t, transactor, ethAddress, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
 
 	log.Infoln("Open channel...")
-	channelId, err := tc.OpenChannel(ethAddress, mainchain.Hex2Addr(tc.EthAddresses[1]), privKey, Client1PrivKey)
+	channelId, err := tc.OpenChannel(ethAddress, mainchain.Hex2Addr(tc.ValEthAddrs[1]), privKey, Client1PrivKey)
 	tc.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
@@ -130,7 +130,7 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	var request stypes.Request
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.EthAddresses[0], tc.EthAddresses[1], 0, signedSimplexStateBytes)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.ValEthAddrs[0], tc.ValEthAddrs[1], 0, signedSimplexStateBytes)
 	for retry := 0; retry < 30; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -154,7 +154,7 @@ func subscribeTest(t *testing.T) {
 	tc.WaitMinedWithChk(ctx, conn, tx, tc.BlockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tc.EthAddresses[0], tc.EthAddresses[1], 0, signedSimplexStateBytes)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tc.ValEthAddrs[0], tc.ValEthAddrs[1], 0, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < 60; retry++ {

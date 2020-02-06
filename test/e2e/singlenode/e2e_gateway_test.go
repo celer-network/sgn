@@ -64,7 +64,7 @@ func gatewayTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
-	Client1PrivKey, err := tc.GetEthPrivateKey(tc.EthKeystores[1])
+	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
 	tc.ChkTestErr(t, err, "failed to get client 1 private key")
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
