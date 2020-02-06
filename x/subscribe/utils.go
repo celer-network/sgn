@@ -2,7 +2,6 @@ package subscribe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -74,7 +73,7 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 // Make sure signature match peer addresses for the channel
 func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
 	if len(signedSimplexState.Sigs) != 2 {
-		return errors.New("incorrect sigs count")
+		return fmt.Errorf("incorrect sigs count %d", len(signedSimplexState.Sigs))
 	}
 
 	for i := 0; i < 2; i++ {
@@ -84,7 +83,7 @@ func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 		}
 
 		if request.PeerAddresses[i] != mainchain.Addr2Hex(addr) {
-			return errors.New("invalid sig")
+			return fmt.Errorf("invalid eth signer %d %s %s", i, request.PeerAddresses[i], mainchain.Addr2Hex(addr))
 		}
 	}
 

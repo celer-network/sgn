@@ -37,7 +37,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 func handleMsgSignPenalty(ctx sdk.Context, keeper Keeper, msg MsgSignPenalty, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.SlashNonce = msg.Nonce
+	logEntry.Penalty.Nonce = msg.Nonce
 
 	res := sdk.Result{}
 	validator, found := keeper.validatorKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
@@ -52,6 +52,8 @@ func handleMsgSignPenalty(ctx sdk.Context, keeper Keeper, msg MsgSignPenalty, lo
 	if !found {
 		return res, fmt.Errorf("Penalty does not exist")
 	}
+	logEntry.Penalty.Validator = penalty.ValidatorAddr
+	logEntry.Penalty.Reason = penalty.Reason
 
 	err := penalty.AddSig(msg.Sig, validator.Description.Identity)
 	if err != nil {

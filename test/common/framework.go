@@ -1,13 +1,20 @@
 // Copyright 2018 Celer Network
-
-package testing
+package testcommon
 
 import (
 	"os"
 	"os/exec"
+	"testing"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+)
+
+// runtime variables, will be initialized before each test
+var (
+	// E2eProfile will be updated and used for each test
+	// not support parallel tests
+	E2eProfile *TestProfile
 )
 
 // Killable is object that has Kill() func
@@ -26,7 +33,7 @@ type TestProfile struct {
 func TearDown(tokill []Killable) {
 	log.Info("Tear down Killables ing...")
 	for _, p := range tokill {
-		p.Kill()
+		ChkErr(p.Kill(), "kill process error")
 	}
 }
 
@@ -41,7 +48,20 @@ func StartProcess(name string, args ...string) *os.Process {
 	return cmd.Process
 }
 
-func KillProcess(process *os.Process) {
-	process.Kill()
-	process.Release()
+func KillProcess(p *os.Process) {
+	ChkErr(p.Kill(), "kill process error")
+	ChkErr(p.Release(), "kill release error")
+}
+
+func ChkTestErr(t *testing.T, err error, msg string) {
+	if err != nil {
+		log.Errorln(msg, err)
+		t.FailNow()
+	}
+}
+
+func ChkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalln(msg, err)
+	}
 }

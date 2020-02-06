@@ -15,7 +15,7 @@ import (
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
@@ -83,8 +83,8 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
-	tf.DefaultTestEthClient = user
-	channelID, err := tf.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
+	tc.DefaultEthClient = user
+	channelID, err := tc.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
 	if err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	if err != nil {
 		return
 	}
-	tf.WaitMinedWithChk(context.Background(), user.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(context.Background(), user.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
 
 	if gateway == "" {
 		msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), ts.Key.GetAddress())
@@ -128,7 +128,7 @@ func NewRestServer() (rs *RestServer, err error) {
 }
 
 // Start starts the rest server
-func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) (err error) {
+func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) error {
 	server.TrapSignal(func() {
 		err := rs.listener.Close()
 		log.Errorln("error closing listener err", err)
@@ -139,9 +139,10 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
+	var err error
 	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
-		return
+		return err
 	}
 	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 
@@ -181,8 +182,8 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(userFlag, "./test/keys/client0.json", "user keystore path")
-	cmd.Flags().String(ospFlag, "./test/keys/client1.json", "osp keystore path")
+	cmd.Flags().String(userFlag, "./test/keys/ethks0.json", "user keystore path")
+	cmd.Flags().String(ospFlag, "./test/keys/ethks1.json", "osp keystore path")
 	cmd.Flags().String(gatewayFlag, "", "gateway url")
 	cmd.Flags().Uint64(blockDelayFlag, 5, "block delay")
 	return sdkFlags.RegisterRestServerFlags(cmd)

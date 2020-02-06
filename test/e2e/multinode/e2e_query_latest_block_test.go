@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	tc "github.com/celer-network/sgn/test/e2e/common"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +14,7 @@ import (
 func setUpQueryLatestBlock() {
 	log.Infoln("Set up new sgn env")
 	setupNewSGNEnv(nil)
-	tf.SleepWithLog(10, "sgn syncing")
+	tc.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
@@ -30,27 +29,26 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test queryLatestBlock ===========================")
 
-	conn := tf.DefaultTestEthClient.Client
-
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
-		sgnCLIHome,
-		sgnChainID,
-		sgnNodeURI,
-		sgnTransactor,
-		sgnPassphrase,
-		sgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
-	tc.AddValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
-	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
+	tc.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
+	conn := tc.Client0.Client
 	header, err := conn.HeaderByNumber(context.Background(), nil)
-	tf.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
+	tc.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
 	log.Infof("Latest block number on mainchain is %d", header.Number)
 
 	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")

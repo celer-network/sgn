@@ -8,7 +8,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	protobuf "github.com/golang/protobuf/proto"
@@ -43,7 +43,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tf.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user.PrivateKey, rs.osp.PrivateKey)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user.PrivateKey, rs.osp.PrivateKey)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -87,7 +87,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tf.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user.PrivateKey, rs.osp.PrivateKey)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user.PrivateKey, rs.osp.PrivateKey)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return

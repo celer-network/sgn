@@ -4,7 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func ParseTransactorAddrs(ts []string) (transactors []sdk.AccAddress, err error) {
+func ParseTransactorAddrs(ts []string) ([]sdk.AccAddress, error) {
+	var transactors []sdk.AccAddress
 	for _, t := range ts {
 		transactor, err := sdk.AccAddressFromBech32(t)
 		if err != nil {
@@ -14,5 +15,5 @@ func ParseTransactorAddrs(ts []string) (transactors []sdk.AccAddress, err error)
 		transactors = append(transactors, transactor)
 	}
 
-	return transactors, err
+	return transactors, nil
 }

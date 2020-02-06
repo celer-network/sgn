@@ -9,7 +9,7 @@ checkout_pr_merge: &checkout_pr_merge
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12.9
+      - image: circleci/golang:1.13
     resource_class: large
     steps:
       - checkout
@@ -17,11 +17,14 @@ jobs:
       - run: sudo chown -R circleci /go/bin # fix /go/bin permission for later restore
       - restore_cache:
           key: go-cache-{{ checksum "go.sum" }} # use go.mod should also work
-      # - run:
-      #     name: check shadow variable
-      #     command: |
-      #       which shadow || go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow  # modifies go.sum!
-      #       go vet -vettool=$(which shadow) ./...
+      - run:
+          name: check shadow variable
+          command: |
+            which shadow || go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow  # modifies go.sum!
+            go vet -vettool=$(which shadow) ./...
+      - run:
+          name: go vet source code
+          command: go vet ./...
       - run: make install-test
       - run:
           name: fetch geth if not found and run e2e test
