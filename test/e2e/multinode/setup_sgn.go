@@ -10,23 +10,23 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/spf13/viper"
 )
 
-func setupNewSGNEnv(sgnParams *tf.SGNParams) {
+func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 	log.Infoln("Deploy guard contract")
 	if sgnParams == nil {
-		sgnParams = &tf.SGNParams{
+		sgnParams = &tc.SGNParams{
 			BlameTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MinStakingPool:         big.NewInt(100),
 			SidechainGoLiveTimeout: big.NewInt(0),
-			CelrAddr:               tf.E2eProfile.CelrAddr,
+			CelrAddr:               tc.E2eProfile.CelrAddr,
 			MaxValidatorNum:        big.NewInt(11),
 		}
 	}
-	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+	tc.E2eProfile.GuardAddr = tc.DeployGuardContract(sgnParams)
 
 	log.Infoln("make localnet-down-nodes")
 	cmd := exec.Command("make", "localnet-down-nodes")
@@ -34,41 +34,39 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err := cmd.Run()
+	tc.ChkErr(err, "Failed to make localnet-down-nodes")
 
 	log.Infoln("make prepare-sgn-data")
 	cmd = exec.Command("make", "prepare-sgn-data")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err = cmd.Run()
+	tc.ChkErr(err, "Failed to make prepare-sgn-data")
 
 	log.Infoln("Updating config files of SGN nodes")
 	for i := 0; i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
 		viper.SetConfigFile(configPath)
-		err := viper.ReadInConfig()
-		tf.ChkErr(err, "Failed to read config")
-		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
-		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-		viper.WriteConfig()
+		err = viper.ReadInConfig()
+		tc.ChkErr(err, "Failed to read config")
+		viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
+		viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
+		err = viper.WriteConfig()
+		tc.ChkErr(err, "Failed to write config")
 	}
 
-	log.Infoln("SetContracts")
-	tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+	err = tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
+	tc.ChkErr(err, "Failed to SetContracts")
 
 	log.Infoln("make localnet-up-nodes")
 	cmd = exec.Command("make", "localnet-up-nodes")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err = cmd.Run()
+	tc.ChkErr(err, "Failed to make localnet-up-nodes")
 }
 
 func shutdownNode(node uint) {
@@ -87,9 +85,10 @@ func turnOffMonitor(node uint) {
 	configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", node)
 	viper.SetConfigFile(configPath)
 	err := viper.ReadInConfig()
-	tf.ChkErr(err, "Failed to read config")
+	tc.ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagStartMonitor, false)
-	viper.WriteConfig()
+	err = viper.WriteConfig()
+	tc.ChkErr(err, "Failed to write config")
 	viper.Set(common.FlagStartMonitor, true)
 
 	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))

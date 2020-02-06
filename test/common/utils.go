@@ -1,4 +1,4 @@
-package testing
+package testcommon
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"testing"
+	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -15,30 +15,40 @@ import (
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	protobuf "github.com/golang/protobuf/proto"
 )
 
-func ChkTestErr(t *testing.T, err error, msg string) {
+func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
+	keystoreBytes, err := ioutil.ReadFile(ksfile)
 	if err != nil {
-		log.Errorln(msg, err)
-		t.FailNow()
+		return
 	}
+	key, err := keystore.DecryptKey(keystoreBytes, "")
+	if err != nil {
+		return
+	}
+	addr = key.Address
+	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), "")
+	if err != nil {
+		return
+	}
+	return
 }
 
-func ChkErr(err error, msg string) {
+func GetEthPrivateKey(ksfile string) (*ecdsa.PrivateKey, error) {
+	keystoreBytes, err := ioutil.ReadFile(ksfile)
 	if err != nil {
-		log.Fatalln(msg, err)
+		return nil, err
 	}
-}
-
-// if status isn't 1 (sucess), log.Fatal
-func ChkTxStatus(s uint64, txname string) {
-	if s != 1 {
-		log.Fatalln(txname, "tx failed")
+	key, err := keystore.DecryptKey(keystoreBytes, "")
+	if err != nil {
+		return nil, err
 	}
-	log.Infoln(txname, "tx success")
+	return key.PrivateKey, nil
 }
 
 func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
@@ -47,7 +57,10 @@ func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
 	defer cancel()
 	receipt, err := mainchain.WaitMined(ctx2, conn, tx, BlockDelay)
 	ChkErr(err, "WaitMined error")
-	ChkTxStatus(receipt.Status, txname)
+	if receipt.Status != ethtypes.ReceiptStatusSuccessful {
+		log.Fatalln(txname, "tx failed")
+	}
+	log.Infoln(txname, "tx success")
 }
 
 func LogBlkNum(conn *ethclient.Client) {
@@ -115,9 +128,10 @@ func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKe
 		return nil, err
 	}
 
+	// TODO: sort the sigs
 	signedSimplexStateProto := &chain.SignedSimplexState{
 		SimplexState: simplexPaymentChannelBytes,
-		Sigs:         [][]byte{sig0, sig1},
+		Sigs:         [][]byte{sig1, sig0},
 	}
 
 	return signedSimplexStateProto, nil

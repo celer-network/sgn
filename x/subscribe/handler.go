@@ -100,8 +100,8 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	// reject guard request if the channel is not Operable
 	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
 	cid := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-	logEntry.ChanId = mainchain.Cid2Hex(cid)
-	logEntry.ChanSeqNum = simplexPaymentChannel.SeqNum
+	logEntry.ChanInfo.ChanId = mainchain.Cid2Hex(cid)
+	logEntry.ChanInfo.SeqNum = simplexPaymentChannel.SeqNum
 
 	status, err := keeper.ethClient.Ledger.GetChannelStatus(
 		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))}, cid)
@@ -135,9 +135,9 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.TriggerTxHash = msg.TxHash
-	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
-	logEntry.ChanPeerFrom = msg.PeerFrom
+	logEntry.ChanInfo.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.ChanInfo.PeerFrom = msg.PeerFrom
+	logEntry.ChanInfo.TriggerTxHash = msg.TxHash
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
@@ -164,9 +164,9 @@ func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, 
 func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.GuardTxHash = msg.TxHash
-	logEntry.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
-	logEntry.ChanPeerFrom = msg.PeerFrom
+	logEntry.ChanInfo.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
+	logEntry.ChanInfo.PeerFrom = msg.PeerFrom
+	logEntry.ChanInfo.GuardTxHash = msg.TxHash
 
 	res := sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
@@ -203,7 +203,9 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 	requestGuards := request.RequestGuards
 	blockNumberDiff := guardLog.BlockNumber - triggerLog.BlockNumber
 	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
-	log.Infoln("guard", guardIndex, guardLog.BlockNumber, triggerLog.BlockNumber)
+	logEntry.ChanInfo.GuardIndex = uint32(guardIndex)
+	logEntry.ChanInfo.TriggerBlknum = triggerLog.BlockNumber
+	logEntry.ChanInfo.GuardBlknum = guardLog.BlockNumber
 
 	var rewardValidator sdk.AccAddress
 	if guardIndex < len(requestGuards) {

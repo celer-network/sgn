@@ -1,7 +1,7 @@
 {
   "eth": {
     "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
-    "keystore": "./keys/client0.json",
+    "keystore": "./keys/ethks0.json",
     "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
     "passphrase": "",
     "ws": "ws://geth:8546"
@@ -16,7 +16,10 @@
     "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
     "passphrase": "12341234",
     "pubkey": "cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
-    "transactors": ["cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc"],
+    "transactors": [
+      "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
+      "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
+    ],
     "timeoutCommit": 2,
     "seedNode": true
   }

@@ -8,8 +8,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	tc "github.com/celer-network/sgn/test/e2e/common"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/slash"
 	stypes "github.com/celer-network/sgn/x/slash/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -18,16 +17,16 @@ import (
 
 func setUpSlash() {
 	log.Infoln("set up new sgn env")
-	p := &tf.SGNParams{
+	p := &tc.SGNParams{
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
 		MinStakingPool:         big.NewInt(0),
 		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tf.E2eProfile.CelrAddr,
+		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        big.NewInt(11),
 	}
 	setupNewSGNEnv(p)
-	tf.SleepWithLog(10, "sgn syncing")
+	tc.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2ESlash(t *testing.T) {
@@ -43,18 +42,18 @@ func slashTest(t *testing.T) {
 	log.Infoln("===================================================================")
 	log.Infoln("======================== Test slash ===========================")
 
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
-		sgnCLIHome,
-		sgnChainID,
-		sgnNodeURI,
-		sgnTransactor,
-		sgnPassphrase,
-		sgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
-	tc.AddValidators(t, transactor, ethKeystores[:], ethKeystorePps[:], sgnOperators[:], sgnOperatorValAddrs[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
 
 	shutdownNode(2)
 
@@ -62,8 +61,8 @@ func slashTest(t *testing.T) {
 	var penalty stypes.Penalty
 	var err error
 	nonce := uint64(0)
-	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, ethAddresses[2])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, ethAddresses[2])
+	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.ValEthAddrs[2])
 	for retry := 0; retry < 30; retry++ {
 		penalty, err = slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 		if err == nil && penalty.String() == expRes1 && penalty.PenalizedDelegators[0].String() == expRes2 &&
@@ -72,7 +71,7 @@ func slashTest(t *testing.T) {
 		}
 		time.Sleep(2 * time.Second)
 	}
-	tf.ChkTestErr(t, err, "failed to query penalty")
+	tc.ChkTestErr(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
@@ -82,7 +81,7 @@ func slashTest(t *testing.T) {
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < 30; retry++ {
-		ci, _ := tf.DefaultTestEthClient.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(ethAddresses[2]))
+		ci, _ := tc.Client0.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "99000000000000000" {
 			break

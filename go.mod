@@ -6,7 +6,7 @@ require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
 	github.com/celer-network/cChannel-eth-go v0.12.6
-	github.com/celer-network/goutils v0.1.1
+	github.com/celer-network/goutils v0.1.2
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.37.5
 	github.com/cosmos/go-bip39 v0.0.0-20180618194314-52158e4697b8

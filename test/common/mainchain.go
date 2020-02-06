@@ -1,6 +1,6 @@
 // Copyright 2018 Celer Network
 
-package testing
+package testcommon
 
 import (
 	"context"
@@ -23,20 +23,50 @@ import (
 
 var (
 	etherBaseKs = EnvDir + "/keystore/etherbase.json"
+
+	EtherBase        = &mainchain.EthClient{}
+	Client0          = &mainchain.EthClient{}
+	Client1          = &mainchain.EthClient{}
+	DefaultEthClient = &mainchain.EthClient{}
 )
 
 func SetEthBaseKs(prefix string) {
 	etherBaseKs = prefix + "/keystore/etherbase.json"
 }
 
-// SetupDefaultTestEthClient sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
+// SetupEthClients sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
 // Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
-func SetupDefaultTestEthClient() {
-	err := DefaultTestEthClient.SetClient(LocalGeth)
+func SetupEthClients() {
+	EtherBase = setupEthClient(etherBaseKs)
+	Client0 = setupEthClient(ClientEthKs[0])
+	Client1 = setupEthClient(ClientEthKs[1])
+	DefaultEthClient = Client0
+}
+
+func setupEthClient(ksfile string) *mainchain.EthClient {
+	ethClient := &mainchain.EthClient{}
+	err := ethClient.SetClient(LocalGeth)
 	ChkErr(err, "failed to connect to the Ethereum")
-	// TODO: move keys to testing and make this path not hardcoded
-	err = DefaultTestEthClient.SetAuth("../../keys/client0.json", "")
+	err = ethClient.SetAuth(ksfile, "")
 	ChkErr(err, "failed to create auth")
+	return ethClient
+}
+
+func SetContracts(guardAddr, ledgerAddr mainchain.Addr) error {
+	log.Infof("set contracts guard %x ledger %x", guardAddr, ledgerAddr)
+	err := EtherBase.SetContracts(guardAddr.String(), ledgerAddr.String())
+	if err != nil {
+		return err
+	}
+	err = Client0.SetContracts(guardAddr.String(), ledgerAddr.String())
+	if err != nil {
+		return err
+	}
+	err = Client1.SetContracts(guardAddr.String(), ledgerAddr.String())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func SetupE2eProfile() {
@@ -54,7 +84,7 @@ func SetupE2eProfile() {
 	}
 }
 
-func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
+func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
 	if err != nil {
 		return err
@@ -64,7 +94,7 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 	auth.Value = value
 	chainID := big.NewInt(883) // Private Mainchain Testnet
 	var gasLimit uint64 = 21000
-	for _, r := range recipients {
+	for _, addr := range recipients {
 		nonce, err := conn.PendingNonceAt(ctx, senderAddr)
 		if err != nil {
 			return err
@@ -73,15 +103,15 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 		if err != nil {
 			return err
 		}
-		tx := types.NewTransaction(nonce, *r, auth.Value, gasLimit, gasPrice, nil)
+		tx := types.NewTransaction(nonce, addr, auth.Value, gasLimit, gasPrice, nil)
 		tx, err = auth.Signer(types.NewEIP155Signer(chainID), senderAddr, tx)
 		if err != nil {
 			return err
 		}
-		if *r == mainchain.ZeroAddr {
+		if addr == mainchain.ZeroAddr {
 			log.Info("Advancing block")
 		} else {
-			log.Infof("Sending %s wei from %x to %x, nonce %d. tx: %x", amt, senderAddr, r, nonce, tx.Hash())
+			log.Infof("Sending ETH %s to %x from %x", amt, addr, senderAddr)
 		}
 
 		err = conn.SendTransaction(ctx, tx)
@@ -97,49 +127,50 @@ func FundAddrsETH(amt string, recipients []*mainchain.Addr) error {
 		if receipt.Status != 1 {
 			log.Errorf("tx failed. tx hash: %x", receipt.TxHash)
 		} else {
-			if *r == mainchain.ZeroAddr {
+			if addr == mainchain.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)
 				log.Infoln("Current block number:", head.Number.String())
 			} else {
-				bal, _ := conn.BalanceAt(ctx, *r, nil)
-				log.Infoln("Tx done.", r.String(), "bal:", bal.String())
+				bal, _ := conn.BalanceAt(ctx, addr, nil)
+				log.Infoln("Tx done.", addr.String(), "bal:", bal.String())
 			}
 		}
 	}
 	return nil
 }
 
-func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []*mainchain.Addr, amount string) error {
-	conn := DefaultTestEthClient.Client
-	ctx := context.Background()
-
-	erc20Contract, err := mainchain.NewERC20(erc20Addr, conn)
+func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount string) error {
+	erc20Contract, err := mainchain.NewERC20(erc20Addr, EtherBase.Client)
 	if err != nil {
 		return err
 	}
 	tokenAmt := new(big.Int)
 	tokenAmt.SetString(amount, 10)
 	for _, addr := range addrs {
-		tx, err := erc20Contract.Transfer(auth, *addr, tokenAmt)
+		tx, err := erc20Contract.Transfer(EtherBase.Auth, addr, tokenAmt)
 		if err != nil {
 			return err
 		}
-		mainchain.WaitMined(ctx, conn, tx, 0)
+		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, EtherBase.Auth.From)
+		_, err = mainchain.WaitMined(context.Background(), EtherBase.Client, tx, 0)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
-	log.Infof("Call openChannel on ledger contract %s %s", peer0Addr.String(), peer1Addr.String())
+	log.Infoln("Call openChannel on ledger contract", mainchain.Addr2Hex(peer0Addr), mainchain.Addr2Hex(peer1Addr))
 	tokenInfo := &entity.TokenInfo{
 		TokenType: entity.TokenType_ETH,
 	}
 	lowAddrDist := &entity.AccountAmtPair{
-		Account: peer0Addr.Bytes(),
+		Account: peer1Addr.Bytes(),
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	highAddrDist := &entity.AccountAmtPair{
-		Account: peer1Addr.Bytes(),
+		Account: peer0Addr.Bytes(),
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	initializer := &entity.PaymentChannelInitializer{
@@ -169,7 +200,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 
 	requestBytes, err := protobuf.Marshal(&chain.OpenChannelRequest{
 		ChannelInitializer: paymentChannelInitializerBytes,
-		Sigs:               [][]byte{sig0, sig1},
+		Sigs:               [][]byte{sig1, sig0},
 	})
 	if err != nil {
 		return
@@ -177,7 +208,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 
 	channelIdChan := make(chan [32]byte)
 	go monitorOpenChannel(channelIdChan)
-	_, err = DefaultTestEthClient.Ledger.OpenChannel(DefaultTestEthClient.Auth, requestBytes)
+	_, err = Client0.Ledger.OpenChannel(Client0.Auth, requestBytes)
 	if err != nil {
 		return
 	}
@@ -189,8 +220,8 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 }
 
 func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *big.Int) error {
-	conn := DefaultTestEthClient.Client
-	guardContract := DefaultTestEthClient.Guard
+	conn := EtherBase.Client
+	guardContract := EtherBase.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
@@ -205,8 +236,8 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 }
 
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int) error {
-	conn := DefaultTestEthClient.Client
-	guardContract := DefaultTestEthClient.Guard
+	conn := EtherBase.Client
+	guardContract := EtherBase.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
@@ -221,8 +252,8 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 }
 
 func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
-	conn := DefaultTestEthClient.Client
-	guardContract := DefaultTestEthClient.Guard
+	conn := EtherBase.Client
+	guardContract := EtherBase.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
@@ -243,7 +274,7 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 
 func monitorOpenChannel(channelIdChan chan [32]byte) {
 	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
-	sub, err := DefaultTestEthClient.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
+	sub, err := Client0.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
 	if err != nil {
 		log.Errorln("WatchInitializeCandidate err: ", err)
 		return
@@ -264,6 +295,7 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	}
 }
 
+// Remove this
 func prepareEtherBaseClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
 	conn, err := ethclient.Dial(LocalGeth)
