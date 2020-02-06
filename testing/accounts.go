@@ -27,50 +27,20 @@ func AccountsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accounts",
 		Short: "Add accounts in batch",
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			kb, err := keys.NewKeyBaseFromHomeFlag()
 			if err != nil {
 				return err
 			}
 
-			var addresses []string
-			passphrase := viper.GetString(passphraseFlag)
-			np := viper.GetString(namePrefixFlag)
-			count := viper.GetInt(countFlag)
-
-			for i := 0; i < count; i++ {
-				name := fmt.Sprintf("%s_%d", np, i)
-				info, err := kb.Get(name)
-				if err == nil {
-					log.Infof("Account %s has existed", name)
-					printAccount(info)
-					addresses = append(addresses, info.GetAddress().String())
-					continue
-				}
-
-				entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
-				if err != nil {
-					return err
-				}
-
-				mnemonic, err := bip39.NewMnemonic(entropySeed[:])
-				if err != nil {
-					return err
-				}
-
-				info, err = kb.CreateAccount(name, mnemonic, passphrase, "", 0, 0)
-				if err != nil {
-					return err
-				}
-
-				log.Infof("Account %s created", name)
-				printAccount(info)
-				addresses = append(addresses, info.GetAddress().String())
+			addresses, err := addAccounts(kb)
+			if err != nil {
+				return err
 			}
 
 			jsonString, err := keys.MarshalJSON(addresses)
 			if err != nil {
-				return
+				return err
 			}
 			log.Infoln("All addresses", string(jsonString))
 
@@ -81,13 +51,13 @@ func AccountsCommand() *cobra.Command {
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
 					cmd.Dir, _ = filepath.Abs(".")
-					if err := cmd.Run(); err == nil {
+					if err = cmd.Run(); err == nil {
 						log.Infof("Add address %s to genesis", address)
 					}
 				}
 			}
 
-			return
+			return nil
 		},
 	}
 
@@ -96,6 +66,46 @@ func AccountsCommand() *cobra.Command {
 	cmd.Flags().Int(countFlag, 1, "account count")
 	cmd.Flags().String(genesisCoinFlag, "", "amount of coin adding to genesis for the account")
 	return cmd
+}
+
+func addAccounts(kb cKeys.Keybase) ([]string, error) {
+	var addresses []string
+
+	passphrase := viper.GetString(passphraseFlag)
+	np := viper.GetString(namePrefixFlag)
+	count := viper.GetInt(countFlag)
+
+	for i := 0; i < count; i++ {
+		name := fmt.Sprintf("%s_%d", np, i)
+		info, err := kb.Get(name)
+		if err == nil {
+			log.Infof("Account %s has existed", name)
+			printAccount(info)
+			addresses = append(addresses, info.GetAddress().String())
+			continue
+		}
+
+		entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
+		if err != nil {
+			return addresses, err
+		}
+
+		mnemonic, err := bip39.NewMnemonic(entropySeed[:])
+		if err != nil {
+			return addresses, err
+		}
+
+		info, err = kb.CreateAccount(name, mnemonic, passphrase, "", 0, 0)
+		if err != nil {
+			return addresses, err
+		}
+
+		log.Infof("Account %s created", name)
+		printAccount(info)
+		addresses = append(addresses, info.GetAddress().String())
+	}
+
+	return addresses, nil
 }
 
 func printAccount(info cKeys.Info) {
