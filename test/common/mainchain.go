@@ -64,7 +64,7 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 	auth.Value = value
 	chainID := big.NewInt(883) // Private Mainchain Testnet
 	var gasLimit uint64 = 21000
-	for _, r := range recipients {
+	for _, addr := range recipients {
 		nonce, err := conn.PendingNonceAt(ctx, senderAddr)
 		if err != nil {
 			return err
@@ -73,15 +73,15 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 		if err != nil {
 			return err
 		}
-		tx := types.NewTransaction(nonce, r, auth.Value, gasLimit, gasPrice, nil)
+		tx := types.NewTransaction(nonce, addr, auth.Value, gasLimit, gasPrice, nil)
 		tx, err = auth.Signer(types.NewEIP155Signer(chainID), senderAddr, tx)
 		if err != nil {
 			return err
 		}
-		if r == mainchain.ZeroAddr {
+		if addr == mainchain.ZeroAddr {
 			log.Info("Advancing block")
 		} else {
-			log.Infof("Sending %s wei from %x to %x, nonce %d. tx: %x", amt, senderAddr, r, nonce, tx.Hash())
+			log.Infof("Sending ETH %s to %x from %x", amt, addr, senderAddr)
 		}
 
 		err = conn.SendTransaction(ctx, tx)
@@ -97,12 +97,12 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 		if receipt.Status != 1 {
 			log.Errorf("tx failed. tx hash: %x", receipt.TxHash)
 		} else {
-			if r == mainchain.ZeroAddr {
+			if addr == mainchain.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)
 				log.Infoln("Current block number:", head.Number.String())
 			} else {
-				bal, _ := conn.BalanceAt(ctx, r, nil)
-				log.Infoln("Tx done.", r.String(), "bal:", bal.String())
+				bal, _ := conn.BalanceAt(ctx, addr, nil)
+				log.Infoln("Tx done.", addr.String(), "bal:", bal.String())
 			}
 		}
 	}
@@ -124,6 +124,7 @@ func FundAddrsErc20(auth *bind.TransactOpts, erc20Addr mainchain.Addr, addrs []m
 		if err != nil {
 			return err
 		}
+		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, auth.From)
 		_, err = mainchain.WaitMined(ctx, conn, tx, 0)
 		if err != nil {
 			return err
