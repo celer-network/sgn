@@ -18,7 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -183,7 +183,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 		OpenDeadline:   math.MaxUint64,
 		DisputeTimeout: DisputeTimeout,
 	}
-	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
+	paymentChannelInitializerBytes, err := proto.Marshal(initializer)
 	if err != nil {
 		return
 	}
@@ -198,7 +198,7 @@ func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey
 		return
 	}
 
-	requestBytes, err := protobuf.Marshal(&chain.OpenChannelRequest{
+	requestBytes, err := proto.Marshal(&chain.OpenChannelRequest{
 		ChannelInitializer: paymentChannelInitializerBytes,
 		Sigs:               [][]byte{sig1, sig0},
 	})
@@ -295,7 +295,6 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	}
 }
 
-// Remove this
 func prepareEtherBaseClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
 	conn, err := ethclient.Dial(LocalGeth)

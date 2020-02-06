@@ -19,7 +19,7 @@ import (
 	stypes "github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,7 +70,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Request guard...")
 	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(10, channelId[:], tc.Client0.Address.Bytes(), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
-	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
+	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	msgRequestGuard := subscribe.NewMsgRequestGuard(tc.Client0.Address.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgRequestGuard)
@@ -93,7 +93,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Call intendSettle on ledger contract...")
 	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client0.Address.Bytes(), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
-	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+	signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
 	})
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateArrayBytes")

@@ -11,7 +11,7 @@ import (
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 func (rs *RestServer) registerRoutes() {
@@ -49,7 +49,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
+		signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
 		if err != nil {
 			log.Errorln("could not marshal SignedSimplexState:", err)
 			return
@@ -93,7 +93,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+		signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 			SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
 		})
 		if err != nil {

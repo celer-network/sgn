@@ -13,7 +13,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 func (m *EthMonitor) processQueue() {
@@ -128,13 +128,13 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		var signedSimplexState chain.SignedSimplexState
-		err := protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+		err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 		if err != nil {
 			log.Errorln("Unmarshal SignedSimplexState error:", err)
 			return
 		}
 
-		signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+		signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 			SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
 		})
 		if err != nil {

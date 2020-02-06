@@ -19,7 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
@@ -109,7 +109,7 @@ func ParseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawM
 }
 
 func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) (*chain.SignedSimplexState, error) {
-	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
+	simplexPaymentChannelBytes, err := proto.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    seqNum,
 		ChannelId: channelId,
 		PeerFrom:  peerFrom,
