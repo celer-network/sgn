@@ -163,7 +163,6 @@ func subscribeTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
 	assert.True(t, reward.MiningReward.IsPositive(), "Minging reward should be larger than 0")
-	// TODO: add explanation
 	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`, tc.ValEthAddrs[0], reward.MiningReward.String(), "476190476190476190")
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
