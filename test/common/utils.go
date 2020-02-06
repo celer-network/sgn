@@ -128,9 +128,10 @@ func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKe
 		return nil, err
 	}
 
+	// TODO: sort the sigs
 	signedSimplexStateProto := &chain.SignedSimplexState{
 		SimplexState: simplexPaymentChannelBytes,
-		Sigs:         [][]byte{sig0, sig1},
+		Sigs:         [][]byte{sig1, sig0},
 	}
 
 	return signedSimplexStateProto, nil

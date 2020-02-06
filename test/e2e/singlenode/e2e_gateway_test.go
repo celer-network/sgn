@@ -51,10 +51,6 @@ func gatewayTest(t *testing.T) {
 	log.Info("======================== Test gateway ===========================")
 
 	ctx := context.Background()
-	conn := tc.DefaultTestEthClient.Client
-	auth := tc.DefaultTestEthClient.Auth
-	ethAddress := tc.DefaultTestEthClient.Address
-	guardContract := tc.DefaultTestEthClient.Guard
 	transactor := tc.NewTransactor(
 		t,
 		CLIHome,
@@ -71,24 +67,24 @@ func gatewayTest(t *testing.T) {
 
 	log.Info("Call subscribe on guard contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
-	tx, err := tc.E2eProfile.CelrContract.Approve(auth, tc.E2eProfile.GuardAddr, amt)
+	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.GuardAddr, amt)
 	tc.ChkTestErr(t, err, "failed to approve CELR on mainchain")
-	tc.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to Guard contract")
 
-	tx, err = guardContract.Subscribe(auth, amt)
+	tx, err = tc.Client0.Guard.Subscribe(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to subscribe on mainchain")
-	tc.WaitMinedWithChk(ctx, conn, tx, tc.BlockDelay, "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on Guard contract")
 	tc.SleepWithLog(10, "passing subscribe event block delay")
 
 	msg := map[string]interface{}{
-		"ethAddr": ethAddress.Hex(),
+		"ethAddr": tc.Client0.Address.Hex(),
 	}
 	body, _ := json.Marshal(msg)
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
 	tc.ChkTestErr(t, err, "failed to post subscribe msg to gateway")
 	tc.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
-	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + ethAddress.Hex())
+	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + tc.Client0.Address.Hex())
 	tc.ChkTestErr(t, err, "failed to query subscription from gateway")
 
 	result, err := tc.ParseGatewayQueryResponse(resp, transactor.CliCtx.Codec)

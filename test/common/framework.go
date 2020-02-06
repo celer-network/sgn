@@ -15,8 +15,6 @@ var (
 	// E2eProfile will be updated and used for each test
 	// not support parallel tests
 	E2eProfile *TestProfile
-
-	DefaultTestEthClient = &mainchain.EthClient{}
 )
 
 // Killable is object that has Kill() func

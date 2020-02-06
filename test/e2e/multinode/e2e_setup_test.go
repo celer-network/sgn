@@ -50,17 +50,17 @@ func TestMain(m *testing.M) {
 	addr0 := mainchain.Hex2Addr(tc.ValEthAddrs[0])
 	addr1 := mainchain.Hex2Addr(tc.ValEthAddrs[1])
 	addr2 := mainchain.Hex2Addr(tc.ValEthAddrs[2])
-	err := tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{addr0, addr1, addr2})
+	addr3 := mainchain.Hex2Addr(tc.ClientEthAddrs[0])
+	err := tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{addr0, addr1, addr2, addr3})
 	tc.ChkErr(err, "fund each validator ETH")
 
 	log.Infoln("set up mainchain")
-	tc.SetupDefaultTestEthClient()
+	tc.SetupEthClients()
 	tc.SetupE2eProfile()
 
-	// fund CELR to each validators
+	// fund CELR to each eth account
 	log.Infoln("fund each validator 10 million CELR")
-	err = tc.FundAddrsErc20(
-		tc.DefaultTestEthClient.Auth, tc.E2eProfile.CelrAddr, []mainchain.Addr{addr1, addr2}, "1"+strings.Repeat("0", 25))
+	err = tc.FundAddrsErc20(tc.E2eProfile.CelrAddr, []mainchain.Addr{addr0, addr1, addr2, addr3}, "1"+strings.Repeat("0", 25))
 	tc.ChkErr(err, "fund each validator ERC20")
 
 	log.Infoln("run all e2e tests")

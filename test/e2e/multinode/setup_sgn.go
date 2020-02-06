@@ -57,8 +57,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 		tc.ChkErr(err, "Failed to write config")
 	}
 
-	log.Infoln("SetContracts")
-	err = tc.DefaultTestEthClient.SetContracts(tc.E2eProfile.GuardAddr.String(), tc.E2eProfile.LedgerAddr.String())
+	err = tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
 	tc.ChkErr(err, "Failed to SetContracts")
 
 	log.Infoln("make localnet-up-nodes")

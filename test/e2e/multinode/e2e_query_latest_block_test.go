@@ -29,8 +29,6 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test queryLatestBlock ===========================")
 
-	conn := tc.DefaultTestEthClient.Client
-
 	transactor := tc.NewTransactor(
 		t,
 		tc.SgnCLIHome,
@@ -48,6 +46,7 @@ func queryLatestBlockTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
+	conn := tc.Client0.Client
 	header, err := conn.HeaderByNumber(context.Background(), nil)
 	tc.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
 	log.Infof("Latest block number on mainchain is %d", header.Number)

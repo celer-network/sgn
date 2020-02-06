@@ -41,8 +41,6 @@ func validatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
 
-	auth := tc.DefaultTestEthClient.Auth
-	ethAddr := tc.DefaultTestEthClient.Address
 	transactor := tc.NewTransactor(
 		t,
 		CLIHome,
@@ -54,6 +52,8 @@ func validatorTest(t *testing.T) {
 	)
 	amt := big.NewInt(1000000000000000000)
 
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	tc.ChkTestErr(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
 	tc.CheckValidatorNum(t, transactor, 1)
 }

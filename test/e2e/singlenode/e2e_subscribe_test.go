@@ -56,12 +56,6 @@ func subscribeTest(t *testing.T) {
 	log.Infoln("======================== Test subscribe ===========================")
 
 	ctx := context.Background()
-	conn := tc.DefaultTestEthClient.Client
-	auth := tc.DefaultTestEthClient.Auth
-	ethAddress := tc.DefaultTestEthClient.Address
-	guardContract := tc.DefaultTestEthClient.Guard
-	ledgerContract := tc.DefaultTestEthClient.Ledger
-	privKey := tc.DefaultTestEthClient.PrivateKey
 	transactor := tc.NewTransactor(
 		t,
 		CLIHome,
@@ -71,39 +65,39 @@ func subscribeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
-	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
-	tc.ChkTestErr(t, err, "failed to get client 1 private key")
 
 	amt := new(big.Int)
 	amt.SetString("100000000000000000000", 10) // 100 CELR
-	tc.AddCandidateWithStake(t, transactor, ethAddress, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	tc.ChkTestErr(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
 
 	log.Infoln("Open channel...")
-	channelId, err := tc.OpenChannel(ethAddress, mainchain.Hex2Addr(tc.ValEthAddrs[1]), privKey, Client1PrivKey)
+	channelId, err := tc.OpenChannel(tc.Client0.Address, mainchain.Hex2Addr(tc.ClientEthAddrs[1]), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
 	tc.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
-	tx, err := tc.E2eProfile.CelrContract.Approve(auth, tc.E2eProfile.GuardAddr, new(big.Int).Mul(amt, big.NewInt(2)))
+	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.GuardAddr, new(big.Int).Mul(amt, big.NewInt(2)))
 	tc.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
-	tc.WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to Guard contract")
 
-	_, err = guardContract.ContributeToMiningPool(auth, amt)
+	_, err = tc.EtherBase.Guard.ContributeToMiningPool(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to call ContributeToMiningPool of Guard contract")
 
-	tx, err = guardContract.Subscribe(auth, amt)
+	tx, err = tc.Client0.Guard.Subscribe(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
-	tc.WaitMinedWithChk(ctx, conn, tx, tc.BlockDelay, "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on Guard contract")
 	tc.SleepWithLog(20, "passing subscribe event block delay")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
-	msgSubscribe := subscribe.NewMsgSubscribe(ethAddress.Hex(), transactor.Key.GetAddress())
+	msgSubscribe := subscribe.NewMsgSubscribe(tc.Client0.Address.Hex(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubscribe)
 
 	log.Infoln("Query sgn about the subscription info...")
 	var subscription stypes.Subscription
 	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
 	for retry := 0; retry < 30; retry++ {
-		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddress.Hex())
+		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, tc.Client0.Address.Hex())
 		if err == nil && expectedRes == subscription.String() {
 			break
 		}
@@ -120,19 +114,19 @@ func subscribeTest(t *testing.T) {
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Request guard...")
-	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(10, channelId[:], ethAddress.Bytes(), privKey, Client1PrivKey)
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(10, channelId[:], tc.Client0.Address.Bytes(), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := protobuf.Marshal(signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
-	msgRequestGuard := subscribe.NewMsgRequestGuard(ethAddress.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
+	msgRequestGuard := subscribe.NewMsgRequestGuard(tc.Client0.Address.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgRequestGuard)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	var request stypes.Request
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.ValEthAddrs[0], tc.ValEthAddrs[1], 0, signedSimplexStateBytes)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 1, signedSimplexStateBytes)
 	for retry := 0; retry < 30; retry++ {
-		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
+		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
@@ -143,22 +137,22 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], ethAddress.Bytes(), privKey, Client1PrivKey)
+	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client0.Address.Bytes(), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
 	})
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateArrayBytes")
-	tx, err = ledgerContract.IntendSettle(auth, signedSimplexStateArrayBytes)
+	tx, err = tc.Client0.Ledger.IntendSettle(tc.Client0.Auth, signedSimplexStateArrayBytes)
 	tc.ChkTestErr(t, err, "failed to IntendSettle")
-	tc.WaitMinedWithChk(ctx, conn, tx, tc.BlockDelay, "IntendSettle")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tc.ValEthAddrs[0], tc.ValEthAddrs[1], 0, signedSimplexStateBytes)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: 0x[a-f0-9]{64}, GuardTxHash: 0x[a-f0-9]{64}`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 1, signedSimplexStateBytes)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < 60; retry++ {
-		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], ethAddress.Hex())
+		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && r.MatchString(strings.ToLower(request.String())) {
 			break
 		}
@@ -172,21 +166,21 @@ func subscribeTest(t *testing.T) {
 	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query params on sgn")
 	log.Infoln("Query sgn about the params info:", params.String())
-	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
+	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])
 	tc.ChkTestErr(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
 	assert.True(t, reward.MiningReward.IsPositive(), "Minging reward should be larger than 0")
-	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`, mainchain.Addr2Hex(ethAddress), reward.MiningReward.String(), params.RequestCost.String())
+	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`, tc.ValEthAddrs[0], reward.MiningReward.String(), params.RequestCost.String())
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")
-	msgWithdrawReward := validator.NewMsgWithdrawReward(ethAddress.Hex(), transactor.Key.GetAddress())
+	msgWithdrawReward := validator.NewMsgWithdrawReward(tc.ValEthAddrs[0], transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgWithdrawReward)
 	tc.SleepWithLog(15, "sgn withdrawing reward")
 
 	log.Infoln("Query sgn to check if reward gets signature...")
 	for retry := 0; retry < 30; retry++ {
-		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddress.Hex())
+		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])
 		if err == nil && len(reward.Sigs) == 1 {
 			break
 		}
@@ -196,10 +190,10 @@ func subscribeTest(t *testing.T) {
 	assert.Equal(t, 1, len(reward.Sigs), "The length of reward signatures should be 1")
 
 	log.Infoln("Call redeemReward on guard contract...")
-	tx, err = guardContract.RedeemReward(auth, reward.GetRewardRequest())
+	tx, err = tc.Client0.Guard.RedeemReward(auth, reward.GetRewardRequest())
 	tc.ChkTestErr(t, err, "failed to redeem reward")
-	tc.WaitMinedWithChk(ctx, conn, tx, 0, "redeem reward on Guard contract")
-	rsr, err := guardContract.RedeemedServiceReward(&bind.CallOpts{}, ethAddress)
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "redeem reward on Guard contract")
+	rsr, err := tc.Client0.Guard.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 	tc.ChkTestErr(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 }

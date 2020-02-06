@@ -16,16 +16,16 @@ import (
 
 func DeployLedgerContract() mainchain.Addr {
 	ctx := context.Background()
-	channelAddrBundle := deploy.DeployAll(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, ctx, 0)
+	channelAddrBundle := deploy.DeployAll(EtherBase.Auth, EtherBase.Client, ctx, 0)
 	ledgerAddr := channelAddrBundle.CelerLedgerAddr
 
 	// Disable channel deposit limit
-	LogBlkNum(DefaultTestEthClient.Client)
-	ledgerContract, err := ledger.NewCelerLedger(ledgerAddr, DefaultTestEthClient.Client)
+	LogBlkNum(EtherBase.Client)
+	ledgerContract, err := ledger.NewCelerLedger(ledgerAddr, EtherBase.Client)
 	ChkErr(err, "failed to NewCelerLedger")
-	tx, err := ledgerContract.DisableBalanceLimits(DefaultTestEthClient.Auth)
+	tx, err := ledgerContract.DisableBalanceLimits(EtherBase.Auth)
 	ChkErr(err, "failed disable channel deposit limits")
-	WaitMinedWithChk(ctx, DefaultTestEthClient.Client, tx, 0, "Disable balance limit")
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Disable balance limit")
 
 	log.Infoln("Ledger address:", ledgerAddr.String())
 	return ledgerAddr
@@ -35,9 +35,9 @@ func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
 	ctx := context.Background()
 	initAmt := new(big.Int)
 	initAmt.SetString("1"+strings.Repeat("0", 28), 10)
-	erc20Addr, tx, erc20, err := mainchain.DeployERC20(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, initAmt, "Celer", 18, "CELR")
+	erc20Addr, tx, erc20, err := mainchain.DeployERC20(EtherBase.Auth, EtherBase.Client, initAmt, "Celer", 18, "CELR")
 	ChkErr(err, "failed to deploy ERC20")
-	WaitMinedWithChk(ctx, DefaultTestEthClient.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
 	log.Infoln("Erc20 address:", erc20Addr.String())
 	return erc20Addr, erc20
@@ -45,9 +45,9 @@ func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
 
 func DeployGuardContract(sgnParams *SGNParams) mainchain.Addr {
 	ctx := context.Background()
-	guardAddr, tx, _, err := mainchain.DeployGuard(DefaultTestEthClient.Auth, DefaultTestEthClient.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout, sgnParams.MaxValidatorNum)
+	guardAddr, tx, _, err := mainchain.DeployGuard(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout, sgnParams.MaxValidatorNum)
 	ChkErr(err, "failed to deploy Guard contract")
-	WaitMinedWithChk(ctx, DefaultTestEthClient.Client, tx, 0, "Deploy Guard "+guardAddr.Hex())
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy Guard "+guardAddr.Hex())
 
 	log.Infoln("Guard address:", guardAddr.String())
 	return guardAddr

@@ -31,7 +31,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tc.ChkErr(err, "start sidechain")
-	tc.DefaultTestEthClient.SetContracts(tc.E2eProfile.GuardAddr.String(), tc.E2eProfile.LedgerAddr.String())
+	tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
 
 	killable := []tc.Killable{sgnProc}
 	if sgnParams.StartGateway {
