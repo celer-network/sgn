@@ -50,13 +50,16 @@ func gatewayTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test gateway ===========================")
 
+	sgnTransactors := viper.GetStringSlice(common.FlagSgnTransactors)
+	assert.Greater(t, len(sgnTransactors), 1, "not enough sgn transactors")
+
 	ctx := context.Background()
 	transactor := tc.NewTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[1],
+		sgnTransactors[1],
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
