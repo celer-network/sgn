@@ -108,7 +108,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 }
 
 func (m *EthMonitor) monitorBlockHead() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -118,8 +118,8 @@ func (m *EthMonitor) monitorBlockHead() {
 			continue
 		}
 
-		go m.handleNewBlock()
 		m.blkNum = blkNum
+		go m.handleNewBlock()
 	}
 }
 
