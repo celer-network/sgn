@@ -3,6 +3,7 @@ package multinode
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,12 +51,16 @@ func subscribeTest(t *testing.T) {
 		tc.SgnGasPrice,
 	)
 
-	amt := big.NewInt(1000000000000000000)
-	amts := []*big.Int{amt, amt, amt}
+	amt1 := big.NewInt(1000000000000000000)
+	amt2 := big.NewInt(1000000000000000000)
+	amt3 := big.NewInt(100000000000000000)
+	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
 	turnOffMonitor(2)
 
+	amt := new(big.Int)
+	amt.SetString("1"+strings.Repeat("0", 20), 10)
 	e2ecommon.SubscribteTestCommon(t, transactor, amt, "476190476190476190", 2)
 
 	log.Infoln("Query sgn to check penalty")
