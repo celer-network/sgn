@@ -5,11 +5,11 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/celer-network/cChannel-eth-go/deploy"
-	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/test/channel-eth-go/deploy"
+	"github.com/celer-network/sgn/test/channel-eth-go/ledger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -65,12 +65,12 @@ func DeployCommand() *cobra.Command {
 			}
 
 			ws := viper.GetString(common.FlagEthWS)
-			err = DefaultEthClient.SetClient(ws)
+			err = EtherBase.SetClient(ws)
 			if err != nil {
 				return
 			}
 
-			err = DefaultEthClient.SetAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
+			err = EtherBase.SetAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
 			if err != nil {
 				return
 			}
@@ -102,9 +102,9 @@ func DeployCommand() *cobra.Command {
 			if ws == LocalGeth {
 				amt := new(big.Int)
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
-				tx, err := erc20.Approve(DefaultEthClient.Auth, guardAddr, amt)
+				tx, err := erc20.Approve(EtherBase.Auth, guardAddr, amt)
 				ChkErr(err, "failed to approve erc20")
-				WaitMinedWithChk(context.Background(), DefaultEthClient.Client, tx, 0, "approve erc20")
+				WaitMinedWithChk(context.Background(), EtherBase.Client, tx, 0, "approve erc20")
 			}
 
 			return nil

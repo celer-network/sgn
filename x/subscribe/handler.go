@@ -11,7 +11,7 @@ import (
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -86,13 +86,13 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	}
 
 	var signedSimplexState chain.SignedSimplexState
-	err = protobuf.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
+	err = proto.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
 		return res, fmt.Errorf("Failed to unmarshal signedSimplexStateBytes: %s", err)
 	}
 
 	var simplexPaymentChannel entity.SimplexPaymentChannel
-	err = protobuf.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
+	err = proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {
 		return res, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
 	}

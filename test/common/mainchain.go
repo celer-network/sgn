@@ -3,8 +3,8 @@
 package testcommon
 
 import (
+	"bytes"
 	"context"
-	"crypto/ecdsa"
 	"io/ioutil"
 	"math"
 	"math/big"
@@ -18,16 +18,15 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
 	etherBaseKs = EnvDir + "/keystore/etherbase.json"
 
-	EtherBase        = &mainchain.EthClient{}
-	Client0          = &mainchain.EthClient{}
-	Client1          = &mainchain.EthClient{}
-	DefaultEthClient = &mainchain.EthClient{}
+	EtherBase = &mainchain.EthClient{}
+	Client0   = &mainchain.EthClient{}
+	Client1   = &mainchain.EthClient{}
 )
 
 func SetEthBaseKs(prefix string) {
@@ -40,7 +39,6 @@ func SetupEthClients() {
 	EtherBase = setupEthClient(etherBaseKs)
 	Client0 = setupEthClient(ClientEthKs[0])
 	Client1 = setupEthClient(ClientEthKs[1])
-	DefaultEthClient = Client0
 }
 
 func setupEthClient(ksfile string) *mainchain.EthClient {
@@ -160,47 +158,53 @@ func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount str
 	return nil
 }
 
-func OpenChannel(peer0Addr, peer1Addr mainchain.Addr, peer0PrivKey, peer1PrivKey *ecdsa.PrivateKey) (channelId [32]byte, err error) {
-	log.Infoln("Call openChannel on ledger contract", mainchain.Addr2Hex(peer0Addr), mainchain.Addr2Hex(peer1Addr))
+func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err error) {
+	log.Infoln("Call openChannel on ledger contract", mainchain.Addr2Hex(peer0.Address), mainchain.Addr2Hex(peer1.Address))
+
+	lo, hi := peer0, peer1
+	if bytes.Compare(peer0.Address.Bytes(), peer1.Address.Bytes()) > 0 {
+		lo, hi = peer1, peer0
+	}
+
 	tokenInfo := &entity.TokenInfo{
 		TokenType: entity.TokenType_ETH,
 	}
-	lowAddrDist := &entity.AccountAmtPair{
-		Account: peer1Addr.Bytes(),
+	loAddrDist := &entity.AccountAmtPair{
+		Account: lo.Address.Bytes(),
 		Amt:     big.NewInt(0).Bytes(),
 	}
-	highAddrDist := &entity.AccountAmtPair{
-		Account: peer0Addr.Bytes(),
+	hiAddrDist := &entity.AccountAmtPair{
+		Account: hi.Address.Bytes(),
 		Amt:     big.NewInt(0).Bytes(),
 	}
 	initializer := &entity.PaymentChannelInitializer{
 		InitDistribution: &entity.TokenDistribution{
 			Token: tokenInfo,
 			Distribution: []*entity.AccountAmtPair{
-				lowAddrDist, highAddrDist,
+				loAddrDist, hiAddrDist,
 			},
 		},
 		OpenDeadline:   math.MaxUint64,
 		DisputeTimeout: DisputeTimeout,
 	}
-	paymentChannelInitializerBytes, err := protobuf.Marshal(initializer)
+	paymentChannelInitializerBytes, err := proto.Marshal(initializer)
 	if err != nil {
 		return
 	}
 
-	sig0, err := mainchain.SignMessage(peer0PrivKey, paymentChannelInitializerBytes)
+	siglo, err := mainchain.SignMessage(lo.PrivateKey, paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
 
-	sig1, err := mainchain.SignMessage(peer1PrivKey, paymentChannelInitializerBytes)
+	sighi, err := mainchain.SignMessage(hi.PrivateKey, paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
 
-	requestBytes, err := protobuf.Marshal(&chain.OpenChannelRequest{
+	requestBytes, err := proto.Marshal(&chain.OpenChannelRequest{
 		ChannelInitializer: paymentChannelInitializerBytes,
-		Sigs:               [][]byte{sig1, sig0},
+		Sigs:               [][]byte{siglo, sighi},
 	})
 	if err != nil {
 		return
@@ -295,7 +299,6 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	}
 }
 
-// Remove this
 func prepareEtherBaseClient() (
 	*ethclient.Client, *bind.TransactOpts, context.Context, mainchain.Addr, error) {
 	conn, err := ethclient.Dial(LocalGeth)

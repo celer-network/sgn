@@ -9,7 +9,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/sgn"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -99,7 +99,7 @@ func (p *Penalty) GenerateProtoBytes() {
 		})
 	}
 
-	penaltyBytes, _ := protobuf.Marshal(&sgn.Penalty{
+	penaltyBytes, _ := proto.Marshal(&sgn.Penalty{
 		Nonce:               p.Nonce,
 		ExpireTime:          expireTime,
 		ValidatorAddress:    mainchain.Hex2Addr(p.ValidatorAddr).Bytes(),
@@ -129,7 +129,7 @@ func (p Penalty) GetPenaltyRequest() []byte {
 		sigs = append(sigs, sig.Sig)
 	}
 
-	penaltyRequestBytes, _ := protobuf.Marshal(&sgn.PenaltyRequest{
+	penaltyRequestBytes, _ := proto.Marshal(&sgn.PenaltyRequest{
 		Penalty: p.PenaltyProtoBytes,
 		Sigs:    sigs,
 	})

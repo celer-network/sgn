@@ -1,4 +1,4 @@
-package osp
+package channel
 
 import (
 	"bytes"
@@ -21,6 +21,7 @@ import (
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,16 +35,16 @@ type RestServer struct {
 	listener   net.Listener
 	logger     tlog.Logger
 	transactor *transactor.Transactor
-	osp        *mainchain.EthClient
-	user       *mainchain.EthClient
+	peer1      *mainchain.EthClient
+	peer2      *mainchain.EthClient
 	cdc        *codec.Codec
 	channelID  mainchain.CidType
 	gateway    string
 }
 
 const (
-	userFlag       = "user"
-	ospFlag        = "osp"
+	peer1Flag      = "peer1"
+	peer2Flag      = "peer2"
 	gatewayFlag    = "gateway"
 	blockDelayFlag = "blockDelay"
 )
@@ -73,46 +74,58 @@ func NewRestServer() (rs *RestServer, err error) {
 		}
 	}
 
-	user, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(userFlag), "")
+	peer1, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer1Flag), "")
 	if err != nil {
 		return
 	}
 
-	osp, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(ospFlag), "")
+	peer2, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer2Flag), "")
 	if err != nil {
 		return
 	}
 
-	tc.DefaultEthClient = user
-	channelID, err := tc.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
-	if err != nil {
-		return
-	}
+	tc.Client0 = peer1
 
 	log.Infof("Subscribe to sgn")
-	amt := new(big.Int)
-	amt.SetString("1"+strings.Repeat("0", 19), 10)
-	tx, err := user.Guard.Subscribe(user.Auth, amt)
+	tokenAddr, err := peer1.Guard.CelerToken(&bind.CallOpts{})
 	if err != nil {
 		return
 	}
-	tc.WaitMinedWithChk(context.Background(), user.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
+	tokenContract, err := mainchain.NewERC20(tokenAddr, peer1.Client)
+	if err != nil {
+		return
+	}
+
+	amt := new(big.Int)
+	amt.SetString("1"+strings.Repeat("0", 19), 10)
+	tx, err := tokenContract.Approve(peer1.Auth, peer1.GuardAddress, amt)
+	tc.ChkErr(err, "failed to approve erc20")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, 0, "approve erc20")
+
+	tx, err = peer1.Guard.Subscribe(peer1.Auth, amt)
+	tc.ChkErr(err, "failed to subscribe")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
 
 	if gateway == "" {
-		msgSubscribe := subscribe.NewMsgSubscribe(user.Address.Hex(), ts.Key.GetAddress())
+		msgSubscribe := subscribe.NewMsgSubscribe(peer1.Address.Hex(), ts.Key.GetAddress())
 		ts.AddTxMsg(msgSubscribe)
 	} else {
-		reqBody, err := json.Marshal(map[string]string{
-			"ethAddr": user.Address.Hex(),
+		reqBody, err2 := json.Marshal(map[string]string{
+			"ethAddr": peer1.Address.Hex(),
 		})
-		if err != nil {
-			return nil, err
+		if err2 != nil {
+			return nil, err2
 		}
-		_, err = http.Post(rs.gateway+"/subscribe/subscribe",
+		_, err2 = http.Post(gateway+"/subscribe/subscribe",
 			"application/json", bytes.NewBuffer(reqBody))
-		if err != nil {
-			return nil, err
+		if err2 != nil {
+			return nil, err2
 		}
+	}
+
+	channelID, err := tc.OpenChannel(peer1, peer2)
+	if err != nil {
+		return
 	}
 
 	return &RestServer{
@@ -120,8 +133,8 @@ func NewRestServer() (rs *RestServer, err error) {
 		logger:     logger,
 		transactor: ts,
 		cdc:        cdc,
-		osp:        osp,
-		user:       user,
+		peer1:      peer1,
+		peer2:      peer2,
 		channelID:  channelID,
 		gateway:    gateway,
 	}, nil
@@ -154,8 +167,8 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 // necessary routes.
 func ServeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "osp",
-		Short: "Start a local REST server talking to osp",
+		Use:   "channel",
+		Short: "Start a local REST server talking to channel and sgn",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			viper.SetConfigFile(viper.GetString(common.FlagConfig))
 			err = viper.ReadInConfig()
@@ -182,8 +195,8 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(userFlag, "./test/keys/ethks0.json", "user keystore path")
-	cmd.Flags().String(ospFlag, "./test/keys/ethks1.json", "osp keystore path")
+	cmd.Flags().String(peer1Flag, "./test/keys/ethks0.json", "peer1 keystore path")
+	cmd.Flags().String(peer2Flag, "./test/keys/ethks1.json", "peer2 keystore path")
 	cmd.Flags().String(gatewayFlag, "", "gateway url")
 	cmd.Flags().Uint64(blockDelayFlag, 5, "block delay")
 	return sdkFlags.RegisterRestServerFlags(cmd)
