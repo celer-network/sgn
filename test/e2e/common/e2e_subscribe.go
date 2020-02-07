@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.Int, srvReward string, rewardSig int) {
+func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.Int, srvReward string, rewardSigLen int) {
 	ctx := context.Background()
 
 	log.Infoln("Open channel...")
@@ -137,13 +137,13 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Query sgn to check if reward gets signature...")
 	for retry := 0; retry < 30; retry++ {
 		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])
-		if err == nil && len(reward.Sigs) == rewardSig {
+		if err == nil && len(reward.Sigs) == rewardSigLen {
 			break
 		}
 		time.Sleep(time.Second)
 	}
 	tc.ChkTestErr(t, err, "failed to query reward on sgn")
-	assert.Equal(t, rewardSig, len(reward.Sigs), "The length of reward signatures mismatch")
+	assert.Equal(t, rewardSigLen, len(reward.Sigs), "The length of reward signatures mismatch")
 
 	log.Infoln("Call redeemReward on guard contract...")
 	tx, err = tc.Client0.Guard.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())

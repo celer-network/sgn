@@ -50,8 +50,7 @@ func subscribeTest(t *testing.T) {
 		tc.SgnGasPrice,
 	)
 
-	amt := new(big.Int)
-	amt.SetString("100000000000000000000", 10) // 100 CELR
+	amt := big.NewInt(1000000000000000000)
 	amts := []*big.Int{amt, amt, amt}
 	log.Infoln("Add validators...")
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)

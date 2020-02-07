@@ -49,8 +49,7 @@ func subscribeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnGasPrice),
 	)
 
-	amt := new(big.Int)
-	amt.SetString("100000000000000000000", 10) // 100 CELR
+	amt := big.NewInt(1000000000000000000)
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
 	tc.ChkTestErr(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
