@@ -43,7 +43,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user.PrivateKey, rs.osp.PrivateKey)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user, rs.osp)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -87,7 +87,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user.PrivateKey, rs.osp.PrivateKey)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user, rs.osp)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return

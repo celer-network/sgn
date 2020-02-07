@@ -27,7 +27,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	ctx := context.Background()
 
 	log.Infoln("Open channel...")
-	channelId, err := tc.OpenChannel(tc.Client0.Address, mainchain.Hex2Addr(tc.ClientEthAddrs[1]), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
+	channelId, err := tc.OpenChannel(tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on guard contract...")
@@ -68,7 +68,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Request guard...")
-	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(10, channelId[:], tc.Client0.Address.Bytes(), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(10, channelId[:], tc.Client0.Address.Bytes(), tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
@@ -91,7 +91,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client0.Address.Bytes(), tc.Client0.PrivateKey, tc.Client1.PrivateKey)
+	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client0.Address.Bytes(), tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
