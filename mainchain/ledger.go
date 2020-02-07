@@ -1,3 +1,4 @@
+// Code generated - DO NOT EDIT.
 // This file is a generated binding with CelerLedgerBin cleared
 
 package mainchain
