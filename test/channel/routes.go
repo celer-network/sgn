@@ -1,8 +1,9 @@
-package osp
+package channel
 
 import (
 	"bytes"
 	"encoding/json"
+	"math/big"
 	"net/http"
 
 	"github.com/celer-network/goutils/log"
@@ -11,7 +12,9 @@ import (
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/mux"
 )
 
 func (rs *RestServer) registerRoutes() {
@@ -24,6 +27,11 @@ func (rs *RestServer) registerRoutes() {
 		"/intendSettle",
 		postIntendSettleHandlerFn(rs),
 	).Methods(http.MethodPost)
+
+	rs.Mux.HandleFunc(
+		"/channelInfo/{channelId}",
+		getChannelInfoHandlerFn(rs),
+	).Methods(http.MethodGet)
 }
 
 type (
@@ -43,7 +51,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user, rs.osp)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer1.Address.Bytes(), rs.peer1, rs.peer2)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -56,11 +64,11 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			msgRequestGuard := subscribe.NewMsgRequestGuard(rs.user.Address.Hex(), signedSimplexStateBytes, rs.transactor.Key.GetAddress())
+			msgRequestGuard := subscribe.NewMsgRequestGuard(rs.peer1.Address.Hex(), signedSimplexStateBytes, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msgRequestGuard)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
-				"ethAddr":                 rs.user.Address.Hex(),
+				"ethAddr":                 rs.peer1.Address.Hex(),
 				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
 			})
 			if err != nil {
@@ -87,7 +95,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.user.Address.Bytes(), rs.user, rs.osp)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer1.Address.Bytes(), rs.peer1, rs.peer2)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -101,7 +109,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		_, err = rs.osp.Ledger.IntendSettle(rs.osp.Auth, signedSimplexStateArrayBytes)
+		_, err = rs.peer2.Ledger.IntendSettle(rs.peer2.Auth, signedSimplexStateArrayBytes)
 		if err != nil {
 			log.Errorln("could not intendSettle:", err)
 			return
@@ -109,6 +117,32 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "text/plain")
 		if _, err := w.Write([]byte("success")); err != nil {
+			log.Errorln("could not write response:", err)
+		}
+	}
+}
+
+func getChannelInfoHandlerFn(rs *RestServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		channelId := vars["channelId"]
+		addresses, seqNums, err := rs.peer1.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Hex2Cid(channelId))
+		if err != nil {
+			log.Errorln("Query StateSeqNumMap err", err)
+			return
+		}
+
+		result, err := rs.cdc.MarshalJSON(struct {
+			Addresses [2]mainchain.Addr
+			SeqNums   [2]*big.Int
+		}{addresses, seqNums})
+
+		if err != nil {
+			log.Errorln("MarshalJSON err", err)
+			return
+		}
+
+		if _, err := w.Write(result); err != nil {
 			log.Errorln("could not write response:", err)
 		}
 	}

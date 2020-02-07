@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/test/channel"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/test/osp"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 )
@@ -21,7 +21,7 @@ func main() {
 	rootCmd.AddCommand(
 		tc.DeployCommand(),
 		tc.AccountsCommand(),
-		osp.ServeCommand(),
+		channel.ServeCommand(),
 	)
 
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
