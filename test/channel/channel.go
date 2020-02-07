@@ -21,6 +21,7 @@ import (
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -84,18 +85,25 @@ func NewRestServer() (rs *RestServer, err error) {
 	}
 
 	tc.Client0 = peer1
-	channelID, err := tc.OpenChannel(peer1, peer2)
+
+	log.Infof("Subscribe to sgn")
+	tokenAddr, err := peer1.Guard.CelerToken(&bind.CallOpts{})
+	if err != nil {
+		return
+	}
+	tokenContract, err := mainchain.NewERC20(tokenAddr, peer1.Client)
 	if err != nil {
 		return
 	}
 
-	log.Infof("Subscribe to sgn")
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 19), 10)
-	tx, err := peer1.Guard.Subscribe(peer1.Auth, amt)
-	if err != nil {
-		return
-	}
+	tx, err := tokenContract.Approve(peer1.Auth, peer1.GuardAddress, amt)
+	tc.ChkErr(err, "failed to approve erc20")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, 0, "approve erc20")
+
+	tx, err = peer1.Guard.Subscribe(peer1.Auth, amt)
+	tc.ChkErr(err, "failed to subscribe")
 	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
 
 	if gateway == "" {
@@ -108,11 +116,16 @@ func NewRestServer() (rs *RestServer, err error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = http.Post(rs.gateway+"/subscribe/subscribe",
+		_, err = http.Post(gateway+"/subscribe/subscribe",
 			"application/json", bytes.NewBuffer(reqBody))
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	channelID, err := tc.OpenChannel(peer1, peer2)
+	if err != nil {
+		return
 	}
 
 	return &RestServer{

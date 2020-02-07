@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/mux"
 )
 
 func (rs *RestServer) registerRoutes() {
@@ -29,7 +28,7 @@ func (rs *RestServer) registerRoutes() {
 	).Methods(http.MethodPost)
 
 	rs.Mux.HandleFunc(
-		"/channelInfo/{channelId}",
+		"/channelInfo",
 		getChannelInfoHandlerFn(rs),
 	).Methods(http.MethodGet)
 }
@@ -124,9 +123,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 
 func getChannelInfoHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		channelId := vars["channelId"]
-		addresses, seqNums, err := rs.peer1.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Hex2Cid(channelId))
+		addresses, seqNums, err := rs.peer1.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, rs.channelID)
 		if err != nil {
 			log.Errorln("Query StateSeqNumMap err", err)
 			return
