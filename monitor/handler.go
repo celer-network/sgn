@@ -12,7 +12,6 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 )
 
@@ -40,8 +39,8 @@ func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 	}
 }
 
-func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Infoln("Catch new mainchain block", header.Number)
+func (m *EthMonitor) handleNewBlock() {
+	log.Infoln("Catch new mainchain block", m.blkNum)
 	if !m.isPuller() {
 		return
 	}
@@ -54,8 +53,8 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 
 	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
 
-	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
-	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.blockSyncer.Key.GetAddress())
+	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", m.blkNum)
+	msg := global.NewMsgSyncBlock(m.blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
 	m.blockSyncer.AddTxMsg(msg)
 }
 

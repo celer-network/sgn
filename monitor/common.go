@@ -42,10 +42,10 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, eventBlockNumber 
 		return false
 	}
 
-	blockNumberDiff := m.ms.GetCurrentBlockNumber().Uint64() - eventBlockNumber
+	blockNumberDiff := m.blkNum.Uint64() - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
-	log.Infoln("IsRequestGuard", m.ms.GetCurrentBlockNumber().Uint64(), eventBlockNumber, guardIndex, requestGuards)
+	log.Infoln("IsRequestGuard", m.blkNum.Uint64(), eventBlockNumber, guardIndex, requestGuards)
 	// All other validators need to guard
 	if guardIndex >= uint64(len(requestGuards)) {
 		return true
