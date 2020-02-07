@@ -84,7 +84,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	}
 
 	tc.DefaultEthClient = user
-	channelID, err := tc.OpenChannel(user.Address, osp.Address, user.PrivateKey, osp.PrivateKey)
+	channelID, err := tc.OpenChannel(user, osp)
 	if err != nil {
 		return
 	}

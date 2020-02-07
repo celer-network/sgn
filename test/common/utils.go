@@ -1,6 +1,7 @@
 package testcommon
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
@@ -19,7 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 func GetAuth(ksfile string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
@@ -108,8 +109,8 @@ func ParseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawM
 	return responseWithHeight.Result, nil
 }
 
-func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKey0, prvtKey1 *ecdsa.PrivateKey) (*chain.SignedSimplexState, error) {
-	simplexPaymentChannelBytes, err := protobuf.Marshal(&entity.SimplexPaymentChannel{
+func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, peer0, peer1 *mainchain.EthClient) (*chain.SignedSimplexState, error) {
+	simplexPaymentChannelBytes, err := proto.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    seqNum,
 		ChannelId: channelId,
 		PeerFrom:  peerFrom,
@@ -118,20 +119,24 @@ func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, prvtKe
 		return nil, err
 	}
 
-	sig0, err := mainchain.SignMessage(prvtKey0, simplexPaymentChannelBytes)
+	lo, hi := peer0, peer1
+	if bytes.Compare(peer0.Address.Bytes(), peer1.Address.Bytes()) > 0 {
+		lo, hi = peer1, peer0
+	}
+
+	siglo, err := mainchain.SignMessage(lo.PrivateKey, simplexPaymentChannelBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	sig1, err := mainchain.SignMessage(prvtKey1, simplexPaymentChannelBytes)
+	sighi, err := mainchain.SignMessage(hi.PrivateKey, simplexPaymentChannelBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: sort the sigs
 	signedSimplexStateProto := &chain.SignedSimplexState{
 		SimplexState: simplexPaymentChannelBytes,
-		Sigs:         [][]byte{sig1, sig0},
+		Sigs:         [][]byte{siglo, sighi},
 	}
 
 	return signedSimplexStateProto, nil

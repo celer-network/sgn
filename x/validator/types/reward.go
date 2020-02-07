@@ -10,7 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/sgn"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	protobuf "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 type Reward struct {
@@ -41,7 +41,7 @@ func (r Reward) HasNewReward() bool {
 	}
 
 	var reward sgn.Reward
-	protobuf.Unmarshal(r.RewardProtoBytes, &reward)
+	proto.Unmarshal(r.RewardProtoBytes, &reward)
 
 	hasNewServiceReward := new(big.Int).SetBytes(reward.CumulativeServiceReward).Cmp(r.ServiceReward.BigInt()) != 0
 	hasNewMingingReward := new(big.Int).SetBytes(reward.CumulativeMiningReward).Cmp(r.MiningReward.BigInt()) != 0
@@ -50,7 +50,7 @@ func (r Reward) HasNewReward() bool {
 
 // Initiate the withdraw process
 func (r *Reward) InitateWithdraw() {
-	rewardBytes, _ := protobuf.Marshal(&sgn.Reward{
+	rewardBytes, _ := proto.Marshal(&sgn.Reward{
 		Receiver:                mainchain.Hex2Bytes(r.Receiver),
 		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
 		CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
@@ -79,7 +79,7 @@ func (r Reward) GetRewardRequest() []byte {
 		sigs = append(sigs, sig.Sig)
 	}
 
-	rewardRequestBytes, _ := protobuf.Marshal(&sgn.RewardRequest{
+	rewardRequestBytes, _ := proto.Marshal(&sgn.RewardRequest{
 		Reward: r.RewardProtoBytes,
 		Sigs:   sigs,
 	})
