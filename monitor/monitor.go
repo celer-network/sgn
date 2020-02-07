@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
@@ -61,7 +62,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	}
 
 	dal := watcher.NewDAL(st)
-	ws := watcher.NewWatchService(ethClient.Client, dal, pollingInterval)
+	ws := watcher.NewWatchService(ethClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
 	if ws == nil {
 		log.Fatalln("Cannot create watch service")
 	}
@@ -108,7 +109,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 }
 
 func (m *EthMonitor) monitorBlockHead() {
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
