@@ -3,10 +3,13 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
@@ -16,7 +19,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -26,7 +28,7 @@ import (
 )
 
 const (
-	pollingInterval = 10
+	pollingInterval = 1
 )
 
 var (
@@ -43,6 +45,7 @@ type EthMonitor struct {
 	ms             *watcher.Service
 	guardContract  *watcher.BoundContract
 	ledgerContract *watcher.BoundContract
+	blkNum         *big.Int
 	isValidator    bool
 }
 
@@ -59,7 +62,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	}
 
 	dal := watcher.NewDAL(st)
-	ws := watcher.NewWatchService(ethClient.Client, dal, pollingInterval)
+	ws := watcher.NewWatchService(ethClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
 	if ws == nil {
 		log.Fatalln("Cannot create watch service")
 	}
@@ -88,6 +91,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 		blockSyncer:    blockSyncer,
 		db:             db,
 		ms:             ms,
+		blkNum:         ms.GetCurrentBlockNumber(),
 		guardContract:  guardContract,
 		ledgerContract: ledgerContract,
 		isValidator:    mainchain.IsBonded(candidateInfo),
@@ -105,26 +109,23 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 }
 
 func (m *EthMonitor) monitorBlockHead() {
-	headerChan := make(chan *ethTypes.Header)
-	sub, err := m.ethClient.Client.SubscribeNewHead(context.Background(), headerChan)
-	if err != nil {
-		log.Errorln("SubscribeNewHead err", err)
-		return
-	}
-	defer sub.Unsubscribe()
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
 
 	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("SubscribeNewHead err", err)
-		case header := <-headerChan:
-			go m.handleNewBlock(header)
+		<-ticker.C
+		blkNum := m.ms.GetCurrentBlockNumber()
+		if blkNum.Cmp(m.blkNum) == 0 {
+			continue
 		}
+
+		m.blkNum = blkNum
+		go m.handleNewBlock()
 	}
 }
 
 func (m *EthMonitor) monitorInitializeCandidate() {
-	_, err := m.ms.Monitor(string(InitializeCandidate), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(InitializeCandidate), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event InitializeCandidate, tx hash: %x", eLog.TxHash)
 		event := NewEvent(InitializeCandidate, eLog)
 		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
@@ -135,7 +136,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 }
 
 func (m *EthMonitor) monitorDelegate() {
-	_, err := m.ms.Monitor(string(Delegate), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(Delegate), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
 		event := NewEvent(Delegate, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
@@ -146,7 +147,7 @@ func (m *EthMonitor) monitorDelegate() {
 }
 
 func (m *EthMonitor) monitorValidatorChange() {
-	_, err := m.ms.Monitor(string(ValidatorChange), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(ValidatorChange), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
 		event := NewEvent(ValidatorChange, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
@@ -157,7 +158,7 @@ func (m *EthMonitor) monitorValidatorChange() {
 }
 
 func (m *EthMonitor) monitorIntendWithdraw() {
-	_, err := m.ms.Monitor(string(IntendWithdraw), m.guardContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(IntendWithdraw), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event IntendWithdraw, tx hash: %x", eLog.TxHash)
 		event := NewEvent(IntendWithdraw, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
@@ -168,7 +169,7 @@ func (m *EthMonitor) monitorIntendWithdraw() {
 }
 
 func (m *EthMonitor) monitorIntendSettle() {
-	_, err := m.ms.Monitor(string(IntendSettle), m.ledgerContract, m.ms.GetCurrentBlockNumber(), nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(IntendSettle), m.ledgerContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
 		event := NewEvent(IntendSettle, eLog)
 		m.db.Set(GetPullerKey(eLog), event.MustMarshal())

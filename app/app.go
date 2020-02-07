@@ -121,9 +121,10 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		cmn.Exit(err.Error())
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
+	viper.SetDefault(common.FlagEthPollInterval, 5)
 
 	ethClient, err = mainchain.NewEthClient(
-		viper.GetString(common.FlagEthWS),
+		viper.GetString(common.FlagEthInstance),
 		viper.GetString(common.FlagEthGuardAddress),
 		viper.GetString(common.FlagEthLedgerAddress),
 		viper.GetString(common.FlagEthKeystore),

@@ -3,11 +3,12 @@ package common
 const (
 	FlagConfig = "config"
 
-	FlagEthWS            = "eth.ws"
+	FlagEthInstance      = "eth.instance"
 	FlagEthGuardAddress  = "eth.guardAddress"
 	FlagEthLedgerAddress = "eth.ledgerAddress"
 	FlagEthKeystore      = "eth.keystore"
 	FlagEthPassphrase    = "eth.passphrase"
+	FlagEthPollInterval  = "eth.pollInterval"
 
 	FlagSgnOperator      = "sgn.operator"
 	FlagSgnTransactors   = "sgn.transactors"
