@@ -53,7 +53,7 @@ func updateSGNConfig() {
 	clientKeystore, err := filepath.Abs("../../keys/ethks0.json")
 	tc.ChkErr(err, "get client keystore path")
 
-	viper.Set(common.FlagEthWS, tc.LocalGeth)
+	viper.Set(common.FlagEthInstance, tc.LocalGeth)
 	viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
 	viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
 	viper.Set(common.FlagEthKeystore, clientKeystore)

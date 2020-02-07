@@ -74,12 +74,12 @@ func NewRestServer() (rs *RestServer, err error) {
 		}
 	}
 
-	peer1, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer1Flag), "")
+	peer1, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer1Flag), "")
 	if err != nil {
 		return
 	}
 
-	peer2, err := mainchain.NewEthClient(viper.GetString(common.FlagEthWS), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer2Flag), "")
+	peer2, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer2Flag), "")
 	if err != nil {
 		return
 	}

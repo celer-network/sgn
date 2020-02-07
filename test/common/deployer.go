@@ -64,7 +64,7 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
-			ws := viper.GetString(common.FlagEthWS)
+			ws := viper.GetString(common.FlagEthInstance)
 			err = EtherBase.SetClient(ws)
 			if err != nil {
 				return

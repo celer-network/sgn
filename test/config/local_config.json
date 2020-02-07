@@ -4,7 +4,7 @@
     "keystore": "./test/keys/ethks0.json",
     "ledgeraddress": "0x960eb3B6Dd75652B0C6A359E3E976c6e20478A03",
     "passphrase": "",
-    "ws": "ws://127.0.0.1:8546"
+    "instance": "http://127.0.0.1:8545"
   },
   "logcolor": true,
   "loglevel": "debug",

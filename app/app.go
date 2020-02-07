@@ -123,7 +123,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	viper.SetDefault(common.FlagStartMonitor, true)
 
 	ethClient, err = mainchain.NewEthClient(
-		viper.GetString(common.FlagEthWS),
+		viper.GetString(common.FlagEthInstance),
 		viper.GetString(common.FlagEthGuardAddress),
 		viper.GetString(common.FlagEthLedgerAddress),
 		viper.GetString(common.FlagEthKeystore),

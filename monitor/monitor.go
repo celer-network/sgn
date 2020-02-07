@@ -114,7 +114,6 @@ func (m *EthMonitor) monitorBlockHead() {
 	for {
 		<-ticker.C
 		blkNum := m.ms.GetCurrentBlockNumber()
-		log.Info(blkNum)
 		if blkNum.Cmp(m.blkNum) == 0 {
 			continue
 		}

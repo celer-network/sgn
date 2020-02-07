@@ -4,7 +4,7 @@
     "keystore": "[KEYSTORE_PATH]",
     "ledgeraddress": "0xc1b5f0c94f03b99242af7b8712f91189784e92b7",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
-    "ws": "wss://rinkeby.infura.io/ws/v3/[INFURA_API_KEY]"
+    "instance": "https://rinkeby.infura.io/v3/[YOUR-PROJECT-ID]"
   },
   "logcolor": true,
   "loglevel": "debug",

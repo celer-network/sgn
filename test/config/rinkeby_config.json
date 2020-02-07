@@ -4,7 +4,7 @@
     "keystore": "./test/keys/ethks0.json",
     "ledgeraddress": "0xdc474d2c99510aab91c2b1573476f2a45cb87bcb",
     "passphrase": "",
-    "ws": "wss://rinkeby.infura.io/ws/"
+    "instance": "https://rinkeby.infura.io/v3/"
   },
   "logcolor": true,
   "loglevel": "debug",
