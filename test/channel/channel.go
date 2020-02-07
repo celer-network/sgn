@@ -110,16 +110,16 @@ func NewRestServer() (rs *RestServer, err error) {
 		msgSubscribe := subscribe.NewMsgSubscribe(peer1.Address.Hex(), ts.Key.GetAddress())
 		ts.AddTxMsg(msgSubscribe)
 	} else {
-		reqBody, err := json.Marshal(map[string]string{
+		reqBody, err2 := json.Marshal(map[string]string{
 			"ethAddr": peer1.Address.Hex(),
 		})
-		if err != nil {
-			return nil, err
+		if err2 != nil {
+			return nil, err2
 		}
-		_, err = http.Post(gateway+"/subscribe/subscribe",
+		_, err2 = http.Post(gateway+"/subscribe/subscribe",
 			"application/json", bytes.NewBuffer(reqBody))
-		if err != nil {
-			return nil, err
+		if err2 != nil {
+			return nil, err2
 		}
 	}
 
