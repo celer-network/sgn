@@ -5,11 +5,11 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/celer-network/cChannel-eth-go/deploy"
-	"github.com/celer-network/cChannel-eth-go/ledger"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/test/channel-eth-go/deploy"
+	"github.com/celer-network/sgn/test/channel-eth-go/ledger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
