@@ -1,6 +1,6 @@
 {
   "eth": {
-    "guardaddress": "0x65202de29687bee1c0bc61ae3fd88c3c55a4f1f9",
+    "guardaddress": "0xbd733c283ea44c3233fd58a9f628b038e5405519",
     "keystore": "[KEYSTORE_PATH]",
     "ledgeraddress": "0xc1b5f0c94f03b99242af7b8712f91189784e92b7",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
