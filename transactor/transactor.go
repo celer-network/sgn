@@ -23,7 +23,7 @@ const (
 	maxQueryRetry   = 20
 	queryRetryDelay = 500 * time.Millisecond
 	maxSignRetry    = 10
-	signRetryDelay  = 50 * time.Millisecond
+	signRetryDelay  = 100 * time.Millisecond
 )
 
 type Transactor struct {

@@ -12,17 +12,24 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	protobuf "github.com/golang/protobuf/proto"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/golang/protobuf/proto"
 )
 
 func (m *EthMonitor) processQueue() {
-	m.processEventQueue()
-	m.processPullerQueue()
+	secureBlockNum, err := m.getSecureBlockNum()
+	if err != nil {
+		log.Errorln("Query secureBlockNum err", err)
+		return
+	}
+
+	m.processEventQueue(secureBlockNum)
+	m.processPullerQueue(secureBlockNum)
 	m.processPusherQueue()
 	m.processPenaltyQueue()
 }
 
-func (m *EthMonitor) processPullerQueue() {
+func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 	if !m.isPuller() {
 		return
 	}
@@ -32,6 +39,10 @@ func (m *EthMonitor) processPullerQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
+		if secureBlockNum < event.Log.BlockNumber {
+			continue
+		}
+
 		log.Infoln("Process puller event", event.Name)
 		m.db.Delete(iterator.Key())
 
@@ -76,7 +87,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	_, err := validator.CLIQueryCandidate(m.transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
+	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
 	if err == nil {
 		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
 		return
@@ -84,8 +95,8 @@ func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.Guar
 
 	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
 	msg := validator.NewMsgInitializeCandidate(
-		mainchain.Addr2Hex(initializeCandidate.Candidate), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+		mainchain.Addr2Hex(initializeCandidate.Candidate), m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
@@ -96,8 +107,8 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 			return
 		}
 
-		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.transactor.Key.GetAddress())
-		m.transactor.AddTxMsg(msg)
+		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.operator.Key.GetAddress())
+		m.operator.AddTxMsg(msg)
 	}
 }
 
@@ -117,13 +128,13 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		var signedSimplexState chain.SignedSimplexState
-		err := protobuf.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+		err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 		if err != nil {
 			log.Errorln("Unmarshal SignedSimplexState error:", err)
 			return
 		}
 
-		signedSimplexStateArrayBytes, err := protobuf.Marshal(&chain.SignedSimplexStateArray{
+		signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 			SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
 		})
 		if err != nil {
@@ -139,11 +150,19 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		// TODO: 1) bockDelay, 2) may need a better way than wait mined,
-		mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+		res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+		if err != nil {
+			log.Errorln("intendSettle WaitMined err", err, tx.Hash().Hex())
+			return
+		}
+		if res.Status != ethtypes.ReceiptStatusSuccessful {
+			log.Errorln("intendSettle failed", tx.Hash().Hex())
+			return
+		}
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.transactor.Key.GetAddress())
-		m.transactor.AddTxMsg(msg)
+		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.operator.Key.GetAddress())
+		m.operator.AddTxMsg(msg)
 	}
 }
 
@@ -161,7 +180,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.transactor.CliCtx, slash.StoreKey, penaltyEvent.nonce)
+	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.operator.CliCtx, slash.StoreKey, penaltyEvent.nonce)
 	if err != nil {
 		log.Errorln("QueryPenaltyRequest err", err)
 		return
@@ -173,8 +192,23 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
 		return
 	}
+	log.Infoln("Punish tx submitted", tx.Hash().Hex())
 
-	log.Infoln("Punish tx detail", tx)
+	go m.waitPunishMined(tx)
+}
+
+func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
+	// TODO: blockdelay
+	res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+	if err != nil {
+		log.Errorln("Punish tx WaitMined err", err, tx.Hash().Hex())
+		return
+	}
+	if res.Status != ethtypes.ReceiptStatusSuccessful {
+		log.Errorln("Punish tx failed", tx.Hash().Hex())
+		return
+	}
+	log.Infoln("Punish tx mined", tx.Hash().Hex())
 }
 
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (requests []subscribe.Request) {
@@ -190,7 +224,6 @@ func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerInte
 		peerFrom := mainchain.Addr2Hex(addr)
 		request, err := m.getRequest(channelId, peerFrom)
 		if err != nil {
-			log.Errorln("Query request err", err)
 			continue
 		}
 

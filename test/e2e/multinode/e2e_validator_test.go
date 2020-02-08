@@ -1,32 +1,26 @@
 package multinode
 
 import (
-	"fmt"
 	"math/big"
-	"strconv"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
-	sgnval "github.com/celer-network/sgn/x/validator"
+	tc "github.com/celer-network/sgn/test/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/stretchr/testify/assert"
 )
 
 func setUpValidator(maxValidatorNum *big.Int) {
 	log.Infoln("set up new sgn env")
-	p := &tf.SGNParams{
+	p := &tc.SGNParams{
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(1),
 		MinStakingPool:         big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tf.E2eProfile.CelrAddr,
+		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        maxValidatorNum,
 	}
 	setupNewSGNEnv(p)
-	tf.SleepWithLog(10, "sgn being ready")
+	tc.SleepWithLog(10, "sgn being ready")
 }
 
 func TestE2EValidator(t *testing.T) {
@@ -41,14 +35,14 @@ func validatorTest(t *testing.T) {
 	log.Info("======================== Test validator ===========================")
 	setUpValidator(big.NewInt(11))
 
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
-		sgnCLIHomes[0],
-		sgnChainID,
-		sgnNodeURIs[0],
-		sgnTransactors[0],
-		sgnPassphrase,
-		sgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 
 	// delegation ratio. V0 : V1 : V2 = 2 : 1 : 1
@@ -58,95 +52,33 @@ func validatorTest(t *testing.T) {
 	log.Infoln("---------- It should add two validators successfully ----------")
 	for i := 0; i < 2; i++ {
 		log.Infoln("Adding validator", i)
-
 		// get auth
-		ethAddr, auth, err := getAuth(ethKeystores[i], ethKeystorePps[i])
-		tf.ChkTestErr(t, err, "failed to get auth")
-
-		// get sgnAddr
-		sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[i])
-		tf.ChkTestErr(t, err, "failed to parse sgn address")
-
-		err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(1))
-		tf.ChkTestErr(t, err, "failed to initialize candidate")
-
-		log.Info("Query sgn about the validator candidate...")
-		candidate, err := sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
-		tf.ChkTestErr(t, err, "failed to queryCandidate")
-		log.Infoln("Query sgn about the validator candidate:", candidate)
-		expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[i], 0) // defined in Candidate.String()
-		assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
-
-		err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, amts[i])
-		tf.ChkTestErr(t, err, "failed to delegate stake")
-
-		log.Info("Query sgn about the delegator to check if it has correct stakes...")
-		delegator, err := sgnval.CLIQueryDelegator(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex(), ethAddr.Hex())
-		tf.ChkTestErr(t, err, "failed to queryDelegator")
-		log.Infoln("Query sgn about the validator delegator:", delegator)
-		expectedRes = fmt.Sprintf(`EthAddress: %s, DelegatedStake: %d`, mainchain.Addr2Hex(ethAddr), amts[i]) // defined in Delegator.String()
-		assert.Equal(t, expectedRes, delegator.String(), "The expected result should be: "+expectedRes)
-
-		log.Info("Query sgn about the candidate to check if it has correct stakes...")
-		candidate, err = sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
-		tf.ChkTestErr(t, err, "failed to queryCandidate")
-		log.Infoln("Query sgn about the validator candidate:", candidate)
-		expectedRes = fmt.Sprintf(`Operator: %s, StakingPool: %d`, sgnOperators[i], amts[i]) // defined in Candidate.String()
-		assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
-
-		log.Info("Query sgn about the validators to check if it has correct stakes...")
-		validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
-		tf.ChkTestErr(t, err, "failed to queryValidators")
-		log.Infoln("Query sgn about the validators:\n", validators)
-		assert.Equal(t, i+1, len(validators), "The length of validators should be: "+strconv.Itoa(i+1))
-		validator, err := sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[i])
-		tf.ChkTestErr(t, err, "failed to queryValidator")
-		log.Infoln("Query sgn about the validator:\n", validator)
-		assert.Equal(t, sdk.NewIntFromBigInt(amts[i]), validator.Tokens, "validator token should be "+amts[i].String())
-		assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
+		ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[i])
+		tc.ChkTestErr(t, err, "failed to get auth")
+		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[i], amts[i], big.NewInt(1), true)
+		tc.CheckValidatorNum(t, transactor, i+1)
 	}
 
 	log.Infoln("---------- It should fail to add validator 2 without enough delegation ----------")
-	ethAddr, auth, err := getAuth(ethKeystores[2], ethKeystorePps[2])
-	tf.ChkTestErr(t, err, "failed to get auth")
-	sgnAddr, err := sdk.AccAddressFromBech32(sgnOperators[2])
-	tf.ChkTestErr(t, err, "failed to parse sgn address")
-	err = tf.InitializeCandidate(auth, sgnAddr, big.NewInt(10))
-	tf.ChkTestErr(t, err, "failed to initialize candidate")
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[2])
+	tc.ChkTestErr(t, err, "failed to get auth")
 	initialDelegation := big.NewInt(1)
-	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, initialDelegation)
-	tf.ChkTestErr(t, err, "failed to delegate stake")
-
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], initialDelegation, big.NewInt(10), false)
 	log.Info("Query sgn about validators to check if validator 2 is not added...")
-	validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
-	tf.ChkTestErr(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
+	tc.CheckValidatorNum(t, transactor, 2)
 
 	log.Infoln("---------- It should correctly add validator 2 with enough delegation ----------")
-	err = tf.DelegateStake(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
-	tf.ChkTestErr(t, err, "failed to delegate stake")
-	log.Info("Query sgn about the validators to check if it has correct stakes...")
-	validators, err = sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
-	tf.ChkTestErr(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 3, len(validators), "The length of validators should be: 3")
-	validator, err := sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
-	tf.ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 1000000000000000000")
-	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
+	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
+	tc.ChkTestErr(t, err, "failed to delegate stake")
+	tc.CheckValidatorNum(t, transactor, 3)
+	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
 
 	log.Infoln("---------- It should successfully remove validator 2 caused by intendWithdraw ----------")
-	err = tf.IntendWithdraw(auth, ethAddr, amts[2])
-	tf.ChkTestErr(t, err, "failed to intendWithdraw stake")
-	log.Info("Query sgn about the validators to check if it has correct stakes...")
-	validators, err = sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
-	tf.ChkTestErr(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
-	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
-	assert.Equal(t, sdk.Unbonding, validator.Status, "validator should be unbonding")
+	err = tc.IntendWithdraw(auth, ethAddr, amts[2])
+	tc.ChkTestErr(t, err, "failed to intendWithdraw stake")
+	log.Info("Query sgn about the validators to check if it has correct number of validators...")
+	tc.CheckValidatorNum(t, transactor, 2)
+	tc.CheckValidatorStatus(t, transactor, tc.SgnOperators[2], sdk.Unbonding)
 
 	// TODO: normally add back validator 1
 }
@@ -156,41 +88,26 @@ func replaceValidatorTest(t *testing.T) {
 	log.Info("========================  Test replacing validator ===========================")
 	setUpValidator(big.NewInt(2))
 
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
-		sgnCLIHomes[0],
-		sgnChainID,
-		sgnNodeURIs[0],
-		sgnTransactors[0],
-		sgnPassphrase,
-		sgnGasPrice,
+		tc.SgnCLIHome,
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
-
 	// add two validators, 0 and 1
-	addValidators(ethKeystores[:2], ethKeystorePps[:2], sgnOperators[:2], amts[:2])
+	tc.AddValidators(t, transactor, tc.ValEthKs[:2], tc.SgnOperators[:2], amts[:2])
 
 	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
-	err := addValidator(ethKeystores[2], ethKeystorePps[2], sgnOperators[2], amts[2])
-	tf.ChkTestErr(t, err, "failed to add validator")
-	tf.SleepWithLog(30, "wait for validator replacement")
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[2])
+	tc.ChkTestErr(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], amts[2], big.NewInt(1), true)
 
-	log.Info("Query sgn about the validators to check if it has correct stakes...")
-	validators, err := sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
-	tf.ChkTestErr(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
-	assert.Equal(t, 2, len(validators), "The length of validators should be: 2")
-
-	validator, err := sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[1])
-	tf.ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, sdk.NewIntFromBigInt(amts[1]), validator.Tokens, "validator token should be 1000000000000000000")
-	assert.Equal(t, sdk.Unbonding, validator.Status, "validator should be unbonding")
-
-	validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnOperatorValAddrs[2])
-	tf.ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, sdk.NewIntFromBigInt(amts[2]), validator.Tokens, "validator token should be 2000000000000000000")
-	assert.Equal(t, sdk.Bonded, validator.Status, "validator should be bonded")
+	log.Info("Query sgn about the validators...")
+	tc.CheckValidatorNum(t, transactor, 2)
+	tc.CheckValidator(t, transactor, tc.SgnOperators[1], amts[1], sdk.Unbonding)
 }

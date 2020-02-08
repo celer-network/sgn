@@ -33,6 +33,5 @@
 1. `sgntest deploy`
 1. `sgntest osp`
 1. `sgn start`
-1. `sgncli tx subscribe subscribe 0x6A6d2a97dA1C453a4e099E8054865a0a59728863 --from alice`
 1. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
-1. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "10" }'`
+1. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'`

@@ -1,14 +1,14 @@
 module github.com/celer-network/sgn
 
-go 1.12
+go 1.13
 
 require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
-	github.com/celer-network/cChannel-eth-go v0.12.6
-	github.com/celer-network/goutils v0.1.1
+	github.com/celer-network/goutils v0.1.2
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.37.5
+	github.com/cosmos/go-bip39 v0.0.0-20180618194314-52158e4697b8
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/elastic/gosigar v0.10.5 // indirect
@@ -18,7 +18,7 @@ require (
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/gorilla/mux v1.7.0
+	github.com/gorilla/mux v1.7.4-0.20200112191743-75dcda0896e1
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect

@@ -35,14 +35,17 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	transactorPool, err := transactor.NewTransactorPool(
+	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
+		cdc,
+	)
+
+	err = transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
-		viper.GetStringSlice(common.FlagSgnTransactors),
-		cdc,
+		viper.GetStringSlice(common.FlagSgnTransactors)[1:],
 	)
 	if err != nil {
 		return nil, err
@@ -68,7 +71,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 }
 
 // Start starts the rest server
-func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) (err error) {
+func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTimeout uint) error {
 	server.TrapSignal(func() {
 		err := rs.listener.Close()
 		log.Errorln("error closing listener err", err)
@@ -79,9 +82,10 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	cfg.ReadTimeout = time.Duration(readTimeout) * time.Second
 	cfg.WriteTimeout = time.Duration(writeTimeout) * time.Second
 
+	var err error
 	rs.listener, err = rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
-		return
+		return err
 	}
 	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 

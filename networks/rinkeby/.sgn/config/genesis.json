@@ -21,7 +21,7 @@
       "params": {
         "epochLength": "10",
         "blkTimeDiffLower": "2",
-        "blkTimeDiffUpper": "7",
+        "blkTimeDiffUpper": "10",
         "confirmationCount": "2"
       }
     },

@@ -121,9 +121,10 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		cmn.Exit(err.Error())
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
+	viper.SetDefault(common.FlagEthPollInterval, 5)
 
 	ethClient, err = mainchain.NewEthClient(
-		viper.GetString(common.FlagEthWS),
+		viper.GetString(common.FlagEthInstance),
 		viper.GetString(common.FlagEthGuardAddress),
 		viper.GetString(common.FlagEthLedgerAddress),
 		viper.GetString(common.FlagEthKeystore),
@@ -395,7 +396,7 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		return
 	}
 
-	transactor, err := transactor.NewTransactor(
+	operator, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
 		ctx.ChainID(),
 		viper.GetString(common.FlagSgnNodeURI),
@@ -408,5 +409,18 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		cmn.Exit(err.Error())
 	}
 
-	monitor.NewEthMonitor(ethClient, transactor, viper.GetString(common.FlagSgnPubKey), viper.GetStringSlice(common.FlagSgnTransactors))
+	transactor, err := transactor.NewTransactor(
+		viper.GetString(common.FlagCLIHome),
+		ctx.ChainID(),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetString(common.FlagSgnPassphrase),
+		viper.GetString(common.FlagSgnGasPrice),
+		app.cdc,
+	)
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	monitor.NewEthMonitor(ethClient, operator, transactor)
 }

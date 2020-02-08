@@ -12,7 +12,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 )
 
 // TestMain handles common setup (start mainchain, deploy, start sidechain etc)
@@ -44,23 +44,24 @@ func TestMain(m *testing.M) {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-	tf.SleepWithLog(5, "geth start")
+	tc.SleepWithLog(5, "geth start")
 
 	log.Infoln("fund each validator's ETH address 100 ETH")
-	addr0 := mainchain.Hex2Addr(ethAddresses[0])
-	addr1 := mainchain.Hex2Addr(ethAddresses[1])
-	addr2 := mainchain.Hex2Addr(ethAddresses[2])
-	err := tf.FundAddrsETH("1"+strings.Repeat("0", 20), []*mainchain.Addr{&addr0, &addr1, &addr2})
-	tf.ChkErr(err, "fund each validator ETH")
+	addr0 := mainchain.Hex2Addr(tc.ValEthAddrs[0])
+	addr1 := mainchain.Hex2Addr(tc.ValEthAddrs[1])
+	addr2 := mainchain.Hex2Addr(tc.ValEthAddrs[2])
+	addr3 := mainchain.Hex2Addr(tc.ClientEthAddrs[0])
+	err := tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{addr0, addr1, addr2, addr3})
+	tc.ChkErr(err, "fund each validator ETH")
 
 	log.Infoln("set up mainchain")
-	tf.SetupDefaultTestEthClient()
-	tf.SetupE2eProfile()
+	tc.SetupEthClients()
+	tc.SetupE2eProfile()
 
-	// fund CELR to each validators
+	// fund CELR to each eth account
 	log.Infoln("fund each validator 10 million CELR")
-	err = tf.FundAddrsErc20(tf.DefaultTestEthClient.Auth, tf.E2eProfile.CelrAddr, []*mainchain.Addr{&addr1, &addr2}, "1"+strings.Repeat("0", 25))
-	tf.ChkErr(err, "fund each validator ERC20")
+	err = tc.FundAddrsErc20(tc.E2eProfile.CelrAddr, []mainchain.Addr{addr0, addr1, addr2, addr3}, "1"+strings.Repeat("0", 25))
+	tc.ChkErr(err, "fund each validator ERC20")
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()

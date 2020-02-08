@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 
 	"github.com/celer-network/goutils/log"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 )
 
 // start process to handle eth rpc, and fund etherbase and server account
 func startMainchain() (*os.Process, error) {
-	log.Infoln("outRootDir", outRootDir, "envDir", tf.EnvDir)
+	log.Infoln("outRootDir", outRootDir, "envDir", tc.EnvDir)
 	chainDataDir := outRootDir + "mainchaindata"
 	logFname := outRootDir + "mainchain.log"
 	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
@@ -21,7 +21,7 @@ func startMainchain() (*os.Process, error) {
 	// geth init
 	cmdInit := exec.Command("geth", "--datadir", chainDataDir, "init", "mainchain_genesis.json")
 	// set cmd.Dir because relative files are under testing/env
-	cmdInit.Dir, _ = filepath.Abs(tf.EnvDir)
+	cmdInit.Dir, _ = filepath.Abs(tc.EnvDir)
 	if err := cmdInit.Run(); err != nil {
 		return nil, err
 	}

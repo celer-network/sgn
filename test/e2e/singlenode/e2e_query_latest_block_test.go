@@ -6,22 +6,22 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tf "github.com/celer-network/sgn/testing"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpQueryLatestBlock() []tf.Killable {
+func setUpQueryLatestBlock() []tc.Killable {
 	res := setupNewSGNEnv(nil, "query_latest_block")
-	tf.SleepWithLog(10, "sgn syncing")
+	tc.SleepWithLog(10, "sgn syncing")
 
 	return res
 }
 
 func TestE2EQueryLatestBlock(t *testing.T) {
 	toKill := setUpQueryLatestBlock()
-	defer tf.TearDown(toKill)
+	defer tc.TearDown(toKill)
 
 	t.Run("e2e-queryLatestBlock", func(t *testing.T) {
 		t.Run("queryLatestBlockTest", queryLatestBlockTest)
@@ -34,24 +34,23 @@ func queryLatestBlockTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test queryLatestBlock ===========================")
 
-	conn := tf.DefaultTestEthClient.Client
-
-	transactor := tf.NewTransactor(
+	transactor := tc.NewTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[0],
+		viper.GetStringSlice(common.FlagSgnTransactors)[1],
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
 	)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
-	tf.ChkTestErr(t, err, "failed to query latest synced block on sgn")
+	tc.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)
 
+	conn := tc.Client0.Client
 	header, err := conn.HeaderByNumber(context.Background(), nil)
-	tf.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
+	tc.ChkTestErr(t, err, "failed to query latest synced block on mainchain")
 	log.Infof("Latest block number on mainchain is %d", header.Number)
 
 	assert.GreaterOrEqual(t, header.Number.Uint64(), blockSGN.Number, "blkNumMain should be greater than or equal to blockSGN.Number")

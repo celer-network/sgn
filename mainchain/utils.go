@@ -37,7 +37,6 @@ func GetEventSignature(eventSigStr string) HashType {
 	return crypto.Keccak256Hash([]byte(eventSigStr))
 }
 
-// TODO(mzhou): Remove this once cEnv is cleaned up
 func WaitMined(ctx context.Context, ec *ethclient.Client,
 	tx *ethtypes.Transaction, blockDelay uint64) (*ethtypes.Receipt, error) {
 	return WaitMinedWithTxHash(ctx, ec, tx.Hash().Hex(), blockDelay)

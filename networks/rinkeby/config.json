@@ -1,0 +1,22 @@
+{
+  "eth": {
+    "guardaddress": "0xbd733c283ea44c3233fd58a9f628b038e5405519",
+    "keystore": "[KEYSTORE_PATH]",
+    "ledgeraddress": "0xc1b5f0c94f03b99242af7b8712f91189784e92b7",
+    "passphrase": "[KEYSTORE_PASSPHRASE]",
+    "instance": "https://rinkeby.infura.io/v3/[YOUR-PROJECT-ID]"
+  },
+  "logcolor": true,
+  "loglevel": "debug",
+  "loglongfile": true,
+  "sgn": {
+    "chainid": "sgnchain",
+    "gasprice": "",
+    "nodeuri": "tcp://localhost:26657",
+    "operator": "[OPERATOR_ADDRESS]",
+    "passphrase": "[TRANSACTOR_PASSPHRASE]",
+    "pubkey": "[VALIDATOR_PUBKEY]",
+    "transactors": ["TRANSACTOR_ADDRESS"],
+    "timeoutCommit": 5
+  }
+}

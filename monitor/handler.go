@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
@@ -11,16 +12,10 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/spf13/viper"
 )
 
-func (m *EthMonitor) processEventQueue() {
-	secureBlockNum, err := m.getSecureBlockNum()
-	if err != nil {
-		log.Errorln("Query secureBlockNum err", err)
-		return
-	}
-
+func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
 	defer iterator.Close()
 
@@ -44,8 +39,8 @@ func (m *EthMonitor) processEventQueue() {
 	}
 }
 
-func (m *EthMonitor) handleNewBlock(header *types.Header) {
-	log.Infoln("Catch new mainchain block", header.Number)
+func (m *EthMonitor) handleNewBlock() {
+	log.Infoln("Catch new mainchain block", m.blkNum)
 	if !m.isPuller() {
 		return
 	}
@@ -56,10 +51,11 @@ func (m *EthMonitor) handleNewBlock(header *types.Header) {
 		return
 	}
 
-	time.Sleep(time.Duration(params.BlkTimeDiffLower+1) * time.Second)
-	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", header.Number)
-	msg := global.NewMsgSyncBlock(header.Number.Uint64(), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
+
+	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", m.blkNum)
+	msg := global.NewMsgSyncBlock(m.blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
+	m.blockSyncer.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
@@ -109,7 +105,7 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendW
 func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Infoln("New initiate withdraw", ethAddr)
 
-	reward, err := validator.CLIQueryReward(m.transactor.CliCtx, validator.StoreKey, ethAddr)
+	reward, err := validator.CLIQueryReward(m.operator.CliCtx, validator.StoreKey, ethAddr)
 	if err != nil {
 		log.Errorln("Query reward err", err)
 		return
@@ -121,18 +117,17 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 		return
 	}
 
-	msg := validator.NewMsgSignReward(ethAddr, sig, m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := validator.NewMsgSignReward(ethAddr, sig, m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
-	log.Infoln("New Penalty", nonce)
-
-	penalty, err := slash.CLIQueryPenalty(m.transactor.CliCtx, slash.StoreKey, nonce)
+	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, nonce)
 	if err != nil {
-		log.Errorln("Query penalty err", err)
+		log.Errorf("Query penalty %d err %s", nonce, err)
 		return
 	}
+	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, nonce)
 
 	sig, err := m.ethClient.SignMessage(penalty.PenaltyProtoBytes)
 	if err != nil {
@@ -140,8 +135,8 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 		return
 	}
 
-	msg := slash.NewMsgSignPenalty(nonce, sig, m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := slash.NewMsgSignPenalty(nonce, sig, m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate) {
@@ -166,28 +161,31 @@ func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate
 
 func (m *EthMonitor) claimValidator() {
 	log.Infof("Claim self as a validator on sidechain, self address %x", m.ethClient.Address)
-	transactors, err := transactor.ParseTransactorAddrs(m.transactors)
+	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 	if err != nil {
 		log.Errorln("parse transactors err", err)
 		return
 	}
 
 	msg := validator.NewMsgClaimValidator(
-		mainchain.Addr2Hex(m.ethClient.Address), m.pubkey, transactors, m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
-
+		mainchain.Addr2Hex(m.ethClient.Address),
+		viper.GetString(common.FlagSgnPubKey),
+		transactors,
+		m.operator.Key.GetAddress(),
+	)
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	log.Infof("SyncValidator %x", address)
-	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
 
 	msg := validator.NewMsgSyncDelegator(
-		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.transactor.Key.GetAddress())
-	m.transactor.AddTxMsg(msg)
+		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
 }

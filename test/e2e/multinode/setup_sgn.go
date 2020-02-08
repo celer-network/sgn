@@ -3,36 +3,30 @@ package multinode
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
-	tf "github.com/celer-network/sgn/testing"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
+	tc "github.com/celer-network/sgn/test/common"
 	"github.com/spf13/viper"
 )
 
-func setupNewSGNEnv(sgnParams *tf.SGNParams) {
+func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 	log.Infoln("Deploy guard contract")
 	if sgnParams == nil {
-		sgnParams = &tf.SGNParams{
+		sgnParams = &tc.SGNParams{
 			BlameTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MinStakingPool:         big.NewInt(100),
 			SidechainGoLiveTimeout: big.NewInt(0),
-			CelrAddr:               tf.E2eProfile.CelrAddr,
+			CelrAddr:               tc.E2eProfile.CelrAddr,
 			MaxValidatorNum:        big.NewInt(11),
 		}
 	}
-	tf.E2eProfile.GuardAddr = tf.DeployGuardContract(sgnParams)
+	tc.E2eProfile.GuardAddr = tc.DeployGuardContract(sgnParams)
 
 	log.Infoln("make localnet-down-nodes")
 	cmd := exec.Command("make", "localnet-down-nodes")
@@ -40,41 +34,39 @@ func setupNewSGNEnv(sgnParams *tf.SGNParams) {
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err := cmd.Run()
+	tc.ChkErr(err, "Failed to make localnet-down-nodes")
 
 	log.Infoln("make prepare-sgn-data")
 	cmd = exec.Command("make", "prepare-sgn-data")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err = cmd.Run()
+	tc.ChkErr(err, "Failed to make prepare-sgn-data")
 
 	log.Infoln("Updating config files of SGN nodes")
 	for i := 0; i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
 		viper.SetConfigFile(configPath)
-		err := viper.ReadInConfig()
-		tf.ChkErr(err, "Failed to read config")
-		viper.Set(common.FlagEthGuardAddress, tf.E2eProfile.GuardAddr)
-		viper.Set(common.FlagEthLedgerAddress, tf.E2eProfile.LedgerAddr)
-		viper.WriteConfig()
+		err = viper.ReadInConfig()
+		tc.ChkErr(err, "Failed to read config")
+		viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
+		viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
+		err = viper.WriteConfig()
+		tc.ChkErr(err, "Failed to write config")
 	}
 
-	log.Infoln("SetContracts")
-	tf.DefaultTestEthClient.SetContracts(tf.E2eProfile.GuardAddr.String(), tf.E2eProfile.LedgerAddr.String())
+	err = tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
+	tc.ChkErr(err, "Failed to SetContracts")
 
 	log.Infoln("make localnet-up-nodes")
 	cmd = exec.Command("make", "localnet-up-nodes")
 	cmd.Dir = repoRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	err = cmd.Run()
+	tc.ChkErr(err, "Failed to make localnet-up-nodes")
 }
 
 func shutdownNode(node uint) {
@@ -93,9 +85,10 @@ func turnOffMonitor(node uint) {
 	configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", node)
 	viper.SetConfigFile(configPath)
 	err := viper.ReadInConfig()
-	tf.ChkErr(err, "Failed to read config")
+	tc.ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagStartMonitor, false)
-	viper.WriteConfig()
+	err = viper.WriteConfig()
+	tc.ChkErr(err, "Failed to write config")
 	viper.Set(common.FlagStartMonitor, true)
 
 	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))
@@ -104,51 +97,4 @@ func turnOffMonitor(node uint) {
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
-}
-
-func addValidators(ethkss []string, ethpps []string, sgnops []string, amts []*big.Int) {
-	for i := 0; i < len(ethkss); i++ {
-		log.Infoln("Adding validator", i)
-		err := addValidator(ethkss[i], ethpps[i], sgnops[i], amts[i])
-		tf.ChkErr(err, "Failed to add validator")
-	}
-}
-
-func addValidator(ethks string, ethpp string, sgnop string, amt *big.Int) error {
-	// get auth
-	addr, auth, err := getAuth(ethks, ethpp)
-	if err != nil {
-		return err
-	}
-
-	// get sgnAddr
-	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
-	if err != nil {
-		return err
-	}
-
-	err = tf.AddValidator(tf.E2eProfile.CelrContract, tf.E2eProfile.GuardAddr, auth, addr, sgnAddr, amt)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func getAuth(ks, pp string) (addr mainchain.Addr, auth *bind.TransactOpts, err error) {
-	keystoreBytes, err := ioutil.ReadFile(ks)
-	if err != nil {
-		return
-	}
-	key, err := keystore.DecryptKey(keystoreBytes, pp)
-	if err != nil {
-		return
-	}
-	addr = key.Address
-	auth, err = bind.NewTransactor(strings.NewReader(string(keystoreBytes)), pp)
-	if err != nil {
-		return
-	}
-
-	return
 }

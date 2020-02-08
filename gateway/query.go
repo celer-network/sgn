@@ -16,37 +16,37 @@ func (rs *RestServer) registerQueryRoutes() {
 	rs.Mux.HandleFunc(
 		"/global/latestBlock",
 		latestBlockHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/params",
 		subscribeParamsHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/subscription/{ethAddr}",
 		subscriptionHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/subscribe/request/{channelId}/{peerFrom}",
 		guardRequestHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/candidate/{ethAddr}",
 		candidateHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/reward/{ethAddr}",
 		rewardHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/rewardRequest/{ethAddr}",
 		rewardRequestHandlerFn(rs),
-	).Methods(http.MethodGet)
+	).Methods(http.MethodGet, http.MethodOptions)
 }
 
 // http request handler to query latest block
@@ -105,6 +105,11 @@ func candidateHandlerFn(rs *RestServer) http.HandlerFunc {
 // http request handler to query reward
 func rewardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
@@ -116,11 +121,16 @@ func rewardHandlerFn(rs *RestServer) http.HandlerFunc {
 // http request handler to query reward request
 func rewardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
 		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddr)
-		postProcessResponse(w, transactor.CliCtx, reward.GetRewardRequest(), err)
+		postProcessResponse(w, transactor.CliCtx, mainchain.Bytes2Hex(reward.GetRewardRequest()), err)
 	}
 }
 
