@@ -1,10 +1,10 @@
 {
   "eth": {
-    "guardaddress": "0xbd733c283ea44c3233fd58a9f628b038e5405519",
+    "guardaddress": "0x8B55776dbbC456d5e0457F742bA6041d96511531",
     "keystore": "[KEYSTORE_PATH]",
-    "ledgeraddress": "0xc1b5f0c94f03b99242af7b8712f91189784e92b7",
+    "ledgeraddress": "0xAEF5939B60b7a1cb031492D95321a44626548c2B",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
-    "instance": "https://rinkeby.infura.io/v3/[YOUR-PROJECT-ID]"
+    "instance": "[ETHEREUM_INSTANCE_URL]"
   },
   "logcolor": true,
   "loglevel": "debug",
