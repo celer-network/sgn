@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -184,7 +185,7 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 				loAddrDist, hiAddrDist,
 			},
 		},
-		OpenDeadline:   math.MaxUint64,
+		OpenDeadline:   uint64(time.Now().Unix()) + math.MaxUint64/2,
 		DisputeTimeout: DisputeTimeout,
 	}
 	paymentChannelInitializerBytes, err := proto.Marshal(initializer)
