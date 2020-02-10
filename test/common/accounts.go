@@ -95,7 +95,7 @@ func addAccounts(kb cKeys.Keybase) ([]string, error) {
 			return addresses, err
 		}
 
-		info, err = kb.CreateAccount(name, mnemonic, passphrase, "", 0, 0)
+		info, err = kb.CreateAccount(name, mnemonic, "", passphrase, 0, 0)
 		if err != nil {
 			return addresses, err
 		}

@@ -14,10 +14,10 @@ const (
 	DefaultEpochLength int64 = 60
 
 	// Default lower bound of block time diff
-	DefaultBlkTimeDiffLower int64 = 30
+	DefaultBlkTimeDiffLower int64 = 2
 
 	// Default upper bound of block time diff
-	DefaultBlkTimeDiffUpper int64 = 60
+	DefaultBlkTimeDiffUpper int64 = 15
 
 	// Default number of blocks to confirm a block is safe
 	DefaultConfirmationCount uint64 = 5
