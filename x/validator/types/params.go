@@ -39,8 +39,8 @@ func NewParams(pullerDuration uint, pusherDuration uint) Params {
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeyPullerDuration, &p.PullerDuration},
-		{KeyPusherDuration, &p.PusherDuration},
+		{Key: KeyPullerDuration, Value: &p.PullerDuration},
+		{Key: KeyPusherDuration, Value: &p.PusherDuration},
 	}
 }
 
@@ -60,7 +60,7 @@ func DefaultParams() Params {
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   PullerDuration:    %d,
-  PusherDuration:    %s`,
+  PusherDuration:    %ds`,
 		p.PullerDuration, p.PusherDuration)
 }
 
