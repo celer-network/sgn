@@ -185,6 +185,7 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 				loAddrDist, hiAddrDist,
 			},
 		},
+		// The unit of OpenDeadline is block number. time.Now() here is only used for uniqueness of each run.
 		OpenDeadline:   uint64(time.Now().Unix()) + math.MaxUint64/2,
 		DisputeTimeout: DisputeTimeout,
 	}
