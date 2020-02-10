@@ -97,14 +97,14 @@ func NewRestServer() (rs *RestServer, err error) {
 	}
 
 	amt := new(big.Int)
-	amt.SetString("1"+strings.Repeat("0", 19), 10)
+	amt.SetString("1"+strings.Repeat("0", 18), 10)
 	tx, err := tokenContract.Approve(peer1.Auth, peer1.GuardAddress, amt)
 	tc.ChkErr(err, "failed to approve erc20")
 	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, 0, "approve erc20")
 
 	tx, err = peer1.Guard.Subscribe(peer1.Auth, amt)
 	tc.ChkErr(err, "failed to subscribe")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, "Subscribe on Guard contract")
 
 	if gateway == "" {
 		msgSubscribe := subscribe.NewMsgSubscribe(peer1.Address.Hex(), ts.Key.GetAddress())

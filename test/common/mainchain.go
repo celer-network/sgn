@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -184,7 +185,8 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 				loAddrDist, hiAddrDist,
 			},
 		},
-		OpenDeadline:   math.MaxUint64,
+		// The unit of OpenDeadline is block number. time.Now() here is only used for uniqueness of each run.
+		OpenDeadline:   uint64(time.Now().Unix()) + math.MaxUint64/2,
 		DisputeTimeout: DisputeTimeout,
 	}
 	paymentChannelInitializerBytes, err := proto.Marshal(initializer)
@@ -210,14 +212,19 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 		return
 	}
 
-	channelIdChan := make(chan [32]byte)
-	go monitorOpenChannel(channelIdChan)
-	_, err = Client0.Ledger.OpenChannel(Client0.Auth, requestBytes)
+	tx, err := Client0.Ledger.OpenChannel(Client0.Auth, requestBytes)
 	if err != nil {
 		return
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+	WaitMinedWithChk(ctx, Client0.Client, tx, 0, "OpenChannel")
 
-	channelId = <-channelIdChan
+	receipt, err := Client0.Client.TransactionReceipt(context.Background(), tx.Hash())
+	if err != nil {
+		return
+	}
+	channelId = receipt.Logs[0].Topics[1]
 	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
 	return
@@ -274,29 +281,6 @@ func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, from
 	}
 	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "Delegate to validator")
 	return nil
-}
-
-func monitorOpenChannel(channelIdChan chan [32]byte) {
-	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
-	sub, err := Client0.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
-	if err != nil {
-		log.Errorln("WatchInitializeCandidate err: ", err)
-		return
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			log.Errorln("WatchInitializeCandidate err: ", err)
-		case openChannel := <-openChannelChan:
-			log.Infoln("Monitored a OpenChannel event")
-			channelId := [32]byte{}
-			copy(channelId[:], openChannel.ChannelId[:])
-			channelIdChan <- channelId
-			return
-		}
-	}
 }
 
 func prepareEtherBaseClient() (
