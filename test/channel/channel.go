@@ -104,7 +104,7 @@ func NewRestServer() (rs *RestServer, err error) {
 
 	tx, err = peer1.Guard.Subscribe(peer1.Auth, amt)
 	tc.ChkErr(err, "failed to subscribe")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag), "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, "Subscribe on Guard contract")
 
 	if gateway == "" {
 		msgSubscribe := subscribe.NewMsgSubscribe(peer1.Address.Hex(), ts.Key.GetAddress())
