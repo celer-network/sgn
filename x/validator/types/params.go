@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
@@ -14,25 +15,32 @@ const (
 	DefaultPusherDuration uint = 10
 )
 
+var (
+	DefaultMiningReward = sdk.NewInt(10000000000000)
+)
+
 // nolint - Keys for parameter access
 var (
 	KeyPullerDuration = []byte("PullerDuration")
 	KeyPusherDuration = []byte("PusherDuration")
+	KeyMiningReward   = []byte("MiningReward")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 type Params struct {
-	PullerDuration uint `json:"pullerDuration" yaml:"pullerDuration"`
-	PusherDuration uint `json:"pusherDuration" yaml:"pusherDuration"`
+	PullerDuration uint    `json:"pullerDuration" yaml:"pullerDuration"`
+	PusherDuration uint    `json:"pusherDuration" yaml:"pusherDuration"`
+	MiningReward   sdk.Int `json:"miningReward" yaml:"miningReward"`
 }
 
 // NewParams creates a new Params instance
-func NewParams(pullerDuration uint, pusherDuration uint) Params {
+func NewParams(pullerDuration uint, pusherDuration uint, miningReward sdk.Int) Params {
 
 	return Params{
 		PullerDuration: pullerDuration,
 		PusherDuration: pusherDuration,
+		MiningReward:   miningReward,
 	}
 }
 
@@ -41,6 +49,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		{Key: KeyPullerDuration, Value: &p.PullerDuration},
 		{Key: KeyPusherDuration, Value: &p.PusherDuration},
+		{Key: KeyMiningReward, Value: &p.MiningReward},
 	}
 }
 
@@ -53,15 +62,16 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultPullerDuration, DefaultPusherDuration)
+	return NewParams(DefaultPullerDuration, DefaultPusherDuration, DefaultMiningReward)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   PullerDuration:    %d,
-  PusherDuration:    %ds`,
-		p.PullerDuration, p.PusherDuration)
+  PusherDuration:    %d,
+  MiningReward:    %s`,
+		p.PullerDuration, p.PusherDuration, p.MiningReward)
 }
 
 // unmarshal the current validator params value from store key or panic
@@ -90,6 +100,10 @@ func (p Params) Validate() error {
 
 	if p.PusherDuration == 0 {
 		return fmt.Errorf("validator parameter PusherDuration must be a positive integer")
+	}
+
+	if !p.MiningReward.IsPositive() {
+		return fmt.Errorf("validator parameter MiningReward must be a positive integer")
 	}
 	return nil
 }
