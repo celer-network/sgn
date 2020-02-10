@@ -8,7 +8,7 @@ const (
 	// the folder will be deleted after test ends successfully
 	OutRootDirPrefix = "/tmp/celer_e2e_"
 	EnvDir           = "../../env"
-	LocalGeth        = "ws://127.0.0.1:8546"
+	LocalGeth        = "http://127.0.0.1:8545"
 
 	SgnChainID    = "sgnchain"
 	SgnPassphrase = "12341234"
