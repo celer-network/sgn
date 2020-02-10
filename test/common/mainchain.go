@@ -280,7 +280,7 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	openChannelChan := make(chan *mainchain.CelerLedgerOpenChannel)
 	sub, err := Client0.Ledger.WatchOpenChannel(nil, openChannelChan, nil, nil)
 	if err != nil {
-		log.Errorln("WatchInitializeCandidate err: ", err)
+		log.Errorln("WatchOpenChannel err: ", err)
 		return
 	}
 	defer sub.Unsubscribe()
@@ -288,7 +288,7 @@ func monitorOpenChannel(channelIdChan chan [32]byte) {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Errorln("WatchInitializeCandidate err: ", err)
+			log.Errorln("WatchOpenChannel err: ", err)
 		case openChannel := <-openChannelChan:
 			log.Infoln("Monitored a OpenChannel event")
 			channelId := [32]byte{}
