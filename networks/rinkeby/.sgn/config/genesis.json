@@ -11,7 +11,9 @@
       "max_age": "100000"
     },
     "validator": {
-      "pub_key_types": ["ed25519"]
+      "pub_key_types": [
+        "ed25519"
+      ]
     }
   },
   "app_hash": "",
@@ -31,7 +33,13 @@
     "bank": {
       "send_enabled": true
     },
-    "validator": {},
+    "validator": {
+      "params": {
+        "pullerDuration": "10",
+        "pusherDuration": "10",
+        "miningReward": "1000000000000000000"
+      }
+    },
     "accounts": [
       {
         "address": "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
@@ -49,7 +57,9 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [""]
+        "module_permissions": [
+          ""
+        ]
       },
       {
         "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
@@ -67,7 +77,9 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [""]
+        "module_permissions": [
+          ""
+        ]
       }
     ],
     "auth": {

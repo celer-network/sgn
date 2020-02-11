@@ -185,6 +185,12 @@
     "supply": {
       "supply": []
     },
-    "validator": {}
+    "validator": {
+      "params": {
+        "pullerDuration": "10",
+        "pusherDuration": "10",
+        "miningReward": "1000000000000000000"
+      }
+    }
   }
 }
