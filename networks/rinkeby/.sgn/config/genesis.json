@@ -37,7 +37,7 @@
       "params": {
         "pullerDuration": "10",
         "pusherDuration": "10",
-        "miningReward": "1000000000000000000"
+        "miningReward": "10000000000000"
       }
     },
     "accounts": [
