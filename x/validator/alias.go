@@ -49,11 +49,13 @@ var (
 	CLIQueryValidator         = cli.QueryValidator
 	CLIQueryValidators        = cli.QueryValidators
 	CLIQueryBondedValidators  = cli.QueryBondedValidators
+	DefaultParams             = types.DefaultParams
 )
 
 type (
 	Puller                 = types.Puller
 	Pusher                 = types.Pusher
+	Params                 = types.Params
 	Delegator              = types.Delegator
 	Candidate              = types.Candidate
 	Reward                 = types.Reward
