@@ -10,15 +10,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-const pullerDuration = 10
-const pusherDuration = 10
-
-var miningReward = sdk.NewInt(10000000000000)
-
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
 	setPuller(ctx, req, keeper)
 	setPusher(ctx, keeper)
+	miningReward := keeper.MiningReward(ctx)
 	keeper.DistributeReward(ctx, miningReward, MiningReward)
 
 	return applyAndReturnValidatorSetUpdates(ctx, keeper)
@@ -28,6 +24,7 @@ func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updat
 func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	puller := keeper.GetPuller(ctx)
 	validators := keeper.GetValidators(ctx)
+	pullerDuration := keeper.PullerDuration(ctx)
 	vIdx := uint(req.Height) / pullerDuration % uint(len(validators))
 
 	if puller.ValidatorIdx != vIdx || puller.ValidatorAddr.Empty() {
@@ -41,6 +38,7 @@ func setPusher(ctx sdk.Context, keeper Keeper) {
 	pusher := keeper.GetPusher(ctx)
 	validators := keeper.GetValidators(ctx)
 	latestBlock := keeper.globalKeeper.GetLatestBlock(ctx)
+	pusherDuration := keeper.PusherDuration(ctx)
 	vIdx := uint(latestBlock.Number) / pusherDuration % uint(len(validators))
 
 	if pusher.ValidatorIdx != vIdx || pusher.ValidatorAddr.Empty() {
