@@ -18,16 +18,16 @@
   "app_state": {
     "global": {
       "params": {
-        "epochLength": "60",
+        "epochLength": "10",
         "blkTimeDiffLower": "2",
         "blkTimeDiffUpper": "15",
-        "confirmationCount": "5"
+        "confirmationCount": "2"
       }
     },
     "subscribe": {
       "params": {
         "requestGuardCount": "3",
-        "requestCost": "1000000000000000000"
+        "requestCost": "10000000000000000"
       }
     },
     "genutil": {
@@ -82,7 +82,7 @@
     "staking": {
       "params": {
         "unbonding_time": "1814400000000000",
-        "max_validators": 10,
+        "max_validators": 7,
         "max_entries": 7,
         "bond_denom": "stake"
       },
@@ -97,7 +97,7 @@
     "params": null,
     "slash": {
       "params": {
-        "signed_blocks_window": "100",
+        "signed_blocks_window": "1500",
         "min_signed_per_window": "0.500000000000000000",
         "slashFractionDoubleSign": "0.050000000000000000",
         "slashFractionDowntime": "0.010000000000000000",
@@ -110,9 +110,9 @@
     },
     "validator": {
       "params": {
-        "pullerDuration": "10",
-        "pusherDuration": "10",
-        "miningReward": "10000000000000"
+        "pullerDuration": "5",
+        "pusherDuration": "5",
+        "miningReward": "100000000000000000"
       }
     },
     "bank": {
