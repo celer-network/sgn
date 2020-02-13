@@ -1,8 +1,8 @@
 {
   "eth": {
-    "guardaddress": "0x8B55776dbbC456d5e0457F742bA6041d96511531",
+    "guardaddress": "0xD171B8c83B3b12F2b3099726C03524577E8C37E7",
     "keystore": "[KEYSTORE_PATH]",
-    "ledgeraddress": "0xAEF5939B60b7a1cb031492D95321a44626548c2B",
+    "ledgeraddress": "0xA29cC2F47ab83d6198F2B85BA4f9D59a62e43B34",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
     "instance": "[ETHEREUM_INSTANCE_URL]"
   },
@@ -16,9 +16,7 @@
     "operator": "[OPERATOR_ADDRESS]",
     "passphrase": "[TRANSACTOR_PASSPHRASE]",
     "pubkey": "[VALIDATOR_PUBKEY]",
-    "transactors": [
-      "TRANSACTOR_ADDRESS"
-    ],
+    "transactors": ["TRANSACTOR_ADDRESS"],
     "timeoutCommit": 5
   }
 }
