@@ -87,12 +87,12 @@ func DeployCommand() *cobra.Command {
 
 			erc20Addr, erc20 := DeployERC20Contract()
 			sgnParams := &SGNParams{
-				BlameTimeout:           big.NewInt(50),
-				MinValidatorNum:        big.NewInt(0),
-				MinStakingPool:         big.NewInt(100),
-				SidechainGoLiveTimeout: big.NewInt(0),
+				BlameTimeout:           big.NewInt(5760),
+				MinValidatorNum:        big.NewInt(3),
+				MinStakingPool:         big.NewInt(10000),
+				SidechainGoLiveTimeout: big.NewInt(5760),
 				CelrAddr:               erc20Addr,
-				MaxValidatorNum:        big.NewInt(10),
+				MaxValidatorNum:        big.NewInt(7),
 			}
 			guardAddr := DeployGuardContract(sgnParams)
 			viper.Set(common.FlagEthGuardAddress, guardAddr)

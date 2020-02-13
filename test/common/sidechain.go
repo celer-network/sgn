@@ -130,7 +130,8 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop strin
 	}
 	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
-	assert.Equal(t, expAmt.String(), validator.Tokens.String(), "validator token should be "+expAmt.String())
+	expToken := sdk.NewIntFromBigInt(expAmt).Quo(sgnval.PowerReduction).String()
+	assert.Equal(t, expToken, validator.Tokens.String(), "validator token should be "+expToken)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
