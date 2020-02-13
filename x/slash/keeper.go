@@ -144,7 +144,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	}
 
 	// Amount of slashing = slash slashFactor * power at time of infraction
-	amount := sdk.TokensFromConsensusPower(power)
+	amount := sdk.TokensFromConsensusPower(power).Mul(validator.PowerReduction)
 	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
 	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {

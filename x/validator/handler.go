@@ -17,7 +17,7 @@ var (
 	errRes = sdk.Result{Code: sdk.CodeInternal}
 )
 
-var PowerReduction = sdk.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(10), nil))
+var PowerReduction = sdk.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil))
 
 // NewHandler returns a handler for "validator" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
