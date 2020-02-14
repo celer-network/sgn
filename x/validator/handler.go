@@ -17,6 +17,8 @@ var (
 	errRes = sdk.Result{Code: sdk.CodeInternal}
 )
 
+var PowerReduction = sdk.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil))
+
 // NewHandler returns a handler for "validator" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
@@ -255,7 +257,7 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 
 func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, totalTokens *big.Int) {
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(totalTokens)
+	validator.Tokens = sdk.NewIntFromBigInt(totalTokens).Quo(PowerReduction)
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 	keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
