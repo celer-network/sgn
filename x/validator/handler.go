@@ -17,6 +17,9 @@ var (
 	errRes = sdk.Result{Code: sdk.CodeInternal}
 )
 
+// 1 Gwei (10^9), mainchain token amount will be divided by this number in sidechain.
+// This is to address the Tendermint limitation on the voting power max value.
+// It also indicates that mainchain token staking should be a the unit of gwei.
 var PowerReduction = sdk.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil))
 
 // NewHandler returns a handler for "validator" type messages.
