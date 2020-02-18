@@ -1,10 +1,11 @@
 package validator
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -62,7 +63,6 @@ func queryDelegator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 
-
 	}
 
 	return res, nil
@@ -77,13 +77,12 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 
 	candidate, found := keeper.GetCandidate(ctx, params.CandidateAddress)
 	if !found {
-		return nil, sdk.ErrInternal("Cannot find candidate " + params.CandidateAddress)
+		return nil, errors.New("Cannot find candidate " + params.CandidateAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-
 
 	}
 
@@ -99,13 +98,12 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 	reward, found := keeper.GetReward(ctx, params.EthAddress)
 	if !found {
-		return nil, sdk.ErrInternal("Reward does not exist for " + params.EthAddress)
+		return nil, errors.New("Reward does not exist for " + params.EthAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, reward)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-
 
 	}
 

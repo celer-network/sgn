@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
 )
@@ -20,9 +20,9 @@ var (
 
 // NewHandler returns a handler for "subscribe" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		logEntry := seal.NewMsgLog()
-		var res sdk.Result
+		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
 		case MsgSubscribe:
@@ -34,28 +34,25 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		case MsgGuardProof:
 			res, err = handleMsgGuardProof(ctx, keeper, msg, logEntry)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized subscribe Msg type: %v", msg.Type())
-			log.Error(errMsg)
-			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg).Result()
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
 
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
-			seal.CommitMsgLog(logEntry)
-			return sdk.ErrInternal(err.Error()).Result()
 		}
+
 		seal.CommitMsgLog(logEntry)
-		return res
+		return res, err
 	}
 }
 
 // Handle a message to subscribe
-func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 
-	res := sdk.Result{}
+	res := &sdk.Result{}
 	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(
 		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))},
 		mainchain.Hex2Addr(msg.EthAddress))
@@ -74,12 +71,12 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEnt
 }
 
 // Handle a message to request guard
-func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 
-	res := sdk.Result{}
+	res := &sdk.Result{}
 	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
 	if err != nil {
 		return res, fmt.Errorf("Failed to charge request fee: %s", err)
@@ -132,14 +129,14 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	return res, nil
 }
 
-func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.ChanInfo.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
 	logEntry.ChanInfo.PeerFrom = msg.PeerFrom
 	logEntry.ChanInfo.TriggerTxHash = msg.TxHash
 
-	res := sdk.Result{}
+	res := &sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
 	if !found {
 		return res, fmt.Errorf("Cannot find request for channel ID")
@@ -161,14 +158,14 @@ func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, 
 // Handle a message to submit guard proof
 // Currently only supports that the validator sends out a tx purely for one intendSettle.
 // (not call it via a contract or put multiple calls in one tx)
-func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.ChanInfo.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
 	logEntry.ChanInfo.PeerFrom = msg.PeerFrom
 	logEntry.ChanInfo.GuardTxHash = msg.TxHash
 
-	res := sdk.Result{}
+	res := &sdk.Result{}
 	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
 	if !found {
 		return res, fmt.Errorf("Cannot find request for channel ID")
@@ -235,7 +232,7 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
 	}
 
-	return sdk.Result{
+	return &sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}, nil
 }

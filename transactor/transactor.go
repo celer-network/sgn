@@ -7,14 +7,12 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/seal"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clientKeys "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gammazero/deque"
@@ -63,14 +61,13 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 		}
 	}
 
-	txBldr := auth.
-		NewTxBuilderFromCLI().
+	txBldr := NewTxBuilder().
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID).
 		WithKeybase(kb).
 		WithGasPrices(gasPrice)
 
-	cliCtx := client.
+	cliCtx := context.
 		NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(key.GetAddress()).

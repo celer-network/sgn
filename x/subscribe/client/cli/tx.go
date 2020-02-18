@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"bufio"
+
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -21,7 +24,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	subscribeTxCmd.AddCommand(client.PostCommands(
+	subscribeTxCmd.AddCommand(flags.PostCommands(
 		GetCmdSubscribe(cdc),
 		GetCmdRequestGuard(cdc),
 	)...)
@@ -37,7 +40,7 @@ func GetCmdSubscribe(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
 			msg := types.NewMsgSubscribe(args[0], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
@@ -57,7 +60,7 @@ func GetCmdRequestGuard(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
 			signedSimplexStateBytes := mainchain.Hex2Bytes(args[1])
 			msg := types.NewMsgRequestGuard(args[0], signedSimplexStateBytes, cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()

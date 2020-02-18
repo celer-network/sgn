@@ -1,11 +1,13 @@
 package subscribe
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -29,12 +31,12 @@ func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	var params QuerySubscriptionParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+		return nil, errors.New(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
 	subscription, found := keeper.GetSubscription(ctx, params.EthAddress)
 	if !found {
-		return nil, sdk.ErrInternal("cannot find subscription")
+		return nil, errors.New("cannot find subscription")
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)
@@ -55,13 +57,12 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 
 	request, found := keeper.GetRequest(ctx, params.ChannelId, params.PeerFrom)
 	if !found {
-		return nil, sdk.ErrInternal("Could not find corresponding request")
+		return nil, errors.New("Could not find corresponding request")
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, request)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-
 
 	}
 
@@ -73,7 +74,7 @@ func queryParameters(ctx sdk.Context, k Keeper) ([]byte, error) {
 
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return res, nil

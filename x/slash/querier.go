@@ -1,11 +1,13 @@
 package slash
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -27,12 +29,12 @@ func queryPenalty(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 	var params QueryPenaltyParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+		return nil, errors.New(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
 	penalty, found := keeper.GetPenalty(ctx, params.Nonce)
 	if !found {
-		return nil, sdk.ErrInternal("Penalty does not exist")
+		return nil, errors.New("Penalty does not exist")
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, penalty)
@@ -49,7 +51,7 @@ func queryParameters(ctx sdk.Context, k Keeper) ([]byte, error) {
 
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return res, nil

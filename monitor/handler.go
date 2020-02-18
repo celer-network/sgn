@@ -16,7 +16,7 @@ import (
 )
 
 func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
-	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	iterator, _ := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

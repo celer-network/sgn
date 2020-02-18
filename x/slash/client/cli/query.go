@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +21,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	slashQueryCmd.AddCommand(client.GetCommands(
+	slashQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdPenalty(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
