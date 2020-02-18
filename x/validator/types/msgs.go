@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -37,13 +38,13 @@ func (msg MsgInitializeCandidate) Route() string { return RouterKey }
 func (msg MsgInitializeCandidate) Type() string { return TypeMsgInitializeCandidate }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgInitializeCandidate) ValidateBasic() sdk.Error {
+func (msg MsgInitializeCandidate) ValidateBasic() error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -84,23 +85,23 @@ func (msg MsgClaimValidator) Route() string { return RouterKey }
 func (msg MsgClaimValidator) Type() string { return TypeMsgClaimValidator }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgClaimValidator) ValidateBasic() sdk.Error {
+func (msg MsgClaimValidator) ValidateBasic() error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
-	_, err := sdk.GetConsPubKeyBech32(msg.PubKey)
+	_, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, msg.PubKey)
 	if err != nil {
-		return sdk.ErrInvalidPubKey(err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidPubKey, err.Error())
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	for _, transactor := range msg.Transactors {
 		if transactor.Empty() {
-			return sdk.ErrInvalidAddress(transactor.String())
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, transactor.String())
 		}
 	}
 
@@ -138,13 +139,13 @@ func (msg MsgSyncValidator) Route() string { return RouterKey }
 func (msg MsgSyncValidator) Type() string { return TypeMsgSyncValidator }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgSyncValidator) ValidateBasic() sdk.Error {
+func (msg MsgSyncValidator) ValidateBasic() error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -183,17 +184,17 @@ func (msg MsgSyncDelegator) Route() string { return RouterKey }
 func (msg MsgSyncDelegator) Type() string { return TypeMsgSyncDelegator }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgSyncDelegator) ValidateBasic() sdk.Error {
+func (msg MsgSyncDelegator) ValidateBasic() error {
 	if msg.CandidateAddress == "" {
-		return sdk.ErrUnknownRequest("CandidateAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "CandidateAddress cannot be empty")
 	}
 
 	if msg.DelegatorAddress == "" {
-		return sdk.ErrUnknownRequest("DelegatorAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "DelegatorAddress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -229,13 +230,13 @@ func (msg MsgWithdrawReward) Route() string { return RouterKey }
 func (msg MsgWithdrawReward) Type() string { return TypeMsgWithdrawReward }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgWithdrawReward) ValidateBasic() sdk.Error {
+func (msg MsgWithdrawReward) ValidateBasic() error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -273,17 +274,17 @@ func (msg MsgSignReward) Route() string { return RouterKey }
 func (msg MsgSignReward) Type() string { return TypeMsgSignReward }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgSignReward) ValidateBasic() sdk.Error {
+func (msg MsgSignReward) ValidateBasic() error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
 	if len(msg.Sig) == 0 {
-		return sdk.ErrUnknownRequest("Sig cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Sig cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil

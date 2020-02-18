@@ -20,7 +20,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		default:
 			errMsg := fmt.Sprintf("Unrecognized slash Msg type: %v", msg.Type())
 			log.Error(errMsg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg).Result()
 		}
 
 		if err != nil {

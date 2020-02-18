@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/x/global/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,7 +26,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	globalQueryCmd.AddCommand(client.GetCommands(
+	globalQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdLatestBlock(storeKey, cdc),
 		GetCmdEpoch(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),

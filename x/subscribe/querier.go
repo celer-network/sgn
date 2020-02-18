@@ -11,7 +11,7 @@ import (
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 		case QuerySubscription:
 			return querySubscription(ctx, req, keeper)
@@ -20,12 +20,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("Unknown subscribe query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Unknown subscribe query endpoint")
 		}
 	}
 }
 
-func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params QuerySubscriptionParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
@@ -39,17 +39,18 @@ func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+
 	}
 
 	return res, nil
 }
 
-func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params QueryRequestParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Failed to parse params: %s", err))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	request, found := keeper.GetRequest(ctx, params.ChannelId, params.PeerFrom)
@@ -59,14 +60,15 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, request)
 	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Could not marshal result to JSON", err.Error()))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+
 
 	}
 
 	return res, nil
 }
 
-func queryParameters(ctx sdk.Context, k Keeper) ([]byte, sdk.Error) {
+func queryParameters(ctx sdk.Context, k Keeper) ([]byte, error) {
 	params := k.GetParams(ctx)
 
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)

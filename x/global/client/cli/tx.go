@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"bufio"
 	"strconv"
 
 	"github.com/celer-network/sgn/x/global/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -22,7 +24,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	globalTxCmd.AddCommand(client.PostCommands(
+	globalTxCmd.AddCommand(flags.PostCommands(
 		GetCmdSyncBlock(cdc),
 	)...)
 
@@ -42,7 +44,8 @@ func GetCmdSyncBlock(cdc *codec.Codec) *cobra.Command {
 			}
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			msg := types.NewMsgSyncBlock(blockNumber, cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
