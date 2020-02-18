@@ -19,8 +19,12 @@ import (
 func (m *EthMonitor) processQueue() {
 	secureBlockNum, err := m.getSecureBlockNum()
 	if err != nil {
-		log.Errorln("Query secureBlockNum err", err)
-		return
+		// Retry once
+		secureBlockNum, err = m.getSecureBlockNum()
+		if err != nil {
+			log.Errorln("Query secureBlockNum err", err)
+			return
+		}
 	}
 
 	m.processEventQueue(secureBlockNum)

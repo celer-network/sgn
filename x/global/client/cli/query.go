@@ -69,7 +69,6 @@ func QuerySecureBlockNum(cliCtx context.CLIContext, queryRoute string) (secureBl
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
 	res, _, err := cliCtx.Query(route)
 	if err != nil {
-		log.Errorln("query error", err)
 		return
 	}
 
