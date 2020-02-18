@@ -37,13 +37,13 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				// attempt to lookup address from Keybase if no address was provided
-				kb, err := keys.NewKeyBaseFromDir(viper.GetString(common.FlagCLIHome))
-				if err != nil {
-					return err
+				kb, err2 := keys.NewKeyBaseFromDir(viper.GetString(common.FlagCLIHome))
+				if err2 != nil {
+					return err2
 				}
 
-				info, err := kb.Get(args[0])
-				if err != nil {
+				info, err2 := kb.Get(args[0])
+				if err2 != nil {
 					return fmt.Errorf("failed to get address from Keybase: %w", err)
 				}
 

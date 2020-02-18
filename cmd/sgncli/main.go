@@ -11,8 +11,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
@@ -82,6 +86,16 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 	// add modules' query commands
 	app.ModuleBasics.AddQueryCommands(queryCmd, cdc)
 
+	var cmdsToRemove []*cobra.Command
+
+	for _, cmd := range queryCmd.Commands() {
+		if cmd.Use == auth.ModuleName || cmd.Use == supply.ModuleName || cmd.Use == staking.ModuleName {
+			cmdsToRemove = append(cmdsToRemove, cmd)
+		}
+	}
+
+	queryCmd.RemoveCommand(cmdsToRemove...)
+
 	return queryCmd
 }
 
@@ -99,11 +113,23 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		flags.LineBreak,
 		authcmd.GetBroadcastCommand(cdc),
 		authcmd.GetEncodeCommand(cdc),
+		authcmd.GetDecodeCommand(cdc),
 		flags.LineBreak,
 	)
 
 	// add modules' tx commands
 	app.ModuleBasics.AddTxCommands(txCmd, cdc)
+
+	// remove auth and bank commands as they're mounted under the root tx command
+	var cmdsToRemove []*cobra.Command
+
+	for _, cmd := range txCmd.Commands() {
+		if cmd.Use == auth.ModuleName || cmd.Use == bank.ModuleName || cmd.Use == staking.ModuleName {
+			cmdsToRemove = append(cmdsToRemove, cmd)
+		}
+	}
+
+	txCmd.RemoveCommand(cmdsToRemove...)
 
 	return txCmd
 }
