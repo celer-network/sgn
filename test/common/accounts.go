@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	cKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/go-bip39"
@@ -28,7 +29,7 @@ func AccountsCommand() *cobra.Command {
 		Use:   "accounts",
 		Short: "Add accounts in batch",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			kb, err := keys.NewKeyBaseFromHomeFlag()
+			kb, err := keys.NewKeyBaseFromDir(viper.GetString(flags.FlagHome))
 			if err != nil {
 				return err
 			}
@@ -95,7 +96,7 @@ func addAccounts(kb cKeys.Keybase) ([]string, error) {
 			return addresses, err
 		}
 
-		info, err = kb.CreateAccount(name, mnemonic, "", passphrase, 0, 0)
+		info, err = kb.CreateAccount(name, mnemonic, "", passphrase, "", cKeys.Secp256k1)
 		if err != nil {
 			return addresses, err
 		}
