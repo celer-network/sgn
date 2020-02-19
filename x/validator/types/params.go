@@ -47,9 +47,9 @@ func NewParams(pullerDuration uint, pusherDuration uint, miningReward sdk.Int) P
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeyPullerDuration, &p.PullerDuration, validatePullerDuration},
-		{KeyPusherDuration, &p.PusherDuration, validatePusherDuration},
-		{KeyMiningReward, &p.MiningReward, validateMiningReward},
+		params.NewParamSetPair(KeyPullerDuration, &p.PullerDuration, validatePullerDuration),
+		params.NewParamSetPair(KeyPusherDuration, &p.PusherDuration, validatePusherDuration),
+		params.NewParamSetPair(KeyMiningReward, &p.MiningReward, validateMiningReward),
 	}
 }
 

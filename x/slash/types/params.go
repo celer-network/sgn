@@ -60,12 +60,12 @@ func NewParams(signedBlocksWindow int64, minSignedPerWindow,
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{KeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow},
-		{KeyMinSignedPerWindow, &p.MinSignedPerWindow, validateMinSignedPerWindow},
-		{KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign, validateSlashFractionDoubleSign},
-		{KeySlashFractionDowntime, &p.SlashFractionDowntime, validateSlashFractionDowntime},
-		{KeySlashFractionGuardFailure, &p.SlashFractionGuardFailure, validateSlashFractionGuardFailure},
-		{KeyFallbackGuardReward, &p.FallbackGuardReward, validateFallbackGuardReward},
+		params.NewParamSetPair(KeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow),
+		params.NewParamSetPair(KeyMinSignedPerWindow, &p.MinSignedPerWindow, validateMinSignedPerWindow),
+		params.NewParamSetPair(KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign, validateSlashFractionDoubleSign),
+		params.NewParamSetPair(KeySlashFractionDowntime, &p.SlashFractionDowntime, validateSlashFractionDowntime),
+		params.NewParamSetPair(KeySlashFractionGuardFailure, &p.SlashFractionGuardFailure, validateSlashFractionGuardFailure),
+		params.NewParamSetPair(KeyFallbackGuardReward, &p.FallbackGuardReward, validateFallbackGuardReward),
 	}
 }
 
