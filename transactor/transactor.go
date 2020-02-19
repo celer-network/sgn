@@ -9,13 +9,13 @@ import (
 	"github.com/celer-network/sgn/seal"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	clientKeys "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gammazero/deque"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -34,10 +34,9 @@ type Transactor struct {
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
-	kb, err := clientKeys.NewKeyBaseFromDir(cliHome)
-	if err != nil {
-		return nil, err
-	}
+	pp := strings.NewReader(passphrase)
+	kb, err := keys.NewKeyring(sdk.KeyringServiceName(),
+		viper.GetString(flags.FlagKeyringBackend), cliHome, pp)
 
 	addr, err := sdk.AccAddressFromBech32(accAddr)
 	if err != nil {
@@ -53,6 +52,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 			break
 		}
 		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
+			log.Debugln("Failed to call kb.GetByAddress.")
 			return nil, err
 		}
 		if try != maxSignRetry-1 {

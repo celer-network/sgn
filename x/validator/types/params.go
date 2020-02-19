@@ -109,7 +109,7 @@ func (p Params) Validate() error {
 }
 
 func validatePullerDuration(i interface{}) error {
-	v, ok := i.(uint64)
+	v, ok := i.(uint)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -122,7 +122,7 @@ func validatePullerDuration(i interface{}) error {
 }
 
 func validatePusherDuration(i interface{}) error {
-	v, ok := i.(uint64)
+	v, ok := i.(uint)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
