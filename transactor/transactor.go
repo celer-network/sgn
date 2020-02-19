@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/seal"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -36,7 +37,7 @@ type Transactor struct {
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
 	pp := strings.NewReader(passphrase)
 	kb, err := keys.NewKeyring(sdk.KeyringServiceName(),
-		viper.GetString(flags.FlagKeyringBackend), cliHome, pp)
+		viper.GetString(common.FlagSgnKeyringBackend), cliHome, pp)
 
 	addr, err := sdk.AccAddressFromBech32(accAddr)
 	if err != nil {
