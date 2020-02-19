@@ -2705,3 +2705,82 @@
 19:57:22.517960 db@open done T·38.5868ms
 19:57:22.518544 db@close closing
 19:57:22.518758 db@close done T·210.97µs
+=============== Feb 18, 2020 (PST) ===============
+14:14:41.316464 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:14:41.316713 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:41.316738 db@open opening
+14:14:41.316818 journal@recovery F·1
+14:14:41.317121 journal@recovery recovering @4015
+14:14:41.317626 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:41.374181 db@janitor F·7 G·2
+14:14:41.374206 db@janitor removing manifest-3713
+14:14:41.374297 db@janitor removing journal-3712
+14:14:41.374367 db@open done T·57.615029ms
+14:14:41.374629 db@close closing
+14:14:41.374847 db@close done T·215.662µs
+=============== Feb 18, 2020 (PST) ===============
+14:14:41.375036 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:14:41.375262 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:41.375286 db@open opening
+14:14:41.375359 journal@recovery F·1
+14:14:41.375492 journal@recovery recovering @4017
+14:14:41.375870 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:41.401242 db@janitor F·5 G·0
+14:14:41.401293 db@open done T·25.996212ms
+14:14:41.401457 db@close closing
+14:14:41.401640 db@close done T·180.175µs
+=============== Feb 18, 2020 (PST) ===============
+14:14:52.082294 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:14:52.082619 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:52.082652 db@open opening
+14:14:52.082749 journal@recovery F·1
+14:14:52.084821 journal@recovery recovering @4019
+14:14:52.087207 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:52.113038 db@janitor F·5 G·0
+14:14:52.113082 db@open done T·30.415768ms
+14:14:52.616333 db@close closing
+14:14:52.616560 db@close done T·223.991µs
+=============== Feb 18, 2020 (PST) ===============
+14:14:52.923830 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:14:52.924056 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:52.924081 db@open opening
+14:14:52.924150 journal@recovery F·1
+14:14:52.924990 journal@recovery recovering @4021
+14:14:52.925480 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:52.951051 db@janitor F·5 G·0
+14:14:52.951106 db@open done T·27.012513ms
+14:14:52.951331 db@close closing
+14:14:52.951604 db@close done T·267.23µs
+=============== Feb 18, 2020 (PST) ===============
+14:14:58.556981 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:14:58.557244 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:58.557275 db@open opening
+14:14:58.557349 journal@recovery F·1
+14:14:58.558803 journal@recovery recovering @4023
+14:14:58.560535 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:58.583519 db@janitor F·5 G·0
+14:14:58.583567 db@open done T·26.280374ms
+14:14:59.085196 db@close closing
+14:14:59.085422 db@close done T·225.226µs
+=============== Feb 18, 2020 (PST) ===============
+14:14:59.369834 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:14:59.370043 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:59.370067 db@open opening
+14:14:59.370135 journal@recovery F·1
+14:14:59.372050 journal@recovery recovering @4025
+14:14:59.372426 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:14:59.397523 db@janitor F·5 G·0
+14:14:59.397578 db@open done T·27.500177ms
+14:14:59.397748 db@close closing
+14:14:59.398013 db@close done T·260.86µs
+=============== Feb 18, 2020 (PST) ===============
+14:15:02.941191 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:15:02.941537 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:15:02.941582 db@open opening
+14:15:02.941689 journal@recovery F·1
+14:15:02.943676 journal@recovery recovering @4027
+14:15:02.945704 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+14:15:02.972455 db@janitor F·5 G·0
+14:15:02.972500 db@open done T·30.903845ms
+14:15:03.478631 db@close closing
+14:15:03.478860 db@close done T·227.953µs

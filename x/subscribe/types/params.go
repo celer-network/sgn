@@ -46,8 +46,8 @@ func NewParams(requestGuardCount uint64, requestCost sdk.Int) Params {
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{Key: KeyRequestGuardCount, Value: &p.RequestGuardCount},
-		{Key: KeyRequestCost, Value: &p.RequestCost},
+		{KeyRequestGuardCount, &p.RequestGuardCount, validateRequestGuardCount},
+		{KeyRequestCost, &p.RequestCost, validateRequestCost},
 	}
 }
 
@@ -91,12 +91,38 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
-	if p.RequestGuardCount == 0 {
-		return fmt.Errorf("subscribe parameter RequestGuardCount must be a positive integer")
+	if err := validateRequestGuardCount(p.RequestGuardCount); err != nil {
+		return err
+	}
+	if err := validateRequestCost(p.RequestCost); err != nil {
+		return err
 	}
 
-	if !p.RequestCost.IsPositive() {
-		return fmt.Errorf("subscribe parameter RequestCost must be a positive integer")
+	return nil
+}
+
+func validateRequestGuardCount(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
+
+	if v == 0 {
+		return fmt.Errorf("subscribe parameter RequestGuardCount must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateRequestCost(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("subscribe parameter RequestCost cannot be negative: %s", v)
+	}
+
 	return nil
 }

@@ -60,12 +60,12 @@ func NewParams(signedBlocksWindow int64, minSignedPerWindow,
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{Key: KeySignedBlocksWindow, Value: &p.SignedBlocksWindow},
-		{Key: KeyMinSignedPerWindow, Value: &p.MinSignedPerWindow},
-		{Key: KeySlashFractionDoubleSign, Value: &p.SlashFractionDoubleSign},
-		{Key: KeySlashFractionDowntime, Value: &p.SlashFractionDowntime},
-		{Key: KeySlashFractionGuardFailure, Value: &p.SlashFractionGuardFailure},
-		{Key: KeyFallbackGuardReward, Value: &p.FallbackGuardReward},
+		{KeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow},
+		{KeyMinSignedPerWindow, &p.MinSignedPerWindow, validateMinSignedPerWindow},
+		{KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign, validateSlashFractionDoubleSign},
+		{KeySlashFractionDowntime, &p.SlashFractionDowntime, validateSlashFractionDowntime},
+		{KeySlashFractionGuardFailure, &p.SlashFractionGuardFailure, validateSlashFractionGuardFailure},
+		{KeyFallbackGuardReward, &p.FallbackGuardReward, validateFallbackGuardReward},
 	}
 }
 
@@ -114,48 +114,121 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
-	if p.SignedBlocksWindow == 0 {
-		return fmt.Errorf("slash parameter SignedBlocksWindow must be positive")
+	if err := validateSignedBlocksWindow(p.SignedBlocksWindow); err != nil {
+		return err
+	}
+	if err := validateMinSignedPerWindow(p.MinSignedPerWindow); err != nil {
+		return err
+	}
+	if err := validateSlashFractionDoubleSign(p.SlashFractionDoubleSign); err != nil {
+		return err
+	}
+	if err := validateSlashFractionDowntime(p.SlashFractionDowntime); err != nil {
+		return err
+	}
+	if err := validateSlashFractionGuardFailure(p.SlashFractionGuardFailure); err != nil {
+		return err
+	}
+	if err := validateFallbackGuardReward(p.FallbackGuardReward); err != nil {
+		return err
 	}
 
-	if p.MinSignedPerWindow.IsNegative() {
-		return fmt.Errorf("slash parameter MinSignedPerWindow must be positive")
+	return nil
+}
+
+func validateSignedBlocksWindow(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if p.MinSignedPerWindow.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter MinSignedPerWindow must be less or equal than 1")
+	if v <= 0 {
+		return fmt.Errorf("slash parameter SignedBlocksWindow must be positive: %d", v)
 	}
 
-	if p.SlashFractionDoubleSign.IsNegative() {
-		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be positive")
+	return nil
+}
+
+func validateMinSignedPerWindow(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if p.SlashFractionDoubleSign.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be less or equal than 1")
+	if v.IsNegative() {
+		return fmt.Errorf("slash parameter MinSignedPerWindow cannot be negative: %s", v)
 	}
 
-	if p.SlashFractionDowntime.IsNegative() {
-		return fmt.Errorf("slash parameter SlashFractionDowntime must be positive")
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter MinSignedPerWindow must be less or equal than 1: %s", v)
 	}
 
-	if p.SlashFractionDowntime.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter SlashFractionDowntime must be less or equal than 1")
+	return nil
+}
+
+func validateSlashFractionDoubleSign(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if p.SlashFractionGuardFailure.IsNegative() {
-		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be positive")
+	if v.IsNegative() {
+		return fmt.Errorf("slash parameter SlashFractionDoubleSign cannot be negative: %s", v)
 	}
 
-	if p.SlashFractionGuardFailure.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be less or equal than 1")
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionDoubleSign must be less or equal than 1: %s", v)
 	}
 
-	if p.FallbackGuardReward.IsNegative() {
-		return fmt.Errorf("slash parameter FallbackGuardReward must be positive")
+	return nil
+}
+
+func validateSlashFractionDowntime(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if p.FallbackGuardReward.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter FallbackGuardReward must be less or equal than 1")
+	if v.IsNegative() {
+		return fmt.Errorf("slash parameter SlashFractionDowntime cannot be negative: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionDowntime must be less or equal than 1: %s", v)
+	}
+
+	return nil
+}
+
+func validateSlashFractionGuardFailure(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("slash parameter SlashFractionGuardFailure cannot be negative: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter SlashFractionGuardFailure must be less or equal than 1: %s", v)
+	}
+
+	return nil
+}
+
+func validateFallbackGuardReward(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("slash parameter FallbackGuardReward cannot be negative: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter FallbackGuardReward must be less or equal than 1: %s", v)
 	}
 
 	return nil
