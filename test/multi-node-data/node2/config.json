@@ -18,6 +18,7 @@
     "passphrase": "12341234",
     "pubkey": "cosmosvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qhu3vf7",
     "transactors": ["cosmos190xknjnht45ypumxcq7da4plsnuuvf0ajfselv"],
-    "timeoutCommit": 2
+    "timeoutCommit": 2,
+    "keyringbackend": "test"
   }
 }

@@ -1,13 +1,13 @@
 {
   "eth": {
-    "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
-    "keystore": "./keys/ethks0.json",
-    "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
+    "guardaddress": "0xd8E82043FD4E7d0dE29c34BE3C15f93c71581737",
+    "keystore": "./test/keys/ethks0.json",
+    "ledgeraddress": "0x960eb3B6Dd75652B0C6A359E3E976c6e20478A03",
     "passphrase": "",
-    "instance": "http://192.168.10.1:8545",
+    "instance": "http://127.0.0.1:8545",
     "pollInterval": 1
   },
-  "logcolor": false,
+  "logcolor": true,
   "loglevel": "debug",
   "loglongfile": true,
   "sgn": {
@@ -21,7 +21,7 @@
       "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
       "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
     ],
-    "timeoutCommit": 2,
-    "keyringbackend": "test"
+    "keyringBackend": "test",
+    "timeoutCommit": 2
   }
 }
