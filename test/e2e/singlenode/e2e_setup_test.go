@@ -73,6 +73,6 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	} else {
 		log.Errorln("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
-		// os.Exit(ret)
+		os.Exit(ret)
 	}
 }
