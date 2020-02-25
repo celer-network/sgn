@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -43,8 +44,8 @@ func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 	}
 }
 
-func (m *EthMonitor) handleNewBlock() {
-	log.Infoln("Catch new mainchain block", m.blkNum)
+func (m *EthMonitor) handleNewBlock(blkNum *big.Int) {
+	log.Infoln("Catch new mainchain block", blkNum)
 	if !m.isPuller() {
 		return
 	}
@@ -57,8 +58,8 @@ func (m *EthMonitor) handleNewBlock() {
 
 	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
 
-	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", m.blkNum)
-	msg := global.NewMsgSyncBlock(m.blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
+	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", blkNum)
+	msg := global.NewMsgSyncBlock(blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
 	m.blockSyncer.AddTxMsg(msg)
 }
 

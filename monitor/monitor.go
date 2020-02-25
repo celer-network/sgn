@@ -120,7 +120,7 @@ func (m *EthMonitor) monitorBlockHead() {
 		}
 
 		m.blkNum = blkNum
-		go m.handleNewBlock()
+		go m.handleNewBlock(blkNum)
 	}
 }
 
