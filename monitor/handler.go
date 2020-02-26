@@ -78,11 +78,12 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
 	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
-	doSync := m.isPuller()
+	isAddValidator := validatorChange.ChangeType == mainchain.AddValidator
+	doSync := m.isPuller() && !isAddValidator
 
 	if validatorChange.EthAddr == m.ethClient.Address {
-		m.isValidator = validatorChange.ChangeType == mainchain.AddValidator
-		if m.isValidator {
+		if isAddValidator {
+			m.isValidator = isAddValidator
 			m.claimValidator()
 			return
 		}
