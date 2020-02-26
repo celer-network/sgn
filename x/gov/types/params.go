@@ -39,7 +39,7 @@ func ParamKeyTable() params.KeyTable {
 
 // DepositParams defines the params around deposits for governance
 type DepositParams struct {
-	MinDeposit       sdk.Coins     `json:"min_deposit,omitempty" yaml:"min_deposit,omitempty"`               //  Minimum deposit for a proposal to enter voting period.
+	MinDeposit       sdk.Int       `json:"min_deposit,omitempty" yaml:"min_deposit,omitempty"`               //  Minimum deposit for a proposal to enter voting period.
 	MaxDepositPeriod time.Duration `json:"max_deposit_period,omitempty" yaml:"max_deposit_period,omitempty"` //  Maximum period for Atom holders to deposit on a proposal. Initial value: 2 months
 }
 
@@ -54,7 +54,7 @@ func NewDepositParams(minDeposit sdk.Coins, maxDepositPeriod time.Duration) Depo
 // DefaultDepositParams default parameters for deposits
 func DefaultDepositParams() DepositParams {
 	return NewDepositParams(
-		sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, DefaultMinDepositTokens)),
+		DefaultMinDepositTokens,
 		DefaultPeriod,
 	)
 }
@@ -68,7 +68,7 @@ func (dp DepositParams) String() string {
 
 // Equal checks equality of DepositParams
 func (dp DepositParams) Equal(dp2 DepositParams) bool {
-	return dp.MinDeposit.IsEqual(dp2.MinDeposit) && dp.MaxDepositPeriod == dp2.MaxDepositPeriod
+	return dp.MinDeposit.Equal(dp2.MinDeposit) && dp.MaxDepositPeriod == dp2.MaxDepositPeriod
 }
 
 func validateDepositParams(i interface{}) error {
@@ -77,7 +77,7 @@ func validateDepositParams(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if !v.MinDeposit.IsValid() {
+	if v.MinDeposit.IsNegative() {
 		return fmt.Errorf("invalid minimum deposit: %s", v.MinDeposit)
 	}
 	if v.MaxDepositPeriod <= 0 {

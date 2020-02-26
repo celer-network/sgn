@@ -146,6 +146,20 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidat
 	return candidate, true
 }
 
+// Get the entire Candidate by operator address metadata
+func (k Keeper) GetCandidateByOperator(ctx sdk.Context, operator sdk.AccAddress) (candidate Candidate, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	candidateKey := store.Get(GetCandidateByOperatorKey(operator))
+
+	if candidateKey == nil {
+		return candidate, false
+	}
+
+	value := store.Get(candidateKey)
+	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
+	return candidate, true
+}
+
 // Get the set of all candidates with no limits
 func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
 	store := ctx.KVStore(k.storeKey)
@@ -161,9 +175,11 @@ func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
 }
 
 // Sets the Candidate metadata
-func (k Keeper) SetCandidate(ctx sdk.Context, candidateAddr string, candidate Candidate) {
+func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetCandidateKey(candidateAddr), k.cdc.MustMarshalBinaryBare(candidate))
+	candidateKey := GetCandidateKey(candidate.EthAddress)
+	store.Set(GetCandidateByOperatorKey(candidate.Operator), candidateKey)
+	store.Set(candidateKey, k.cdc.MustMarshalBinaryBare(candidate))
 }
 
 // Take a snapshot of candidate
@@ -177,7 +193,7 @@ func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
 	}
 	candidate.StakingPool = totalStake
 
-	k.SetCandidate(ctx, candidateAddr, candidate)
+	k.SetCandidate(ctx, candidate)
 }
 
 // Get the entire Reward metadata for ethAddress

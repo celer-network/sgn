@@ -3,8 +3,8 @@ package gov
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/x/gov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // EndBlocker called every block, process inflation, update validator set.

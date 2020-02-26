@@ -11,6 +11,7 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/gov"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -21,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	sdkgovtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
@@ -52,6 +54,7 @@ var (
 
 		cron.AppModule{},
 		global.AppModule{},
+		gov.AppModule{},
 		slash.AppModule{},
 		subscribe.AppModule{},
 		validator.AppModuleBasic{},
@@ -90,6 +93,7 @@ type sgnApp struct {
 	keyParams    *sdk.KVStoreKey
 	keyCron      *sdk.KVStoreKey
 	keyGlobal    *sdk.KVStoreKey
+	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
@@ -102,6 +106,7 @@ type sgnApp struct {
 	paramsKeeper    params.Keeper
 	cronKeeper      cron.Keeper
 	globalKeeper    global.Keeper
+	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
 	subscribeKeeper subscribe.Keeper
 	validatorKeeper validator.Keeper
@@ -159,6 +164,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
 		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
+		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
@@ -171,6 +177,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	globalSubspace := app.paramsKeeper.Subspace(global.DefaultParamspace)
+	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
 	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
@@ -253,6 +260,18 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.validatorKeeper,
 	)
 
+	govRouter := sdkgovtypes.NewRouter()
+	govRouter.AddRoute(gov.RouterKey, sdkgovtypes.ProposalHandler).
+		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper))
+	app.govKeeper = gov.NewKeeper(
+		app.cdc,
+		app.keyGov,
+		govSubspace,
+		app.stakingKeeper,
+		app.validatorKeeper,
+		govRouter,
+	)
+
 	app.mm = module.NewManager(
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
@@ -264,10 +283,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		slash.NewAppModule(app.slashKeeper, app.bankKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
+		gov.NewAppModule(app.govKeeper, app.accountKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(slash.ModuleName)
-	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName)
+	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
@@ -280,6 +300,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		slash.ModuleName,
 		subscribe.ModuleName,
 		validator.ModuleName,
+		gov.ModuleName,
 	)
 
 	// register all module routes and module queriers
@@ -312,6 +333,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keySlash,
 		app.keySubscribe,
 		app.keyValidator,
+		app.keyGov,
 	)
 
 	err = app.LoadLatestVersion(app.keyMain)

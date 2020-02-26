@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/x/gov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // AddVote adds a vote on a specific proposal

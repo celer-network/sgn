@@ -71,7 +71,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		log.Infof("Created a new profile for candidate %s account %x", msg.EthAddress, accAddress)
-		keeper.SetCandidate(ctx, msg.EthAddress, NewCandidate(accAddress))
+		keeper.SetCandidate(ctx, NewCandidate(msg.EthAddress, accAddress))
 	}
 
 	return &sdk.Result{}, nil
@@ -135,7 +135,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		InitAccount(ctx, keeper, transactor)
 	}
 
-	keeper.SetCandidate(ctx, msg.EthAddress, candidate)
+	keeper.SetCandidate(ctx, candidate)
 
 	return &sdk.Result{}, nil
 }

@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	govutils "github.com/celer-network/sgn/x/gov/client/utils"
+	"github.com/celer-network/sgn/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,8 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	govutils "github.com/cosmos/cosmos-sdk/x/gov/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // Proposal flags
@@ -115,8 +115,8 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 				return err
 			}
 
-			amount, err := sdk.ParseCoins(proposal.Deposit)
-			if err != nil {
+			amount, ok := sdk.NewIntFromString(proposal.Deposit)
+			if !ok {
 				return err
 			}
 
@@ -171,8 +171,8 @@ $ %s tx gov deposit 1 10stake --from mykey
 			from := cliCtx.GetFromAddress()
 
 			// Get amount of coins
-			amount, err := sdk.ParseCoins(args[1])
-			if err != nil {
+			amount, ok := sdk.NewIntFromString(args[1])
+			if !ok {
 				return err
 			}
 
