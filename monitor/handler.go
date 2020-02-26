@@ -72,7 +72,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
 	} else {
-		m.claimValidatorOnMainchain(delegate)
+		m.claimValidatorOnMainchain()
 	}
 }
 
@@ -141,14 +141,23 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate) {
+func (m *EthMonitor) claimValidatorOnMainchain() {
+	candidate, err := m.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
+	if err != nil {
+		log.Errorln("GetCandidateInfo err", err)
+		return
+	}
+	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
+		log.Debug("Not enough stake to become validator")
+		return
+	}
+
 	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
 		return
 	}
-
-	if delegate.StakingPool.Uint64() <= minStake.Uint64() {
+	if candidate.StakingPool.Cmp(minStake) == -1 {
 		log.Debug("Not enough stake to become validator")
 		return
 	}
@@ -158,7 +167,7 @@ func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate
 		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Infof("Claimed validator %x on mainchain", delegate.Candidate)
+	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
 }
 
 func (m *EthMonitor) claimValidator() {
