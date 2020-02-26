@@ -82,8 +82,8 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValid
 	doSync := m.isPuller() && !isAddValidator
 
 	if validatorChange.EthAddr == m.ethClient.Address {
-		if isAddValidator {
-			m.isValidator = isAddValidator
+		m.isValidator = isAddValidator
+		if m.isValidator {
 			m.claimValidator()
 			return
 		}
