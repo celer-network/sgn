@@ -177,7 +177,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	globalSubspace := app.paramsKeeper.Subspace(global.DefaultParamspace)
-	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
+	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
 	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
