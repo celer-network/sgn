@@ -47,9 +47,9 @@ func NewParams(pullerDuration uint, pusherDuration uint, miningReward sdk.Int) P
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{Key: KeyPullerDuration, Value: &p.PullerDuration},
-		{Key: KeyPusherDuration, Value: &p.PusherDuration},
-		{Key: KeyMiningReward, Value: &p.MiningReward},
+		params.NewParamSetPair(KeyPullerDuration, &p.PullerDuration, validatePullerDuration),
+		params.NewParamSetPair(KeyPusherDuration, &p.PusherDuration, validatePusherDuration),
+		params.NewParamSetPair(KeyMiningReward, &p.MiningReward, validateMiningReward),
 	}
 }
 
@@ -105,5 +105,44 @@ func (p Params) Validate() error {
 	if !p.MiningReward.IsPositive() {
 		return fmt.Errorf("validator parameter MiningReward must be a positive integer")
 	}
+	return nil
+}
+
+func validatePullerDuration(i interface{}) error {
+	v, ok := i.(uint)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v == 0 {
+		return fmt.Errorf("validator parameter PullerDuration must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validatePusherDuration(i interface{}) error {
+	v, ok := i.(uint)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v == 0 {
+		return fmt.Errorf("validator parameter PusherDuration must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMiningReward(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("subscribe parameter MiningReward cannot be negative: %s", v)
+	}
+
 	return nil
 }

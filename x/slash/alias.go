@@ -3,7 +3,7 @@ package slash
 import (
 	"github.com/celer-network/sgn/x/slash/client/cli"
 	"github.com/celer-network/sgn/x/slash/types"
-	slashingTypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
 )
 
 const (
@@ -20,11 +20,11 @@ var (
 	ModuleCdc              = types.ModuleCdc
 	RegisterCodec          = types.RegisterCodec
 	NewAccountAmtPair      = types.NewAccountAmtPair
-	NewAccountFractionPair  = types.NewAccountFractionPair
+	NewAccountFractionPair = types.NewAccountFractionPair
 	NewPenalty             = types.NewPenalty
 	NewQueryPenaltyParams  = types.NewQueryPenaltyParams
 	NewMsgSignPenalty      = types.NewMsgSignPenalty
-	EventTypeSlash         = slashingTypes.EventTypeSlash
+	EventTypeSlash         = slashing.EventTypeSlash
 	PenaltyNonceKey        = types.PenaltyNonceKey
 	ActionPenalty          = types.ActionPenalty
 	GetPenaltyKey          = types.GetPenaltyKey
@@ -34,10 +34,10 @@ var (
 )
 
 type (
-	AccountAmtPair     = types.AccountAmtPair
+	AccountAmtPair      = types.AccountAmtPair
 	AccountFractionPair = types.AccountFractionPair
-	Penalty            = types.Penalty
-	Params             = types.Params
-	QueryPenaltyParams = types.QueryPenaltyParams
-	MsgSignPenalty     = types.MsgSignPenalty
+	Penalty             = types.Penalty
+	Params              = types.Params
+	QueryPenaltyParams  = types.QueryPenaltyParams
+	MsgSignPenalty      = types.MsgSignPenalty
 )

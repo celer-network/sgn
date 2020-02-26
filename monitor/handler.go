@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -16,7 +17,11 @@ import (
 )
 
 func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
-	iterator := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	iterator, err := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
+	if err != nil {
+		log.Errorln("Create db iterator err", err)
+		return
+	}
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -39,8 +44,8 @@ func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 	}
 }
 
-func (m *EthMonitor) handleNewBlock() {
-	log.Infoln("Catch new mainchain block", m.blkNum)
+func (m *EthMonitor) handleNewBlock(blkNum *big.Int) {
+	log.Infoln("Catch new mainchain block", blkNum)
 	if !m.isPuller() {
 		return
 	}
@@ -53,8 +58,8 @@ func (m *EthMonitor) handleNewBlock() {
 
 	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
 
-	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", m.blkNum)
-	msg := global.NewMsgSyncBlock(m.blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
+	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", blkNum)
+	msg := global.NewMsgSyncBlock(blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
 	m.blockSyncer.AddTxMsg(msg)
 }
 
@@ -71,16 +76,17 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
 	} else {
-		m.claimValidatorOnMainchain(delegate)
+		m.claimValidatorOnMainchain()
 	}
 }
 
 func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
 	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
-	doSync := m.isPuller()
+	isAddValidator := validatorChange.ChangeType == mainchain.AddValidator
+	doSync := m.isPuller() && !isAddValidator
 
 	if validatorChange.EthAddr == m.ethClient.Address {
-		m.isValidator = validatorChange.ChangeType == mainchain.AddValidator
+		m.isValidator = isAddValidator
 		if m.isValidator {
 			m.claimValidator()
 			return
@@ -139,14 +145,23 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate) {
+func (m *EthMonitor) claimValidatorOnMainchain() {
+	candidate, err := m.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
+	if err != nil {
+		log.Errorln("GetCandidateInfo err", err)
+		return
+	}
+	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
+		log.Debug("Not enough stake to become validator")
+		return
+	}
+
 	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
 		return
 	}
-
-	if delegate.StakingPool.Uint64() <= minStake.Uint64() {
+	if candidate.StakingPool.Cmp(minStake) == -1 {
 		log.Debug("Not enough stake to become validator")
 		return
 	}
@@ -156,7 +171,7 @@ func (m *EthMonitor) claimValidatorOnMainchain(delegate *mainchain.GuardDelegate
 		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Infof("Claimed validator %x on mainchain", delegate.Candidate)
+	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
 }
 
 func (m *EthMonitor) claimValidator() {

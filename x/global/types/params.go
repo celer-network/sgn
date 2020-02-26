@@ -54,10 +54,10 @@ func NewParams(epochLength, blkTimeDiffLower, blkTimeDiffUpper int64, confirmati
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
-		{Key: KeyEpochLength, Value: &p.EpochLength},
-		{Key: KeyBlkTimeDiffLower, Value: &p.BlkTimeDiffLower},
-		{Key: KeyBlkTimeDiffUpper, Value: &p.BlkTimeDiffUpper},
-		{Key: KeyConfirmationCount, Value: &p.ConfirmationCount},
+		params.NewParamSetPair(KeyEpochLength, &p.EpochLength, validateEpochLength),
+		params.NewParamSetPair(KeyBlkTimeDiffLower, &p.BlkTimeDiffLower, validateBlkTimeDiffLower),
+		params.NewParamSetPair(KeyBlkTimeDiffUpper, &p.BlkTimeDiffUpper, validateBlkTimeDiffUpper),
+		params.NewParamSetPair(KeyConfirmationCount, &p.ConfirmationCount, validateConfirmationCount),
 	}
 }
 
@@ -103,20 +103,69 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
-	if p.EpochLength <= 0 {
-		return fmt.Errorf("global parameter EpochLength must be a positive integer")
+	if err := validateEpochLength(p.EpochLength); err != nil {
+		return err
+	}
+	if err := validateBlkTimeDiffLower(p.BlkTimeDiffLower); err != nil {
+		return err
+	}
+	if err := validateBlkTimeDiffUpper(p.BlkTimeDiffUpper); err != nil {
+		return err
+	}
+	if err := validateConfirmationCount(p.ConfirmationCount); err != nil {
+		return err
 	}
 
-	if p.BlkTimeDiffLower < 0 {
-		return fmt.Errorf("global parameter BlkTimeDiffLower cannot be a negative integer")
+	return nil
+}
+
+func validateEpochLength(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if p.BlkTimeDiffUpper < 0 {
-		return fmt.Errorf("global parameter BlkTimeDiffUpper cannot be a negative integer")
+	if v <= 0 {
+		return fmt.Errorf("global parameter EpochLength must be positive: %d", v)
 	}
 
-	if p.ConfirmationCount < 0 {
-		return fmt.Errorf("global parameter ConfirmationCount cannot be a negative integer")
+	return nil
+}
+
+func validateBlkTimeDiffLower(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("global parameter BlkTimeDiffLower cannot be negative: %d", v)
+	}
+
+	return nil
+}
+
+func validateBlkTimeDiffUpper(i interface{}) error {
+	v, ok := i.(int64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("global parameter BlkTimeDiffUpper cannot be negative: %d", v)
+	}
+
+	return nil
+}
+
+func validateConfirmationCount(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("global parameter ConfirmationCount cannot be negative: %d", v)
 	}
 
 	return nil

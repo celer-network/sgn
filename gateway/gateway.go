@@ -29,19 +29,13 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
-	viper.SetConfigFile("config.json")
-	err := viper.MergeInConfig()
-	if err != nil {
-		return nil, err
-	}
-
 	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
 		cdc,
 	)
 
-	err = transactorPool.AddTransactors(
+	err := transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetString(common.FlagSgnGasPrice),
@@ -106,9 +100,15 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 		Use:   "gateway",
 		Short: "Start a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			viper.SetConfigFile("config.json")
+			err = viper.MergeInConfig()
+			if err != nil {
+				return
+			}
+
 			rs, err := NewRestServer(cdc)
 			if err != nil {
-				return err
+				return
 			}
 
 			rs.registerRoutes()
@@ -121,7 +121,7 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 				uint(viper.GetInt(sdkFlags.FlagRPCWriteTimeout)),
 			)
 
-			return err
+			return
 		},
 	}
 

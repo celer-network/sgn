@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -28,13 +29,13 @@ func (msg MsgSubscribe) Route() string { return RouterKey }
 func (msg MsgSubscribe) Type() string { return "subscribe" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgSubscribe) ValidateBasic() sdk.Error {
+func (msg MsgSubscribe) ValidateBasic() error {
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("Eth adress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Eth adress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -72,17 +73,17 @@ func (msg MsgRequestGuard) Route() string { return RouterKey }
 func (msg MsgRequestGuard) Type() string { return "request_guard" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgRequestGuard) ValidateBasic() sdk.Error {
+func (msg MsgRequestGuard) ValidateBasic() error {
 	if len(msg.SignedSimplexStateBytes) == 0 {
-		return sdk.ErrUnknownRequest("SignedSimplexStateBytes cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "SignedSimplexStateBytes cannot be empty")
 	}
 
 	if msg.EthAddress == "" {
-		return sdk.ErrUnknownRequest("EthAddress cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -123,21 +124,21 @@ func (msg MsgIntendSettle) Route() string { return RouterKey }
 func (msg MsgIntendSettle) Type() string { return "intend_settle" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgIntendSettle) ValidateBasic() sdk.Error {
+func (msg MsgIntendSettle) ValidateBasic() error {
 	if len(msg.ChannelId) == 0 {
-		return sdk.ErrUnknownRequest("channelId cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "channelId cannot be empty")
 	}
 
 	if msg.PeerFrom == "" {
-		return sdk.ErrUnknownRequest("peerFrom cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "peerFrom cannot be empty")
 	}
 
 	if msg.TxHash == "" {
-		return sdk.ErrUnknownRequest("obsolete tx hash cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "obsolete tx hash cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
@@ -178,21 +179,21 @@ func (msg MsgGuardProof) Route() string { return RouterKey }
 func (msg MsgGuardProof) Type() string { return "guard_proof" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgGuardProof) ValidateBasic() sdk.Error {
+func (msg MsgGuardProof) ValidateBasic() error {
 	if len(msg.ChannelId) == 0 {
-		return sdk.ErrUnknownRequest("channelId cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "channelId cannot be empty")
 	}
 
 	if msg.PeerFrom == "" {
-		return sdk.ErrUnknownRequest("peerFrom cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "peerFrom cannot be empty")
 	}
 
 	if msg.TxHash == "" {
-		return sdk.ErrUnknownRequest("guard tx hash cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "guard tx hash cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil

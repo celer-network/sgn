@@ -34,7 +34,11 @@ func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 		return
 	}
 
-	iterator := m.db.Iterator(PullerKeyPrefix, storetypes.PrefixEndBytes(PullerKeyPrefix))
+	iterator, err := m.db.Iterator(PullerKeyPrefix, storetypes.PrefixEndBytes(PullerKeyPrefix))
+	if err != nil {
+		log.Errorln("Create db iterator err", err)
+		return
+	}
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -56,7 +60,11 @@ func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 }
 
 func (m *EthMonitor) processPusherQueue() {
-	iterator := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
+	iterator, err := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
+	if err != nil {
+		log.Errorln("Create db iterator err", err)
+		return
+	}
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -76,7 +84,11 @@ func (m *EthMonitor) processPenaltyQueue() {
 		return
 	}
 
-	iterator := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
+	iterator, err := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
+	if err != nil {
+		log.Errorln("Create db iterator err", err)
+		return
+	}
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

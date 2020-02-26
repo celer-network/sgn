@@ -120,7 +120,7 @@ func (m *EthMonitor) monitorBlockHead() {
 		}
 
 		m.blkNum = blkNum
-		go m.handleNewBlock()
+		go m.handleNewBlock(blkNum)
 	}
 }
 
@@ -214,8 +214,13 @@ func (m *EthMonitor) monitorSlash() {
 }
 
 func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
-	err := client.Start()
+	client, err := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
+	if err != nil {
+		log.Errorln("Fail to start create http client", err)
+		return
+	}
+
+	err = client.Start()
 	if err != nil {
 		log.Errorln("Fail to start ws client", err)
 		return

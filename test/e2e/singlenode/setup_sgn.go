@@ -68,7 +68,7 @@ func installSgn() error {
 		return err
 	}
 
-	cmd = exec.Command("cp", "./test/config/local_config.json", "./config.json")
+	cmd = exec.Command("cp", "./test/data/local_config.json", "./config.json")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {

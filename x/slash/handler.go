@@ -3,43 +3,40 @@ package slash
 import (
 	"fmt"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewHandler returns a handler for "slash" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		logEntry := seal.NewMsgLog()
-		var res sdk.Result
+		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
 		case MsgSignPenalty:
 			res, err = handleMsgSignPenalty(ctx, keeper, msg, logEntry)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized slash Msg type: %v", msg.Type())
-			log.Error(errMsg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
 
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
-			seal.CommitMsgLog(logEntry)
-			return sdk.ErrInternal(err.Error()).Result()
 		}
+
 		seal.CommitMsgLog(logEntry)
-		return res
+		return res, err
 	}
 }
 
 // Handle a message to sign penalty
-func handleMsgSignPenalty(ctx sdk.Context, keeper Keeper, msg MsgSignPenalty, logEntry *seal.MsgLog) (sdk.Result, error) {
+func handleMsgSignPenalty(ctx sdk.Context, keeper Keeper, msg MsgSignPenalty, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.Penalty.Nonce = msg.Nonce
 
-	res := sdk.Result{}
+	res := &sdk.Result{}
 	validator, found := keeper.validatorKeeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
 		return res, fmt.Errorf("Sender is not validator")

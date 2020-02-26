@@ -85,8 +85,8 @@ func (am AppModule) Route() string {
 }
 
 func (am AppModule) NewHandler() sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-		return sdk.Result{}
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		return nil, nil
 	}
 }
 func (am AppModule) QuerierRoute() string {
@@ -94,7 +94,7 @@ func (am AppModule) QuerierRoute() string {
 }
 
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		return nil, nil
 	}
 }
