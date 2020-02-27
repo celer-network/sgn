@@ -9,6 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 )
 
+const (
+	retryTimeout = 500 * time.Millisecond
+)
+
 // EnableLogLongFile set the log file splitter from the sgn root folder
 func EnableLogLongFile() {
 	log.EnableLongFile()
@@ -22,7 +26,7 @@ func EnableLogLongFile() {
 func RobustQuery(cliCtx context.CLIContext, route string) (res []byte, err error) {
 	res, _, err = cliCtx.Query(route)
 	if err != nil {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(retryTimeout)
 		res, _, err = cliCtx.Query(route)
 		return
 	}
@@ -33,7 +37,7 @@ func RobustQuery(cliCtx context.CLIContext, route string) (res []byte, err error
 func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) (res []byte, err error) {
 	res, _, err = cliCtx.QueryWithData(route, data)
 	if err != nil {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(retryTimeout)
 		res, _, err = cliCtx.QueryWithData(route, data)
 		return
 	}
