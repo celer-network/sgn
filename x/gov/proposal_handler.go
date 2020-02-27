@@ -13,8 +13,8 @@ import (
 func NewParamChangeProposalHandler(k params.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch c := content.(type) {
-		case params.ParameterChangeProposal:
-			return handleParameterChangeProposal(ctx, k, c)
+		case govtypes.ParameterProposal:
+			return handleParameterProposal(ctx, k, c)
 
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized param proposal content type: %T", c)
@@ -22,7 +22,7 @@ func NewParamChangeProposalHandler(k params.Keeper) govtypes.Handler {
 	}
 }
 
-func handleParameterChangeProposal(ctx sdk.Context, k params.Keeper, p params.ParameterChangeProposal) error {
+func handleParameterProposal(ctx sdk.Context, k params.Keeper, p govtypes.ParameterProposal) error {
 	for _, c := range p.Changes {
 		ss, ok := k.GetSubspace(c.Subspace)
 		if !ok {

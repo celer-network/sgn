@@ -32,7 +32,7 @@ func postParamProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		content := govtypes.NewParameterChangeProposal(req.Title, req.Description, req.Changes.ToParamChanges())
+		content := govtypes.NewParameterProposal(req.Title, req.Description, req.Changes.ToParamChanges())
 
 		msg := govtypes.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
 		if err := msg.ValidateBasic(); err != nil {

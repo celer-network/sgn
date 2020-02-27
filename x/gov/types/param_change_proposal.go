@@ -8,44 +8,44 @@ import (
 )
 
 const (
-	// ProposalTypeChange defines the type for a ParameterChangeProposal
+	// ProposalTypeChange defines the type for a ParameterProposal
 	ProposalTypeChange = "ParameterChange"
 )
 
-// Assert ParameterChangeProposal implements Content at compile-time
-var _ Content = ParameterChangeProposal{}
+// Assert ParameterProposal implements Content at compile-time
+var _ Content = ParameterProposal{}
 
 func init() {
 	RegisterProposalType(ProposalTypeChange)
-	RegisterProposalTypeCodec(ParameterChangeProposal{}, "cosmos-sdk/ParameterChangeProposal")
+	// RegisterProposalTypeCodec(ParameterProposal{}, "cosmos-sdk/ParameterProposal")
 }
 
-// ParameterChangeProposal defines a proposal which contains multiple parameter
+// ParameterProposal defines a proposal which contains multiple parameter
 // changes.
-type ParameterChangeProposal struct {
+type ParameterProposal struct {
 	Title       string        `json:"title" yaml:"title"`
 	Description string        `json:"description" yaml:"description"`
 	Changes     []ParamChange `json:"changes" yaml:"changes"`
 }
 
-func NewParameterChangeProposal(title, description string, changes []ParamChange) ParameterChangeProposal {
-	return ParameterChangeProposal{title, description, changes}
+func NewParameterProposal(title, description string, changes []ParamChange) ParameterProposal {
+	return ParameterProposal{title, description, changes}
 }
 
 // GetTitle returns the title of a parameter change proposal.
-func (pcp ParameterChangeProposal) GetTitle() string { return pcp.Title }
+func (pcp ParameterProposal) GetTitle() string { return pcp.Title }
 
 // GetDescription returns the description of a parameter change proposal.
-func (pcp ParameterChangeProposal) GetDescription() string { return pcp.Description }
+func (pcp ParameterProposal) GetDescription() string { return pcp.Description }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
-func (pcp ParameterChangeProposal) ProposalRoute() string { return RouterKey }
+func (pcp ParameterProposal) ProposalRoute() string { return params.RouterKey }
 
 // ProposalType returns the type of a parameter change proposal.
-func (pcp ParameterChangeProposal) ProposalType() string { return ProposalTypeChange }
+func (pcp ParameterProposal) ProposalType() string { return ProposalTypeChange }
 
 // ValidateBasic validates the parameter change proposal
-func (pcp ParameterChangeProposal) ValidateBasic() error {
+func (pcp ParameterProposal) ValidateBasic() error {
 	err := ValidateAbstract(pcp)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (pcp ParameterChangeProposal) ValidateBasic() error {
 }
 
 // String implements the Stringer interface.
-func (pcp ParameterChangeProposal) String() string {
+func (pcp ParameterProposal) String() string {
 	var b strings.Builder
 
 	b.WriteString(fmt.Sprintf(`Parameter Change Proposal:

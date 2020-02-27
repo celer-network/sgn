@@ -23,7 +23,7 @@ type (
 		Value    json.RawMessage `json:"value" yaml:"value"`
 	}
 
-	// ParamChangeProposalJSON defines a ParameterChangeProposal with a deposit used
+	// ParamChangeProposalJSON defines a ParameterProposal with a deposit used
 	// to parse parameter change proposals from a JSON file.
 	ParamChangeProposalJSON struct {
 		Title       string           `json:"title" yaml:"title"`
