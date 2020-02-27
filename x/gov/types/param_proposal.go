@@ -17,7 +17,6 @@ var _ Content = ParameterProposal{}
 
 func init() {
 	RegisterProposalType(ProposalTypeChange)
-	// RegisterProposalTypeCodec(ParameterProposal{}, "cosmos-sdk/ParameterProposal")
 }
 
 // ParameterProposal defines a proposal which contains multiple parameter
