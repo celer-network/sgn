@@ -22,8 +22,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	sdkgovtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/spf13/viper"
@@ -54,7 +54,7 @@ var (
 
 		cron.AppModule{},
 		global.AppModule{},
-		gov.AppModule{},
+		gov.NewAppModuleBasic(paramsclient.ProposalHandler),
 		slash.AppModule{},
 		subscribe.AppModule{},
 		validator.AppModuleBasic{},
@@ -260,8 +260,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.validatorKeeper,
 	)
 
-	govRouter := sdkgovtypes.NewRouter()
-	govRouter.AddRoute(gov.RouterKey, sdkgovtypes.ProposalHandler).
+	govRouter := gov.NewRouter()
+	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
 		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper))
 	app.govKeeper = gov.NewKeeper(
 		app.cdc,
