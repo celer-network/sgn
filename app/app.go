@@ -267,7 +267,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.cdc,
 		app.keyGov,
 		govSubspace,
-		app.stakingKeeper,
 		app.validatorKeeper,
 		govRouter,
 	)

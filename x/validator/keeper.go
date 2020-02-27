@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 )
 
 type RewardType int
@@ -56,6 +57,10 @@ func (k Keeper) GetValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAddress) (s
 // Get a validator by validator account address
 func (k Keeper) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (staking.Validator, bool) {
 	return k.stakingKeeper.GetValidator(ctx, addr)
+}
+
+func (k Keeper) IterateBondedValidatorsByPower(ctx sdk.Context, fn func(index int64, validator exported.ValidatorI) (stop bool)) {
+	k.stakingKeeper.IterateBondedValidatorsByPower(ctx, fn)
 }
 
 // Get the entire Puller metadata
