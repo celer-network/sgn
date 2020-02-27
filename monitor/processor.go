@@ -3,7 +3,6 @@ package monitor
 import (
 	"context"
 	"math/big"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -21,12 +20,8 @@ func (m *EthMonitor) processQueue() {
 	secureBlockNum, err := m.getSecureBlockNum()
 	if err != nil {
 		// Retry once
-		time.Sleep(time.Second)
-		secureBlockNum, err = m.getSecureBlockNum()
-		if err != nil {
-			log.Errorln("Query secureBlockNum err", err)
-			return
-		}
+		log.Errorln("Query secureBlockNum err", err)
+		return
 	}
 
 	m.processEventQueue(secureBlockNum)
