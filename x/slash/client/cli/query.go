@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -60,7 +61,7 @@ func QueryPenalty(cliCtx context.CLIContext, queryRoute string, nonce uint64) (p
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPenalty)
-	res, _, err := cliCtx.QueryWithData(route, data)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
 	if err != nil {
 		return
 	}
@@ -114,13 +115,13 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
-			bz, _, err := cliCtx.QueryWithData(route, nil)
+			res, err := common.RobustQuery(cliCtx, route)
 			if err != nil {
 				return err
 			}
 
 			var params types.Params
-			cdc.MustUnmarshalJSON(bz, &params)
+			cdc.MustUnmarshalJSON(res, &params)
 			return cliCtx.PrintOutput(params)
 		},
 	}

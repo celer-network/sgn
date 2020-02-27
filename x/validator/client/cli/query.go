@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -62,7 +63,7 @@ func GetCmdPuller(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // Query puller info
 func QueryPuller(cliCtx context.CLIContext, queryRoute string) (puller types.Puller, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPuller)
-	res, _, err := cliCtx.Query(route)
+	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
 		return
 	}
@@ -93,7 +94,7 @@ func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // Query pusher info
 func QueryPusher(cliCtx context.CLIContext, queryRoute string) (pusher types.Pusher, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
-	res, _, err := cliCtx.Query(route)
+	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
 		return
 	}
@@ -128,12 +129,12 @@ func QueryDelegator(cliCtx context.CLIContext, queryRoute, candidateAddress, del
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDelegator)
-	bz, _, err := cliCtx.QueryWithData(route, data)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
 	if err != nil {
 		return
 	}
 
-	err = cliCtx.Codec.UnmarshalJSON(bz, &delegator)
+	err = cliCtx.Codec.UnmarshalJSON(res, &delegator)
 	return
 }
 
@@ -163,12 +164,12 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidate)
-	bz, _, err := cliCtx.QueryWithData(route, data)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
 	if err != nil {
 		return
 	}
 
-	err = cliCtx.Codec.UnmarshalJSON(bz, &candidate)
+	err = cliCtx.Codec.UnmarshalJSON(res, &candidate)
 	return
 }
 
@@ -270,7 +271,7 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryReward)
-	res, _, err := cliCtx.QueryWithData(route, data)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
 	if err != nil {
 		return
 	}

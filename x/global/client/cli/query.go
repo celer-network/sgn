@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/global/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -56,7 +57,7 @@ func GetCmdLatestBlock(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // Query latest block
 func QueryLatestBlock(cliCtx context.CLIContext, queryRoute string) (block types.Block, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
-	res, _, err := cliCtx.Query(route)
+	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
 		return
 	}
@@ -68,9 +69,8 @@ func QueryLatestBlock(cliCtx context.CLIContext, queryRoute string) (block types
 // Query secure block number
 func QuerySecureBlockNum(cliCtx context.CLIContext, queryRoute string) (secureBlockNum uint64, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
-	res, _, err := cliCtx.Query(route)
+	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
-		log.Errorln("query error", err)
 		return
 	}
 
@@ -129,7 +129,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Params, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
-	res, _, err := cliCtx.Query(route)
+	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
 		return
 	}
