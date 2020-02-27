@@ -35,7 +35,6 @@ var (
 	GetDelegatorKey           = types.GetDelegatorKey
 	GetDelegatorsKey          = types.GetDelegatorsKey
 	GetCandidateKey           = types.GetCandidateKey
-	GetCandidateByOperatorKey = types.GetCandidateByOperatorKey
 	GetRewardKey              = types.GetRewardKey
 	NewPuller                 = types.NewPuller
 	NewPusher                 = types.NewPusher

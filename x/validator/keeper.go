@@ -151,20 +151,6 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidat
 	return candidate, true
 }
 
-// Get the entire Candidate by operator address metadata
-func (k Keeper) GetCandidateByOperator(ctx sdk.Context, operator sdk.AccAddress) (candidate Candidate, found bool) {
-	store := ctx.KVStore(k.storeKey)
-	candidateKey := store.Get(GetCandidateByOperatorKey(operator))
-
-	if candidateKey == nil {
-		return candidate, false
-	}
-
-	value := store.Get(candidateKey)
-	k.cdc.MustUnmarshalBinaryBare(value, &candidate)
-	return candidate, true
-}
-
 // Get the set of all candidates with no limits
 func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
 	store := ctx.KVStore(k.storeKey)
@@ -183,7 +169,6 @@ func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
 func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)
 	candidateKey := GetCandidateKey(candidate.EthAddress)
-	store.Set(GetCandidateByOperatorKey(candidate.Operator), candidateKey)
 	store.Set(candidateKey, k.cdc.MustMarshalBinaryBare(candidate))
 }
 
