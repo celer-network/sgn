@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/gov"
+	govclient "github.com/celer-network/sgn/x/gov/client"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
@@ -23,7 +24,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/spf13/viper"
@@ -54,7 +54,7 @@ var (
 
 		cron.AppModule{},
 		global.AppModule{},
-		gov.NewAppModuleBasic(paramsclient.ProposalHandler),
+		gov.NewAppModuleBasic(govclient.ParamProposalHandler),
 		slash.AppModule{},
 		subscribe.AppModule{},
 		validator.AppModuleBasic{},
@@ -262,7 +262,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
-		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper))
+		AddRoute(params.RouterKey, gov.NewParamChangeProposalHandler(app.paramsKeeper))
 	app.govKeeper = gov.NewKeeper(
 		app.cdc,
 		app.keyGov,
