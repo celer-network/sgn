@@ -178,7 +178,7 @@
         "confirmationCount": "2"
       }
     },
-    "sgnGov": {
+    "govern": {
       "starting_proposal_id": "1",
       "deposits": null,
       "votes": null,

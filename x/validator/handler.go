@@ -46,7 +46,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		}
 
 		seal.CommitMsgLog(logEntry)
-		return res, nil
+		return res, err
 	}
 }
 

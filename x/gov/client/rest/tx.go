@@ -7,11 +7,11 @@ import (
 	"github.com/gorilla/mux"
 
 	gcutils "github.com/celer-network/sgn/x/gov/client/utils"
+	"github.com/celer-network/sgn/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router, phs []ProposalRESTHandler) {
