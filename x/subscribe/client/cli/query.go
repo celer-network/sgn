@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -55,7 +56,7 @@ func QuerySubscription(cliCtx context.CLIContext, queryRoute, ethAddress string)
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySubscription)
-	res, _, err := cliCtx.QueryWithData(route, data)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
 	if err != nil {
 		return
 	}
@@ -91,7 +92,7 @@ func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte
 	}
 
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRequest)
-	res, _, err := cliCtx.QueryWithData(route, data)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
 	if err != nil {
 		return
 	}
@@ -122,7 +123,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // Query params info
 func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Params, err error) {
 	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
-	res, _, err := cliCtx.Query(route)
+	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
 		return
 	}
