@@ -3,6 +3,7 @@ package gov
 // nolint
 
 import (
+	"github.com/celer-network/sgn/x/gov/client/cli"
 	"github.com/celer-network/sgn/x/gov/keeper"
 	"github.com/celer-network/sgn/x/gov/types"
 )
@@ -110,6 +111,8 @@ var (
 	NewVote                       = types.NewVote
 	VoteOptionFromString          = types.VoteOptionFromString
 	ValidVoteOption               = types.ValidVoteOption
+	CLIQueryProposals             = cli.QueryProposals
+	CLIQueryProposal              = cli.QueryProposal
 
 	// variable aliases
 	ModuleCdc                   = types.ModuleCdc

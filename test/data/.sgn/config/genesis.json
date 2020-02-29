@@ -184,11 +184,11 @@
       "votes": null,
       "proposals": null,
       "deposit_params": {
-        "min_deposit": "10000000",
+        "min_deposit": "10",
         "max_deposit_period": "172800000000000"
       },
       "voting_params": {
-        "voting_period": "172800000000000"
+        "voting_period": "10000000"
       },
       "tally_params": {
         "quorum": "0.334000000000000000",
