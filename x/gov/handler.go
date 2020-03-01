@@ -3,16 +3,14 @@ package gov
 import (
 	"fmt"
 
-	"github.com/celer-network/sgn/seal"
-	"github.com/celer-network/sgn/x/gov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/celer-network/sgn/x/gov/types"
 )
 
 // NewHandler creates an sdk.Handler for all the gov type messages
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		logEntry := seal.NewMsgLog()
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		var res *sdk.Result
 		var err error
@@ -31,11 +29,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
 
-		if err != nil {
-			logEntry.Error = append(logEntry.Error, err.Error())
-		}
-
-		seal.CommitMsgLog(logEntry)
 		return res, err
 	}
 }

@@ -25,14 +25,6 @@ func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) {
 		}
 		k.SetProposal(ctx, proposal)
 	}
-
-	// add coins if not provided on genesis
-	if moduleAcc.GetCoins().IsZero() {
-		if err := moduleAcc.SetCoins(totalDeposits); err != nil {
-			panic(err)
-		}
-		supplyKeeper.SetModuleAccount(ctx, moduleAcc)
-	}
 }
 
 // ExportGenesis - output genesis parameters

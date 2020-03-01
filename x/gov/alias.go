@@ -47,9 +47,6 @@ const (
 
 var (
 	// functions aliases
-	RegisterInvariants            = keeper.RegisterInvariants
-	AllInvariants                 = keeper.AllInvariants
-	ModuleAccountInvariant        = keeper.ModuleAccountInvariant
 	NewKeeper                     = keeper.NewKeeper
 	NewQuerier                    = keeper.NewQuerier
 	RegisterCodec                 = types.RegisterCodec

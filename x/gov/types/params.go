@@ -44,7 +44,7 @@ type DepositParams struct {
 }
 
 // NewDepositParams creates a new DepositParams object
-func NewDepositParams(minDeposit sdk.Coins, maxDepositPeriod time.Duration) DepositParams {
+func NewDepositParams(minDeposit sdk.Int, maxDepositPeriod time.Duration) DepositParams {
 	return DepositParams{
 		MinDeposit:       minDeposit,
 		MaxDepositPeriod: maxDepositPeriod,

@@ -10,7 +10,6 @@ import (
 
 const (
 	// ModuleName is the name of the module
-
 	ModuleName = "govern"
 
 	// StoreKey is the store key string for gov

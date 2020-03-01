@@ -43,7 +43,6 @@ func (msg MsgSubmitProposal) ValidateBasic() error {
 	if msg.Proposer.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Proposer.String())
 	}
-
 	if msg.InitialDeposit.IsNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "deposit cannot be negative")
 	}
@@ -96,7 +95,6 @@ func (msg MsgDeposit) ValidateBasic() error {
 	if msg.Depositor.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Depositor.String())
 	}
-
 	if msg.Amount.IsNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "deposit cannot be negative")
 	}
