@@ -5,27 +5,31 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/celer-network/sgn/x/gov/types"
 )
 
 // NewHandler creates an sdk.Handler for all the gov type messages
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		var res *sdk.Result
+		var err error
 
 		switch msg := msg.(type) {
 		case MsgDeposit:
-			return handleMsgDeposit(ctx, keeper, msg)
+			res, err = handleMsgDeposit(ctx, keeper, msg)
 
 		case MsgSubmitProposal:
-			return handleMsgSubmitProposal(ctx, keeper, msg)
+			res, err = handleMsgSubmitProposal(ctx, keeper, msg)
 
 		case MsgVote:
-			return handleMsgVote(ctx, keeper, msg)
+			res, err = handleMsgVote(ctx, keeper, msg)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
+
+		return res, err
 	}
 }
 

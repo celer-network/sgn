@@ -10,7 +10,7 @@ import (
 
 const (
 	// ModuleName is the name of the module
-	ModuleName = "gov"
+	ModuleName = "govern"
 
 	// StoreKey is the store key string for gov
 	StoreKey = ModuleName
@@ -45,7 +45,8 @@ var (
 	InactiveProposalQueuePrefix = []byte{0x02}
 	ProposalIDKey               = []byte{0x03}
 
-	DepositsKeyPrefix = []byte{0x10}
+	DepositsKeyPrefix     = []byte{0x10}
+	AddrDepositsKeyPrefix = []byte{0x11}
 
 	VotesKeyPrefix = []byte{0x20}
 )
@@ -97,6 +98,11 @@ func DepositsKey(proposalID uint64) []byte {
 // DepositKey key of a specific deposit from the store
 func DepositKey(proposalID uint64, depositorAddr sdk.AccAddress) []byte {
 	return append(DepositsKey(proposalID), depositorAddr.Bytes()...)
+}
+
+// AddrDepositKey key of a specific addr deposit from the store
+func AddrDepositKey(depositorAddr sdk.AccAddress) []byte {
+	return append(AddrDepositsKeyPrefix, depositorAddr.Bytes()...)
 }
 
 // VotesKey gets the first part of the votes key based on the proposalID

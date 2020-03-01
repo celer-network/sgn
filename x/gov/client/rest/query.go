@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
+	gcutils "github.com/celer-network/sgn/x/gov/client/utils"
+	"github.com/celer-network/sgn/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	gcutils "github.com/cosmos/cosmos-sdk/x/gov/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/gorilla/mux"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
@@ -26,12 +25,12 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/gov/proposals/{%s}/votes/{%s}", RestProposalID, RestVoter), queryVoteHandlerFn(cliCtx)).Methods("GET")
 }
 
-func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryParamsHandlerFn(cliC context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		paramType := vars[RestParamsType]
 
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliC, r)
 		if !ok {
 			return
 		}
@@ -117,7 +116,7 @@ func queryDepositsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var proposal types.Proposal
-		if err := cliCtx.Codec.UnmarshalJSON(res, &proposal); err != nil {
+		if err = cliCtx.Codec.UnmarshalJSON(res, &proposal); err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -231,7 +230,7 @@ func queryDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			res, _, err = cliCtx.QueryWithData("custom/gov/proposal", bz)
 			if err != nil || len(res) == 0 {
-				err := fmt.Errorf("proposalID %d does not exist", proposalID)
+				err = fmt.Errorf("proposalID %d does not exist", proposalID)
 				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 				return
 			}
@@ -313,7 +312,7 @@ func queryVoteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			res, _, err = cliCtx.QueryWithData("custom/gov/proposal", bz)
 			if err != nil || len(res) == 0 {
-				err := fmt.Errorf("proposalID %d does not exist", proposalID)
+				err = fmt.Errorf("proposalID %d does not exist", proposalID)
 				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 				return
 			}
@@ -342,7 +341,7 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		strProposalID := vars[RestProposalID]
 
 		if len(strProposalID) == 0 {
-			err := errors.New("proposalId required but not specified")
+			err = errors.New("proposalId required but not specified")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -372,7 +371,7 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var proposal types.Proposal
-		if err := cliCtx.Codec.UnmarshalJSON(res, &proposal); err != nil {
+		if err = cliCtx.Codec.UnmarshalJSON(res, &proposal); err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -396,7 +395,7 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // HTTP request handler to query list of governance proposals
-func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryProposalsWithParameterFn(cliC context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, page, limit, err := rest.ParseHTTPArgsWithLimit(r, 0)
 		if err != nil {
@@ -404,7 +403,7 @@ func queryProposalsWithParameterFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliC, r)
 		if !ok {
 			return
 		}

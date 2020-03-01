@@ -3,8 +3,9 @@ package gov
 // nolint
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/celer-network/sgn/x/gov/client/cli"
+	"github.com/celer-network/sgn/x/gov/keeper"
+	"github.com/celer-network/sgn/x/gov/types"
 )
 
 const (
@@ -46,9 +47,6 @@ const (
 
 var (
 	// functions aliases
-	RegisterInvariants            = keeper.RegisterInvariants
-	AllInvariants                 = keeper.AllInvariants
-	ModuleAccountInvariant        = keeper.ModuleAccountInvariant
 	NewKeeper                     = keeper.NewKeeper
 	NewQuerier                    = keeper.NewQuerier
 	RegisterCodec                 = types.RegisterCodec
@@ -110,6 +108,8 @@ var (
 	NewVote                       = types.NewVote
 	VoteOptionFromString          = types.VoteOptionFromString
 	ValidVoteOption               = types.ValidVoteOption
+	CLIQueryProposals             = cli.QueryProposals
+	CLIQueryProposal              = cli.QueryProposal
 
 	// variable aliases
 	ModuleCdc                   = types.ModuleCdc

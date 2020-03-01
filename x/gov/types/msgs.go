@@ -20,12 +20,12 @@ var _, _, _ sdk.Msg = MsgSubmitProposal{}, MsgDeposit{}, MsgVote{}
 // given content and initial deposit
 type MsgSubmitProposal struct {
 	Content        Content        `json:"content" yaml:"content"`
-	InitialDeposit sdk.Coins      `json:"initial_deposit" yaml:"initial_deposit"` //  Initial deposit paid by sender. Must be strictly positive
+	InitialDeposit sdk.Int        `json:"initial_deposit" yaml:"initial_deposit"` //  Initial deposit paid by sender. Must be strictly positive
 	Proposer       sdk.AccAddress `json:"proposer" yaml:"proposer"`               //  Address of the proposer
 }
 
 // NewMsgSubmitProposal creates a new MsgSubmitProposal instance
-func NewMsgSubmitProposal(content Content, initialDeposit sdk.Coins, proposer sdk.AccAddress) MsgSubmitProposal {
+func NewMsgSubmitProposal(content Content, initialDeposit sdk.Int, proposer sdk.AccAddress) MsgSubmitProposal {
 	return MsgSubmitProposal{content, initialDeposit, proposer}
 }
 
@@ -43,11 +43,8 @@ func (msg MsgSubmitProposal) ValidateBasic() error {
 	if msg.Proposer.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Proposer.String())
 	}
-	if !msg.InitialDeposit.IsValid() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.InitialDeposit.String())
-	}
-	if msg.InitialDeposit.IsAnyNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.InitialDeposit.String())
+	if msg.InitialDeposit.IsNegative() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "deposit cannot be negative")
 	}
 	if !IsValidProposalType(msg.Content.ProposalType()) {
 		return sdkerrors.Wrap(ErrInvalidProposalType, msg.Content.ProposalType())
@@ -79,11 +76,11 @@ func (msg MsgSubmitProposal) GetSigners() []sdk.AccAddress {
 type MsgDeposit struct {
 	ProposalID uint64         `json:"proposal_id" yaml:"proposal_id"` // ID of the proposal
 	Depositor  sdk.AccAddress `json:"depositor" yaml:"depositor"`     // Address of the depositor
-	Amount     sdk.Coins      `json:"amount" yaml:"amount"`           // Coins to add to the proposal's deposit
+	Amount     sdk.Int        `json:"amount" yaml:"amount"`           // Int to add to the proposal's deposit
 }
 
 // NewMsgDeposit creates a new MsgDeposit instance
-func NewMsgDeposit(depositor sdk.AccAddress, proposalID uint64, amount sdk.Coins) MsgDeposit {
+func NewMsgDeposit(depositor sdk.AccAddress, proposalID uint64, amount sdk.Int) MsgDeposit {
 	return MsgDeposit{proposalID, depositor, amount}
 }
 
@@ -98,11 +95,8 @@ func (msg MsgDeposit) ValidateBasic() error {
 	if msg.Depositor.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Depositor.String())
 	}
-	if !msg.Amount.IsValid() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
-	}
-	if msg.Amount.IsAnyNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Amount.String())
+	if msg.Amount.IsNegative() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "deposit cannot be negative")
 	}
 
 	return nil
