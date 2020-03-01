@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/celer-network/sgn/x/gov/types"
+	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -17,11 +17,7 @@ type Keeper struct {
 	// The reference to the Paramstore to get and set gov specific params
 	paramSpace types.ParamSubspace
 
-	// The SupplyKeeper to reduce the supply of the network
-	supplyKeeper types.SupplyKeeper
-
-	// The reference to the DelegationSet and ValidatorSet to get information about validators and delegators
-	sk types.StakingKeeper
+	vk validator.Keeper
 
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
@@ -42,13 +38,8 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	supplyKeeper types.SupplyKeeper, sk types.StakingKeeper, rtr types.Router,
+	vk validator.Keeper, rtr types.Router,
 ) Keeper {
-
-	// ensure governance module account is set
-	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
-		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
-	}
 
 	// It is vital to seal the governance proposal router here as to not allow
 	// further handlers to be registered after the keeper is created since this
@@ -56,12 +47,11 @@ func NewKeeper(
 	rtr.Seal()
 
 	return Keeper{
-		storeKey:     key,
-		paramSpace:   paramSpace,
-		supplyKeeper: supplyKeeper,
-		sk:           sk,
-		cdc:          cdc,
-		router:       rtr,
+		storeKey:   key,
+		paramSpace: paramSpace,
+		vk:         vk,
+		cdc:        cdc,
+		router:     rtr,
 	}
 }
 
@@ -73,11 +63,6 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 // Router returns the gov Keeper's Router
 func (keeper Keeper) Router() types.Router {
 	return keeper.router
-}
-
-// GetGovernanceAccount returns the governance ModuleAccount
-func (keeper Keeper) GetGovernanceAccount(ctx sdk.Context) exported.ModuleAccountI {
-	return keeper.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 }
 
 // ProposalQueues

@@ -3,11 +3,11 @@ package utils
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 const (

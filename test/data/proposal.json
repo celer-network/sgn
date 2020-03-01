@@ -1,0 +1,12 @@
+{
+  "title": "Global Param Change",
+  "description": "Update EpochLength",
+  "changes": [
+    {
+      "subspace": "global",
+      "key": "EpochLength",
+      "value": "3"
+    }
+  ],
+  "deposit": "10"
+}
