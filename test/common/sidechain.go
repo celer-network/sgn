@@ -11,8 +11,11 @@ import (
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/x/gov"
+	govtypes "github.com/celer-network/sgn/x/gov/types"
 	sgnval "github.com/celer-network/sgn/x/validator"
 	vtypes "github.com/celer-network/sgn/x/validator/types"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -163,6 +166,18 @@ func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum i
 	ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, expNum, len(validators), "The length of validators should be: "+strconv.Itoa(expNum))
+}
+
+func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes.ProposalStatus) (proposal govtypes.Proposal, err error) {
+	for retry := 0; retry < 30; retry++ {
+		proposal, err = gov.CLIQueryProposal(cliCtx, gov.RouterKey, proposalID)
+		if err == nil && status == proposal.Status {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
+	return
 }
 
 func sdkStatusName(status sdk.BondStatus) string {

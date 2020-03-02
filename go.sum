@@ -45,6 +45,7 @@ github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792/go.mod h1:ghJtE
 github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46fmI40EZs=
 github.com/celer-network/cosmos-sdk v0.38.1-0 h1:G3lWe08eSEB2rBc0E1F8zqx9w+WH4dCNwvgrFkab0yo=
 github.com/celer-network/cosmos-sdk v0.38.1-0/go.mod h1:9ZZex0GKpyNCvilvVAPBoB+0n3A/aO1+/UhPVEaiCy4=
+github.com/celer-network/cosmos-sdk v0.38.1 h1:3scaE4hie+IICzo1Hu4K+FX9QnTQKqNbmDAAS1/bPvE=
 github.com/celer-network/goutils v0.1.2 h1:2RojhL7Z2hH1sIjucHgJvTSQLjzfLEyvnU3cpL5Buxg=
 github.com/celer-network/goutils v0.1.2/go.mod h1:ABL+egL00e9q0oBbL3hs8C0dM8VHH9JPD2Q0UJ4AODI=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
