@@ -44,7 +44,7 @@ func slashTest(t *testing.T) {
 
 	transactor := tc.NewTransactor(
 		t,
-		tc.SgnCLIHome,
+		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,

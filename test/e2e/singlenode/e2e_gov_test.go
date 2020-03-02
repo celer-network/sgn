@@ -2,16 +2,12 @@ package singlenode
 
 import (
 	"testing"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/celer-network/sgn/x/gov"
-	"github.com/celer-network/sgn/x/gov/types"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -54,21 +50,21 @@ func govTest(t *testing.T) {
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID := uint64(1)
-	proposal, err := QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusDepositPeriod)
+	proposal, err := tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusDepositPeriod)
 	tc.ChkTestErr(t, err, "failed to query proposal 1 with deposit status")
 	assert.Equal(t, content.GetTitle(), proposal.GetTitle(), "The proposal should have same title as submitted proposal")
 	assert.Equal(t, content.GetDescription(), proposal.GetDescription(), "The proposal should have same description as submitted proposal")
 
-	depositMsg := types.NewMsgDeposit(transactor.Key.GetAddress(), proposalID, sdk.NewInt(10))
+	depositMsg := govtypes.NewMsgDeposit(transactor.Key.GetAddress(), proposalID, sdk.NewInt(10))
 	transactor.AddTxMsg(depositMsg)
-	proposal, err = QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	tc.ChkTestErr(t, err, "failed to query proposal 1 with voting status")
 
 	byteVoteOption, _ := govtypes.VoteOptionFromString("Yes")
 	voteMsg := govtypes.NewMsgVote(transactor.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor.AddTxMsg(voteMsg)
 
-	proposal, err = QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusPassed)
+	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusPassed)
 	tc.ChkTestErr(t, err, "failed to query proposal 1 with passed status")
 
 	globalParams, err := global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
@@ -82,29 +78,17 @@ func govTest(t *testing.T) {
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(2)
-	proposal, err = QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	tc.ChkTestErr(t, err, "failed to query proposal 2 with voting status")
 
 	byteVoteOption, _ = govtypes.VoteOptionFromString("No")
 	voteMsg = govtypes.NewMsgVote(transactor.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor.AddTxMsg(voteMsg)
 
-	proposal, err = QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusRejected)
+	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusRejected)
 	tc.ChkTestErr(t, err, "failed to query proposal 2 with rejected status")
 
 	globalParams, err = global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should stay 3")
-}
-
-func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes.ProposalStatus) (proposal govtypes.Proposal, err error) {
-	for retry := 0; retry < 30; retry++ {
-		proposal, err = gov.CLIQueryProposal(cliCtx, gov.RouterKey, proposalID)
-		if err == nil && status == proposal.Status {
-			break
-		}
-		time.Sleep(time.Second)
-	}
-
-	return
 }
