@@ -35,9 +35,8 @@ type Transactor struct {
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
-	pp := strings.NewReader(passphrase)
-	kb, err := keys.NewKeyring(sdk.KeyringServiceName(),
-		viper.GetString(common.FlagSgnKeyringBackend), cliHome, pp)
+	kb, err := keys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
+		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
 
 	addr, err := sdk.AccAddressFromBech32(accAddr)
 	if err != nil {
