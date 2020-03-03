@@ -53,7 +53,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 			break
 		}
 		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
-			log.Debugln("Failed to call kb.GetByAddress.")
+			log.Errorln("kb.GetByAddress error:", err)
 			return nil, err
 		}
 		if try != maxSignRetry-1 {
