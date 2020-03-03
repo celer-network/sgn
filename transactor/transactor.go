@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	maxQueryRetry   = 20
-	queryRetryDelay = 500 * time.Millisecond
+	maxQueryRetry   = 15
+	queryRetryDelay = 1 * time.Second
 	maxSignRetry    = 10
 	signRetryDelay  = 100 * time.Millisecond
 )
@@ -57,7 +57,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 			return nil, err
 		}
 		if try != maxSignRetry-1 {
-			log.Debugln("Failed to call kb.GetByAddress. Will retry it.")
+			log.Debugln("retry kb.GetByAddress due to error:", err)
 			time.Sleep(signRetryDelay)
 		}
 	}
