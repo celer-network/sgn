@@ -12,7 +12,9 @@
       "max_age_duration": "172800000000000"
     },
     "validator": {
-      "pub_key_types": ["ed25519"]
+      "pub_key_types": [
+        "ed25519"
+      ]
     }
   },
   "app_hash": "",
@@ -131,15 +133,10 @@
                 "value": {
                   "description": {
                     "moniker": "node3",
-                    "identity": "6a6d2a97da1c453a4e099e8054865a0a59728863",
+                    "identity": "",
                     "website": "",
                     "security_contact": "",
                     "details": ""
-                  },
-                  "commission": {
-                    "rate": "0.100000000000000000",
-                    "max_rate": "0.200000000000000000",
-                    "max_change_rate": "0.010000000000000000"
                   },
                   "min_self_delegation": "1",
                   "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
@@ -162,10 +159,10 @@
                   "type": "tendermint/PubKeySecp256k1",
                   "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
                 },
-                "signature": "nKv4wGxe2l2zvBD7y21V1QyLl8Ku58q7zgZAw23KxWACw1BEVVKyfx6idc947Z1dx1qQuY0V7yZLRIdmHiyZyw=="
+                "signature": "BBJsUSe7tEWr6SrUmRKzzUZ61EcVPi5yLgkUr4jhggQwk4RMMzMM76GMVHjT5yxryvjXcI9fNYhzxs22NXMW6Q=="
               }
             ],
-            "memo": "9b70230e6243339a3222887385857f73bf60997d@192.168.1.48:26656"
+            "memo": "9b70230e6243339a3222887385857f73bf60997d@192.168.1.3:26656"
           }
         }
       ]
