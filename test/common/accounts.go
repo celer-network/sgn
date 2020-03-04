@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	cKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,12 +30,7 @@ func AccountsCommand() *cobra.Command {
 		Use:   "accounts",
 		Short: "Add accounts in batch",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			kb, err := keys.NewKeyBaseFromDir(viper.GetString(flags.FlagHome))
-			if err != nil {
-				return err
-			}
-
-			addresses, err := addAccounts(kb)
+			addresses, err := addAccounts()
 			if err != nil {
 				return err
 			}
@@ -66,15 +62,21 @@ func AccountsCommand() *cobra.Command {
 	cmd.Flags().String(namePrefixFlag, "transactor", "account prefix")
 	cmd.Flags().Int(countFlag, 1, "account count")
 	cmd.Flags().String(genesisCoinFlag, "", "amount of coin adding to genesis for the account")
+	cmd.Flags().String(flags.FlagKeyringBackend, cKeys.BackendFile, "Select keyring's backend (os|file|test)")
 	return cmd
 }
 
-func addAccounts(kb cKeys.Keybase) ([]string, error) {
+func addAccounts() ([]string, error) {
 	var addresses []string
 
 	passphrase := viper.GetString(passphraseFlag)
 	np := viper.GetString(namePrefixFlag)
 	count := viper.GetInt(countFlag)
+	kb, err := cKeys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
+		viper.GetString(flags.FlagKeyringBackend), viper.GetString(flags.FlagHome), passphrase)
+	if err != nil {
+		return addresses, err
+	}
 
 	for i := 0; i < count; i++ {
 		name := fmt.Sprintf("%s_%d", np, i)
