@@ -18,7 +18,7 @@ require (
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/gorilla/mux v1.7.4-0.20200112191743-75dcda0896e1
+	github.com/gorilla/mux v1.7.4
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
@@ -47,6 +47,6 @@ require (
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.38.1-0
+replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.38.1-1
 
 //replace github.com/cosmos/cosmos-sdk => ../cosmos-sdk

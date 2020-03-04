@@ -45,6 +45,8 @@ github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792/go.mod h1:ghJtE
 github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46fmI40EZs=
 github.com/celer-network/cosmos-sdk v0.38.1-0 h1:G3lWe08eSEB2rBc0E1F8zqx9w+WH4dCNwvgrFkab0yo=
 github.com/celer-network/cosmos-sdk v0.38.1-0/go.mod h1:9ZZex0GKpyNCvilvVAPBoB+0n3A/aO1+/UhPVEaiCy4=
+github.com/celer-network/cosmos-sdk v0.38.1-1 h1:5j9G0OqTC6TOr+t59QyCEPxG30l9HI20Iixj+YqC/s8=
+github.com/celer-network/cosmos-sdk v0.38.1-1/go.mod h1:hUaaoUxliJTgo4zZQaOVlfjoS6FATG1y77Yfy9fBxs8=
 github.com/celer-network/cosmos-sdk v0.38.1 h1:3scaE4hie+IICzo1Hu4K+FX9QnTQKqNbmDAAS1/bPvE=
 github.com/celer-network/goutils v0.1.2 h1:2RojhL7Z2hH1sIjucHgJvTSQLjzfLEyvnU3cpL5Buxg=
 github.com/celer-network/goutils v0.1.2/go.mod h1:ABL+egL00e9q0oBbL3hs8C0dM8VHH9JPD2Q0UJ4AODI=
@@ -154,6 +156,8 @@ github.com/gorilla/mux v1.7.3 h1:gnP5JzjVOuiZD07fKKToCAOjS0yOpj/qPETTXCCS6hw=
 github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/mux v1.7.4-0.20200112191743-75dcda0896e1 h1:L2w9fXjfWXCv8iGW49xJdVyo4SzCsC/9ttOc/BS0iNQ=
 github.com/gorilla/mux v1.7.4-0.20200112191743-75dcda0896e1/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
+github.com/gorilla/mux v1.7.4 h1:VuZ8uybHlWmqV03+zRzdwKL4tUnIp1MAQtp1mIFE1bc=
+github.com/gorilla/mux v1.7.4/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
