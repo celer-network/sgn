@@ -58,7 +58,6 @@ func gatewayTest(t *testing.T) {
 		viper.GetString(common.FlagSgnNodeURI),
 		sgnTransactors[1],
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 	)
 	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
 	tc.ChkTestErr(t, err, "failed to get client 1 private key")

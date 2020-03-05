@@ -40,7 +40,6 @@ func govTest(t *testing.T) {
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnOperator),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 	)
 
 	log.Info("======================== Test change epochlengh passed ===========================")

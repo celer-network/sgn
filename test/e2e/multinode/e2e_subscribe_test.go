@@ -48,7 +48,6 @@ func subscribeTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	amt1 := big.NewInt(1000000000000000000)

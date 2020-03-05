@@ -66,8 +66,8 @@ func NewRestServer() (rs *RestServer, err error) {
 			viper.GetString(common.FlagSgnNodeURI),
 			viper.GetString(common.FlagSgnOperator),
 			viper.GetString(common.FlagSgnPassphrase),
-			viper.GetString(common.FlagSgnGasPrice),
 			cdc,
+			nil,
 		)
 		if err != nil {
 			return

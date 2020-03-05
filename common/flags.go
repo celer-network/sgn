@@ -16,7 +16,7 @@ const (
 	FlagSgnPubKey         = "sgn.pubkey"
 	FlagSgnChainID        = "sgn.chainID"
 	FlagSgnNodeURI        = "sgn.nodeURI"
-	FlagSgnGasPrice       = "sgn.gasPrice"
+	FlagSgnBaseGasPrice   = "sgn.baseGasPrice"
 	FlagSgnTimeoutCommit  = "sgn.timeoutCommit"
 	FlagSgnKeyringBackend = "sgn.keyringBackend"
 

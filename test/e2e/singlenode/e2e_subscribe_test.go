@@ -46,7 +46,6 @@ func subscribeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[1],
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 	)
 
 	amt := big.NewInt(1000000000000000000)

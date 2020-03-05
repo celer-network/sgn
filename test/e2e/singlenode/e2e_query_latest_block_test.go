@@ -41,7 +41,6 @@ func queryLatestBlockTest(t *testing.T) {
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[1],
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 	)
 
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)

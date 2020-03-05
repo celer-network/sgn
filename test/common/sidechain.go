@@ -33,7 +33,7 @@ type SGNParams struct {
 	MaxValidatorNum        *big.Int
 }
 
-func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase, sgnGasPrice string) *transactor.Transactor {
+func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase string) *transactor.Transactor {
 	cdc := app.MakeCodec()
 	tr, err := transactor.NewTransactor(
 		sgnCLIHome,
@@ -41,8 +41,8 @@ func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransact
 		sgnNodeURI,
 		sgnTransactor,
 		sgnPassphrase,
-		sgnGasPrice,
 		cdc,
+		nil,
 	)
 	ChkTestErr(t, err, "Failed to create new transactor.")
 
