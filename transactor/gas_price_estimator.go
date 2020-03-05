@@ -16,11 +16,11 @@ const (
 )
 
 type GasPriceEstimator struct {
-	currentHeight     int64
-	txCounts          []int
-	txCountSum        int
-	gasPriceIncrement float64
-	cliCtx            context.CLIContext
+	currentHeight int64
+	txCounts      []int
+	txCountSum    int
+	baseGasPrice  float64
+	cliCtx        context.CLIContext
 }
 
 func NewGasPriceEstimator(nodeURI string) *GasPriceEstimator {
@@ -29,10 +29,10 @@ func NewGasPriceEstimator(nodeURI string) *GasPriceEstimator {
 		WithNodeURI(nodeURI)
 
 	gpe := &GasPriceEstimator{
-		txCounts:          []int{},
-		txCountSum:        0,
-		gasPriceIncrement: viper.GetFloat64(common.FlagSgnGasPriceIncrement),
-		cliCtx:            cliCtx,
+		txCounts:     []int{},
+		txCountSum:   0,
+		baseGasPrice: viper.GetFloat64(common.FlagSgnBaseGasPrice),
+		cliCtx:       cliCtx,
 	}
 
 	go gpe.collectStatistics()
@@ -75,15 +75,19 @@ func (gpe *GasPriceEstimator) collectStatistics() {
 
 // Get proper gas price to send a tx
 func (gpe *GasPriceEstimator) GetGasPrice() string {
-	if len(gpe.txCounts) == 0 {
+	if gpe.baseGasPrice == 0 {
 		return ""
 	}
 
-	avgTxCount := gpe.txCountSum / len(gpe.txCounts)
-	gasPrice := float64(avgTxCount/incrementThreshold) * gpe.gasPriceIncrement
-	if gasPrice == 0 {
-		return ""
+	var priceMultiplier float64 = 0
+	if len(gpe.txCounts) != 0 {
+		priceMultiplier = float64(gpe.txCountSum / len(gpe.txCounts) / incrementThreshold)
+	}
+	if priceMultiplier == 0 {
+		priceMultiplier = 1
 	}
 
+	gasPrice := priceMultiplier * gpe.baseGasPrice
+	log.Info(gasPrice)
 	return fmt.Sprintf("%f%s", gasPrice, common.QuotaCoinName)
 }
