@@ -13,6 +13,7 @@ func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	if ctx.BlockTime().Sub(dailyTimestamp).Hours() > 24 {
 		keeper.SetDailyTimestamp(ctx, ctx.BlockTime())
 		resetRateLimit(ctx, keeper)
+		resetRequestCount(ctx, keeper)
 	}
 }
 
@@ -27,6 +28,17 @@ func resetRateLimit(ctx sdk.Context, keeper Keeper) {
 
 		for _, transactor := range candidate.Transactors {
 			keeper.bankKeeper.SetCoins(ctx, transactor, quota)
+		}
+	}
+}
+
+func resetRequestCount(ctx sdk.Context, keeper Keeper) {
+	candidates := keeper.validatorKeeper.GetAllCandidates(ctx)
+
+	for _, candidate := range candidates {
+		if candidate.RequestCount.IsPositive() {
+			candidate.RequestCount = sdk.ZeroInt()
+			keeper.validatorKeeper.SetCandidate(ctx, candidate)
 		}
 	}
 }

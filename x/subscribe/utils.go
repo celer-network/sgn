@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -79,6 +80,7 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 		requestGuards = append(requestGuards, sdk.AccAddress(candidate.Operator))
 	}
 
+	log.Info(validatorCandidates, requestGuards)
 	return requestGuards
 }
 
