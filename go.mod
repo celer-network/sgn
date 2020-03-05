@@ -47,6 +47,6 @@ require (
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.38.1-1
+replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.38.1-2
 
 //replace github.com/cosmos/cosmos-sdk => ../cosmos-sdk
