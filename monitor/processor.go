@@ -113,6 +113,7 @@ func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.Guar
 }
 
 func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.processIntendSettle(intendSettle)
 	for _, request := range requests {
 		if request.TriggerTxHash != "" {
@@ -126,6 +127,7 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 }
 
 func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.processIntendSettle(intendSettle)
 	for _, request := range requests {
 		if request.GuardTxHash != "" {
@@ -225,7 +227,6 @@ func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
 }
 
 func (m *EthMonitor) processIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (requests []subscribe.Request) {
-	log.Infof("Process IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	channelId := intendSettle.ChannelId[:]
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, intendSettle.ChannelId)
 	if err != nil {

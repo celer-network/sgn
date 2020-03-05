@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -72,7 +71,7 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	requestGuardCount := int(keeper.RequestGuardCount(ctx))
 	requestGuards := []sdk.AccAddress{}
 
-	for len(requestGuards) < requestGuardCount {
+	for len(requestGuards) < requestGuardCount && len(requestGuards) < len(validatorCandidates) {
 		candidate := validatorCandidates[len(requestGuards)]
 		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
 		keeper.validatorKeeper.SetCandidate(ctx, candidate)
@@ -80,7 +79,6 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 		requestGuards = append(requestGuards, sdk.AccAddress(candidate.Operator))
 	}
 
-	log.Info(validatorCandidates, requestGuards)
 	return requestGuards
 }
 
