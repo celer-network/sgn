@@ -12,7 +12,9 @@
       "max_age_duration": "172800000000000"
     },
     "validator": {
-      "pub_key_types": ["ed25519"]
+      "pub_key_types": [
+        "ed25519"
+      ]
     }
   },
   "app_hash": "",
@@ -136,11 +138,6 @@
                     "security_contact": "",
                     "details": ""
                   },
-                  "commission": {
-                    "rate": "0.100000000000000000",
-                    "max_rate": "0.200000000000000000",
-                    "max_change_rate": "0.010000000000000000"
-                  },
                   "min_self_delegation": "1",
                   "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
                   "validator_address": "cosmosvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
@@ -162,10 +159,10 @@
                   "type": "tendermint/PubKeySecp256k1",
                   "value": "A/ddpk3jEmKKKQSUtL49plviglGNy0wzNn/PvsyvzLIb"
                 },
-                "signature": "nKv4wGxe2l2zvBD7y21V1QyLl8Ku58q7zgZAw23KxWACw1BEVVKyfx6idc947Z1dx1qQuY0V7yZLRIdmHiyZyw=="
+                "signature": "PHT1vVlCtGcZ3Jx8X5IJuZmCdBc7t442Ah5ZecldIFdfy3RefY/QgPGDKsqc4BwA0MbtTjplXzI1CZxLxJe6dQ=="
               }
             ],
-            "memo": "9b70230e6243339a3222887385857f73bf60997d@192.168.1.48:26656"
+            "memo": "9b70230e6243339a3222887385857f73bf60997d@192.168.1.3:26656"
           }
         }
       ]
