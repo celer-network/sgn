@@ -113,21 +113,3 @@ func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRequestKey(request.ChannelId, request.GetPeerAddress()), k.cdc.MustMarshalBinaryBare(request))
 }
-
-// Gets the request guard id
-func (k Keeper) GetRequestGuardId(ctx sdk.Context) uint8 {
-	store := ctx.KVStore(k.storeKey)
-
-	if !store.Has(RequestGuardIdKey) {
-		return 0
-	}
-
-	value := store.Get(RequestGuardIdKey)
-	return uint8(value[0])
-}
-
-// Sets the request guard id
-func (k Keeper) SetRequestGuardId(ctx sdk.Context, request uint8) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(RequestGuardIdKey, []byte{request})
-}

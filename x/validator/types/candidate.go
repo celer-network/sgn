@@ -26,11 +26,12 @@ func (c Delegator) String() string {
 
 // operator will be used for running validator node, and transactor will be used for running gateway
 type Candidate struct {
-	EthAddress  string           `json:"ethAddress"`
-	Operator    sdk.AccAddress   `json:"operator"`
-	Transactors []sdk.AccAddress `json:"transactors"`
-	StakingPool sdk.Int          `json:"stakingPool"`
-	Delegators  []Delegator      `json:"delegators"`
+	EthAddress   string           `json:"ethAddress"`
+	Operator     sdk.AccAddress   `json:"operator"`
+	Transactors  []sdk.AccAddress `json:"transactors"`
+	Delegators   []Delegator      `json:"delegators"`
+	StakingPool  sdk.Int          `json:"stakingPool"`
+	RequestCount sdk.Int          `json:"requestCount"`
 }
 
 func NewCandidate(ethAddress string, operator sdk.AccAddress) Candidate {

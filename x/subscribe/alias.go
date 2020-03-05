@@ -28,7 +28,6 @@ var (
 	GetSubscriptionKey         = types.GetSubscriptionKey
 	GetRequestKey              = types.GetRequestKey
 	SubscriptionKeyPrefix      = types.SubscriptionKeyPrefix
-	RequestGuardIdKey          = types.RequestGuardIdKey
 	CLIQuerySubscription       = cli.QuerySubscription
 	CLIQueryRequest            = cli.QueryRequest
 	CLIQueryParams             = cli.QueryParams

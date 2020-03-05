@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/thoas/go-funk"
 )
 
 func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
@@ -55,18 +54,31 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 }
 
 func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
-	validators := keeper.validatorKeeper.GetValidators(ctx)
-	validators = funk.Reverse(validators).([]staking.Validator)
-	requestGuardId := keeper.GetRequestGuardId(ctx)
-	requestGuardCount := keeper.RequestGuardCount(ctx)
+	validatorCandidates := keeper.validatorKeeper.GetValidatorCandidates(ctx)
+	sort.Slice(validatorCandidates, func(i, j int) bool {
+		validatorCandidate0 := validatorCandidates[i]
+		validatorCandidate1 := validatorCandidates[j]
+		reqStakeRatio0 := validatorCandidate0.RequestCount.ToDec().QuoInt(validatorCandidate0.StakingPool)
+		reqStakeRatio1 := validatorCandidate1.RequestCount.ToDec().QuoInt(validatorCandidate1.StakingPool)
+
+		if !reqStakeRatio0.Equal(reqStakeRatio1) {
+			return reqStakeRatio0.LT(reqStakeRatio1)
+		}
+
+		return validatorCandidate0.StakingPool.LT(validatorCandidate1.StakingPool)
+	})
+
+	requestGuardCount := int(keeper.RequestGuardCount(ctx))
 	requestGuards := []sdk.AccAddress{}
 
-	for uint64(len(requestGuards)) < requestGuardCount {
-		requestGuards = append(requestGuards, sdk.AccAddress(validators[requestGuardId].OperatorAddress))
-		requestGuardId = (requestGuardId + 1) % uint8(len(validators))
+	for len(requestGuards) < requestGuardCount && len(requestGuards) < len(validatorCandidates) {
+		candidate := validatorCandidates[len(requestGuards)]
+		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
+		keeper.validatorKeeper.SetCandidate(ctx, candidate)
+
+		requestGuards = append(requestGuards, sdk.AccAddress(candidate.Operator))
 	}
 
-	keeper.SetRequestGuardId(ctx, requestGuardId)
 	return requestGuards
 }
 
