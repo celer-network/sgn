@@ -49,7 +49,6 @@ func slashTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}

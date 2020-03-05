@@ -29,16 +29,17 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
+	gpe := transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI))
 	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
 		cdc,
+		gpe,
 	)
 
 	err := transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 		viper.GetStringSlice(common.FlagSgnTransactors)[1:],
 	)
 	if err != nil {

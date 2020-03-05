@@ -42,7 +42,6 @@ func validatorTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	// delegation ratio. V0 : V1 : V2 = 2 : 1 : 1
@@ -95,7 +94,6 @@ func replaceValidatorTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}

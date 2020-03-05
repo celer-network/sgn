@@ -37,7 +37,6 @@ func govTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnOperators[0],
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	transactor1 := tc.NewTransactor(
@@ -47,7 +46,6 @@ func govTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnOperators[1],
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	transactor2 := tc.NewTransactor(
@@ -57,7 +55,6 @@ func govTest(t *testing.T) {
 		tc.SgnNodeURI,
 		tc.SgnOperators[2],
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(1100000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}

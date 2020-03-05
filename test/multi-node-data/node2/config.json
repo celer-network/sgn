@@ -12,7 +12,7 @@
   "loglongfile": true,
   "sgn": {
     "chainid": "sgnchain",
-    "gasprice": "",
+    "gaspriceincrement": 0,
     "nodeuri": "tcp://localhost:26657",
     "operator": "cosmos122w97t8vsa3538fr3ylvz3hvuqxrgpnax8es8f",
     "passphrase": "12341234",

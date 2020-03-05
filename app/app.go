@@ -411,14 +411,15 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		return
 	}
 
+	gpe := transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI))
 	operator, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
 		ctx.ChainID(),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnOperator),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 		app.cdc,
+		gpe,
 	)
 	if err != nil {
 		tmos.Exit(err.Error())
@@ -430,8 +431,8 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetStringSlice(common.FlagSgnTransactors)[0],
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 		app.cdc,
+		gpe,
 	)
 	if err != nil {
 		tmos.Exit(err.Error())

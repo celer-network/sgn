@@ -11,7 +11,7 @@
   "loglongfile": true,
   "sgn": {
     "chainid": "sgnchain",
-    "gasprice": "",
+    "gaspriceincrement": 0,
     "nodeuri": "tcp://localhost:26657",
     "operator": "[OPERATOR_ADDRESS]",
     "passphrase": "[TRANSACTOR_PASSPHRASE]",
