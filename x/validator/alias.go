@@ -63,6 +63,7 @@ type (
 	QueryCandidateParams   = types.QueryCandidateParams
 	QueryRewardParams      = types.QueryRewardParams
 	MsgInitializeCandidate = types.MsgInitializeCandidate
+	MsgSetTransactors      = types.MsgSetTransactors
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator
 	MsgSyncDelegator       = types.MsgSyncDelegator

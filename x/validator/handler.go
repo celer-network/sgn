@@ -27,6 +27,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgInitializeCandidate:
 			res, err = handleMsgInitializeCandidate(ctx, keeper, msg, logEntry)
+		case MsgSetTransactors:
+			res, err = handleMsgSetTransactors(ctx, keeper, msg, logEntry)
 		case MsgClaimValidator:
 			res, err = handleMsgClaimValidator(ctx, keeper, msg, logEntry)
 		case MsgSyncValidator:
@@ -74,6 +76,30 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 		keeper.SetCandidate(ctx, NewCandidate(msg.EthAddress, accAddress))
 	}
 
+	return &sdk.Result{}, nil
+}
+
+// Handle a message to set transactors
+func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransactors, logEntry *seal.MsgLog) (*sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
+
+	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	if !found {
+		return nil, fmt.Errorf("Candidate does not exist")
+	}
+
+	if !candidate.Operator.Equals(msg.Sender) {
+		return nil, fmt.Errorf("The candidate is not operated by the sender.")
+	}
+
+	candidate.Transactors = msg.Transactors
+	for _, transactor := range candidate.Transactors {
+		InitAccount(ctx, keeper, transactor)
+	}
+
+	keeper.SetCandidate(ctx, candidate)
 	return &sdk.Result{}, nil
 }
 
@@ -129,14 +155,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 
 	validator.Status = sdk.Bonded
 	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
-
-	candidate.Transactors = msg.Transactors
-	for _, transactor := range candidate.Transactors {
-		InitAccount(ctx, keeper, transactor)
-	}
-
 	keeper.SetCandidate(ctx, candidate)
-
 	return &sdk.Result{}, nil
 }
 

@@ -10,6 +10,7 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 const (
 	TypeMsgInitializeCandidate = "initialize_candidate"
+	TypeMsgSetTransactors      = "set_transactors"
 	TypeMsgClaimValidator      = "claim_validator"
 	TypeMsgSyncValidator       = "sync_validator"
 	TypeMsgSyncDelegator       = "sync_delegator"
@@ -60,21 +61,69 @@ func (msg MsgInitializeCandidate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-// MsgClaimValidator defines a ClaimValidator message
-type MsgClaimValidator struct {
+type MsgSetTransactors struct {
 	EthAddress  string           `json:"ethAddress"`
-	PubKey      string           `json:"pubkey"`
 	Transactors []sdk.AccAddress `json:"transactors"`
 	Sender      sdk.AccAddress   `json:"sender"`
 }
 
-// NewMsgClaimValidator is a constructor function for MsgClaimValidator
-func NewMsgClaimValidator(ethAddress string, pubkey string, transactors []sdk.AccAddress, sender sdk.AccAddress) MsgClaimValidator {
-	return MsgClaimValidator{
+// NewMsgSetTransactors is a constructor function for MsgSetTransactors
+func NewMsgSetTransactors(ethAddress string, transactors []sdk.AccAddress, sender sdk.AccAddress) MsgSetTransactors {
+	return MsgSetTransactors{
 		EthAddress:  mainchain.FormatAddrHex(ethAddress),
-		PubKey:      pubkey,
 		Transactors: transactors,
 		Sender:      sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgSetTransactors) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgSetTransactors) Type() string { return TypeMsgSetTransactors }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgSetTransactors) ValidateBasic() error {
+	if msg.EthAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
+	}
+
+	for _, transactor := range msg.Transactors {
+		if transactor.Empty() {
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, transactor.String())
+		}
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSetTransactors) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSetTransactors) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// MsgClaimValidator defines a ClaimValidator message
+type MsgClaimValidator struct {
+	EthAddress string         `json:"ethAddress"`
+	PubKey     string         `json:"pubkey"`
+	Sender     sdk.AccAddress `json:"sender"`
+}
+
+// NewMsgClaimValidator is a constructor function for MsgClaimValidator
+func NewMsgClaimValidator(ethAddress string, pubkey string, sender sdk.AccAddress) MsgClaimValidator {
+	return MsgClaimValidator{
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
+		PubKey:     pubkey,
+		Sender:     sender,
 	}
 }
 
@@ -97,12 +146,6 @@ func (msg MsgClaimValidator) ValidateBasic() error {
 
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
-	}
-
-	for _, transactor := range msg.Transactors {
-		if transactor.Empty() {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, transactor.String())
-		}
 	}
 
 	return nil
