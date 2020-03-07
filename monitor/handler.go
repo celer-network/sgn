@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
@@ -176,12 +177,24 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 func (m *EthMonitor) claimValidator() {
 	log.Infof("Claim self as a validator on sidechain, self address %x", m.ethClient.Address)
 
-	msg := validator.NewMsgClaimValidator(
+	claimValidatorMsg := validator.NewMsgClaimValidator(
 		mainchain.Addr2Hex(m.ethClient.Address),
 		viper.GetString(common.FlagSgnPubKey),
 		m.operator.Key.GetAddress(),
 	)
-	m.operator.AddTxMsg(msg)
+	m.operator.AddTxMsg(claimValidatorMsg)
+
+	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
+	if err != nil {
+		log.Errorln("parse transactors err", err)
+		return
+	}
+	setTransactorsMsg := validator.NewMsgSetTransactors(
+		mainchain.Addr2Hex(m.ethClient.Address),
+		transactors,
+		m.operator.Key.GetAddress(),
+	)
+	m.operator.AddTxMsg(setTransactorsMsg)
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {

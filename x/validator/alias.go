@@ -21,6 +21,7 @@ const (
 
 var (
 	NewMsgInitializeCandidate = types.NewMsgInitializeCandidate
+	NewMsgSetTransactors      = types.NewMsgSetTransactors
 	NewMsgClaimValidator      = types.NewMsgClaimValidator
 	NewMsgSyncValidator       = types.NewMsgSyncValidator
 	NewMsgSyncDelegator       = types.NewMsgSyncDelegator
