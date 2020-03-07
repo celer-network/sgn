@@ -84,6 +84,9 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
+	for _, transactor := range msg.Transactors {
+		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
+	}
 
 	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
@@ -109,9 +112,6 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 	logEntry.PubKey = msg.PubKey
-	for _, transactor := range msg.Transactors {
-		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
-	}
 
 	pk, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, msg.PubKey)
 	if err != nil {
