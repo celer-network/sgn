@@ -21,6 +21,7 @@ const (
 
 var (
 	NewMsgInitializeCandidate = types.NewMsgInitializeCandidate
+	NewMsgSetTransactors      = types.NewMsgSetTransactors
 	NewMsgClaimValidator      = types.NewMsgClaimValidator
 	NewMsgSyncValidator       = types.NewMsgSyncValidator
 	NewMsgSyncDelegator       = types.NewMsgSyncDelegator
@@ -63,6 +64,7 @@ type (
 	QueryCandidateParams   = types.QueryCandidateParams
 	QueryRewardParams      = types.QueryRewardParams
 	MsgInitializeCandidate = types.MsgInitializeCandidate
+	MsgSetTransactors      = types.MsgSetTransactors
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator
 	MsgSyncDelegator       = types.MsgSyncDelegator

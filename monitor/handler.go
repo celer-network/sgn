@@ -176,19 +176,25 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 
 func (m *EthMonitor) claimValidator() {
 	log.Infof("Claim self as a validator on sidechain, self address %x", m.ethClient.Address)
+
+	claimValidatorMsg := validator.NewMsgClaimValidator(
+		mainchain.Addr2Hex(m.ethClient.Address),
+		viper.GetString(common.FlagSgnPubKey),
+		m.operator.Key.GetAddress(),
+	)
+	m.operator.AddTxMsg(claimValidatorMsg)
+
 	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 	if err != nil {
 		log.Errorln("parse transactors err", err)
 		return
 	}
-
-	msg := validator.NewMsgClaimValidator(
+	setTransactorsMsg := validator.NewMsgSetTransactors(
 		mainchain.Addr2Hex(m.ethClient.Address),
-		viper.GetString(common.FlagSgnPubKey),
 		transactors,
 		m.operator.Key.GetAddress(),
 	)
-	m.operator.AddTxMsg(msg)
+	m.operator.AddTxMsg(setTransactorsMsg)
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {

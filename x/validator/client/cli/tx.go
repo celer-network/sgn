@@ -61,12 +61,12 @@ func GetCmdInitializeCandidate(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// GetCmdClaimValidator is the CLI command for sending a SyncValidator transaction
-func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
+// GetCmdSetTransactors is the CLI command for sending a SetTransactors transaction
+func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "claim-validator [eth-addr] [val-pubkey]",
-		Short: "claim validator for the eth address",
-		Args:  cobra.ExactArgs(2),
+		Use:   "set-transasctors [eth-addr]",
+		Short: "set transasctors for the eth address",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Info(viper.GetStringSlice(flagTransactors))
 			transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
@@ -76,7 +76,7 @@ func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgClaimValidator(args[0], args[1], transactors, cliCtx.GetFromAddress())
+			msg := types.NewMsgSetTransactors(args[0], transactors, cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -87,6 +87,29 @@ func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringSlice(flagTransactors, []string{}, "transactors")
+
+	return cmd
+}
+
+// GetCmdClaimValidator is the CLI command for sending a ClaimValidator transaction
+func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-validator [eth-addr] [val-pubkey]",
+		Short: "claim validator for the eth address",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			log.Info(viper.GetStringSlice(flagTransactors))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
+			msg := types.NewMsgClaimValidator(args[0], args[1], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 
 	return cmd
 }
