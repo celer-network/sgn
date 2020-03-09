@@ -1,4 +1,11 @@
-include Makefile.ledger
+# include Makefile.ledger
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += cleveldb
+endif
+
+BUILD_FLAGS := -tags "$(build_tags)"
+
 .PHONY: all
 all: lint install
 
