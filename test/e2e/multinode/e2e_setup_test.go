@@ -28,21 +28,21 @@ func TestMain(m *testing.M) {
 	cmd := exec.Command("make", "localnet-down")
 	cmd.Dir = repoRoot
 	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		log.Fatal(err)
 	}
 
 	log.Infoln("build dockers, get geth, build sgn binary")
 	cmd = exec.Command("make", "prepare-docker-env")
 	cmd.Dir = repoRoot
 	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		log.Fatal(err)
 	}
 
 	log.Infoln("start geth container")
 	cmd = exec.Command("make", "localnet-start-geth")
 	cmd.Dir = repoRoot
 	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		log.Fatal(err)
 	}
 	tc.SleepWithLog(5, "geth start")
 
