@@ -19,8 +19,8 @@
     "global": {
       "params": {
         "epochLength": "10",
-        "blkTimeDiffLower": "2",
-        "blkTimeDiffUpper": "15",
+        "blkTimeDiffLower": "0",
+        "blkTimeDiffUpper": "30",
         "confirmationCount": "2"
       }
     },
@@ -82,8 +82,8 @@
     "staking": {
       "params": {
         "unbonding_time": "1814400000000000",
-        "max_validators": 7,
-        "max_entries": 7,
+        "max_validators": 9,
+        "max_entries": 9,
         "bond_denom": "stake"
       },
       "last_total_power": "0",
