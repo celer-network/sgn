@@ -92,7 +92,7 @@ func DeployCommand() *cobra.Command {
 				MinStakingPool:         big.NewInt(10000),
 				SidechainGoLiveTimeout: big.NewInt(5760),
 				CelrAddr:               erc20Addr,
-				MaxValidatorNum:        big.NewInt(7),
+				MaxValidatorNum:        big.NewInt(9),
 			}
 			guardAddr := DeployGuardContract(sgnParams)
 			viper.Set(common.FlagEthGuardAddress, guardAddr)
