@@ -48,8 +48,8 @@ copy-test-config:
 .PHONY: build
 build: go.sum
 	mkdir -p ./build
-	go build -o ./build/sgn ./cmd/sgn
-	go build -o ./build/sgncli ./cmd/sgncli
+	go build -o -tags "cleveldb" ./build/sgn ./cmd/sgn
+	go build -o -tags "cleveldb" ./build/sgncli ./cmd/sgncli
 
 .PHONY: build-linux
 build-linux: go.sum
