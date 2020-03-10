@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	cmd = exec.Command("make", "prepare-docker-env")
 	cmd.Dir = repoRoot
 	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 
 	log.Infoln("start geth container")
