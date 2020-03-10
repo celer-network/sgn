@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   geth:
@@ -21,7 +21,7 @@ services:
     environment:
       - LOG=${LOG:-sgn.log}
     volumes:
-      - ./build:/sgn/bin:Z
+      # - ./build:/sgn/bin:Z
       - ./docker-volumes/node0:/sgn/env:Z
     networks:
       localnet:
@@ -61,5 +61,4 @@ networks:
     ipam:
       driver: default
       config:
-      -
-        subnet: 192.168.10.0/16
+        - subnet: 192.168.10.0/16

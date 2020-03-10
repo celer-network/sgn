@@ -1,4 +1,11 @@
-include Makefile.ledger
+# include Makefile.ledger
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += cleveldb
+endif
+
+BUILD_FLAGS := -tags "$(build_tags)"
+
 .PHONY: all
 all: lint install
 
@@ -56,7 +63,9 @@ get-geth:
 
 .PHONY: build-dockers
 build-dockers:
-	$(MAKE) -C networks/local
+	docker build --tag celer-network/geth networks/local/geth
+	docker build --tag celer-network/sgnnode .
+	# $(MAKE) -C networks/local
 
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env

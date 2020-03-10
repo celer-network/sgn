@@ -62,6 +62,11 @@ func updateSGNConfig() {
 
 func installSgn() error {
 	cmd := exec.Command("make", "install")
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "WITH_CLEVELDB=yes")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {
