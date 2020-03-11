@@ -9,6 +9,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/gov"
@@ -133,7 +134,7 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop strin
 	}
 	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
-	expToken := sdk.NewIntFromBigInt(expAmt).Quo(sgnval.PowerReduction).String()
+	expToken := sdk.NewIntFromBigInt(expAmt).QuoRaw(common.TokenDec).String()
 	assert.Equal(t, expToken, validator.Tokens.String(), "validator token should be "+expToken)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
