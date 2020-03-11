@@ -45,8 +45,8 @@ var (
 	InactiveProposalQueuePrefix = []byte{0x02}
 	ProposalIDKey               = []byte{0x03}
 
-	DepositsKeyPrefix     = []byte{0x10}
-	AddrDepositsKeyPrefix = []byte{0x11}
+	DepositsKeyPrefix   = []byte{0x10}
+	DepositorsKeyPrefix = []byte{0x11}
 
 	VotesKeyPrefix = []byte{0x20}
 )
@@ -100,9 +100,9 @@ func DepositKey(proposalID uint64, depositorAddr sdk.AccAddress) []byte {
 	return append(DepositsKey(proposalID), depositorAddr.Bytes()...)
 }
 
-// AddrDepositKey key of a specific addr deposit from the store
-func AddrDepositKey(depositorAddr sdk.AccAddress) []byte {
-	return append(AddrDepositsKeyPrefix, depositorAddr.Bytes()...)
+// DepositorKey key of a specific addr deposit from the store
+func DepositorKey(depositorAddr sdk.AccAddress) []byte {
+	return append(DepositorsKeyPrefix, depositorAddr.Bytes()...)
 }
 
 // VotesKey gets the first part of the votes key based on the proposalID

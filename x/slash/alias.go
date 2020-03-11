@@ -14,6 +14,7 @@ const (
 	QueryParameters            = types.QueryParameters
 	AttributeKeyNonce          = types.AttributeKeyNonce
 	AttributeValueGuardFailure = types.AttributeValueGuardFailure
+	AttributeValueDepositBurn  = types.AttributeValueDepositBurn
 )
 
 var (

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -45,4 +46,21 @@ func (d Deposit) Equals(comp Deposit) bool {
 // Empty returns whether a deposit is empty.
 func (d Deposit) Empty() bool {
 	return d.Equals(Deposit{})
+}
+
+type Depositor struct {
+	Amount     sdk.Int   `json:"amount" yaml:"amount"`           //  Deposit amount
+	MutedUntil time.Time `json:"muted_until" yaml:"muted_until"` // timestamp depositor cannot vote until
+}
+
+// NewDepositor creates a new Depositor instance
+func NewDepositor() Depositor {
+	return Depositor{
+		Amount:     sdk.ZeroInt(),
+		MutedUntil: time.Unix(0, 0),
+	}
+}
+
+func (d Depositor) String() string {
+	return fmt.Sprintf("Amount: %s, MutedUntil: %s", d.Amount, d.MutedUntil)
 }

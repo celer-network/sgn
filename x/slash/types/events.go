@@ -6,4 +6,5 @@ const (
 	ActionPenalty = "penalty"
 
 	AttributeValueGuardFailure = "guard_failure"
+	AttributeValueDepositBurn  = "deposit_burn"
 )
