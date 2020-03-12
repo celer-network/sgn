@@ -57,13 +57,16 @@ func govTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amts := []*big.Int{big.NewInt(1100000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	amt1 := big.NewInt(3000000000000000000)
+	amt2 := big.NewInt(2000000000000000000)
+	amt3 := big.NewInt(2000000000000000000)
+	amts := []*big.Int{amt1, amt2, amt3}
 	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.SgnOperators[:], amts)
 
 	log.Info("======================== Test change epochlengh rejected due to small quorum ===========================")
 	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"3\"")}
 	content := govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor1.Key.GetAddress())
+	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor1.Key.GetAddress())
 	transactor1.AddTxMsg(submitProposalmsg)
 
 	proposalID := uint64(1)
@@ -81,10 +84,15 @@ func govTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(1), globalParams.EpochLength, "EpochLength params should stay 1")
 
+	transactor1.AddTxMsg(submitProposalmsg)
+	proposalID = uint64(2)
+	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	assert.Error(t, err, "fail to submit proposal due to muted depositor")
+
 	log.Info("======================== Test change epochlengh passed for reaching quorun ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"3\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor0.Key.GetAddress())
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
 	transactor0.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(2)
@@ -105,8 +113,8 @@ func govTest(t *testing.T) {
 	log.Info("======================== Test change epochlengh rejected due to 1/3 veto ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor0.Key.GetAddress())
-	transactor0.AddTxMsg(submitProposalmsg)
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
+	transactor1.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(3)
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusVotingPeriod)
@@ -128,11 +136,16 @@ func govTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should stay 3")
 
+	transactor1.AddTxMsg(submitProposalmsg)
+	proposalID = uint64(4)
+	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	assert.Error(t, err, "fail to submit proposal due to muted depositor")
+
 	log.Info("======================== Test change epochlengh rejected due to 1/2 No ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor0.Key.GetAddress())
-	transactor0.AddTxMsg(submitProposalmsg)
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
+	transactor2.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(4)
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusVotingPeriod)
@@ -155,8 +168,8 @@ func govTest(t *testing.T) {
 	log.Info("======================== Test change epochlengh passed for over 1/2 yes ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor0.Key.GetAddress())
-	transactor0.AddTxMsg(submitProposalmsg)
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
+	transactor2.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(5)
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusVotingPeriod)

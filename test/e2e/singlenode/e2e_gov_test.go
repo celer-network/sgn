@@ -80,7 +80,7 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	tc.ChkTestErr(t, err, "failed to query proposal 2 with voting status")
 
-	byteVoteOption, _ = govtypes.VoteOptionFromString("No")
+	byteVoteOption, _ = govtypes.VoteOptionFromString("NoWithVeto")
 	voteMsg = govtypes.NewMsgVote(transactor.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor.AddTxMsg(voteMsg)
 
