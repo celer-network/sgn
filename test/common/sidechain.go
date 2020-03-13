@@ -180,6 +180,10 @@ func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes
 		time.Sleep(time.Second)
 	}
 
+	if err != nil {
+		return
+	}
+
 	if status != proposal.Status {
 		err = errors.New("Proposal status does not match expectation")
 	}
@@ -194,6 +198,10 @@ func QueryPenalty(cliCtx context.CLIContext, nonce uint64, sigCount int) (penalt
 			break
 		}
 		time.Sleep(2 * time.Second)
+	}
+
+	if err != nil {
+		return
 	}
 
 	if len(penalty.PenaltyProtoBytes) == 0 {
