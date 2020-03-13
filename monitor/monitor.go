@@ -198,7 +198,6 @@ func (m *EthMonitor) monitorWithdrawReward() {
 func (m *EthMonitor) monitorSlash() {
 	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
 		event := sdk.StringifyEvent(e)
-		log.Warn("sSash event", e, event)
 
 		if event.Attributes[0].Value == slash.ActionPenalty {
 			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)

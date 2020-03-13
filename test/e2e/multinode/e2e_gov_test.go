@@ -85,18 +85,18 @@ func govTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(1), globalParams.EpochLength, "EpochLength params should stay 1")
 
-	transactor1.AddTxMsg(submitProposalmsg)
-	proposalID = uint64(2)
-	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	assert.Error(t, err, "fail to submit proposal due to muted depositor")
-
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
 	tc.ChkTestErr(t, err, "failed to query penalty 0")
 	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1`, tc.ValEthAddrs[1])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000000`, tc.ValEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
+
+	transactor1.AddTxMsg(submitProposalmsg)
+	proposalID = uint64(2)
+	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 
 	log.Info("======================== Test change epochlengh passed for reaching quorun ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"3\"")}
@@ -145,17 +145,17 @@ func govTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should stay 3")
 
-	transactor1.AddTxMsg(submitProposalmsg)
-	proposalID = uint64(4)
-	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	assert.Error(t, err, "fail to submit proposal due to muted depositor")
-
 	nonce = uint64(1)
 	penalty, err = tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
 	tc.ChkTestErr(t, err, "failed to query penalty 1")
 	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
+
+	transactor1.AddTxMsg(submitProposalmsg)
+	proposalID = uint64(4)
+	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 
 	log.Info("======================== Test change epochlengh rejected due to 1/2 No ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
@@ -200,8 +200,8 @@ func govTest(t *testing.T) {
 	voteMsg = govtypes.NewMsgVote(transactor2.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor2.AddTxMsg(voteMsg)
 
-	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusRejected)
-	tc.ChkTestErr(t, err, "failed to query proposal 5 with rejected status")
+	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusPassed)
+	tc.ChkTestErr(t, err, "failed to query proposal 5 with passed status")
 
 	globalParams, err = global.CLIQueryParams(transactor0.CliCtx, global.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query global params")
