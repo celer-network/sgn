@@ -1,6 +1,7 @@
 package multinode
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -89,6 +90,14 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 
+	nonce := uint64(0)
+	penalty, err := tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
+	tc.ChkTestErr(t, err, "failed to query penalty 0")
+	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1`, tc.ValEthAddrs[1])
+	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
+	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
+
 	log.Info("======================== Test change epochlengh passed for reaching quorun ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"3\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
@@ -113,7 +122,7 @@ func govTest(t *testing.T) {
 	log.Info("======================== Test change epochlengh rejected due to 1/3 veto ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor1.Key.GetAddress())
 	transactor1.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(3)
@@ -141,10 +150,17 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 
+	nonce = uint64(1)
+	penalty, err = tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
+	tc.ChkTestErr(t, err, "failed to query penalty 1")
+	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
+	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
+	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
+
 	log.Info("======================== Test change epochlengh rejected due to 1/2 No ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor2.Key.GetAddress())
 	transactor2.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(4)
@@ -168,7 +184,7 @@ func govTest(t *testing.T) {
 	log.Info("======================== Test change epochlengh passed for over 1/2 yes ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor2.Key.GetAddress())
 	transactor2.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(5)

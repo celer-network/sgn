@@ -183,7 +183,7 @@ func (keeper Keeper) DeleteDeposits(ctx sdk.Context, proposalID uint64) {
 		// TODO: properly handle delete deposits
 		depositor, _ := keeper.GetDepositor(ctx, deposit.Depositor)
 		depositor.Amount = depositor.Amount.Sub(deposit.Amount)
-		// depositor.MutedUntil = ctx.BlockTime().Add(keeper.GetDepositParams(ctx).MutedDuration)
+		depositor.MutedUntil = ctx.BlockTime().Add(keeper.GetDepositParams(ctx).MutedDuration)
 		keeper.SetDepositor(ctx, deposit.Depositor, depositor)
 		keeper.sk.HandleProposalDepositBurn(ctx, deposit.Depositor, deposit.Amount)
 

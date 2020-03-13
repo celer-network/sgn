@@ -1,6 +1,7 @@
 package singlenode
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -90,4 +91,17 @@ func govTest(t *testing.T) {
 	globalParams, err = global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should stay 3")
+
+	transactor.AddTxMsg(submitProposalmsg)
+	proposalID = uint64(2)
+	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	assert.Error(t, err, "fail to submit proposal due to muted depositor")
+
+	nonce := uint64(0)
+	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 1)
+	tc.ChkTestErr(t, err, "failed to query penalty 0")
+	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10`, tc.ValEthAddrs[1])
+	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
+	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 }

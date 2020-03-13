@@ -67,7 +67,7 @@ func (k Keeper) HandleProposalDepositBurn(ctx sdk.Context, depositor sdk.AccAddr
 		return
 	}
 
-	k.Slash(ctx, AttributeValueDepositBurn, validator, amount, []AccountFractionPair{})
+	k.Slash(ctx, AttributeValueDepositBurn, validator, amount.MulRaw(common.TokenDec), []AccountFractionPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -132,6 +132,9 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 	minHeight := signInfo.StartHeight + signedBlocksWindow
 	maxMissed := signedBlocksWindow - k.MinSignedPerWindow(ctx).MulInt64(signedBlocksWindow).RoundInt64()
+
+	log.Infof("Validator %s past min height of %d and above max miss threshold of %d",
+		consAddr, minHeight, maxMissed)
 
 	// if we are past the minimum height and the validator has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
