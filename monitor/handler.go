@@ -128,6 +128,8 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 }
 
 func (m *EthMonitor) handlePenalty(nonce uint64) {
+	log.Infoln("Handle penalty", nonce)
+
 	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, nonce)
 	if err != nil {
 		log.Errorf("Query penalty %d err %s", nonce, err)
