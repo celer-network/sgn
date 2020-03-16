@@ -50,9 +50,9 @@ func subscribeTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amt1 := big.NewInt(1000000000000000000)
-	amt2 := big.NewInt(1000000000000000000)
-	amt3 := big.NewInt(100000000000000000)
+	amt1 := big.NewInt(2000000000000000000)
+	amt2 := big.NewInt(2000000000000000000)
+	amt3 := big.NewInt(1000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)

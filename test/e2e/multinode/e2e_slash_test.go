@@ -49,9 +49,8 @@ func slashTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
+	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(2000000000000000000), big.NewInt(1000000000000000000)}
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
-
 	shutdownNode(2)
 
 	log.Infoln("Query sgn about penalty info...")
@@ -60,7 +59,7 @@ func slashTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
 	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.ValEthAddrs[2])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 
@@ -69,10 +68,10 @@ func slashTest(t *testing.T) {
 	for retry := 0; retry < 30; retry++ {
 		ci, _ := tc.Client0.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "99000000000000000" {
+		if poolAmt == "990000000000000000" {
 			break
 		}
 		time.Sleep(time.Second)
 	}
-	assert.Equal(t, "99000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 }

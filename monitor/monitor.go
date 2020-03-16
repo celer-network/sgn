@@ -206,10 +206,9 @@ func (m *EthMonitor) monitorSlash() {
 				return
 			}
 
-			m.handlePenalty(nonce)
-
 			penaltyEvent := NewPenaltyEvent(nonce)
-			m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
+			m.handlePenalty(penaltyEvent)
+			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 		}
 	})
 }
