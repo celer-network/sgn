@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,11 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
-
-// 1 Gwei (10^9), mainchain token amount will be divided by this number in sidechain.
-// This is to address the Tendermint limitation on the voting power max value.
-// It also indicates that mainchain token staking should be a the unit of gwei.
-var PowerReduction = sdk.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil))
 
 // NewHandler returns a handler for "validator" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
@@ -266,7 +262,7 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 
 func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, totalTokens *big.Int) {
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(totalTokens).Quo(PowerReduction)
+	validator.Tokens = sdk.NewIntFromBigInt(totalTokens).QuoRaw(common.TokenDec)
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 	keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)

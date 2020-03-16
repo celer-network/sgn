@@ -10,7 +10,8 @@ import (
 
 // Default period for deposits & voting
 const (
-	DefaultPeriod time.Duration = time.Hour * 24 * 2 // 2 days
+	DefaultPeriod        time.Duration = time.Hour * 24 * 2 // 2 days
+	DefaultMutedDuration time.Duration = time.Hour
 )
 
 // Default governance params
@@ -41,13 +42,15 @@ func ParamKeyTable() params.KeyTable {
 type DepositParams struct {
 	MinDeposit       sdk.Int       `json:"min_deposit,omitempty" yaml:"min_deposit,omitempty"`               //  Minimum deposit for a proposal to enter voting period.
 	MaxDepositPeriod time.Duration `json:"max_deposit_period,omitempty" yaml:"max_deposit_period,omitempty"` //  Maximum period for Atom holders to deposit on a proposal. Initial value: 2 months
+	MutedDuration    time.Duration `json:"muted_duration,omitempty" yaml:"muted_duration,omitempty"`         //  Muted duration. Initial value: 1 hour
 }
 
 // NewDepositParams creates a new DepositParams object
-func NewDepositParams(minDeposit sdk.Int, maxDepositPeriod time.Duration) DepositParams {
+func NewDepositParams(minDeposit sdk.Int, maxDepositPeriod, mutedDuration time.Duration) DepositParams {
 	return DepositParams{
 		MinDeposit:       minDeposit,
 		MaxDepositPeriod: maxDepositPeriod,
+		MutedDuration:    mutedDuration,
 	}
 }
 
@@ -56,6 +59,7 @@ func DefaultDepositParams() DepositParams {
 	return NewDepositParams(
 		DefaultMinDepositTokens,
 		DefaultPeriod,
+		DefaultMutedDuration,
 	)
 }
 
@@ -63,12 +67,15 @@ func DefaultDepositParams() DepositParams {
 func (dp DepositParams) String() string {
 	return fmt.Sprintf(`Deposit Params:
   Min Deposit:        %s
-  Max Deposit Period: %s`, dp.MinDeposit, dp.MaxDepositPeriod)
+	Max Deposit Period: %s
+	Muted Duration: %s`, dp.MinDeposit, dp.MaxDepositPeriod, dp.MutedDuration)
 }
 
 // Equal checks equality of DepositParams
 func (dp DepositParams) Equal(dp2 DepositParams) bool {
-	return dp.MinDeposit.Equal(dp2.MinDeposit) && dp.MaxDepositPeriod == dp2.MaxDepositPeriod
+	return dp.MinDeposit.Equal(dp2.MinDeposit) &&
+		dp.MaxDepositPeriod == dp2.MaxDepositPeriod &&
+		dp.MutedDuration == dp2.MutedDuration
 }
 
 func validateDepositParams(i interface{}) error {
@@ -82,6 +89,10 @@ func validateDepositParams(i interface{}) error {
 	}
 	if v.MaxDepositPeriod <= 0 {
 		return fmt.Errorf("maximum deposit period must be positive: %d", v.MaxDepositPeriod)
+	}
+
+	if v.MutedDuration <= 0 {
+		return fmt.Errorf("muted duration must be positive: %d", v.MutedDuration)
 	}
 
 	return nil

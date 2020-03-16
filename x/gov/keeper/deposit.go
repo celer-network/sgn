@@ -77,23 +77,23 @@ func (keeper Keeper) IterateDeposits(ctx sdk.Context, proposalID uint64, cb func
 	}
 }
 
-// GetDeposit gets the addr deposit of a specific depositor
-func (keeper Keeper) GetAddrDeposit(ctx sdk.Context, depositorAddr sdk.AccAddress) (addrDeposit sdk.Int, found bool) {
+// GetDepositor gets the depositor by address
+func (keeper Keeper) GetDepositor(ctx sdk.Context, depositorAddr sdk.AccAddress) (depositor types.Depositor, found bool) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := store.Get(types.AddrDepositKey(depositorAddr))
+	bz := store.Get(types.DepositorKey(depositorAddr))
 	if bz == nil {
-		return addrDeposit, false
+		return depositor, false
 	}
 
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &addrDeposit)
-	return addrDeposit, true
+	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &depositor)
+	return depositor, true
 }
 
-// SetDeposit sets a Deposit to the gov store
-func (keeper Keeper) SetAddrDeposit(ctx sdk.Context, depositorAddr sdk.AccAddress, addrDeposit sdk.Int) {
+// SetDepositor sets a Depositor to the gov store
+func (keeper Keeper) SetDepositor(ctx sdk.Context, depositorAddr sdk.AccAddress, depositor types.Depositor) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(addrDeposit)
-	store.Set(types.AddrDepositKey(depositorAddr), bz)
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(depositor)
+	store.Set(types.DepositorKey(depositorAddr), bz)
 }
 
 // AddDeposit adds or updates a deposit of a specific depositor on a specific proposal
@@ -115,15 +115,20 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 		return false, sdkerrors.Wrapf(types.ErrUnknownProposal, "Invalid depositor addr %s", depositorAddr)
 	}
 
-	addrDeposit, found := keeper.GetAddrDeposit(ctx, depositorAddr)
+	depositor, found := keeper.GetDepositor(ctx, depositorAddr)
 	if !found {
-		addrDeposit = sdk.ZeroInt()
+		depositor = types.NewDepositor()
 	}
-	addrDeposit = addrDeposit.Add(depositAmount)
-	if addrDeposit.GT(validator.Tokens) {
+
+	if ctx.BlockTime().Before(depositor.MutedUntil) {
+		return false, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Depositor is muted")
+	}
+
+	depositor.Amount = depositor.Amount.Add(depositAmount)
+	if depositor.Amount.GT(validator.Tokens) {
 		return false, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Depositor does not have enough stake to deposit")
 	}
-	keeper.SetAddrDeposit(ctx, depositorAddr, addrDeposit)
+	keeper.SetDepositor(ctx, depositorAddr, depositor)
 
 	// Update proposal
 	proposal.TotalDeposit = proposal.TotalDeposit.Add(depositAmount)
@@ -161,9 +166,9 @@ func (keeper Keeper) RefundDeposits(ctx sdk.Context, proposalID uint64) {
 	store := ctx.KVStore(keeper.storeKey)
 
 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
-		addrDeposit, _ := keeper.GetAddrDeposit(ctx, deposit.Depositor)
-		addrDeposit = addrDeposit.Sub(deposit.Amount)
-		keeper.SetAddrDeposit(ctx, deposit.Depositor, addrDeposit)
+		depositor, _ := keeper.GetDepositor(ctx, deposit.Depositor)
+		depositor.Amount = depositor.Amount.Sub(deposit.Amount)
+		keeper.SetDepositor(ctx, deposit.Depositor, depositor)
 
 		store.Delete(types.DepositKey(proposalID, deposit.Depositor))
 		return false
@@ -176,9 +181,11 @@ func (keeper Keeper) DeleteDeposits(ctx sdk.Context, proposalID uint64) {
 
 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
 		// TODO: properly handle delete deposits
-		addrDeposit, _ := keeper.GetAddrDeposit(ctx, deposit.Depositor)
-		addrDeposit = addrDeposit.Sub(deposit.Amount)
-		keeper.SetAddrDeposit(ctx, deposit.Depositor, addrDeposit)
+		depositor, _ := keeper.GetDepositor(ctx, deposit.Depositor)
+		depositor.Amount = depositor.Amount.Sub(deposit.Amount)
+		depositor.MutedUntil = ctx.BlockTime().Add(keeper.GetDepositParams(ctx).MutedDuration)
+		keeper.SetDepositor(ctx, deposit.Depositor, depositor)
+		keeper.sk.HandleProposalDepositBurn(ctx, deposit.Depositor, deposit.Amount)
 
 		store.Delete(types.DepositKey(proposalID, deposit.Depositor))
 		return false

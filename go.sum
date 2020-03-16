@@ -49,6 +49,10 @@ github.com/celer-network/cosmos-sdk v0.38.1-1 h1:5j9G0OqTC6TOr+t59QyCEPxG30l9HI2
 github.com/celer-network/cosmos-sdk v0.38.1-1/go.mod h1:hUaaoUxliJTgo4zZQaOVlfjoS6FATG1y77Yfy9fBxs8=
 github.com/celer-network/cosmos-sdk v0.38.1-2 h1:Nc/ChMprQdHzNP8NTlVAPAx+hwxQzxP49AhgVJsVZrI=
 github.com/celer-network/cosmos-sdk v0.38.1-2/go.mod h1:hUaaoUxliJTgo4zZQaOVlfjoS6FATG1y77Yfy9fBxs8=
+github.com/celer-network/cosmos-sdk v0.38.1-3 h1:BYmG53bDmHDtpihL8Aut9SU54NBvenHMTiooV0ySvuQ=
+github.com/celer-network/cosmos-sdk v0.38.1-3/go.mod h1:hUaaoUxliJTgo4zZQaOVlfjoS6FATG1y77Yfy9fBxs8=
+github.com/celer-network/cosmos-sdk v0.38.1-4 h1:kqyQbukySEMtQ57uGWJO1B1Ii/7U0WafU7ZKdO9ddQQ=
+github.com/celer-network/cosmos-sdk v0.38.1-4/go.mod h1:hUaaoUxliJTgo4zZQaOVlfjoS6FATG1y77Yfy9fBxs8=
 github.com/celer-network/cosmos-sdk v0.38.1 h1:3scaE4hie+IICzo1Hu4K+FX9QnTQKqNbmDAAS1/bPvE=
 github.com/celer-network/goutils v0.1.2 h1:2RojhL7Z2hH1sIjucHgJvTSQLjzfLEyvnU3cpL5Buxg=
 github.com/celer-network/goutils v0.1.2/go.mod h1:ABL+egL00e9q0oBbL3hs8C0dM8VHH9JPD2Q0UJ4AODI=
@@ -368,6 +372,7 @@ github.com/tendermint/iavl v0.13.0/go.mod h1:7nSUPdrsHEZ2nNZa+9gaIrcJciWd1jCQZXt
 github.com/tendermint/tendermint v0.33.0 h1:TW1g9sQs3YSqKM8o1+opL3/VmBy4Ke/VKV9MxYpqNbI=
 github.com/tendermint/tendermint v0.33.0/go.mod h1:s5UoymnPIY+GcA3mMte4P9gpMP8vS7UH7HBXikT1pHI=
 github.com/tendermint/tendermint v0.33.1 h1:8f68LUBz8yhISZvaLFP4siXXrLWsWeoYfelbdNtmvm4=
+github.com/tendermint/tendermint v0.33.2 h1:NzvRMTuXJxqSsFed2J7uHmMU5N1CVzSpfi3nCc882KY=
 github.com/tendermint/tm-db v0.4.0 h1:iPbCcLbf4nwDFhS39Zo1lpdS1X/cT9CkTlUx17FHQgA=
 github.com/tendermint/tm-db v0.4.0/go.mod h1:+Cwhgowrf7NBGXmsqFMbwEtbo80XmyrlY5Jsk95JubQ=
 github.com/thoas/go-funk v0.5.0 h1:XXFUVqX6xnIDqXxENFHBFS1X5AoT0EDs7HJq2krRfD8=

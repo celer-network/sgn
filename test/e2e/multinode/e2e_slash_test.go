@@ -9,8 +9,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/slash"
-	stypes "github.com/celer-network/sgn/x/slash/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,41 +49,29 @@ func slashTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
+	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(2000000000000000000), big.NewInt(1000000000000000000)}
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
-
 	shutdownNode(2)
 
 	log.Infoln("Query sgn about penalty info...")
-	var penalty stypes.Penalty
-	var err error
 	nonce := uint64(0)
-	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.ValEthAddrs[2])
-	for retry := 0; retry < 30; retry++ {
-		penalty, err = slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
-		if err == nil && penalty.String() == expRes1 && penalty.PenalizedDelegators[0].String() == expRes2 &&
-			len(penalty.PenaltyProtoBytes) > 0 && len(penalty.Sigs) == 2 {
-			break
-		}
-		time.Sleep(2 * time.Second)
-	}
+	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 2)
 	tc.ChkTestErr(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
+	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
-	assert.Greater(t, len(penalty.PenaltyProtoBytes), 0, fmt.Sprintf("The length of penaltyProtoBytes should be larger than 0"))
-	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < 30; retry++ {
 		ci, _ := tc.Client0.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "99000000000000000" {
+		if poolAmt == "990000000000000000" {
 			break
 		}
 		time.Sleep(time.Second)
 	}
-	assert.Equal(t, "99000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 }

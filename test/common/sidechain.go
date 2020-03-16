@@ -1,6 +1,7 @@
 package testcommon
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -9,10 +10,12 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/gov"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
+	"github.com/celer-network/sgn/x/slash"
 	sgnval "github.com/celer-network/sgn/x/validator"
 	vtypes "github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -133,7 +136,7 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop strin
 	}
 	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
-	expToken := sdk.NewIntFromBigInt(expAmt).Quo(sgnval.PowerReduction).String()
+	expToken := sdk.NewIntFromBigInt(expAmt).QuoRaw(common.TokenDec).String()
 	assert.Equal(t, expToken, validator.Tokens.String(), "validator token should be "+expToken)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
@@ -175,6 +178,38 @@ func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes
 			break
 		}
 		time.Sleep(time.Second)
+	}
+
+	if err != nil {
+		return
+	}
+
+	if status != proposal.Status {
+		err = errors.New("Proposal status does not match expectation")
+	}
+
+	return
+}
+
+func QueryPenalty(cliCtx context.CLIContext, nonce uint64, sigCount int) (penalty slash.Penalty, err error) {
+	for retry := 0; retry < 30; retry++ {
+		penalty, err = slash.CLIQueryPenalty(cliCtx, slash.StoreKey, nonce)
+		if err == nil && len(penalty.PenaltyProtoBytes) > 0 && len(penalty.Sigs) == sigCount {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	if err != nil {
+		return
+	}
+
+	if len(penalty.PenaltyProtoBytes) == 0 {
+		err = errors.New("PenaltyProtoBytes cannot be zero")
+	}
+
+	if len(penalty.Sigs) != sigCount {
+		err = errors.New("Signature count does not match expectation")
 	}
 
 	return

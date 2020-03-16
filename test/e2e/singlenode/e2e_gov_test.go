@@ -80,7 +80,7 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	tc.ChkTestErr(t, err, "failed to query proposal 2 with voting status")
 
-	byteVoteOption, _ = govtypes.VoteOptionFromString("No")
+	byteVoteOption, _ = govtypes.VoteOptionFromString("NoWithVeto")
 	voteMsg = govtypes.NewMsgVote(transactor.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor.AddTxMsg(voteMsg)
 
@@ -90,4 +90,9 @@ func govTest(t *testing.T) {
 	globalParams, err = global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query global params")
 	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should stay 3")
+
+	transactor.AddTxMsg(submitProposalmsg)
+	proposalID = uint64(3)
+	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
+	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 }
