@@ -88,12 +88,12 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 }
 
 type PenaltyEvent struct {
-	nonce uint64
+	Nonce uint64
 }
 
 func NewPenaltyEvent(nonce uint64) PenaltyEvent {
 	return PenaltyEvent{
-		nonce: nonce,
+		Nonce: nonce,
 	}
 }
 
