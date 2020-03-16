@@ -192,13 +192,11 @@ func govTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query proposal 5 with voting status")
 
 	byteVoteOption, _ = govtypes.VoteOptionFromString("No")
-	voteMsg = govtypes.NewMsgVote(transactor0.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
-	transactor0.AddTxMsg(voteMsg)
-	byteVoteOption, _ = govtypes.VoteOptionFromString("Yes")
-	voteMsg = govtypes.NewMsgVote(transactor1.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
-	transactor1.AddTxMsg(voteMsg)
 	voteMsg = govtypes.NewMsgVote(transactor2.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor2.AddTxMsg(voteMsg)
+	byteVoteOption, _ = govtypes.VoteOptionFromString("Yes")
+	voteMsg = govtypes.NewMsgVote(transactor0.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
+	transactor0.AddTxMsg(voteMsg)
 
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusPassed)
 	tc.ChkTestErr(t, err, "failed to query proposal 5 with passed status")
