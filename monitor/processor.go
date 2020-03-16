@@ -168,20 +168,20 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 }
 
 func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
-	log.Infoln("Process Penalty", penaltyEvent.nonce)
+	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.nonce)))
+	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
 	}
 
 	if used {
-		log.Infof("Penalty %d has been used", penaltyEvent.nonce)
+		log.Infof("Penalty %d has been used", penaltyEvent.Nonce)
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.operator.CliCtx, slash.StoreKey, penaltyEvent.nonce)
+	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.operator.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
 	if err != nil {
 		log.Errorln("QueryPenaltyRequest err", err)
 		return
@@ -190,7 +190,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
 		log.Errorln("Punish err", err)
-		m.db.Set(GetPenaltyKey(penaltyEvent.nonce), penaltyEvent.MustMarshal())
+		m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 		return
 	}
 	log.Infoln("Punish tx submitted", tx.Hash().Hex())
