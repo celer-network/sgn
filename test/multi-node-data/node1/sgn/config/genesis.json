@@ -11,9 +11,7 @@
       "max_age": "100000"
     },
     "validator": {
-      "pub_key_types": [
-        "ed25519"
-      ]
+      "pub_key_types": ["ed25519"]
     }
   },
   "app_hash": "",
@@ -64,9 +62,7 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [
-          ""
-        ]
+        "module_permissions": [""]
       },
       {
         "address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
@@ -84,9 +80,7 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [
-          ""
-        ]
+        "module_permissions": [""]
       },
       {
         "address": "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh",
@@ -104,9 +98,7 @@
         "start_time": "0",
         "end_time": "0",
         "module_name": "",
-        "module_permissions": [
-          ""
-        ]
+        "module_permissions": [""]
       }
     ],
     "genutil": {
@@ -168,7 +160,7 @@
     },
     "slash": {
       "params": {
-        "signed_blocks_window": "10",
+        "signed_blocks_window": "30",
         "min_signed_per_window": "0.500000000000000000",
         "slashFractionDoubleSign": "0.050000000000000000",
         "slashFractionDowntime": "0.010000000000000000",

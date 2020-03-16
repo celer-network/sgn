@@ -269,13 +269,14 @@ func (ws *WatchService) NewWatch(name string, query ethereum.FilterQuery, blkDel
 // Internal goroutine that periodically fetches and enqueues the log events
 // requested by the watch query.
 func (w *Watch) watchLogEvents(reset bool) {
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
 	// Set the ID of the last log event acknowledged by the app (if any).
 	// It is used to resume the watch from where the application left off.
 	w.setWatchLastID(reset)
 	clog.Debugf("watchLogEvents: start %s from %d", w.name, w.fromBlock)
 
 	// The polling interval is computed in relation to block polling.
-	polling := w.blkInterval*w.service.polling + (rand.Uint64() % 1000)
+	polling := w.blkInterval * w.service.polling
 	ticker := time.NewTicker(time.Duration(polling) * time.Millisecond)
 	defer ticker.Stop()
 
