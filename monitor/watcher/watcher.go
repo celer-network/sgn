@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -274,7 +275,8 @@ func (w *Watch) watchLogEvents(reset bool) {
 	clog.Debugf("watchLogEvents: start %s from %d", w.name, w.fromBlock)
 
 	// The polling interval is computed in relation to block polling.
-	polling := w.blkInterval * w.service.polling
+	polling := int(w.blkInterval * w.service.polling)
+	time.Sleep(time.Duration(rand.Intn(polling/2)) * time.Millisecond)
 	ticker := time.NewTicker(time.Duration(polling) * time.Millisecond)
 	defer ticker.Stop()
 
