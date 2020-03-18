@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,7 +55,19 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr 
 		beneficiaries = append(beneficiaries, NewAccountFractionPair(beneficiaryValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
 	}
 
-	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), beneficiaries)
+	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, calculateSlashAmount(failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx)), beneficiaries)
+}
+
+// HandleProposalDepositBurn handles a depositor supports refused proposal.
+func (k Keeper) HandleProposalDepositBurn(ctx sdk.Context, depositor sdk.AccAddress, amount sdk.Int) {
+	valAddr := sdk.ValAddress(depositor)
+	validator, found := k.validatorKeeper.GetValidator(ctx, valAddr)
+	if !found {
+		log.Errorf("Cannot find failed validator %s", valAddr)
+		return
+	}
+
+	k.Slash(ctx, AttributeValueDepositBurn, validator, amount.MulRaw(common.TokenDec), []AccountFractionPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -68,7 +81,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	}
 
 	log.Infof("Confirmed double sign from %s", consAddr)
-	k.Slash(ctx, slashing.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountFractionPair{})
+	k.Slash(ctx, slashing.AttributeValueDoubleSign, validator, calculateSlashAmount(power, k.SlashFractionDoubleSign(ctx)), []AccountFractionPair{})
 }
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
@@ -130,7 +143,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 		signInfo.MissedBlocksCounter = 0
 		signInfo.IndexOffset = 0
 		k.ClearValidatorMissedBlockBitArray(ctx, consAddr)
-		k.Slash(ctx, slashing.AttributeValueMissingSignature, validator, power, k.SlashFractionDowntime(ctx), []AccountFractionPair{})
+		k.Slash(ctx, slashing.AttributeValueMissingSignature, validator, calculateSlashAmount(power, k.SlashFractionDowntime(ctx)), []AccountFractionPair{})
 	}
 
 	k.SetValidatorSigningInfo(ctx, signInfo)
@@ -138,14 +151,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
-func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
-	if slashFactor.IsNegative() {
-		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashFactor))
-	}
-
-	// Amount of slashing = slash slashFactor * power at time of infraction
-	amount := sdk.TokensFromConsensusPower(power).Mul(validator.PowerReduction)
-	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
+func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, slashAmount sdk.Int, beneficiaries []AccountFractionPair) {
 	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {
 		log.Errorln("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
@@ -162,8 +168,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
 
-	log.Infof("Failed validator %s slashed by %s with slash factor of %s",
-		failedValidator.GetOperator(), slashAmount, slashFactor.String())
+	log.Infof("Failed validator %s slashed by %s", failedValidator.GetOperator(), slashAmount)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -255,4 +260,13 @@ func (k Keeper) ClearValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.C
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
 	}
+}
+
+func calculateSlashAmount(power int64, slashFactor sdk.Dec) sdk.Int {
+	if slashFactor.IsNegative() {
+		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashFactor))
+	}
+	// Amount of slashing = slash slashFactor * power at time of infraction
+	amount := sdk.TokensFromConsensusPower(power).MulRaw(common.TokenDec)
+	return amount.ToDec().Mul(slashFactor).TruncateInt()
 }

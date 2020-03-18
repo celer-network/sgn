@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/celer-network/sgn/x/gov/types"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,6 +19,8 @@ type Keeper struct {
 	paramSpace types.ParamSubspace
 
 	vk validator.Keeper
+
+	sk slash.Keeper
 
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
@@ -38,7 +41,7 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	vk validator.Keeper, rtr types.Router,
+	vk validator.Keeper, sk slash.Keeper, rtr types.Router,
 ) Keeper {
 
 	// It is vital to seal the governance proposal router here as to not allow
@@ -50,6 +53,7 @@ func NewKeeper(
 		storeKey:   key,
 		paramSpace: paramSpace,
 		vk:         vk,
+		sk:         sk,
 		cdc:        cdc,
 		router:     rtr,
 	}

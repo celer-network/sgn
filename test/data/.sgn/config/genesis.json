@@ -12,9 +12,7 @@
       "max_age_duration": "172800000000000"
     },
     "validator": {
-      "pub_key_types": [
-        "ed25519"
-      ]
+      "pub_key_types": ["ed25519"]
     }
   },
   "app_hash": "",
@@ -91,7 +89,7 @@
     },
     "slash": {
       "params": {
-        "signed_blocks_window": "10",
+        "signed_blocks_window": "30",
         "min_signed_per_window": "0.500000000000000000",
         "slashFractionDoubleSign": "0.050000000000000000",
         "slashFractionDowntime": "0.010000000000000000",
@@ -181,7 +179,8 @@
       "votes": null,
       "proposals": null,
       "deposit_params": {
-        "min_deposit": "10",
+        "min_deposit": "1",
+        "muted_duration": "10000000000",
         "max_deposit_period": "172800000000000"
       },
       "voting_params": {

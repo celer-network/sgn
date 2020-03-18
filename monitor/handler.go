@@ -127,13 +127,13 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) handlePenalty(nonce uint64) {
-	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, nonce)
+func (m *EthMonitor) handlePenalty(penaltyEvent PenaltyEvent) {
+	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
 	if err != nil {
-		log.Errorf("Query penalty %d err %s", nonce, err)
+		log.Errorf("Query penalty %d err %s", penaltyEvent.Nonce, err)
 		return
 	}
-	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, nonce)
+	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, penaltyEvent.Nonce)
 
 	sig, err := m.ethClient.SignMessage(penalty.PenaltyProtoBytes)
 	if err != nil {
@@ -141,7 +141,7 @@ func (m *EthMonitor) handlePenalty(nonce uint64) {
 		return
 	}
 
-	msg := slash.NewMsgSignPenalty(nonce, sig, m.operator.Key.GetAddress())
+	msg := slash.NewMsgSignPenalty(penaltyEvent.Nonce, sig, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 

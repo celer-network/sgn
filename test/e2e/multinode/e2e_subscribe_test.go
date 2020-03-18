@@ -50,9 +50,9 @@ func subscribeTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amt1 := big.NewInt(1000000000000000000)
-	amt2 := big.NewInt(1000000000000000000)
-	amt3 := big.NewInt(100000000000000000)
+	amt1 := big.NewInt(2000000000000000000)
+	amt2 := big.NewInt(2000000000000000000)
+	amt3 := big.NewInt(1000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
@@ -60,7 +60,7 @@ func subscribeTest(t *testing.T) {
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
-	e2ecommon.SubscribteTestCommon(t, transactor, amt, "476190476190476190", 2)
+	e2ecommon.SubscribteTestCommon(t, transactor, amt, "400000000000000000", 2)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
@@ -68,7 +68,7 @@ func subscribeTest(t *testing.T) {
 	tc.ChkTestErr(t, err, "failed to query penalty")
 	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.ValEthAddrs[2])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
@@ -77,11 +77,11 @@ func subscribeTest(t *testing.T) {
 	for retry := 0; retry < 30; retry++ {
 		ci, _ := tc.Client0.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "99000000000000000" {
+		if poolAmt == "990000000000000000" {
 			break
 		}
 		time.Sleep(time.Second)
 	}
-	assert.Equal(t, "99000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 
 }
