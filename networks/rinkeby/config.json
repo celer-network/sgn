@@ -1,8 +1,8 @@
 {
   "eth": {
-    "guardaddress": "0x13b6659a07854b28a5334c2e4efc436e4b7470c6",
+    "guardaddress": "0x3E20a37d3f21146Fd595Ff3897ffd424532455D9",
     "keystore": "[KEYSTORE_PATH]",
-    "ledgeraddress": "0x8a764ec53935f38eed4fdfe23cfd731aa7bcfc57",
+    "ledgeraddress": "0x9d345c71a20e1c6d148e33b227411a03d656db59",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
     "instance": "[ETHEREUM_INSTANCE_URL]"
   },
