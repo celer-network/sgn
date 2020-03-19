@@ -88,5 +88,5 @@ func slashTest(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
-	assert.Equal(t, "99000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+	assert.Equal(t, "9900000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
 }
