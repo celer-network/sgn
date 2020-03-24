@@ -188,6 +188,10 @@ func (m *EthMonitor) monitorSyncBlock() {
 
 func (m *EthMonitor) monitorWithdrawReward() {
 	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
+		if !m.isValidator {
+			return
+		}
+
 		event := sdk.StringifyEvent(e)
 		if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
 			m.handleInitiateWithdrawReward(event.Attributes[1].Value)
@@ -197,6 +201,10 @@ func (m *EthMonitor) monitorWithdrawReward() {
 
 func (m *EthMonitor) monitorSlash() {
 	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
+		if !m.isValidator {
+			return
+		}
+
 		event := sdk.StringifyEvent(e)
 
 		if event.Attributes[0].Value == slash.ActionPenalty {
