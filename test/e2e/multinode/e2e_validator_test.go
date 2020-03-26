@@ -12,7 +12,7 @@ import (
 func setUpValidator(maxValidatorNum *big.Int) {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
-		BlameTimeout:           big.NewInt(10),
+		BlameTimeout:           big.NewInt(0),
 		MinValidatorNum:        big.NewInt(1),
 		MinStakingPool:         big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
@@ -80,6 +80,10 @@ func validatorTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 2)
 	tc.CheckValidatorStatus(t, transactor, tc.SgnOperators[2], sdk.Unbonding)
 
+	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, amts[2])
+	tc.ChkTestErr(t, err, "failed to delegate stake")
+	tc.CheckValidatorNum(t, transactor, 3)
+	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
 	// TODO: normally add back validator 1
 }
 
