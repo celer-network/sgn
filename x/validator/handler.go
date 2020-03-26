@@ -96,6 +96,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 	logEntry.PubKey = msg.PubKey
+
 	for _, transactor := range msg.Transactors {
 		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
 	}
@@ -140,8 +141,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
-	validator.Status = sdk.Bonded
-	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
+	updateValidatorToken(ctx, keeper, validator, candidateInfo)
 
 	candidate.Transactors = msg.Transactors
 	for _, transactor := range candidate.Transactors {
@@ -170,13 +170,7 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 		return okRes, fmt.Errorf("Validator does not exist")
 	}
 
-	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
-	if !mainchain.IsBonded(candidateInfo) {
-		validator.Status = mainchain.ParseStatus(candidateInfo)
-		keeper.stakingKeeper.SetValidator(ctx, validator)
-		keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	}
-
+	updateValidatorToken(ctx, keeper, validator, candidateInfo)
 	return okRes, nil
 }
 
@@ -258,10 +252,14 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 	return okRes, nil
 }
 
-func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, totalTokens *big.Int) {
+func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, candidateInfo mainchain.CandidateInfo) {
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(totalTokens).Quo(PowerReduction)
+	validator.Status = mainchain.ParseStatus(candidateInfo)
+	validator.Tokens = sdk.NewIntFromBigInt(candidateInfo.StakingPool).Quo(PowerReduction)
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
-	keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
+
+	if validator.Status == sdk.Bonded {
+		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
+	}
 }
