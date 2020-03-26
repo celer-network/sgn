@@ -80,6 +80,7 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
+
 	for _, transactor := range msg.Transactors {
 		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
 	}
@@ -127,11 +128,6 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return nil, fmt.Errorf("Sender has different address recorded on mainchain. mainchain record: %x; sender: %x", sdk.AccAddress(candidateInfo.SidechainAddr), msg.Sender)
 	}
 
-	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
-	if !found {
-		return nil, fmt.Errorf("Candidate does not exist")
-	}
-
 	// Make sure both val address and pub address have not been used before
 	valAddress := sdk.ValAddress(candidateInfo.SidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
@@ -149,9 +145,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
-	validator.Status = sdk.Bonded
-	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
-	keeper.SetCandidate(ctx, candidate)
+	updateValidatorToken(ctx, keeper, validator, candidateInfo)
 	return &sdk.Result{}, nil
 }
 
@@ -172,13 +166,7 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 		return &sdk.Result{}, fmt.Errorf("Validator does not exist")
 	}
 
-	updateValidatorToken(ctx, keeper, validator, candidateInfo.StakingPool)
-	if !mainchain.IsBonded(candidateInfo) {
-		validator.Status = mainchain.ParseStatus(candidateInfo)
-		keeper.stakingKeeper.SetValidator(ctx, validator)
-		keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	}
-
+	updateValidatorToken(ctx, keeper, validator, candidateInfo)
 	return &sdk.Result{}, nil
 }
 
@@ -260,10 +248,14 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 	return &sdk.Result{}, nil
 }
 
-func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, totalTokens *big.Int) {
+func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, candidateInfo mainchain.CandidateInfo) {
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(totalTokens).QuoRaw(common.TokenDec)
+	validator.Tokens = sdk.NewIntFromBigInt(candidateInfo.StakingPool).QuoRaw(common.TokenDec)
+	validator.Status = mainchain.ParseStatus(candidateInfo)
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
-	keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
+
+	if validator.Status == sdk.Bonded {
+		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
+	}
 }
