@@ -36,7 +36,7 @@ fast_sync = true
 #   - EXPERIMENTAL
 #   - requires gcc
 #   - use rocksdb build tag (go build -tags rocksdb)
-db_backend = "goleveldb"
+db_backend = "cleveldb"
 
 # Database directory
 db_dir = "data"
