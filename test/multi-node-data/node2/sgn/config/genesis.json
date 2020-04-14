@@ -169,7 +169,7 @@
       "params": {
         "epochLength": "1",
         "blkTimeDiffLower": "1",
-        "blkTimeDiffUpper": "4",
+        "blkTimeDiffUpper": "30",
         "confirmationCount": "2"
       }
     },

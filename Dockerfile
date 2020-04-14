@@ -1,13 +1,14 @@
 FROM golang:1.13-alpine as builder
 
-RUN apk add --no-cache g++ musl-dev linux-headers
+RUN apk add --no-cache g++ musl-dev linux-headers leveldb-dev
 
 WORKDIR /sgn
 ADD . /sgn
 RUN go mod download
-RUN go build -o /sgn/bin/sgn ./cmd/sgn
+RUN go build -tags "cleveldb" -o /sgn/bin/sgn ./cmd/sgn
 
 FROM alpine:latest
+RUN apk add leveldb-dev
 VOLUME /sgn/env
 WORKDIR /sgn/env
 EXPOSE 26656 26657
