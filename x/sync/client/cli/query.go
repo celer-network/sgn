@@ -75,7 +75,13 @@ $ %s query sync change 1
 
 func QueryChange(cliCtx context.CLIContext, queryRoute string, changeID uint64) (change types.Change, err error) {
 	cdc := cliCtx.Codec
-	res, err := gcutils.QueryChangeByID(changeID, cliCtx, queryRoute)
+	params := types.NewQueryChangeParams(changeID)
+	bz, err := cdc.MarshalJSON(params)
+	if err != nil {
+		return
+	}
+
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/change", queryRoute), bz)
 	if err != nil {
 		return
 	}
@@ -95,21 +101,19 @@ func GetCmdQueryChanges(queryRoute string, cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s query sync changes --depositor cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
 $ %s query sync changes --voter cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
-$ %s query sync changes --status (DepositPeriod|VotingPeriod|Passed|Rejected)
+$ %s query sync changes --status (VotingPeriod|Passed|Rejected)
 $ %s query sync changes --page=2 --limit=100
 `,
 				version.ClientName, version.ClientName, version.ClientName, version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			bechDepositorAddr := viper.GetString(flagDepositor)
-			bechVoterAddr := viper.GetString(flagVoter)
 			strChangeStatus := viper.GetString(flagStatus)
 			page := viper.GetInt(flags.FlagPage)
 			limit := viper.GetInt(flags.FlagLimit)
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			matchingChanges, err := QueryChanges(cliCtx, queryRoute, page, limit, bechDepositorAddr, bechVoterAddr, strChangeStatus)
+			matchingChanges, err := QueryChanges(cliCtx, queryRoute, page, limit, strChangeStatus)
 			if err != nil {
 				return err
 			}
@@ -124,41 +128,19 @@ $ %s query sync changes --page=2 --limit=100
 
 	cmd.Flags().Int(flags.FlagPage, 1, "pagination page of changes to to query for")
 	cmd.Flags().Int(flags.FlagLimit, 100, "pagination limit of changes to query for")
-	cmd.Flags().String(flagDepositor, "", "(optional) filter by changes deposited on by depositor")
-	cmd.Flags().String(flagVoter, "", "(optional) filter by changes voted on by voted")
 	cmd.Flags().String(flagStatus, "", "(optional) filter changes by change status, status: deposit_period/voting_period/passed/rejected")
 
 	return cmd
 }
 
-func QueryChanges(cliCtx context.CLIContext, queryRoute string, page, limit int, bechDepositorAddr, bechVoterAddr, strChangeStatus string) (matchingChanges types.Changes, err error) {
+func QueryChanges(cliCtx context.CLIContext, queryRoute string, page, limit int, strChangeStatus string) (matchingChanges types.Changes, err error) {
 	cdc := cliCtx.Codec
-	var depositorAddr sdk.AccAddress
-	var voterAddr sdk.AccAddress
 	var changeStatus types.ChangeStatus
 
-	params := types.NewQueryChangesParams(page, limit, changeStatus, voterAddr, depositorAddr)
-
-	if len(bechDepositorAddr) != 0 {
-		depositorAddr, err2 := sdk.AccAddressFromBech32(bechDepositorAddr)
-		if err2 != nil {
-			err = err2
-			return
-		}
-		params.Depositor = depositorAddr
-	}
-
-	if len(bechVoterAddr) != 0 {
-		voterAddr, err2 := sdk.AccAddressFromBech32(bechVoterAddr)
-		if err2 != nil {
-			err = err2
-			return
-		}
-		params.Voter = voterAddr
-	}
+	params := types.NewQueryChangesParams(page, limit, changeStatus)
 
 	if len(strChangeStatus) != 0 {
-		changeStatus, err2 := types.ChangeStatusFromString(gcutils.NormalizeChangeStatus(strChangeStatus))
+		changeStatus, err2 := types.ChangeStatusFromString(strChangeStatus)
 		if err2 != nil {
 			err = err2
 			return
@@ -201,10 +183,6 @@ $ %s query sync params
 			if err != nil {
 				return err
 			}
-			dp, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/params/deposit", queryRoute), nil)
-			if err != nil {
-				return err
-			}
 			vp, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/params/voting", queryRoute), nil)
 			if err != nil {
 				return err
@@ -212,12 +190,10 @@ $ %s query sync params
 
 			var tallyParams types.TallyParams
 			cdc.MustUnmarshalJSON(tp, &tallyParams)
-			var depositParams types.DepositParams
-			cdc.MustUnmarshalJSON(dp, &depositParams)
 			var votingParams types.VotingParams
 			cdc.MustUnmarshalJSON(vp, &votingParams)
 
-			return cliCtx.PrintOutput(types.NewParams(votingParams, tallyParams, depositParams))
+			return cliCtx.PrintOutput(types.NewParams(votingParams, tallyParams))
 		},
 	}
 }
@@ -227,14 +203,13 @@ func GetCmdQueryParam(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "param [param-type]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Query the parameters (voting|tallying|deposit) of the sync process",
+		Short: "Query the parameters (voting|tallying) of the sync process",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the all the parameters for the sync process.
 
 Example:
 $ %s query sync param voting
 $ %s query sync param tallying
-$ %s query sync param deposit
 `,
 				version.ClientName, version.ClientName, version.ClientName,
 			),
@@ -255,10 +230,6 @@ $ %s query sync param deposit
 				out = param
 			case "tallying":
 				var param types.TallyParams
-				cdc.MustUnmarshalJSON(res, &param)
-				out = param
-			case "deposit":
-				var param types.DepositParams
 				cdc.MustUnmarshalJSON(res, &param)
 				out = param
 			default:

@@ -8,124 +8,52 @@ import (
 	params "github.com/cosmos/cosmos-sdk/x/params/subspace"
 )
 
-// Default period for deposits & voting
+// Default period for  voting
 const (
-	DefaultPeriod        time.Duration = time.Hour * 24 * 2 // 2 days
-	DefaultMutedDuration time.Duration = time.Hour
+	DefaultPeriod time.Duration = 15 * time.Second // 15 seconds
 )
 
 // Default sync params
 var (
-	DefaultMinDepositTokens = sdk.TokensFromConsensusPower(10)
-	DefaultQuorum           = sdk.NewDecWithPrec(334, 3)
-	DefaultThreshold        = sdk.NewDecWithPrec(5, 1)
-	DefaultVeto             = sdk.NewDecWithPrec(334, 3)
+	DefaultThreshold = sdk.NewDecWithPrec(668, 3)
 )
 
 // Parameter store key
 var (
-	ParamStoreKeyDepositParams = []byte("depositparams")
-	ParamStoreKeyVotingParams  = []byte("votingparams")
-	ParamStoreKeyTallyParams   = []byte("tallyparams")
+	ParamStoreKeyVotingParams = []byte("votingparams")
+	ParamStoreKeyTallyParams  = []byte("tallyparams")
 )
 
 // ParamKeyTable - Key declaration for parameters
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable(
-		params.NewParamSetPair(ParamStoreKeyDepositParams, DepositParams{}, validateDepositParams),
 		params.NewParamSetPair(ParamStoreKeyVotingParams, VotingParams{}, validateVotingParams),
 		params.NewParamSetPair(ParamStoreKeyTallyParams, TallyParams{}, validateTallyParams),
 	)
 }
 
-// DepositParams defines the params around deposits for sync
-type DepositParams struct {
-	MinDeposit       sdk.Int       `json:"min_deposit,omitempty" yaml:"min_deposit,omitempty"`               //  Minimum deposit for a change to enter voting period.
-	MaxDepositPeriod time.Duration `json:"max_deposit_period,omitempty" yaml:"max_deposit_period,omitempty"` //  Maximum period for Atom holders to deposit on a change. Initial value: 2 months
-	MutedDuration    time.Duration `json:"muted_duration,omitempty" yaml:"muted_duration,omitempty"`         //  Muted duration. Initial value: 1 hour
-}
-
-// NewDepositParams creates a new DepositParams object
-func NewDepositParams(minDeposit sdk.Int, maxDepositPeriod, mutedDuration time.Duration) DepositParams {
-	return DepositParams{
-		MinDeposit:       minDeposit,
-		MaxDepositPeriod: maxDepositPeriod,
-		MutedDuration:    mutedDuration,
-	}
-}
-
-// DefaultDepositParams default parameters for deposits
-func DefaultDepositParams() DepositParams {
-	return NewDepositParams(
-		DefaultMinDepositTokens,
-		DefaultPeriod,
-		DefaultMutedDuration,
-	)
-}
-
-// String implements stringer insterface
-func (dp DepositParams) String() string {
-	return fmt.Sprintf(`Deposit Params:
-  Min Deposit:        %s
-	Max Deposit Period: %s
-	Muted Duration: %s`, dp.MinDeposit, dp.MaxDepositPeriod, dp.MutedDuration)
-}
-
-// Equal checks equality of DepositParams
-func (dp DepositParams) Equal(dp2 DepositParams) bool {
-	return dp.MinDeposit.Equal(dp2.MinDeposit) &&
-		dp.MaxDepositPeriod == dp2.MaxDepositPeriod &&
-		dp.MutedDuration == dp2.MutedDuration
-}
-
-func validateDepositParams(i interface{}) error {
-	v, ok := i.(DepositParams)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.MinDeposit.IsNegative() {
-		return fmt.Errorf("invalid minimum deposit: %s", v.MinDeposit)
-	}
-	if v.MaxDepositPeriod <= 0 {
-		return fmt.Errorf("maximum deposit period must be positive: %d", v.MaxDepositPeriod)
-	}
-
-	if v.MutedDuration <= 0 {
-		return fmt.Errorf("muted duration must be positive: %d", v.MutedDuration)
-	}
-
-	return nil
-}
-
 // TallyParams defines the params around Tallying votes in sync
 type TallyParams struct {
-	Quorum    sdk.Dec `json:"quorum,omitempty" yaml:"quorum,omitempty"`       //  Minimum percentage of total stake needed to vote for a result to be considered valid
-	Threshold sdk.Dec `json:"threshold,omitempty" yaml:"threshold,omitempty"` //  Minimum proportion of Yes votes for change to pass. Initial value: 0.5
-	Veto      sdk.Dec `json:"veto,omitempty" yaml:"veto,omitempty"`           //  Minimum value of Veto votes to Total votes ratio for change to be vetoed. Initial value: 1/3
+	Threshold sdk.Dec `json:"threshold,omitempty" yaml:"threshold,omitempty"` //  Minimum proportion of Yes votes for change to pass. Initial value: 0.668
 }
 
 // NewTallyParams creates a new TallyParams object
-func NewTallyParams(quorum, threshold, veto sdk.Dec) TallyParams {
+func NewTallyParams(threshold sdk.Dec) TallyParams {
 	return TallyParams{
-		Quorum:    quorum,
 		Threshold: threshold,
-		Veto:      veto,
 	}
 }
 
 // DefaultTallyParams default parameters for tallying
 func DefaultTallyParams() TallyParams {
-	return NewTallyParams(DefaultQuorum, DefaultThreshold, DefaultVeto)
+	return NewTallyParams(DefaultThreshold)
 }
 
 // String implements stringer insterface
 func (tp TallyParams) String() string {
 	return fmt.Sprintf(`Tally Params:
-  Quorum:             %s
-  Threshold:          %s
-  Veto:               %s`,
-		tp.Quorum, tp.Threshold, tp.Veto)
+  Threshold:          %s`,
+		tp.Threshold)
 }
 
 func validateTallyParams(i interface{}) error {
@@ -134,23 +62,11 @@ func validateTallyParams(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.Quorum.IsNegative() {
-		return fmt.Errorf("quorom cannot be negative: %s", v.Quorum)
-	}
-	if v.Quorum.GT(sdk.OneDec()) {
-		return fmt.Errorf("quorom too large: %s", v)
-	}
 	if !v.Threshold.IsPositive() {
 		return fmt.Errorf("vote threshold must be positive: %s", v.Threshold)
 	}
 	if v.Threshold.GT(sdk.OneDec()) {
 		return fmt.Errorf("vote threshold too large: %s", v)
-	}
-	if !v.Veto.IsPositive() {
-		return fmt.Errorf("veto threshold must be positive: %s", v.Threshold)
-	}
-	if v.Veto.GT(sdk.OneDec()) {
-		return fmt.Errorf("veto threshold too large: %s", v)
 	}
 
 	return nil
@@ -194,26 +110,24 @@ func validateVotingParams(i interface{}) error {
 
 // Params returns all of the sync params
 type Params struct {
-	VotingParams  VotingParams  `json:"voting_params" yaml:"voting_params"`
-	TallyParams   TallyParams   `json:"tally_params" yaml:"tally_params"`
-	DepositParams DepositParams `json:"deposit_params" yaml:"deposit_parmas"`
+	VotingParams VotingParams `json:"voting_params" yaml:"voting_params"`
+	TallyParams  TallyParams  `json:"tally_params" yaml:"tally_params"`
 }
 
 func (gp Params) String() string {
 	return gp.VotingParams.String() + "\n" +
-		gp.TallyParams.String() + "\n" + gp.DepositParams.String()
+		gp.TallyParams.String()
 }
 
 // NewParams creates a new sync Params instance
-func NewParams(vp VotingParams, tp TallyParams, dp DepositParams) Params {
+func NewParams(vp VotingParams, tp TallyParams) Params {
 	return Params{
-		VotingParams:  vp,
-		DepositParams: dp,
-		TallyParams:   tp,
+		VotingParams: vp,
+		TallyParams:  tp,
 	}
 }
 
 // DefaultParams default sync params
 func DefaultParams() Params {
-	return NewParams(DefaultVotingParams(), DefaultTallyParams(), DefaultDepositParams())
+	return NewParams(DefaultVotingParams(), DefaultTallyParams())
 }

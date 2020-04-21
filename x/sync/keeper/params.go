@@ -1,16 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/celer-network/sgn/x/sync/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// GetDepositParams returns the current DepositParams from the global param store
-func (keeper Keeper) GetDepositParams(ctx sdk.Context) types.DepositParams {
-	var depositParams types.DepositParams
-	keeper.paramSpace.Get(ctx, types.ParamStoreKeyDepositParams, &depositParams)
-	return depositParams
-}
 
 // GetVotingParams returns the current VotingParams from the global param store
 func (keeper Keeper) GetVotingParams(ctx sdk.Context) types.VotingParams {
@@ -24,11 +17,6 @@ func (keeper Keeper) GetTallyParams(ctx sdk.Context) types.TallyParams {
 	var tallyParams types.TallyParams
 	keeper.paramSpace.Get(ctx, types.ParamStoreKeyTallyParams, &tallyParams)
 	return tallyParams
-}
-
-// SetDepositParams sets DepositParams to the global param store
-func (keeper Keeper) SetDepositParams(ctx sdk.Context, depositParams types.DepositParams) {
-	keeper.paramSpace.Set(ctx, types.ParamStoreKeyDepositParams, &depositParams)
 }
 
 // SetVotingParams sets VotingParams to the global param store

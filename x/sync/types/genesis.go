@@ -9,18 +9,16 @@ import (
 
 // GenesisState - all staking state that must be provided at genesis
 type GenesisState struct {
-	StartingChangeID uint64        `json:"starting_change_id" yaml:"starting_change_id"`
-	Changes          Changes       `json:"changes" yaml:"changes"`
-	DepositParams    DepositParams `json:"deposit_params" yaml:"deposit_params"`
-	VotingParams     VotingParams  `json:"voting_params" yaml:"voting_params"`
-	TallyParams      TallyParams   `json:"tally_params" yaml:"tally_params"`
+	StartingChangeID uint64       `json:"starting_change_id" yaml:"starting_change_id"`
+	Changes          Changes      `json:"changes" yaml:"changes"`
+	VotingParams     VotingParams `json:"voting_params" yaml:"voting_params"`
+	TallyParams      TallyParams  `json:"tally_params" yaml:"tally_params"`
 }
 
 // NewGenesisState creates a new genesis state for the sync module
-func NewGenesisState(startingChangeID uint64, dp DepositParams, vp VotingParams, tp TallyParams) GenesisState {
+func NewGenesisState(startingChangeID uint64, vp VotingParams, tp TallyParams) GenesisState {
 	return GenesisState{
 		StartingChangeID: startingChangeID,
-		DepositParams:    dp,
 		VotingParams:     vp,
 		TallyParams:      tp,
 	}
@@ -30,7 +28,6 @@ func NewGenesisState(startingChangeID uint64, dp DepositParams, vp VotingParams,
 func DefaultGenesisState() GenesisState {
 	return NewGenesisState(
 		DefaultStartingChangeID,
-		DefaultDepositParams(),
 		DefaultVotingParams(),
 		DefaultTallyParams(),
 	)
@@ -60,11 +57,6 @@ func ValidateGenesis(data GenesisState) error {
 	if veto.IsNegative() || veto.GT(sdk.OneDec()) {
 		return fmt.Errorf("sync vote veto threshold should be positive and less or equal to one, is %s",
 			veto.String())
-	}
-
-	if data.DepositParams.MinDeposit.IsNegative() {
-		return fmt.Errorf("sync deposit amount must not be a negative amount, is %s",
-			data.DepositParams.MinDeposit.String())
 	}
 
 	return nil

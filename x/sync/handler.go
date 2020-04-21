@@ -1,9 +1,6 @@
 package sync
 
 import (
-	"fmt"
-
-	"github.com/celer-network/sgn/x/sync/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -32,31 +29,10 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 func handleMsgSubmitChange(ctx sdk.Context, keeper Keeper, msg MsgSubmitChange) (*sdk.Result, error) {
-	change, err := keeper.SubmitChange(ctx, msg.Content)
+	change, err := keeper.SubmitChange(ctx, msg.ChangeType, msg.Data, msg.Sender)
 	if err != nil {
 		return nil, err
 	}
-
-	votingStarted, err := keeper.AddDeposit(ctx, change.ChangeID, msg.Proposer, msg.InitialDeposit)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Proposer.String()),
-		),
-	)
-
-	submitEvent := sdk.NewEvent(types.EventTypeSubmitChange, sdk.NewAttribute(types.AttributeKeyChangeType, msg.Content.ChangeType()))
-	if votingStarted {
-		submitEvent = submitEvent.AppendAttributes(
-			sdk.NewAttribute(types.AttributeKeyVotingPeriodStart, fmt.Sprintf("%d", change.ChangeID)),
-		)
-	}
-	ctx.EventManager().EmitEvent(submitEvent)
 
 	return &sdk.Result{
 		Data:   GetChangeIDBytes(change.ChangeID),
@@ -65,18 +41,10 @@ func handleMsgSubmitChange(ctx sdk.Context, keeper Keeper, msg MsgSubmitChange) 
 }
 
 func handleMsgVote(ctx sdk.Context, keeper Keeper, msg MsgVote) (*sdk.Result, error) {
-	err := keeper.AddVote(ctx, msg.ChangeID, msg.Voter, msg.Option)
+	err := keeper.AddVote(ctx, msg.ChangeID, msg.Sender)
 	if err != nil {
 		return nil, err
 	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Voter.String()),
-		),
-	)
 
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }

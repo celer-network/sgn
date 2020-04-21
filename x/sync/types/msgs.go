@@ -15,9 +15,9 @@ const (
 
 // MsgSubmitChange defines a message to create a sync change
 type MsgSubmitChange struct {
-	Type   string         `json:"type" yaml:"type"`
-	Data   []byte         `json:"data" yaml:"data"`     //  Initial deposit paid by sender. Must be strictly positive
-	Sender sdk.AccAddress `json:"sender" yaml:"sender"` //  Address of the sender
+	ChangeType string         `json:"changeType" yaml:"changeType"`
+	Data       []byte         `json:"data" yaml:"data"`     //  Initial deposit paid by sender. Must be strictly positive
+	Sender     sdk.AccAddress `json:"sender" yaml:"sender"` //  Address of the sender
 }
 
 // NewMsgSubmitChange creates a new MsgSubmitChange instance
@@ -33,17 +33,17 @@ func (msg MsgSubmitChange) Type() string { return TypeMsgSubmitChange }
 
 // ValidateBasic implements Msg
 func (msg MsgSubmitChange) ValidateBasic() error {
-	if msg.Type == "" {
+	if msg.ChangeType == "" {
 		return sdkerrors.Wrap(ErrInvalidChangeType, "missing type")
 	}
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 	if len(msg.Data) > 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidChangeData, "data length must be larger than 0")
+		return sdkerrors.Wrap(ErrInvalidChangeData, "data length must be larger than 0")
 	}
 
-	return msg.Content.ValidateBasic()
+	return nil
 }
 
 // String implements the Stringer interface

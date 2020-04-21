@@ -37,10 +37,9 @@ const (
 // - 0x03: nextChangeID
 
 var (
-	ChangesKeyPrefix          = []byte{0x00}
-	ActiveChangeQueuePrefix   = []byte{0x01}
-	InactiveChangeQueuePrefix = []byte{0x02}
-	ChangeIDKey               = []byte{0x03}
+	ChangesKeyPrefix        = []byte{0x00}
+	ActiveChangeQueuePrefix = []byte{0x01}
+	ChangeIDKey             = []byte{0x03}
 )
 
 var lenTime = len(sdk.FormatTimeBytes(time.Now()))
@@ -70,16 +69,6 @@ func ActiveChangeByTimeKey(endTime time.Time) []byte {
 // ActiveChangeQueueKey returns the key for a changeID in the activeChangeQueue
 func ActiveChangeQueueKey(changeID uint64, endTime time.Time) []byte {
 	return append(ActiveChangeByTimeKey(endTime), GetChangeIDBytes(changeID)...)
-}
-
-// InactiveChangeByTimeKey gets the inactive change queue key by endTime
-func InactiveChangeByTimeKey(endTime time.Time) []byte {
-	return append(InactiveChangeQueuePrefix, sdk.FormatTimeBytes(endTime)...)
-}
-
-// InactiveChangeQueueKey returns the key for a changeID in the inactiveChangeQueue
-func InactiveChangeQueueKey(changeID uint64, endTime time.Time) []byte {
-	return append(InactiveChangeByTimeKey(endTime), GetChangeIDBytes(changeID)...)
 }
 
 // Split keys function; used for iterators

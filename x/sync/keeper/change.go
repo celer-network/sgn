@@ -2,40 +2,27 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/celer-network/sgn/x/sync/types"
 )
 
 // SubmitChange create new change given a content
-func (keeper Keeper) SubmitChange(ctx sdk.Context, content types.Content) (types.Change, error) {
-	if !keeper.router.HasRoute(content.ChangeRoute()) {
-		return types.Change{}, sdkerrors.Wrap(types.ErrNoChangeHandlerExists, content.ChangeRoute())
-	}
-
-	// Execute the change content in a cache-wrapped context to validate the
-	// actual parameter changes before the change proceeds through the
-	// sync process. State is not persisted.
-	cacheCtx, _ := ctx.CacheContext()
-	handler := keeper.router.GetRoute(content.ChangeRoute())
-	if err := handler(cacheCtx, content); err != nil {
-		return types.Change{}, sdkerrors.Wrap(types.ErrInvalidChangeContent, err.Error())
-	}
-
+func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byte) (types.Change, error) {
 	changeID, err := keeper.GetChangeID(ctx)
 	if err != nil {
 		return types.Change{}, err
 	}
 
 	submitTime := ctx.BlockHeader().Time
-	depositPeriod := keeper.GetDepositParams(ctx).MaxDepositPeriod
-
-	change := types.NewChange(content, changeID, submitTime, submitTime.Add(depositPeriod))
+	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
+	change := types.NewChange(changeID, changeType, data, submitTime, submitTime.Add(votingPeriod))
 
 	keeper.SetChange(ctx, change)
-	keeper.InsertInactiveChangeQueue(ctx, changeID, change.DepositEndTime)
+	keeper.InsertActiveChangeQueue(ctx, changeID, change.VotingEndTime)
 	keeper.SetChangeID(ctx, changeID+1)
 
 	ctx.EventManager().EmitEvent(
@@ -46,6 +33,29 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, content types.Content) (types
 	)
 
 	return change, nil
+}
+
+// AddVote adds a vote on a specific change
+func (keeper Keeper) AddVote(ctx sdk.Context, changeID uint64, voterAddr sdk.AccAddress) error {
+	change, ok := keeper.GetChange(ctx, changeID)
+	if !ok {
+		return sdkerrors.Wrapf(types.ErrUnknownChange, "%d", changeID)
+	}
+	if change.Status != types.StatusVotingPeriod {
+		return sdkerrors.Wrapf(types.ErrInactiveChange, "%d", changeID)
+	}
+
+	change.Voters = append(change.Voters, voterAddr)
+	keeper.SetChange(ctx, change)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeChangeVote,
+			sdk.NewAttribute(types.AttributeKeyChangeID, fmt.Sprintf("%d", changeID)),
+		),
+	)
+
+	return nil
 }
 
 // GetChange get change from store by ChangeID
@@ -64,18 +74,6 @@ func (keeper Keeper) SetChange(ctx sdk.Context, change types.Change) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(change)
 	store.Set(types.ChangeKey(change.ChangeID), bz)
-}
-
-// DeleteChange deletes a change from store
-func (keeper Keeper) DeleteChange(ctx sdk.Context, changeID uint64) {
-	store := ctx.KVStore(keeper.storeKey)
-	change, ok := keeper.GetChange(ctx, changeID)
-	if !ok {
-		panic(fmt.Sprintf("couldn't find change with id#%d", changeID))
-	}
-	keeper.RemoveFromInactiveChangeQueue(ctx, changeID, change.DepositEndTime)
-	keeper.RemoveFromActiveChangeQueue(ctx, changeID, change.VotingEndTime)
-	store.Delete(types.ChangeKey(changeID))
 }
 
 // IterateChanges iterates over the all the changes and performs a callback function
@@ -117,7 +115,7 @@ func (keeper Keeper) GetChangesFiltered(ctx sdk.Context, params types.QueryChang
 	filteredChanges := make([]types.Change, 0, len(changes))
 
 	for _, p := range changes {
-		matchVoter, matchDepositor, matchStatus := true, true, true
+		matchVoter, matchStatus := true, true
 
 		// match status (if supplied/valid)
 		if types.ValidChangeStatus(params.ChangeStatus) {
@@ -129,12 +127,7 @@ func (keeper Keeper) GetChangesFiltered(ctx sdk.Context, params types.QueryChang
 			_, matchVoter = keeper.GetVote(ctx, p.ChangeID, params.Voter)
 		}
 
-		// match depositor (if supplied)
-		if len(params.Depositor) > 0 {
-			_, matchDepositor = keeper.GetDeposit(ctx, p.ChangeID, params.Depositor)
-		}
-
-		if matchVoter && matchDepositor && matchStatus {
+		if matchVoter && matchStatus {
 			filteredChanges = append(filteredChanges, p)
 		}
 	}
@@ -167,13 +160,40 @@ func (keeper Keeper) SetChangeID(ctx sdk.Context, changeID uint64) {
 	store.Set(types.ChangeIDKey, types.GetChangeIDBytes(changeID))
 }
 
-func (keeper Keeper) activateVotingPeriod(ctx sdk.Context, change types.Change) {
-	change.VotingStartTime = ctx.BlockHeader().Time
-	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
-	change.VotingEndTime = change.VotingStartTime.Add(votingPeriod)
-	change.Status = types.StatusVotingPeriod
-	keeper.SetChange(ctx, change)
+// InsertActiveChangeQueue inserts a ChangeID into the active change queue at endTime
+func (keeper Keeper) InsertActiveChangeQueue(ctx sdk.Context, changeID uint64, endTime time.Time) {
+	store := ctx.KVStore(keeper.storeKey)
+	bz := types.GetChangeIDBytes(changeID)
+	store.Set(types.ActiveChangeQueueKey(changeID, endTime), bz)
+}
 
-	keeper.RemoveFromInactiveChangeQueue(ctx, change.ChangeID, change.DepositEndTime)
-	keeper.InsertActiveChangeQueue(ctx, change.ChangeID, change.VotingEndTime)
+// RemoveFromActiveChangeQueue removes a changeID from the Active Change Queue
+func (keeper Keeper) RemoveFromActiveChangeQueue(ctx sdk.Context, changeID uint64, endTime time.Time) {
+	store := ctx.KVStore(keeper.storeKey)
+	store.Delete(types.ActiveChangeQueueKey(changeID, endTime))
+}
+
+// IterateActiveChangesQueue iterates over the changes in the active change queue
+// and performs a callback function
+func (keeper Keeper) IterateActiveChangesQueue(ctx sdk.Context, endTime time.Time, cb func(change types.Change) (stop bool)) {
+	iterator := keeper.ActiveChangeQueueIterator(ctx, endTime)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		changeID, _ := types.SplitActiveChangeQueueKey(iterator.Key())
+		change, found := keeper.GetChange(ctx, changeID)
+		if !found {
+			panic(fmt.Sprintf("change %d does not exist", changeID))
+		}
+
+		if cb(change) {
+			break
+		}
+	}
+}
+
+// ActiveChangeQueueIterator returns an sdk.Iterator for all the changes in the Active Queue that expire by endTime
+func (keeper Keeper) ActiveChangeQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
+	store := ctx.KVStore(keeper.storeKey)
+	return store.Iterator(types.ActiveChangeQueuePrefix, sdk.PrefixEndBytes(types.ActiveChangeByTimeKey(endTime)))
 }

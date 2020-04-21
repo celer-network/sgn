@@ -67,11 +67,6 @@ $ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from
 				return err
 			}
 
-			amount, ok := sdk.NewIntFromString(change.Deposit)
-			if !ok {
-				return err
-			}
-
 			content := types.ContentFromProposalType(change.Title, change.Description, change.Type)
 
 			msg := types.NewMsgSubmitProposal(content, amount, cliCtx.GetFromAddress())

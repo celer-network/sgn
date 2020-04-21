@@ -29,13 +29,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	switch path[0] {
-	case types.ParamDeposit:
-		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetDepositParams(ctx))
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-		}
-		return bz, nil
-
 	case types.ParamVoting:
 		bz, err := codec.MarshalJSONIndent(keeper.cdc, keeper.GetVotingParams(ctx))
 		if err != nil {

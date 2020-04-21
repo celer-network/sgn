@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // DefaultStartingChangeID is 1
@@ -13,19 +15,25 @@ const DefaultStartingChangeID uint64 = 1
 // Change defines a struct used by the sync module to allow for voting
 // on network changes.
 type Change struct {
-	ChangeID      uint64       `json:"id" yaml:"id"` //  ID of the change
-	Type          string       `json:"type" yaml:"type"`
-	Status        ChangeStatus `json:"change_status" yaml:"change_status"`     // Status of the Change {Pending, Active, Passed, Rejected}
-	SubmitTime    time.Time    `json:"submit_time" yaml:"submit_time"`         // Time of the block where TxGovSubmitChange was included
-	VotingEndTime time.Time    `json:"voting_end_time" yaml:"voting_end_time"` // Time that the VotingPeriod for this change will end and votes will be tallied
+	ChangeID      uint64           `json:"id" yaml:"id"` //  ID of the change
+	Type          string           `json:"type" yaml:"type"`
+	Data          []byte           `json:"data" yaml:"data"`
+	Initiator     sdk.AccAddress   `json:"initiator" yaml:"initiator"`
+	Voters        []sdk.AccAddress `json:"voters" yaml:"voters"`
+	Status        ChangeStatus     `json:"change_status" yaml:"change_status"`     // Status of the Change {Pending, Active, Passed, Rejected}
+	SubmitTime    time.Time        `json:"submit_time" yaml:"submit_time"`         // Time of the block where TxGovSubmitChange was included
+	VotingEndTime time.Time        `json:"voting_end_time" yaml:"voting_end_time"` // Time that the VotingPeriod for this change will end and votes will be tallied
 }
 
 // NewChange creates a new Change instance
-func NewChange(id uint64, submitTime time.Time) Change {
+func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndTime time.Time) Change {
 	return Change{
-		ChangeID:   id,
-		Status:     StatusVotingPeriod,
-		SubmitTime: submitTime,
+		ChangeID:      id,
+		Type:          changeType,
+		Data:          data,
+		Status:        StatusVotingPeriod,
+		SubmitTime:    submitTime,
+		VotingEndTime: votingEndTime,
 	}
 }
 
@@ -33,10 +41,11 @@ func NewChange(id uint64, submitTime time.Time) Change {
 func (c Change) String() string {
 	return fmt.Sprintf(`Change %d:
   Type:               %s
+  Initiator:               %s
   Status:             %s
   Submit Time:        %s
   Voting End Time:    %s`,
-		c.ChangeID, c.Type,
+		c.ChangeID, c.Type, c.Initiator,
 		c.Status, c.VotingEndTime,
 	)
 }

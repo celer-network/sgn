@@ -10,14 +10,8 @@ var ModuleCdc = codec.New()
 // RegisterCodec registers all the necessary types and interfaces for
 // sync.
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterInterface((*Content)(nil), nil)
-
 	cdc.RegisterConcrete(MsgSubmitChange{}, "cosmos-sdk/MsgSubmitChange", nil)
-	cdc.RegisterConcrete(MsgDeposit{}, "cosmos-sdk/MsgDeposit", nil)
 	cdc.RegisterConcrete(MsgVote{}, "cosmos-sdk/MsgVote", nil)
-
-	cdc.RegisterConcrete(TextChange{}, "cosmos-sdk/TextChange", nil)
-	cdc.RegisterConcrete(ParameterChange{}, "cosmos-sdk/ParameterChange", nil)
 }
 
 // RegisterChangeTypeCodec registers an external change content type defined

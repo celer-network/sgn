@@ -8,11 +8,10 @@ import (
 
 // query endpoints supported by the sync Querier
 const (
-	QueryParams    = "params"
+	QueryParams  = "params"
 	QueryChanges = "changes"
 	QueryChange  = "change"
 
-	ParamDeposit  = "deposit"
 	ParamVoting   = "voting"
 	ParamTallying = "tallying"
 )
@@ -34,20 +33,17 @@ func NewQueryChangeParams(changeID uint64) QueryChangeParams {
 
 // QueryChangesParams Params for query 'custom/sync/changes'
 type QueryChangesParams struct {
-	Page           int
-	Limit          int
-	Voter          sdk.AccAddress
-	Depositor      sdk.AccAddress
+	Page         int
+	Limit        int
+	Voter        sdk.AccAddress
 	ChangeStatus ChangeStatus
 }
 
 // NewQueryChangesParams creates a new instance of QueryChangesParams
-func NewQueryChangesParams(page, limit int, status ChangeStatus, voter, depositor sdk.AccAddress) QueryChangesParams {
+func NewQueryChangesParams(page, limit int, status ChangeStatus) QueryChangesParams {
 	return QueryChangesParams{
-		Page:           page,
-		Limit:          limit,
-		Voter:          voter,
-		Depositor:      depositor,
+		Page:         page,
+		Limit:        limit,
 		ChangeStatus: status,
 	}
 }
