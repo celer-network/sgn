@@ -15,8 +15,6 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 	default:
 		return errors.New("Invalid change type")
 	}
-
-	return nil
 }
 
 func (keeper Keeper) SyncBlock(ctx sdk.Context, data []byte) error {
