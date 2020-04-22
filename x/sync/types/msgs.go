@@ -9,7 +9,7 @@ import (
 
 // Governance message types and routes
 const (
-	TypeMsgApprove      = "vote"
+	TypeMsgApprove      = "approve_change"
 	TypeMsgSubmitChange = "submit_change"
 
 	SyncBlock = "sync_block"

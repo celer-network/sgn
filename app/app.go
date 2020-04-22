@@ -228,7 +228,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.globalKeeper = global.NewKeeper(
 		app.keyGlobal,
 		app.cdc,
-		ethClient,
 		globalSubspace,
 	)
 
