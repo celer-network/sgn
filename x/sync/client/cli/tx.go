@@ -55,7 +55,7 @@ func GetCmdSubmitChange(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from mykey
 `,
-				version.ClientName, version.ClientName,
+				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,19 +80,19 @@ $ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from
 	return cmd
 }
 
-// GetCmdVote implements creating a new vote command.
+// GetCmdVote implements creating a new approve command.
 func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "vote [change-id]",
+		Use:   "approve [change-id]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Vote for an active change",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit a vote for an active change. You can
+			fmt.Sprintf(`Submit a approve for an active change. You can
 find the change-id by running "%s query sync changes".
 
 
 Example:
-$ %s tx sync vote 1 --from mykey
+$ %s tx sync approve 1 --from mykey
 `,
 				version.ClientName, version.ClientName,
 			),
@@ -108,7 +108,7 @@ $ %s tx sync vote 1 --from mykey
 				return fmt.Errorf("change-id %s not a valid int, please input a valid change-id", args[0])
 			}
 
-			// Build vote message and run basic validation
+			// Build approve message and run basic validation
 			msg := types.NewMsgApprove(changeID, cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {

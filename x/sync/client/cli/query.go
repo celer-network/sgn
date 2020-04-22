@@ -215,7 +215,7 @@ Example:
 $ %s query sync param voting
 $ %s query sync param tallying
 `,
-				version.ClientName, version.ClientName, version.ClientName,
+				version.ClientName, version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {

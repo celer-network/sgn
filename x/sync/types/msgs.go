@@ -53,9 +53,9 @@ func (msg MsgSubmitChange) ValidateBasic() error {
 // String implements the Stringer interface
 func (msg MsgSubmitChange) String() string {
 	return fmt.Sprintf(`Submit Change Message:
-  Type:         %s
+  ChangeType:         %s
   Sender: %s
-`, msg.Type, msg.Sender)
+`, msg.ChangeType, msg.Sender)
 }
 
 // GetSignBytes implements Msg

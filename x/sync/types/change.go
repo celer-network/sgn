@@ -47,7 +47,7 @@ func (c Change) String() string {
   Submit Time:        %s
   Voting End Time:    %s`,
 		c.ChangeID, c.Type, c.Initiator,
-		c.Status, c.VotingEndTime,
+		c.Status, c.SubmitTime, c.VotingEndTime,
 	)
 }
 
