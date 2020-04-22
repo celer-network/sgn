@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/sync/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -33,8 +34,13 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		tagValue = types.AttributeValueChangeFailed
 
 		if totalVote.GTE(threshold) {
-			change.Status = StatusPassed
-			tagValue = types.AttributeValueChangePassed
+			err := keeper.ApplyChange(ctx, change)
+			if err != nil {
+				log.Errorln("Apply change err:", err)
+			} else {
+				change.Status = StatusPassed
+				tagValue = types.AttributeValueChangePassed
+			}
 		}
 
 		keeper.SetChange(ctx, change)

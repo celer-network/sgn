@@ -13,7 +13,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
@@ -33,7 +32,6 @@ const (
 )
 
 var (
-	syncBlockEvent              = fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, global.TypeMsgSyncBlock)
 	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 	submitChangeEvent           = fmt.Sprintf("%s.%s='%s'", sync.EventTypeSync, sdk.AttributeKeyAction, sync.ActionSubmitChange)
@@ -105,7 +103,6 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
 	go m.monitorIntendSettle()
-	go m.monitorSyncBlock()
 	go m.monitorWithdrawReward()
 	go m.monitorSlash()
 	go m.monitorSubmitChange()
@@ -123,7 +120,8 @@ func (m *EthMonitor) monitorBlockHead() {
 		}
 
 		m.blkNum = blkNum
-		go m.handleNewBlock(blkNum)
+		m.handleNewBlock(blkNum)
+		m.processQueue()
 	}
 }
 
@@ -181,12 +179,6 @@ func (m *EthMonitor) monitorIntendSettle() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func (m *EthMonitor) monitorSyncBlock() {
-	m.monitorTendermintEvent(syncBlockEvent, func(e abci.Event) {
-		m.processQueue()
-	})
 }
 
 func (m *EthMonitor) monitorWithdrawReward() {

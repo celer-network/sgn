@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,6 +13,8 @@ import (
 type Keeper struct {
 	// The reference to the Paramstore to get and set sync specific params
 	paramSpace types.ParamSubspace
+
+	gk global.Keeper
 
 	vk validator.Keeper
 
@@ -31,11 +34,13 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
+	gk global.Keeper,
 	vk validator.Keeper,
 ) Keeper {
 	return Keeper{
 		storeKey:   key,
 		paramSpace: paramSpace,
+		gk:         gk,
 		vk:         vk,
 		cdc:        cdc,
 	}
