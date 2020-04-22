@@ -3,9 +3,9 @@ package keeper
 import (
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 // Keeper defines the sync module Keeper
@@ -33,23 +33,12 @@ func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
 	vk validator.Keeper,
 ) Keeper {
-
-	// It is vital to seal the sync change router here as to not allow
-	// further handlers to be registered after the keeper is created since this
-	// could create invalid or non-deterministic behavior.
-	rtr.Seal()
-
 	return Keeper{
 		storeKey:   key,
 		paramSpace: paramSpace,
 		vk:         vk,
 		cdc:        cdc,
 	}
-}
-
-// Router returns the sync Keeper's Router
-func (keeper Keeper) Router() types.Router {
-	return keeper.router
 }
 
 func (keeper Keeper) GetValidators(ctx sdk.Context) []staking.Validator {

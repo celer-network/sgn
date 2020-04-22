@@ -9,8 +9,10 @@ import (
 
 // Governance message types and routes
 const (
-	TypeMsgVote         = "vote"
+	TypeMsgApprove      = "vote"
 	TypeMsgSubmitChange = "submit_change"
+
+	SyncBlock = "sync_block"
 )
 
 // MsgSubmitChange defines a message to create a sync change
@@ -36,10 +38,12 @@ func (msg MsgSubmitChange) ValidateBasic() error {
 	if msg.ChangeType == "" {
 		return sdkerrors.Wrap(ErrInvalidChangeType, "missing type")
 	}
+
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
-	if len(msg.Data) > 0 {
+
+	if len(msg.Data) == 0 {
 		return sdkerrors.Wrap(ErrInvalidChangeData, "data length must be larger than 0")
 	}
 
@@ -65,25 +69,25 @@ func (msg MsgSubmitChange) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-// MsgVote defines a message to cast a vote
-type MsgVote struct {
+// MsgApprove defines a message to cast a vote
+type MsgApprove struct {
 	ChangeID uint64         `json:"change_id" yaml:"change_id"` // ID of the change
 	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`       //  address of the sender
 }
 
-// NewMsgVote creates a message to cast a vote on an active change
-func NewMsgVote(sender sdk.AccAddress, changeID uint64) MsgVote {
-	return MsgVote{changeID, sender}
+// NewMsgApprove creates a message to cast a vote on an active change
+func NewMsgApprove(changeID uint64, sender sdk.AccAddress) MsgApprove {
+	return MsgApprove{changeID, sender}
 }
 
 // Route implements Msg
-func (msg MsgVote) Route() string { return RouterKey }
+func (msg MsgApprove) Route() string { return RouterKey }
 
 // Type implements Msg
-func (msg MsgVote) Type() string { return TypeMsgVote }
+func (msg MsgApprove) Type() string { return TypeMsgApprove }
 
 // ValidateBasic implements Msg
-func (msg MsgVote) ValidateBasic() error {
+func (msg MsgApprove) ValidateBasic() error {
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
@@ -92,19 +96,19 @@ func (msg MsgVote) ValidateBasic() error {
 }
 
 // String implements the Stringer interface
-func (msg MsgVote) String() string {
+func (msg MsgApprove) String() string {
 	return fmt.Sprintf(`Vote Message:
   Change ID: %d
 `, msg.ChangeID)
 }
 
 // GetSignBytes implements Msg
-func (msg MsgVote) GetSignBytes() []byte {
+func (msg MsgApprove) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
 // GetSigners implements Msg
-func (msg MsgVote) GetSigners() []sdk.AccAddress {
+func (msg MsgApprove) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

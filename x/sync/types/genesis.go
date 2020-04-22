@@ -53,11 +53,5 @@ func ValidateGenesis(data GenesisState) error {
 			threshold.String())
 	}
 
-	veto := data.TallyParams.Veto
-	if veto.IsNegative() || veto.GT(sdk.OneDec()) {
-		return fmt.Errorf("sync vote veto threshold should be positive and less or equal to one, is %s",
-			veto.String())
-	}
-
 	return nil
 }

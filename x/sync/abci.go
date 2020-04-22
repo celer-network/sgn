@@ -19,35 +19,22 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		validatorsByAddr[validator.OperatorAddress.String()] = validator
 	}
 
+	threshold := keeper.GetTallyParams(ctx).Threshold.MulInt(totalToken).TruncateInt()
 	// fetch active changes whose voting periods have ended (are passed the block time)
 	keeper.IterateActiveChangesQueue(ctx, ctx.BlockHeader().Time, func(change Change) bool {
-		var tagValue string
+		tagValue := types.AttributeValueChangeFailed
+		totalVote := sdk.ZeroInt()
 
-		if passes {
-			handler := keeper.Router().GetRoute(change.ChangeRoute())
-			cacheCtx, writeCache := ctx.CacheContext()
+		for _, voter := range change.Voters {
+			totalVote = totalVote.Add(validatorsByAddr[voter.String()].Tokens)
+		}
 
-			// The change handler may execute state mutating logic depending
-			// on the change content. If the handler fails, no state mutation
-			// is written and the error message is logged.
-			err := handler(cacheCtx, change.Content)
-			if err == nil {
-				change.Status = StatusPassed
-				tagValue = types.AttributeValueChangePassed
+		change.Status = StatusFailed
+		tagValue = types.AttributeValueChangeFailed
 
-				// The cached context is created with a new EventManager. However, since
-				// the change handler execution was successful, we want to track/keep
-				// any events emitted, so we re-emit to "merge" the events into the
-				// original Context's EventManager.
-				ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
-
-				// write state to the underlying multi-store
-				writeCache()
-			} else {
-				change.Status = StatusFailed
-				tagValue = types.AttributeValueChangeFailed
-				logMsg = fmt.Sprintf("passed, but failed on execution: %s", err)
-			}
+		if totalVote.GTE(threshold) {
+			change.Status = StatusPassed
+			tagValue = types.AttributeValueChangePassed
 		}
 
 		keeper.SetChange(ctx, change)

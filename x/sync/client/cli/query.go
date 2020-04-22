@@ -13,8 +13,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+)
+
+const (
+	flagStatus = "status"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -33,6 +36,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryChanges(queryRoute, cdc),
 		GetCmdQueryParam(queryRoute, cdc),
 		GetCmdQueryParams(queryRoute, cdc),
+	)...)
 
 	return syncQueryCmd
 }

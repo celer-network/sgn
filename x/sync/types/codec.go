@@ -11,7 +11,7 @@ var ModuleCdc = codec.New()
 // sync.
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSubmitChange{}, "cosmos-sdk/MsgSubmitChange", nil)
-	cdc.RegisterConcrete(MsgVote{}, "cosmos-sdk/MsgVote", nil)
+	cdc.RegisterConcrete(MsgApprove{}, "cosmos-sdk/MsgApprove", nil)
 }
 
 // RegisterChangeTypeCodec registers an external change content type defined

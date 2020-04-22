@@ -11,7 +11,7 @@ import (
 )
 
 // SubmitChange create new change given a content
-func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byte) (types.Change, error) {
+func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byte, initiatorAddr sdk.AccAddress) (types.Change, error) {
 	changeID, err := keeper.GetChangeID(ctx)
 	if err != nil {
 		return types.Change{}, err
@@ -19,7 +19,7 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 
 	submitTime := ctx.BlockHeader().Time
 	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
-	change := types.NewChange(changeID, changeType, data, submitTime, submitTime.Add(votingPeriod))
+	change := types.NewChange(changeID, changeType, data, submitTime, submitTime.Add(votingPeriod), initiatorAddr)
 
 	keeper.SetChange(ctx, change)
 	keeper.InsertActiveChangeQueue(ctx, changeID, change.VotingEndTime)
@@ -27,7 +27,8 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeSubmitChange,
+			types.EventTypeSync,
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.ActionSubmitChange),
 			sdk.NewAttribute(types.AttributeKeyChangeID, fmt.Sprintf("%d", changeID)),
 		),
 	)
@@ -35,8 +36,8 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 	return change, nil
 }
 
-// AddVote adds a vote on a specific change
-func (keeper Keeper) AddVote(ctx sdk.Context, changeID uint64, voterAddr sdk.AccAddress) error {
+// ApproveChange adds a vote on a specific change
+func (keeper Keeper) ApproveChange(ctx sdk.Context, changeID uint64, voterAddr sdk.AccAddress) error {
 	change, ok := keeper.GetChange(ctx, changeID)
 	if !ok {
 		return sdkerrors.Wrapf(types.ErrUnknownChange, "%d", changeID)
@@ -45,15 +46,8 @@ func (keeper Keeper) AddVote(ctx sdk.Context, changeID uint64, voterAddr sdk.Acc
 		return sdkerrors.Wrapf(types.ErrInactiveChange, "%d", changeID)
 	}
 
-	change.Voters = append(change.Voters, voterAddr)
+	change.Voters = append(change.Voters, sdk.ValAddress(voterAddr))
 	keeper.SetChange(ctx, change)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeChangeVote,
-			sdk.NewAttribute(types.AttributeKeyChangeID, fmt.Sprintf("%d", changeID)),
-		),
-	)
 
 	return nil
 }
@@ -115,19 +109,14 @@ func (keeper Keeper) GetChangesFiltered(ctx sdk.Context, params types.QueryChang
 	filteredChanges := make([]types.Change, 0, len(changes))
 
 	for _, p := range changes {
-		matchVoter, matchStatus := true, true
+		matchStatus := true
 
 		// match status (if supplied/valid)
 		if types.ValidChangeStatus(params.ChangeStatus) {
 			matchStatus = p.Status == params.ChangeStatus
 		}
 
-		// match voter address (if supplied)
-		if len(params.Voter) > 0 {
-			_, matchVoter = keeper.GetVote(ctx, p.ChangeID, params.Voter)
-		}
-
-		if matchVoter && matchStatus {
+		if matchStatus {
 			filteredChanges = append(filteredChanges, p)
 		}
 	}

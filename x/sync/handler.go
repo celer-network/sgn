@@ -17,8 +17,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		case MsgSubmitChange:
 			res, err = handleMsgSubmitChange(ctx, keeper, msg)
 
-		case MsgVote:
-			res, err = handleMsgVote(ctx, keeper, msg)
+		case MsgApprove:
+			res, err = handleMsgApprove(ctx, keeper, msg)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
@@ -40,11 +40,11 @@ func handleMsgSubmitChange(ctx sdk.Context, keeper Keeper, msg MsgSubmitChange) 
 	}, nil
 }
 
-func handleMsgVote(ctx sdk.Context, keeper Keeper, msg MsgVote) (*sdk.Result, error) {
-	err := keeper.AddVote(ctx, msg.ChangeID, msg.Sender)
+func handleMsgApprove(ctx sdk.Context, keeper Keeper, msg MsgApprove) (*sdk.Result, error) {
+	err := keeper.ApproveChange(ctx, msg.ChangeID, msg.Sender)
 	if err != nil {
 		return nil, err
 	}
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{}, nil
 }

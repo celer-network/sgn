@@ -19,18 +19,19 @@ type Change struct {
 	Type          string           `json:"type" yaml:"type"`
 	Data          []byte           `json:"data" yaml:"data"`
 	Initiator     sdk.AccAddress   `json:"initiator" yaml:"initiator"`
-	Voters        []sdk.AccAddress `json:"voters" yaml:"voters"`
+	Voters        []sdk.ValAddress `json:"voters" yaml:"voters"`
 	Status        ChangeStatus     `json:"change_status" yaml:"change_status"`     // Status of the Change {Pending, Active, Passed, Rejected}
 	SubmitTime    time.Time        `json:"submit_time" yaml:"submit_time"`         // Time of the block where TxGovSubmitChange was included
 	VotingEndTime time.Time        `json:"voting_end_time" yaml:"voting_end_time"` // Time that the VotingPeriod for this change will end and votes will be tallied
 }
 
 // NewChange creates a new Change instance
-func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndTime time.Time) Change {
+func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndTime time.Time, initiatorAddr sdk.AccAddress) Change {
 	return Change{
 		ChangeID:      id,
 		Type:          changeType,
 		Data:          data,
+		Initiator:     initiatorAddr,
 		Status:        StatusVotingPeriod,
 		SubmitTime:    submitTime,
 		VotingEndTime: votingEndTime,

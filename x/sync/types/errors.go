@@ -10,4 +10,5 @@ var (
 	ErrInactiveChange    = sdkerrors.Register(ModuleName, 2, "inactive change")
 	ErrInvalidChangeType = sdkerrors.Register(ModuleName, 3, "invalid change type")
 	ErrInvalidChangeData = sdkerrors.Register(ModuleName, 4, "invalid change data")
+	ErrInvalidGenesis    = sdkerrors.Register(ModuleName, 5, "invalid genesis state")
 )

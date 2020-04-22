@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -62,14 +63,9 @@ $ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
-			change, err := parseSubmitProposalFlags()
-			if err != nil {
-				return err
-			}
-
-			content := types.ContentFromProposalType(change.Title, change.Description, change.Type)
-
-			msg := types.NewMsgSubmitProposal(content, amount, cliCtx.GetFromAddress())
+			changeType := viper.GetString(FlagType)
+			data := viper.GetString(FlagData)
+			msg := types.NewMsgSubmitChange(changeType, []byte(data), cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -113,7 +109,7 @@ $ %s tx sync vote 1 --from mykey
 			}
 
 			// Build vote message and run basic validation
-			msg := types.NewMsgVote(cliCtx.GetFromAddress(), changeID)
+			msg := types.NewMsgApprove(changeID, cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
