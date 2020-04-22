@@ -27,7 +27,11 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		totalVote := sdk.ZeroInt()
 
 		for _, voter := range change.Voters {
-			totalVote = totalVote.Add(validatorsByAddr[voter.String()].Tokens)
+			validator, ok := validatorsByAddr[voter.String()]
+			if !ok {
+				continue
+			}
+			totalVote = totalVote.Add(validator.Tokens)
 		}
 
 		change.Status = StatusFailed

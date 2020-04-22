@@ -22,6 +22,7 @@
       "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
     ],
     "timeoutCommit": 2,
-    "keyringbackend": "test"
+    "keyringbackend": "test",
+    "bootNode": true
   }
 }

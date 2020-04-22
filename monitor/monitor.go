@@ -218,12 +218,11 @@ func (m *EthMonitor) monitorSlash() {
 
 func (m *EthMonitor) monitorSubmitChange() {
 	m.monitorTendermintEvent(submitChangeEvent, func(e abci.Event) {
-		// if !m.isValidator {
-		// 	return
-		// }
+		if !m.isValidator && !viper.GetBool(common.FlagSgnBootNode) {
+			return
+		}
 
 		event := sdk.StringifyEvent(e)
-
 		if event.Type == sync.EventTypeSync && event.Attributes[0].Value == sync.ActionSubmitChange {
 			changeId, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
 			if err != nil {
@@ -231,8 +230,16 @@ func (m *EthMonitor) monitorSubmitChange() {
 				return
 			}
 
-			msg := sync.NewMsgApprove(changeId, m.operator.Key.GetAddress())
-			m.operator.AddTxMsg(msg)
+			change, err := sync.CLIQueryChange(m.operator.CliCtx, sync.RouterKey, changeId)
+			if err != nil {
+				log.Errorln("Query change error", err)
+				return
+			}
+
+			if m.verifyChange(change) {
+				msg := sync.NewMsgApprove(changeId, m.operator.Key.GetAddress())
+				m.operator.AddTxMsg(msg)
+			}
 		}
 	})
 }
