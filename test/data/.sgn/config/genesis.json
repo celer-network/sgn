@@ -168,8 +168,6 @@
     "global": {
       "params": {
         "epochLength": "1",
-        "blkTimeDiffLower": "1",
-        "blkTimeDiffUpper": "30",
         "confirmationCount": "2"
       }
     },
