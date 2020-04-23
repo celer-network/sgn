@@ -262,14 +262,14 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	return nil
 }
 
-func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
+func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
 	conn := EtherBase.Client
 	guardContract := EtherBase.Guard
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
 	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
+	tx, err := E2eProfile.CelrContract.Approve(fromAuth, E2eProfile.GuardAddr, amt)
 	if err != nil {
 		return err
 	}

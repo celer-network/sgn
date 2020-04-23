@@ -67,7 +67,7 @@ func validatorTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 2)
 
 	log.Infoln("---------- It should correctly add validator 2 with enough delegation ----------")
-	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
+	err = tc.DelegateStake(auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
 	tc.ChkTestErr(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)
 	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
@@ -79,7 +79,7 @@ func validatorTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 2)
 	tc.CheckValidatorStatus(t, transactor, tc.SgnOperators[2], sdk.Unbonding)
 
-	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, amts[2])
+	err = tc.DelegateStake(auth, ethAddr, amts[2])
 	tc.ChkTestErr(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)
 	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
