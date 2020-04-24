@@ -58,13 +58,13 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 	var err error
 	switch e.Name {
 	case InitializeCandidate:
-		res, err = ethClient.Guard.ParseInitializeCandidate(e.Log)
+		res, err = ethClient.DPoS.ParseInitializeCandidate(e.Log)
 	case Delegate:
-		res, err = ethClient.Guard.ParseDelegate(e.Log)
+		res, err = ethClient.DPoS.ParseDelegate(e.Log)
 	case ValidatorChange:
-		res, err = ethClient.Guard.ParseValidatorChange(e.Log)
+		res, err = ethClient.DPoS.ParseValidatorChange(e.Log)
 	case IntendWithdraw:
-		res, err = ethClient.Guard.ParseIntendWithdraw(e.Log)
+		res, err = ethClient.DPoS.ParseIntendWithdraw(e.Log)
 	case IntendSettle:
 		res, err = ethClient.Ledger.ParseIntendSettle(e.Log)
 	default:
@@ -76,7 +76,7 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 	}
 
 	switch tmp := res.(type) {
-	case *mainchain.GuardInitializeCandidate:
+	case *mainchain.DPoSInitializeCandidate:
 		tmp.Raw = e.Log
 		res = tmp
 	case *mainchain.CelerLedgerIntendSettle:

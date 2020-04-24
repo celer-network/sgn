@@ -178,7 +178,7 @@ func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator
 	logEntry.DelegatorAddr = msg.DelegatorAddress
 
 	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
-	di, err := keeper.ethClient.Guard.GetDelegatorInfo(&bind.CallOpts{
+	di, err := keeper.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, mainchain.Hex2Addr(msg.CandidateAddress), mainchain.Hex2Addr(msg.DelegatorAddress))
 	if err != nil {

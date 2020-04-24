@@ -10,7 +10,7 @@ import (
 )
 
 func GetCandidateInfoFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress string) (mainchain.CandidateInfo, error) {
-	return keeper.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{
+	return keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, mainchain.Hex2Addr(ethAddress))
 }

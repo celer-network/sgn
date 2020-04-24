@@ -52,7 +52,7 @@ func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
-		case *mainchain.GuardInitializeCandidate:
+		case *mainchain.DPoSInitializeCandidate:
 			m.syncInitializeCandidate(e)
 		case *mainchain.CelerLedgerIntendSettle:
 			m.syncIntendSettle(e)
@@ -99,7 +99,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 	}
 }
 
-func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
+func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.DPoSInitializeCandidate) {
 	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
 	if err == nil {
 		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
@@ -184,7 +184,7 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
@@ -201,7 +201,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
+	tx, err := m.ethClient.DPoS.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
 		log.Errorln("Punish err", err)
 		m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
