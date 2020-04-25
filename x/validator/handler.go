@@ -59,7 +59,7 @@ func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitial
 		return nil, fmt.Errorf("Failed to query candidate profile: %s", err)
 	}
 
-	if !candidateInfo.Initialized {
+	if !candidateInfo.DPoSCandidateInfo.Initialized {
 		return nil, fmt.Errorf("Candidate has not been initialized")
 	}
 
@@ -120,7 +120,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return nil, fmt.Errorf("Failed to query candidate profile: %s", err)
 	}
 
-	if !mainchain.IsBonded(candidateInfo) {
+	if !mainchain.IsBonded(candidateInfo.DPoSCandidateInfo) {
 		return nil, fmt.Errorf("Candidate is not in validator set")
 	}
 
@@ -250,8 +250,8 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 
 func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, candidateInfo mainchain.CandidateInfo) {
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(candidateInfo.StakingPool).QuoRaw(common.TokenDec)
-	validator.Status = mainchain.ParseStatus(candidateInfo)
+	validator.Tokens = sdk.NewIntFromBigInt(candidateInfo.DPoSCandidateInfo.StakingPool).QuoRaw(common.TokenDec)
+	validator.Status = mainchain.ParseStatus(candidateInfo.DPoSCandidateInfo)
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 

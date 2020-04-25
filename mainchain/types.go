@@ -107,11 +107,17 @@ func Bytes2Hash(b []byte) HashType {
 	return ec.BytesToHash(b)
 }
 
-// CandidateInfo contains info emitted by the mainchain
-type CandidateInfo struct {
+// DPoSCandidateInfo contains info emitted by DPoS contract
+type DPoSCandidateInfo struct {
 	Initialized  bool
 	MinSelfStake *big.Int
 	StakingPool  *big.Int
 	Status       *big.Int
 	UnbondTime   *big.Int
+}
+
+// CandidateInfo contains info emitted by the mainchain
+type CandidateInfo struct {
+	DPoSCandidateInfo DPoSCandidateInfo
+	SidechainAddr     []byte
 }

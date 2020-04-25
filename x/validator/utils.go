@@ -10,9 +10,26 @@ import (
 )
 
 func GetCandidateInfoFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress string) (mainchain.CandidateInfo, error) {
-	return keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
+	var candidateInfo mainchain.CandidateInfo
+
+	dposCandidateInfo, err := keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
 		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
 	}, mainchain.Hex2Addr(ethAddress))
+	if err != nil {
+		return candidateInfo, err
+	}
+
+	sidechainAddr, err := keeper.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
+		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
+	}, mainchain.Hex2Addr(ethAddress))
+	if err != nil {
+		return candidateInfo, err
+	}
+
+	candidateInfo.DPoSCandidateInfo = dposCandidateInfo
+	candidateInfo.SidechainAddr = sidechainAddr
+
+	return candidateInfo, nil
 }
 
 func InitAccount(ctx sdk.Context, keeper Keeper, accAddress sdk.AccAddress) {

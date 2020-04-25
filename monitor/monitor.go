@@ -71,7 +71,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	ms := watcher.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
 	ms.Init()
 
-	candidateInfo, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
+	dposCandidateInfo, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
 		log.Fatalln("GetCandidateInfo err", err)
 	}
@@ -101,7 +101,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 		dposContract:   dposContract,
 		sgnContract:    sgnContract,
 		ledgerContract: ledgerContract,
-		isValidator:    mainchain.IsBonded(candidateInfo),
+		isValidator:    mainchain.IsBonded(dposCandidateInfo),
 	}
 
 	go m.monitorBlockHead()
