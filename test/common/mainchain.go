@@ -249,16 +249,26 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int) error {
 	conn := EtherBase.Client
 	dposContract := EtherBase.DPoS
+	sgnContract := EtherBase.SGN
+
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
-
 	log.Info("Call initializeCandidate on dpos contract using the validator eth address...")
-	tx, err := dposContract.InitializeCandidate(auth, minSelfStake, sgnAddr.Bytes())
+	tx, err := dposContract.InitializeCandidate(auth, minSelfStake)
 	if err != nil {
 		return err
 	}
-
 	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "InitializeCandidate")
+
+	ctx, cancel = context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+	log.Info("Call updateSidechainAddr on sgn contract using the validator eth address...")
+	tx, err = sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
+	if err != nil {
+		return err
+	}
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "UpdateSidechainAddr")
+
 	return nil
 }
 
