@@ -49,6 +49,7 @@ func validatorTest(t *testing.T) {
 	amt := big.NewInt(1000000000000000000)
 
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	log.Infof("my eth address %x", ethAddr)
 	tc.ChkTestErr(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
 	tc.CheckValidatorNum(t, transactor, 1)

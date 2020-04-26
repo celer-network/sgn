@@ -48,7 +48,7 @@ func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 			continue
 		}
 
-		log.Infoln("Process puller event", event.Name)
+		log.Infoln("Process puller event", event.Name, "at mainchain block", event.Log.BlockNumber)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {

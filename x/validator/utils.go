@@ -12,16 +12,15 @@ import (
 func GetCandidateInfoFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress string) (mainchain.CandidateInfo, error) {
 	var candidateInfo mainchain.CandidateInfo
 
-	dposCandidateInfo, err := keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, mainchain.Hex2Addr(ethAddress))
+	ethBlknum := new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))
+	ethAddr := mainchain.Hex2Addr(ethAddress)
+
+	dposCandidateInfo, err := keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{BlockNumber: ethBlknum}, ethAddr)
 	if err != nil {
 		return candidateInfo, err
 	}
 
-	sidechainAddr, err := keeper.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, mainchain.Hex2Addr(ethAddress))
+	sidechainAddr, err := keeper.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{BlockNumber: ethBlknum}, ethAddr)
 	if err != nil {
 		return candidateInfo, err
 	}
