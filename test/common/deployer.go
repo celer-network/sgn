@@ -54,6 +54,14 @@ func DeployDPoSSGNContracts(sgnParams *SGNParams) (mainchain.Addr, mainchain.Add
 	ChkErr(err, "failed to deploy SGN contract")
 	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy SGN "+sgnAddr.Hex())
 
+	// TODO: register SGN address on DPoS contract
+	ctx = context.Background()
+	dpos, err := mainchain.NewDPoS(dposAddr, EtherBase.Client)
+	ChkErr(err, "failed to new DPoS instance")
+	tx, err = dpos.RegisterSidechain(EtherBase.Auth, sgnAddr)
+	ChkErr(err, "failed to register SGN address on DPoS contract")
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Register SGN")
+
 	log.Infoln("DPoS address:", dposAddr.String())
 	log.Infoln("SGN address:", sgnAddr.String())
 

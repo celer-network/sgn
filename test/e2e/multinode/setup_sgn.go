@@ -15,7 +15,7 @@ import (
 )
 
 func setupNewSGNEnv(sgnParams *tc.SGNParams) {
-	log.Infoln("Deploy guard contract")
+	log.Infoln("Deploy DPoS and SGN contracts")
 	if sgnParams == nil {
 		sgnParams = &tc.SGNParams{
 			BlameTimeout:           big.NewInt(50),
@@ -26,7 +26,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 			MaxValidatorNum:        big.NewInt(11),
 		}
 	}
-	tc.E2eProfile.GuardAddr = tc.DeployGuardContract(sgnParams)
+	tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
 
 	log.Infoln("make localnet-down-nodes")
 	cmd := exec.Command("make", "localnet-down-nodes")
@@ -51,13 +51,14 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 		viper.SetConfigFile(configPath)
 		err = viper.ReadInConfig()
 		tc.ChkErr(err, "Failed to read config")
-		viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
+		viper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
+		viper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
 		viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
 		err = viper.WriteConfig()
 		tc.ChkErr(err, "Failed to write config")
 	}
 
-	err = tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
+	err = tc.SetContracts(tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr, tc.E2eProfile.LedgerAddr)
 	tc.ChkErr(err, "Failed to SetContracts")
 
 	log.Infoln("make localnet-up-nodes")
