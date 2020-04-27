@@ -54,16 +54,21 @@ func handleMsgUpdateSidechainAddr(ctx sdk.Context, keeper Keeper, msg MsgUpdateS
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 
-	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
+	dposCandidateInfo, err := GetDPoSCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to query candidate profile: %s", err)
+		return nil, fmt.Errorf("Failed to query candidate profile on DPoS contract: %s", err)
 	}
 
-	if !candidateInfo.DPoSCandidateInfo.Initialized {
+	if !dposCandidateInfo.Initialized {
 		return nil, fmt.Errorf("Candidate has not been initialized")
 	}
 
-	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
+	sidechainAddr, err := GetSidechainAddrFromMainchain(ctx, keeper, msg.EthAddress)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to query sidechain address on SGN contract: %s", err)
+	}
+
+	accAddress := sdk.AccAddress(sidechainAddr)
 	InitAccount(ctx, keeper, accAddress)
 
 	// TODO: only handle the case of first update (initialization), need to handle the case of replacing sidechain address
@@ -116,21 +121,26 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		return nil, fmt.Errorf("GetConsPubKeyBech32 err: %s", err)
 	}
 
-	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
+	dposCandidateInfo, err := GetDPoSCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to query candidate profile: %s", err)
+		return nil, fmt.Errorf("Failed to query candidate profile on DPoS contract: %s", err)
 	}
 
-	if !mainchain.IsBonded(candidateInfo.DPoSCandidateInfo) {
+	if !mainchain.IsBonded(dposCandidateInfo) {
 		return nil, fmt.Errorf("Candidate is not in validator set")
 	}
 
-	if !sdk.AccAddress(candidateInfo.SidechainAddr).Equals(msg.Sender) {
+	sidechainAddr, err := GetSidechainAddrFromMainchain(ctx, keeper, msg.EthAddress)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to query sidechain address on SGN contract: %s", err)
+	}
+
+	if !sdk.AccAddress(sidechainAddr).Equals(msg.Sender) {
 		return nil, fmt.Errorf("Sender has different address recorded on mainchain. mainchain record: %x; sender: %x", sdk.AccAddress(candidateInfo.SidechainAddr), msg.Sender)
 	}
 
 	// Make sure both val address and pub address have not been used before
-	valAddress := sdk.ValAddress(candidateInfo.SidechainAddr)
+	valAddress := sdk.ValAddress(sidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
 	if found != f {
@@ -146,7 +156,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
-	updateValidatorToken(ctx, keeper, validator, candidateInfo)
+	updateValidatorToken(ctx, keeper, validator, dposCandidateInfo)
 	return &sdk.Result{}, nil
 }
 
@@ -156,18 +166,23 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 
-	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
+	sidechainAddr, err := GetSidechainAddrFromMainchain(ctx, keeper, msg.EthAddress)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to query candidate profile: %s", err)
+		return nil, fmt.Errorf("Failed to query sidechain address on SGN contract: %s", err)
 	}
 
-	valAddress := sdk.ValAddress(candidateInfo.SidechainAddr)
+	valAddress := sdk.ValAddress(sidechainAddr)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		return &sdk.Result{}, fmt.Errorf("Validator does not exist")
 	}
 
-	updateValidatorToken(ctx, keeper, validator, candidateInfo)
+	dposCandidateInfo, err := GetDPoSCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to query candidate profile on DPoS contract: %s", err)
+	}
+
+	updateValidatorToken(ctx, keeper, validator, dposCandidateInfo)
 	return &sdk.Result{}, nil
 }
 
@@ -249,10 +264,10 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 	return &sdk.Result{}, nil
 }
 
-func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, candidateInfo mainchain.CandidateInfo) {
+func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, dposCandidateInfo mainchain.DPoSCandidateInfo) {
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(candidateInfo.DPoSCandidateInfo.StakingPool).QuoRaw(common.TokenDec)
-	validator.Status = mainchain.ParseStatus(candidateInfo.DPoSCandidateInfo)
+	validator.Tokens = sdk.NewIntFromBigInt(dposCandidateInfo.StakingPool).QuoRaw(common.TokenDec)
+	validator.Status = mainchain.ParseStatus(dposCandidateInfo)
 	validator.DelegatorShares = validator.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 

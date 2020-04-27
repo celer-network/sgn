@@ -9,26 +9,18 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-func GetCandidateInfoFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress string) (mainchain.CandidateInfo, error) {
-	var candidateInfo mainchain.CandidateInfo
-
+func GetDPoSCandidateInfoFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress string) (mainchain.DPoSCandidateInfo, error) {
 	ethBlknum := new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))
 	ethAddr := mainchain.Hex2Addr(ethAddress)
 
-	dposCandidateInfo, err := keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{BlockNumber: ethBlknum}, ethAddr)
-	if err != nil {
-		return candidateInfo, err
-	}
+	return keeper.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{BlockNumber: ethBlknum}, ethAddr)
+}
 
-	sidechainAddr, err := keeper.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{BlockNumber: ethBlknum}, ethAddr)
-	if err != nil {
-		return candidateInfo, err
-	}
+func GetSidechainAddrFromMainchain(ctx sdk.Context, keeper Keeper, ethAddress string) (mainchain.SidechainAddr, error) {
+	ethBlknum := new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))
+	ethAddr := mainchain.Hex2Addr(ethAddress)
 
-	candidateInfo.DPoSCandidateInfo = dposCandidateInfo
-	candidateInfo.SidechainAddr = sidechainAddr
-
-	return candidateInfo, nil
+	return keeper.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{BlockNumber: ethBlknum}, ethAddr)
 }
 
 func InitAccount(ctx sdk.Context, keeper Keeper, accAddress sdk.AccAddress) {
