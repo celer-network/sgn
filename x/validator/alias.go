@@ -20,7 +20,8 @@ const (
 )
 
 var (
-	NewMsgInitializeCandidate = types.NewMsgInitializeCandidate
+	// NewMsgInitializeCandidate = types.NewMsgInitializeCandidate
+	NewMsgUpdateSidechainAddr = types.NewMsgUpdateSidechainAddr
 	NewMsgSetTransactors      = types.NewMsgSetTransactors
 	NewMsgClaimValidator      = types.NewMsgClaimValidator
 	NewMsgSyncValidator       = types.NewMsgSyncValidator
@@ -54,16 +55,17 @@ var (
 )
 
 type (
-	Puller                 = types.Puller
-	Pusher                 = types.Pusher
-	Params                 = types.Params
-	Delegator              = types.Delegator
-	Candidate              = types.Candidate
-	Reward                 = types.Reward
-	QueryDelegatorParams   = types.QueryDelegatorParams
-	QueryCandidateParams   = types.QueryCandidateParams
-	QueryRewardParams      = types.QueryRewardParams
-	MsgInitializeCandidate = types.MsgInitializeCandidate
+	Puller               = types.Puller
+	Pusher               = types.Pusher
+	Params               = types.Params
+	Delegator            = types.Delegator
+	Candidate            = types.Candidate
+	Reward               = types.Reward
+	QueryDelegatorParams = types.QueryDelegatorParams
+	QueryCandidateParams = types.QueryCandidateParams
+	QueryRewardParams    = types.QueryRewardParams
+	// MsgInitializeCandidate = types.MsgInitializeCandidate
+	MsgUpdateSidechainAddr = types.MsgUpdateSidechainAddr
 	MsgSetTransactors      = types.MsgSetTransactors
 	MsgClaimValidator      = types.MsgClaimValidator
 	MsgSyncValidator       = types.MsgSyncValidator

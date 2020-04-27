@@ -90,15 +90,28 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
-func postInitializeCandidateHandlerFn(rs *RestServer) http.HandlerFunc {
+// func postInitializeCandidateHandlerFn(rs *RestServer) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		var req InitializeCandidateRequest
+// 		transactor := rs.transactorPool.GetTransactor()
+// 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
+// 			return
+// 		}
+
+// 		msg := validator.NewMsgInitializeCandidate(req.EthAddr, transactor.CliCtx.GetFromAddress())
+// 		writeGenerateStdTxResponse(w, transactor, msg)
+// 	}
+// }
+
+func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req InitializeCandidateRequest
+		var req UpdateSidechainAddrRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
 			return
 		}
 
-		msg := validator.NewMsgInitializeCandidate(req.EthAddr, transactor.CliCtx.GetFromAddress())
+		msg := validator.NewMsgUpdateSidechainAddr(req.EthAddr, transactor.CliCtx.GetFromAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
