@@ -136,7 +136,7 @@ func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidat
 	}
 
 	if !sdk.AccAddress(sidechainAddr).Equals(msg.Sender) {
-		return nil, fmt.Errorf("Sender has different address recorded on mainchain. mainchain record: %x; sender: %x", sdk.AccAddress(candidateInfo.SidechainAddr), msg.Sender)
+		return nil, fmt.Errorf("Sender has different address recorded on mainchain. mainchain record: %x; sender: %x", sdk.AccAddress(sidechainAddr), msg.Sender)
 	}
 
 	// Make sure both val address and pub address have not been used before
