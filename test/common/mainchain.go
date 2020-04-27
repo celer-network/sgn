@@ -253,12 +253,12 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
-	log.Infoln("Call initializeCandidate on dpos contract using the validator eth address, minSelfStake:", minSelfStake)
+	log.Infof("Call initializeCandidate on dpos contract using the validator eth address %x, minSelfStake: %d", auth.From.Bytes(), minSelfStake)
 	tx, err := dposContract.InitializeCandidate(auth, minSelfStake)
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "InitializeCandidate")
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "DPoS InitializeCandidate")
 
 	ctx, cancel = context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
@@ -267,7 +267,7 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "UpdateSidechainAddr")
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "SGN UpdateSidechainAddr")
 
 	return nil
 }

@@ -105,7 +105,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	}
 
 	go m.monitorBlockHead()
-	go m.monitorInitializeCandidate()
+	go m.monitorUpdateSidechainAddr()
 	go m.monitorDelegate()
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
@@ -131,10 +131,10 @@ func (m *EthMonitor) monitorBlockHead() {
 	}
 }
 
-func (m *EthMonitor) monitorInitializeCandidate() {
-	_, err := m.ms.Monitor(string(InitializeCandidate), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event InitializeCandidate, tx hash: %x", eLog.TxHash)
-		event := NewEvent(InitializeCandidate, eLog)
+func (m *EthMonitor) monitorUpdateSidechainAddr() {
+	_, err := m.ms.Monitor(string(UpdateSidechainAddr), m.sgnContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
+		event := NewEvent(UpdateSidechainAddr, eLog)
 		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 	})
 	if err != nil {

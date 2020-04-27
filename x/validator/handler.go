@@ -21,8 +21,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
-		// case MsgInitializeCandidate:
-		// 	res, err = handleMsgInitializeCandidate(ctx, keeper, msg, logEntry)
 		case MsgUpdateSidechainAddr:
 			res, err = handleMsgUpdateSidechainAddr(ctx, keeper, msg, logEntry)
 		case MsgSetTransactors:
@@ -49,33 +47,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		return res, err
 	}
 }
-
-// Handle a message to initialize candidate
-// func handleMsgInitializeCandidate(ctx sdk.Context, keeper Keeper, msg MsgInitializeCandidate, logEntry *seal.MsgLog) (*sdk.Result, error) {
-// 	logEntry.Type = msg.Type()
-// 	logEntry.Sender = msg.Sender.String()
-// 	logEntry.EthAddress = msg.EthAddress
-
-// 	candidateInfo, err := GetCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Failed to query candidate profile: %s", err)
-// 	}
-
-// 	if !candidateInfo.DPoSCandidateInfo.Initialized {
-// 		return nil, fmt.Errorf("Candidate has not been initialized")
-// 	}
-
-// 	accAddress := sdk.AccAddress(candidateInfo.SidechainAddr)
-// 	InitAccount(ctx, keeper, accAddress)
-
-// 	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
-// 	if !found {
-// 		log.Infof("Created a new profile for candidate %s account %x", msg.EthAddress, accAddress)
-// 		keeper.SetCandidate(ctx, NewCandidate(msg.EthAddress, accAddress))
-// 	}
-
-// 	return &sdk.Result{}, nil
-// }
 
 // Handle a message to update sidechain address
 func handleMsgUpdateSidechainAddr(ctx sdk.Context, keeper Keeper, msg MsgUpdateSidechainAddr, logEntry *seal.MsgLog) (*sdk.Result, error) {

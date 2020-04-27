@@ -52,8 +52,6 @@ func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
-		// case *mainchain.DPoSInitializeCandidate:
-		// 	m.syncInitializeCandidate(e)
 		case *mainchain.SGNUpdateSidechainAddr:
 			m.syncUpdateSidechainAddr(e)
 		case *mainchain.CelerLedgerIntendSettle:
@@ -101,19 +99,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 	}
 }
 
-// func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.DPoSInitializeCandidate) {
-// 	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
-// 	if err == nil {
-// 		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
-// 		return
-// 	}
-
-// 	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
-// 	msg := validator.NewMsgInitializeCandidate(
-// 		mainchain.Addr2Hex(initializeCandidate.Candidate), m.operator.Key.GetAddress())
-// 	m.operator.AddTxMsg(msg)
-// }
-
+// TODO: need to handle update after first initialization
 func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
 	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
 	if err == nil {

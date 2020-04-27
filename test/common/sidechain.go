@@ -73,6 +73,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	err = InitializeCandidate(auth, sgnAddr, minAmt)
 	ChkTestErr(t, err, "failed to initialize candidate")
 
+	// bug here
 	log.Infof("Query sgn about the validator candidate %s ...", ethAddr.Hex())
 	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
 

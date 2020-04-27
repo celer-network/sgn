@@ -23,11 +23,6 @@ func (rs *RestServer) registerTxRoutes() {
 		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
-	// rs.Mux.HandleFunc(
-	// 	"/validator/initializeCandidate",
-	// 	postInitializeCandidateHandlerFn(rs),
-	// ).Methods(http.MethodPost, http.MethodOptions)
-
 	rs.Mux.HandleFunc(
 		"/validator/updateSidechainAddr",
 		postUpdateSidechainAddrHandlerFn(rs),
@@ -53,10 +48,6 @@ type (
 		EthAddr                 string `json:"ethAddr" yaml:"ethAddr"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
 	}
-
-	// InitializeCandidateRequest struct {
-	// 	EthAddr string `json:"ethAddr" yaml:"ethAddr"`
-	// }
 
 	UpdateSidechainAddrRequest struct {
 		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
@@ -98,19 +89,6 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
-
-// func postInitializeCandidateHandlerFn(rs *RestServer) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		var req InitializeCandidateRequest
-// 		transactor := rs.transactorPool.GetTransactor()
-// 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
-// 			return
-// 		}
-
-// 		msg := validator.NewMsgInitializeCandidate(req.EthAddr, transactor.CliCtx.GetFromAddress())
-// 		writeGenerateStdTxResponse(w, transactor, msg)
-// 	}
-// }
 
 func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

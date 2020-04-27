@@ -9,7 +9,6 @@ import (
 const RouterKey = ModuleName // this was defined in your key.go file
 
 const (
-	// TypeMsgInitializeCandidate = "initialize_candidate"
 	TypeMsgUpdateSidechainAddr = "update_sidechain_addr"
 	TypeMsgSetTransactors      = "set_transactors"
 	TypeMsgClaimValidator      = "claim_validator"
@@ -18,49 +17,6 @@ const (
 	TypeMsgWithdrawReward      = "withdraw_reward"
 	TypeMsgSignReward          = "sign_reward"
 )
-
-// // MsgInitializeCandidate defines a InitializeCandidate message
-// type MsgInitializeCandidate struct {
-// 	EthAddress string         `json:"ethAddress"`
-// 	Sender     sdk.AccAddress `json:"sender"`
-// }
-
-// // NewMsgInitializeCandidate is a constructor function for MsgInitializeCandidate
-// func NewMsgInitializeCandidate(ethAddress string, sender sdk.AccAddress) MsgInitializeCandidate {
-// 	return MsgInitializeCandidate{
-// 		EthAddress: mainchain.FormatAddrHex(ethAddress),
-// 		Sender:     sender,
-// 	}
-// }
-
-// // Route should return the name of the module
-// func (msg MsgInitializeCandidate) Route() string { return RouterKey }
-
-// // Type should return the action
-// func (msg MsgInitializeCandidate) Type() string { return TypeMsgInitializeCandidate }
-
-// // ValidateBasic runs stateless checks on the message
-// func (msg MsgInitializeCandidate) ValidateBasic() error {
-// 	if msg.EthAddress == "" {
-// 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
-// 	}
-
-// 	if msg.Sender.Empty() {
-// 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
-// 	}
-
-// 	return nil
-// }
-
-// // GetSignBytes encodes the message for signing
-// func (msg MsgInitializeCandidate) GetSignBytes() []byte {
-// 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-// }
-
-// // GetSigners defines whose signature is required
-// func (msg MsgInitializeCandidate) GetSigners() []sdk.AccAddress {
-// 	return []sdk.AccAddress{msg.Sender}
-// }
 
 // MsgUpdateSidechainAddr defines a UpdateSidechainAddr message
 type MsgUpdateSidechainAddr struct {

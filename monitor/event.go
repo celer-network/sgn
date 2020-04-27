@@ -10,7 +10,7 @@ import (
 type EventName string
 
 const (
-	InitializeCandidate EventName = "InitializeCandidate"
+	UpdateSidechainAddr EventName = "UpdateSidechainAddr"
 	Delegate            EventName = "Delegate"
 	ValidatorChange     EventName = "ValidatorChange"
 	IntendWithdraw      EventName = "IntendWithdraw"
@@ -57,8 +57,8 @@ func (e *EventWrapper) MustUnMarshal(input []byte) {
 func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
 	var err error
 	switch e.Name {
-	case InitializeCandidate:
-		res, err = ethClient.DPoS.ParseInitializeCandidate(e.Log)
+	case UpdateSidechainAddr:
+		res, err = ethClient.SGN.ParseUpdateSidechainAddr(e.Log)
 	case Delegate:
 		res, err = ethClient.DPoS.ParseDelegate(e.Log)
 	case ValidatorChange:
@@ -76,7 +76,7 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 	}
 
 	switch tmp := res.(type) {
-	case *mainchain.DPoSInitializeCandidate:
+	case *mainchain.SGNUpdateSidechainAddr:
 		tmp.Raw = e.Log
 		res = tmp
 	case *mainchain.CelerLedgerIntendSettle:
