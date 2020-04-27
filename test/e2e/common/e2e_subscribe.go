@@ -31,7 +31,12 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to open channel")
 
 	log.Infoln("Call subscribe on sgn contract...")
-	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, new(big.Int).Mul(amt, big.NewInt(2)))
+
+	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
+	tc.ChkTestErr(t, err, "failed to approve CELR to DPoS contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to DPoS contract")
+
+	tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
 	tc.ChkTestErr(t, err, "failed to approve CELR to SGN contract")
 	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to SGN contract")
 
