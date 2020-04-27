@@ -66,7 +66,7 @@ func slashTest(t *testing.T) {
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < 30; retry++ {
-		ci, _ := tc.Client0.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
+		ci, _ := tc.Client0.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "990000000000000000" {
 			break

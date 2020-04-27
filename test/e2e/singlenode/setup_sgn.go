@@ -25,13 +25,13 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 			MaxValidatorNum:        big.NewInt(11),
 		}
 	}
-	tc.E2eProfile.GuardAddr = tc.DeployGuardContract(sgnParams)
+	tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
 
 	updateSGNConfig()
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tc.ChkErr(err, "start sidechain")
-	tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
+	tc.SetContracts(tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr, tc.E2eProfile.LedgerAddr)
 
 	killable := []tc.Killable{sgnProc}
 	if sgnParams.StartGateway {
@@ -54,7 +54,8 @@ func updateSGNConfig() {
 	tc.ChkErr(err, "get client keystore path")
 
 	viper.Set(common.FlagEthInstance, tc.LocalGeth)
-	viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
+	viper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
+	viper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
 	viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()

@@ -77,7 +77,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
 
 	// self delegate stake
-	err = DelegateStake(E2eProfile.CelrContract, E2eProfile.GuardAddr, auth, ethAddr, amt)
+	err = DelegateStake(E2eProfile.CelrContract, E2eProfile.DPoSAddr, auth, ethAddr, amt)
 	ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")

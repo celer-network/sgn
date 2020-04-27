@@ -35,7 +35,7 @@ func SetEthBaseKs(prefix string) {
 }
 
 // SetupEthClients sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
-// Contracts part (GuardAddress, Guard, LedgerAddress, Ledger) is set after deploying Guard contracts in setupNewSGNEnv()
+// Contracts part (DPoSAddress, DPoS, SGNAddress, SGN, LedgerAddress, Ledger) is set after deploying DPoS and SGN contracts in setupNewSGNEnv()
 func SetupEthClients() {
 	EtherBase = setupEthClient(etherBaseKs)
 	Client0 = setupEthClient(ClientEthKs[0])
@@ -51,17 +51,17 @@ func setupEthClient(ksfile string) *mainchain.EthClient {
 	return ethClient
 }
 
-func SetContracts(guardAddr, ledgerAddr mainchain.Addr) error {
-	log.Infof("set contracts guard %x ledger %x", guardAddr, ledgerAddr)
-	err := EtherBase.SetContracts(guardAddr.String(), ledgerAddr.String())
+func SetContracts(dposAddr, sgnAddr, ledgerAddr mainchain.Addr) error {
+	log.Infof("set contracts dpos %x sgn %x ledger %x", dposAddr, sgnAddr, ledgerAddr)
+	err := EtherBase.SetContracts(dposAddr.String(), sgnAddr.String(), ledgerAddr.String())
 	if err != nil {
 		return err
 	}
-	err = Client0.SetContracts(guardAddr.String(), ledgerAddr.String())
+	err = Client0.SetContracts(dposAddr.String(), sgnAddr.String(), ledgerAddr.String())
 	if err != nil {
 		return err
 	}
-	err = Client1.SetContracts(guardAddr.String(), ledgerAddr.String())
+	err = Client1.SetContracts(dposAddr.String(), sgnAddr.String(), ledgerAddr.String())
 	if err != nil {
 		return err
 	}
@@ -232,12 +232,12 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 
 func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *big.Int) error {
 	conn := EtherBase.Client
-	guardContract := EtherBase.Guard
+	dposContract := EtherBase.DPoS
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
-	log.Info("Call intendWithdraw on guard contract using the validator eth address...")
-	tx, err := guardContract.IntendWithdraw(auth, candidateAddr, amt)
+	log.Info("Call intendWithdraw on dpos contract using the validator eth address...")
+	tx, err := dposContract.IntendWithdraw(auth, candidateAddr, amt)
 	if err != nil {
 		return err
 	}
@@ -248,34 +248,44 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int) error {
 	conn := EtherBase.Client
-	guardContract := EtherBase.Guard
+	dposContract := EtherBase.DPoS
+	sgnContract := EtherBase.SGN
+
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
-
-	log.Info("Call initializeCandidate on guard contract using the validator eth address...")
-	tx, err := guardContract.InitializeCandidate(auth, minSelfStake, sgnAddr.Bytes())
+	log.Infof("Call initializeCandidate on dpos contract using the validator eth address %x, minSelfStake: %d", auth.From.Bytes(), minSelfStake)
+	tx, err := dposContract.InitializeCandidate(auth, minSelfStake)
 	if err != nil {
 		return err
 	}
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "DPoS InitializeCandidate")
 
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "InitializeCandidate")
+	ctx, cancel = context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+	log.Infof("Call updateSidechainAddr on sgn contract using the validator eth address, sgnAddr: %x", sgnAddr.Bytes())
+	tx, err = sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
+	if err != nil {
+		return err
+	}
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "SGN UpdateSidechainAddr")
+
 	return nil
 }
 
-func DelegateStake(celrContract *mainchain.ERC20, guardAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
+func DelegateStake(celrContract *mainchain.ERC20, dposAddr mainchain.Addr, fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
 	conn := EtherBase.Client
-	guardContract := EtherBase.Guard
+	dposContract := EtherBase.DPoS
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
-	log.Info("Call delegate on guard contract to delegate stake to the validator eth address...")
-	tx, err := celrContract.Approve(fromAuth, guardAddr, amt)
+	log.Info("Call delegate on dpos contract to delegate stake to the validator eth address...")
+	tx, err := celrContract.Approve(fromAuth, dposAddr, amt)
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to Guard contract")
+	WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to DPoS contract")
 
-	tx, err = guardContract.Delegate(fromAuth, toEthAddress, amt)
+	tx, err = dposContract.Delegate(fromAuth, toEthAddress, amt)
 	if err != nil {
 		return err
 	}

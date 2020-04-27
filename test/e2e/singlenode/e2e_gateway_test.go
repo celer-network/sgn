@@ -64,15 +64,15 @@ func gatewayTest(t *testing.T) {
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
 	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
-	log.Info("Call subscribe on guard contract...")
+	log.Info("Call subscribe on sgn contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
-	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.GuardAddr, amt)
+	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
 	tc.ChkTestErr(t, err, "failed to approve CELR on mainchain")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to Guard contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to SGN contract")
 
-	tx, err = tc.Client0.Guard.Subscribe(tc.Client0.Auth, amt)
+	tx, err = tc.Client0.SGN.Subscribe(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to subscribe on mainchain")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on SGN contract")
 	tc.SleepWithLog(10, "passing subscribe event block delay")
 
 	msg := map[string]interface{}{

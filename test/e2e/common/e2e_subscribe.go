@@ -30,17 +30,22 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	channelId, err := tc.OpenChannel(tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to open channel")
 
-	log.Infoln("Call subscribe on guard contract...")
-	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.GuardAddr, new(big.Int).Mul(amt, big.NewInt(2)))
-	tc.ChkTestErr(t, err, "failed to approve CELR to Guard contract")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to Guard contract")
+	log.Infoln("Call subscribe on sgn contract...")
 
-	_, err = tc.EtherBase.Guard.ContributeToMiningPool(tc.Client0.Auth, amt)
-	tc.ChkTestErr(t, err, "failed to call ContributeToMiningPool of Guard contract")
+	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
+	tc.ChkTestErr(t, err, "failed to approve CELR to DPoS contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to DPoS contract")
 
-	tx, err = tc.Client0.Guard.Subscribe(tc.Client0.Auth, amt)
-	tc.ChkTestErr(t, err, "failed to call subscribe of Guard contract")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on Guard contract")
+	tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
+	tc.ChkTestErr(t, err, "failed to approve CELR to SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to SGN contract")
+
+	_, err = tc.EtherBase.DPoS.ContributeToMiningPool(tc.Client0.Auth, amt)
+	tc.ChkTestErr(t, err, "failed to call ContributeToMiningPool of DPoS contract")
+
+	tx, err = tc.Client0.SGN.Subscribe(tc.Client0.Auth, amt)
+	tc.ChkTestErr(t, err, "failed to call subscribe of SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on SGN contract")
 	tc.SleepWithLog(20, "passing subscribe event block delay")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
@@ -145,11 +150,11 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to query reward on sgn")
 	assert.Equal(t, rewardSigLen, len(reward.Sigs), "The length of reward signatures mismatch")
 
-	log.Infoln("Call redeemReward on guard contract...")
-	tx, err = tc.Client0.Guard.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())
+	log.Infoln("Call redeemReward on sgn contract...")
+	tx, err = tc.Client0.SGN.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())
 	tc.ChkTestErr(t, err, "failed to redeem reward")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "redeem reward on Guard contract")
-	rsr, err := tc.Client0.Guard.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "redeem reward on SGN contract")
+	rsr, err := tc.Client0.SGN.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 	tc.ChkTestErr(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 }
