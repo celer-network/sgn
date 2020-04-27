@@ -23,9 +23,14 @@ func (rs *RestServer) registerTxRoutes() {
 		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
+	// rs.Mux.HandleFunc(
+	// 	"/validator/initializeCandidate",
+	// 	postInitializeCandidateHandlerFn(rs),
+	// ).Methods(http.MethodPost, http.MethodOptions)
+
 	rs.Mux.HandleFunc(
-		"/validator/initializeCandidate",
-		postInitializeCandidateHandlerFn(rs),
+		"/validator/updateSidechainAddr",
+		postUpdateSidechainAddrHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
@@ -49,7 +54,11 @@ type (
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
 	}
 
-	InitializeCandidateRequest struct {
+	// InitializeCandidateRequest struct {
+	// 	EthAddr string `json:"ethAddr" yaml:"ethAddr"`
+	// }
+
+	UpdateSidechainAddrRequest struct {
 		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
 	}
 
