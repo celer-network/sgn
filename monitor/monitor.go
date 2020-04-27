@@ -43,7 +43,8 @@ type EthMonitor struct {
 	blockSyncer    *transactor.Transactor
 	db             *dbm.GoLevelDB
 	ms             *watcher.Service
-	guardContract  *watcher.BoundContract
+	dposContract   *watcher.BoundContract
+	sgnContract    *watcher.BoundContract
 	ledgerContract *watcher.BoundContract
 	blkNum         *big.Int
 	isValidator    bool
@@ -70,14 +71,19 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	ms := watcher.NewService(ws, 0 /* blockDelay */, true /* enabled */, "" /* rpcAddr */)
 	ms.Init()
 
-	candidateInfo, err := ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
+	dposCandidateInfo, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
 		log.Fatalln("GetCandidateInfo err", err)
 	}
 
-	guardContract, err := watcher.NewBoundContract(ethClient.Client, ethClient.GuardAddress, mainchain.GuardABI)
+	dposContract, err := watcher.NewBoundContract(ethClient.Client, ethClient.DPoSAddress, mainchain.DPoSABI)
 	if err != nil {
-		log.Fatalln("guardContract err", err)
+		log.Fatalln("dposContract err", err)
+	}
+
+	sgnContract, err := watcher.NewBoundContract(ethClient.Client, ethClient.SGNAddress, mainchain.SGNABI)
+	if err != nil {
+		log.Fatalln("sgnContract err", err)
 	}
 
 	ledgerContract, err := watcher.NewBoundContract(ethClient.Client, ethClient.LedgerAddress, mainchain.CelerLedgerABI)
@@ -92,13 +98,14 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 		db:             db,
 		ms:             ms,
 		blkNum:         ms.GetCurrentBlockNumber(),
-		guardContract:  guardContract,
+		dposContract:   dposContract,
+		sgnContract:    sgnContract,
 		ledgerContract: ledgerContract,
-		isValidator:    mainchain.IsBonded(candidateInfo),
+		isValidator:    mainchain.IsBonded(dposCandidateInfo),
 	}
 
 	go m.monitorBlockHead()
-	go m.monitorInitializeCandidate()
+	go m.monitorUpdateSidechainAddr()
 	go m.monitorDelegate()
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
@@ -125,10 +132,10 @@ func (m *EthMonitor) monitorBlockHead() {
 	}
 }
 
-func (m *EthMonitor) monitorInitializeCandidate() {
-	_, err := m.ms.Monitor(string(InitializeCandidate), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event InitializeCandidate, tx hash: %x", eLog.TxHash)
-		event := NewEvent(InitializeCandidate, eLog)
+func (m *EthMonitor) monitorUpdateSidechainAddr() {
+	_, err := m.ms.Monitor(string(UpdateSidechainAddr), m.sgnContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
+		event := NewEvent(UpdateSidechainAddr, eLog)
 		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 	})
 	if err != nil {
@@ -137,7 +144,7 @@ func (m *EthMonitor) monitorInitializeCandidate() {
 }
 
 func (m *EthMonitor) monitorDelegate() {
-	_, err := m.ms.Monitor(string(Delegate), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(Delegate), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
 		event := NewEvent(Delegate, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
@@ -148,7 +155,7 @@ func (m *EthMonitor) monitorDelegate() {
 }
 
 func (m *EthMonitor) monitorValidatorChange() {
-	_, err := m.ms.Monitor(string(ValidatorChange), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(ValidatorChange), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
 		event := NewEvent(ValidatorChange, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
@@ -159,7 +166,7 @@ func (m *EthMonitor) monitorValidatorChange() {
 }
 
 func (m *EthMonitor) monitorIntendWithdraw() {
-	_, err := m.ms.Monitor(string(IntendWithdraw), m.guardContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor(string(IntendWithdraw), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event IntendWithdraw, tx hash: %x", eLog.TxHash)
 		event := NewEvent(IntendWithdraw, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())

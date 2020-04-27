@@ -25,7 +25,8 @@ type Killable interface {
 type TestProfile struct {
 	DisputeTimeout uint64
 	LedgerAddr     mainchain.Addr
-	GuardAddr      mainchain.Addr
+	DPoSAddr       mainchain.Addr
+	SGNAddr        mainchain.Addr
 	CelrAddr       mainchain.Addr
 	CelrContract   *mainchain.ERC20
 }

@@ -74,12 +74,12 @@ func NewRestServer() (rs *RestServer, err error) {
 		}
 	}
 
-	peer1, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer1Flag), "")
+	peer1, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthDPoSAddress), viper.GetString(common.FlagEthSGNAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer1Flag), "")
 	if err != nil {
 		return
 	}
 
-	peer2, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthGuardAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer2Flag), "")
+	peer2, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthDPoSAddress), viper.GetString(common.FlagEthSGNAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer2Flag), "")
 	if err != nil {
 		return
 	}
@@ -87,7 +87,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	tc.Client0 = peer1
 
 	log.Infof("Subscribe to sgn")
-	tokenAddr, err := peer1.Guard.CelerToken(&bind.CallOpts{})
+	tokenAddr, err := peer1.DPoS.CelerToken(&bind.CallOpts{})
 	if err != nil {
 		return
 	}
@@ -98,13 +98,13 @@ func NewRestServer() (rs *RestServer, err error) {
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 18), 10)
-	tx, err := tokenContract.Approve(peer1.Auth, peer1.GuardAddress, amt)
+	tx, err := tokenContract.Approve(peer1.Auth, peer1.DPoSAddress, amt)
 	tc.ChkErr(err, "failed to approve erc20")
 	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, 0, "approve erc20")
 
-	tx, err = peer1.Guard.Subscribe(peer1.Auth, amt)
+	tx, err = peer1.SGN.Subscribe(peer1.Auth, amt)
 	tc.ChkErr(err, "failed to subscribe")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, "Subscribe on Guard contract")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, "Subscribe on SGN contract")
 
 	if gateway == "" {
 		msgSubscribe := subscribe.NewMsgSubscribe(peer1.Address.Hex(), ts.Key.GetAddress())

@@ -28,6 +28,18 @@ type HashType = ec.Hash
 // Addr is alias to geth common.Address
 type Addr = ec.Address
 
+// DPoSCandidateInfo contains info emitted by DPoS contract
+type DPoSCandidateInfo struct {
+	Initialized  bool
+	MinSelfStake *big.Int
+	StakingPool  *big.Int
+	Status       *big.Int
+	UnbondTime   *big.Int
+}
+
+// SidechainAddr is alias to []byte
+type SidechainAddr = []byte
+
 // ========== Hex/Bytes ==========
 
 // Hex2Bytes supports hex string with or without 0x prefix
@@ -105,14 +117,4 @@ func Hex2Hash(s string) HashType {
 // Bytes2Hash converts bytes to HashType
 func Bytes2Hash(b []byte) HashType {
 	return ec.BytesToHash(b)
-}
-
-// CandidateInfo contains info emitted by the mainchain
-type CandidateInfo struct {
-	Initialized   bool
-	MinSelfStake  *big.Int
-	SidechainAddr []byte
-	StakingPool   *big.Int
-	Status        *big.Int
-	UnbondTime    *big.Int
 }

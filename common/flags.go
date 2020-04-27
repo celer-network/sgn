@@ -4,7 +4,8 @@ const (
 	FlagConfig = "config"
 
 	FlagEthInstance      = "eth.instance"
-	FlagEthGuardAddress  = "eth.guardAddress"
+	FlagEthDPoSAddress   = "eth.dposAddress"
+	FlagEthSGNAddress    = "eth.sgnAddress"
 	FlagEthLedgerAddress = "eth.ledgerAddress"
 	FlagEthKeystore      = "eth.keystore"
 	FlagEthPassphrase    = "eth.passphrase"

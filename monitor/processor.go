@@ -48,12 +48,12 @@ func (m *EthMonitor) processPullerQueue(secureBlockNum uint64) {
 			continue
 		}
 
-		log.Infoln("Process puller event", event.Name)
+		log.Infoln("Process puller event", event.Name, "at mainchain block", event.Log.BlockNumber)
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
-		case *mainchain.GuardInitializeCandidate:
-			m.syncInitializeCandidate(e)
+		case *mainchain.SGNUpdateSidechainAddr:
+			m.syncUpdateSidechainAddr(e)
 		case *mainchain.CelerLedgerIntendSettle:
 			m.syncIntendSettle(e)
 		}
@@ -99,16 +99,17 @@ func (m *EthMonitor) processPenaltyQueue() {
 	}
 }
 
-func (m *EthMonitor) syncInitializeCandidate(initializeCandidate *mainchain.GuardInitializeCandidate) {
-	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(initializeCandidate.Candidate))
+// TODO: need to handle update after first initialization
+func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
+	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
 	if err == nil {
-		log.Infof("Candidate %x has been initialized", initializeCandidate.Candidate)
+		log.Infof("The sidechain address of candidate %x has been updated", updateSidechainAddr.Candidate)
 		return
 	}
 
-	log.Infof("Add InitializeCandidate of %x to transactor msgQueue", initializeCandidate.Candidate)
-	msg := validator.NewMsgInitializeCandidate(
-		mainchain.Addr2Hex(initializeCandidate.Candidate), m.operator.Key.GetAddress())
+	log.Infof("Add UpdateSidechainAddr of %x to transactor msgQueue", updateSidechainAddr.Candidate)
+	msg := validator.NewMsgUpdateSidechainAddr(
+		mainchain.Addr2Hex(updateSidechainAddr.Candidate), m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 
@@ -184,7 +185,7 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.Guard.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
@@ -201,7 +202,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	tx, err := m.ethClient.Guard.Punish(m.ethClient.Auth, penaltyRequest)
+	tx, err := m.ethClient.DPoS.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
 		log.Errorln("Punish err", err)
 		m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())

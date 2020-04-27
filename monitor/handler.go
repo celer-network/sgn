@@ -34,11 +34,11 @@ func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
-		case *mainchain.GuardDelegate:
+		case *mainchain.DPoSDelegate:
 			m.handleDelegate(e)
-		case *mainchain.GuardValidatorChange:
+		case *mainchain.DPoSValidatorChange:
 			m.handleValidatorChange(e)
-		case *mainchain.GuardIntendWithdraw:
+		case *mainchain.DPoSIntendWithdraw:
 			m.handleIntendWithdraw(e)
 		}
 	}
@@ -57,7 +57,7 @@ func (m *EthMonitor) handleNewBlock(blkNum *big.Int) {
 	m.blockSyncer.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
+func (m *EthMonitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
 	if delegate.Candidate != m.ethClient.Address {
 		log.Infof("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
 		return
@@ -74,7 +74,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.GuardDelegate) {
 	}
 }
 
-func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValidatorChange) {
+func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
 	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	isAddValidator := validatorChange.ChangeType == mainchain.AddValidator
 	doSync := m.isPuller() && !isAddValidator
@@ -94,7 +94,7 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.GuardValid
 	}
 }
 
-func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.GuardIntendWithdraw) {
+func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
 	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate) {
@@ -140,7 +140,7 @@ func (m *EthMonitor) handlePenalty(penaltyEvent PenaltyEvent) {
 }
 
 func (m *EthMonitor) claimValidatorOnMainchain() {
-	candidate, err := m.ethClient.Guard.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
+	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
 	if err != nil {
 		log.Errorln("GetCandidateInfo err", err)
 		return
@@ -150,7 +150,7 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 		return
 	}
 
-	minStake, err := m.ethClient.Guard.GetMinStakingPool(&bind.CallOpts{})
+	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
 		return
@@ -160,7 +160,7 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 		return
 	}
 
-	_, err = m.ethClient.Guard.ClaimValidator(m.ethClient.Auth)
+	_, err = m.ethClient.DPoS.ClaimValidator(m.ethClient.Auth)
 	if err != nil {
 		log.Errorln("ClaimValidator tx err", err)
 		return

@@ -19,14 +19,16 @@ type EthClient struct {
 	Address    Addr
 	Auth       *bind.TransactOpts
 	// initialized by SetContracts()
-	GuardAddress  Addr
-	Guard         *Guard
+	DPoSAddress   Addr
+	DPoS          *DPoS
+	SGNAddress    Addr
+	SGN           *SGN
 	LedgerAddress Addr
 	Ledger        *CelerLedger
 }
 
 // NewEthClient creates a new eth client and initializes all fields
-func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
+func NewEthClient(ws, dposAddrStr, sgnAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
 	ethClient := &EthClient{}
 	err := ethClient.SetClient(ws)
 	if err != nil {
@@ -38,7 +40,7 @@ func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthC
 		return nil, err
 	}
 
-	err = ethClient.SetContracts(guardAddrStr, ledgerAddrStr)
+	err = ethClient.SetContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +80,15 @@ func (ethClient *EthClient) SetAuth(ks, passphrase string) error {
 	return nil
 }
 
-func (ethClient *EthClient) SetContracts(guardAddrStr, ledgerAddrStr string) error {
-	ethClient.GuardAddress = Hex2Addr(guardAddrStr)
-	guard, err := NewGuard(ethClient.GuardAddress, ethClient.Client)
+func (ethClient *EthClient) SetContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
+	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
+	dpos, err := NewDPoS(ethClient.DPoSAddress, ethClient.Client)
+	if err != nil {
+		return err
+	}
+
+	ethClient.SGNAddress = Hex2Addr(sgnAddrStr)
+	sgn, err := NewSGN(ethClient.SGNAddress, ethClient.Client)
 	if err != nil {
 		return err
 	}
@@ -91,7 +99,8 @@ func (ethClient *EthClient) SetContracts(guardAddrStr, ledgerAddrStr string) err
 		return err
 	}
 
-	ethClient.Guard = guard
+	ethClient.DPoS = dpos
+	ethClient.SGN = sgn
 	ethClient.Ledger = ledger
 	return nil
 }

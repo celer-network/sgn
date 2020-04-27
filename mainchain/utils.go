@@ -15,12 +15,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func IsBonded(candidateInfo CandidateInfo) bool {
-	return candidateInfo.Status.Uint64() == Bonded
+func IsBonded(dposCandidateInfo DPoSCandidateInfo) bool {
+	return dposCandidateInfo.Status.Uint64() == Bonded
 }
 
-func ParseStatus(candidateInfo CandidateInfo) sdk.BondStatus {
-	switch candidateInfo.Status.Uint64() {
+func ParseStatus(dposCandidateInfo DPoSCandidateInfo) sdk.BondStatus {
+	switch dposCandidateInfo.Status.Uint64() {
 	case Bonded:
 		return sdk.Bonded
 	case Unbonding:

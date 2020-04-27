@@ -43,14 +43,29 @@ func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
 	return erc20Addr, erc20
 }
 
-func DeployGuardContract(sgnParams *SGNParams) mainchain.Addr {
+func DeployDPoSSGNContracts(sgnParams *SGNParams) (mainchain.Addr, mainchain.Addr) {
 	ctx := context.Background()
-	guardAddr, tx, _, err := mainchain.DeployGuard(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout, sgnParams.MaxValidatorNum)
-	ChkErr(err, "failed to deploy Guard contract")
-	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy Guard "+guardAddr.Hex())
+	dposAddr, tx, _, err := mainchain.DeployDPoS(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout, sgnParams.MaxValidatorNum)
+	ChkErr(err, "failed to deploy DPoS contract")
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy DPoS "+dposAddr.Hex())
 
-	log.Infoln("Guard address:", guardAddr.String())
-	return guardAddr
+	ctx = context.Background()
+	sgnAddr, tx, _, err := mainchain.DeploySGN(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, dposAddr)
+	ChkErr(err, "failed to deploy SGN contract")
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy SGN "+sgnAddr.Hex())
+
+	// TODO: register SGN address on DPoS contract
+	ctx = context.Background()
+	dpos, err := mainchain.NewDPoS(dposAddr, EtherBase.Client)
+	ChkErr(err, "failed to new DPoS instance")
+	tx, err = dpos.RegisterSidechain(EtherBase.Auth, sgnAddr)
+	ChkErr(err, "failed to register SGN address on DPoS contract")
+	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Register SGN")
+
+	log.Infoln("DPoS address:", dposAddr.String())
+	log.Infoln("SGN address:", sgnAddr.String())
+
+	return dposAddr, sgnAddr
 }
 
 func DeployCommand() *cobra.Command {
@@ -94,15 +109,16 @@ func DeployCommand() *cobra.Command {
 				CelrAddr:               erc20Addr,
 				MaxValidatorNum:        big.NewInt(7),
 			}
-			guardAddr := DeployGuardContract(sgnParams)
-			viper.Set(common.FlagEthGuardAddress, guardAddr)
+			dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
+			viper.Set(common.FlagEthDPoSAddress, dposAddr)
+			viper.Set(common.FlagEthSGNAddress, sgnAddr)
 			err = viper.WriteConfig()
 			ChkErr(err, "failed to write config")
 
 			if ws == LocalGeth {
 				amt := new(big.Int)
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
-				tx, err := erc20.Approve(EtherBase.Auth, guardAddr, amt)
+				tx, err := erc20.Approve(EtherBase.Auth, dposAddr, amt)
 				ChkErr(err, "failed to approve erc20")
 				WaitMinedWithChk(context.Background(), EtherBase.Client, tx, 0, "approve erc20")
 			}

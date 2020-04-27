@@ -53,7 +53,7 @@ func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEnt
 	logEntry.EthAddress = msg.EthAddress
 
 	res := &sdk.Result{}
-	deposit, err := keeper.ethClient.Guard.SubscriptionDeposits(
+	deposit, err := keeper.ethClient.SGN.SubscriptionDeposits(
 		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))},
 		mainchain.Hex2Addr(msg.EthAddress))
 	if err != nil {

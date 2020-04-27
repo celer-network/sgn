@@ -9,7 +9,7 @@ import (
 const RouterKey = ModuleName // this was defined in your key.go file
 
 const (
-	TypeMsgInitializeCandidate = "initialize_candidate"
+	TypeMsgUpdateSidechainAddr = "update_sidechain_addr"
 	TypeMsgSetTransactors      = "set_transactors"
 	TypeMsgClaimValidator      = "claim_validator"
 	TypeMsgSyncValidator       = "sync_validator"
@@ -18,28 +18,28 @@ const (
 	TypeMsgSignReward          = "sign_reward"
 )
 
-// MsgInitializeCandidate defines a InitializeCandidate message
-type MsgInitializeCandidate struct {
+// MsgUpdateSidechainAddr defines a UpdateSidechainAddr message
+type MsgUpdateSidechainAddr struct {
 	EthAddress string         `json:"ethAddress"`
 	Sender     sdk.AccAddress `json:"sender"`
 }
 
-// NewMsgInitializeCandidate is a constructor function for MsgInitializeCandidate
-func NewMsgInitializeCandidate(ethAddress string, sender sdk.AccAddress) MsgInitializeCandidate {
-	return MsgInitializeCandidate{
+// NewMsgUpdateSidechainAddr is a constructor function for MsgUpdateSidechainAddr
+func NewMsgUpdateSidechainAddr(ethAddress string, sender sdk.AccAddress) MsgUpdateSidechainAddr {
+	return MsgUpdateSidechainAddr{
 		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Sender:     sender,
 	}
 }
 
 // Route should return the name of the module
-func (msg MsgInitializeCandidate) Route() string { return RouterKey }
+func (msg MsgUpdateSidechainAddr) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgInitializeCandidate) Type() string { return TypeMsgInitializeCandidate }
+func (msg MsgUpdateSidechainAddr) Type() string { return TypeMsgUpdateSidechainAddr }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgInitializeCandidate) ValidateBasic() error {
+func (msg MsgUpdateSidechainAddr) ValidateBasic() error {
 	if msg.EthAddress == "" {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
@@ -52,12 +52,12 @@ func (msg MsgInitializeCandidate) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgInitializeCandidate) GetSignBytes() []byte {
+func (msg MsgUpdateSidechainAddr) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgInitializeCandidate) GetSigners() []sdk.AccAddress {
+func (msg MsgUpdateSidechainAddr) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
