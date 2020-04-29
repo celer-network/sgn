@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/sync/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,5 +23,7 @@ func (keeper Keeper) SyncBlock(ctx sdk.Context, data []byte) error {
 	keeper.cdc.MustUnmarshalBinaryBare(data, &block)
 
 	keeper.gk.SyncBlock(ctx, block.Number)
+	log.Infof("Sync mainchain block to", block.Number)
+
 	return nil
 }

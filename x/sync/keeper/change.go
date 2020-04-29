@@ -52,7 +52,7 @@ func (keeper Keeper) ApproveChange(ctx sdk.Context, changeID uint64, voterAddr s
 	return nil
 }
 
-// GetChange get change from store by ChangeID
+// GetChange get change from store by ID
 func (keeper Keeper) GetChange(ctx sdk.Context, changeID uint64) (change types.Change, ok bool) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := store.Get(types.ChangeKey(changeID))
@@ -67,7 +67,7 @@ func (keeper Keeper) GetChange(ctx sdk.Context, changeID uint64) (change types.C
 func (keeper Keeper) SetChange(ctx sdk.Context, change types.Change) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(change)
-	store.Set(types.ChangeKey(change.ChangeID), bz)
+	store.Set(types.ChangeKey(change.ID), bz)
 }
 
 // IterateChanges iterates over the all the changes and performs a callback function
@@ -149,7 +149,7 @@ func (keeper Keeper) SetChangeID(ctx sdk.Context, changeID uint64) {
 	store.Set(types.ChangeIDKey, types.GetChangeIDBytes(changeID))
 }
 
-// InsertActiveChangeQueue inserts a ChangeID into the active change queue at endTime
+// InsertActiveChangeQueue inserts a ID into the active change queue at endTime
 func (keeper Keeper) InsertActiveChangeQueue(ctx sdk.Context, changeID uint64, endTime time.Time) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := types.GetChangeIDBytes(changeID)

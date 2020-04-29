@@ -56,9 +56,9 @@ func queryChange(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	change, ok := keeper.GetChange(ctx, params.ChangeID)
+	change, ok := keeper.GetChange(ctx, params.ID)
 	if !ok {
-		return nil, sdkerrors.Wrapf(types.ErrUnknownChange, "%d", params.ChangeID)
+		return nil, sdkerrors.Wrapf(types.ErrUnknownChange, "%d", params.ID)
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, change)

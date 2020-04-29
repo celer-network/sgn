@@ -15,7 +15,7 @@ const DefaultStartingChangeID uint64 = 1
 // Change defines a struct used by the sync module to allow for voting
 // on network changes.
 type Change struct {
-	ChangeID      uint64           `json:"id" yaml:"id"` //  ID of the change
+	ID      uint64           `json:"id" yaml:"id"` //  ID of the change
 	Type          string           `json:"type" yaml:"type"`
 	Data          []byte           `json:"data" yaml:"data"`
 	Initiator     sdk.AccAddress   `json:"initiator" yaml:"initiator"`
@@ -28,7 +28,7 @@ type Change struct {
 // NewChange creates a new Change instance
 func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndTime time.Time, initiatorAddr sdk.AccAddress) Change {
 	return Change{
-		ChangeID:      id,
+		ID:      id,
 		Type:          changeType,
 		Data:          data,
 		Initiator:     initiatorAddr,
@@ -46,7 +46,7 @@ func (c Change) String() string {
   Status:             %s
   Submit Time:        %s
   Voting End Time:    %s`,
-		c.ChangeID, c.Type, c.Initiator,
+		c.ID, c.Type, c.Initiator,
 		c.Status, c.SubmitTime, c.VotingEndTime,
 	)
 }
@@ -59,7 +59,7 @@ func (changes Changes) String() string {
 	out := "ID - (Status) [Type]\n"
 	for _, change := range changes {
 		out += fmt.Sprintf("%d - (%s) [%s]\n",
-			change.ChangeID, change.Status,
+			change.ID, change.Status,
 			change.Type)
 	}
 	return strings.TrimSpace(out)

@@ -243,6 +243,7 @@ func (m *EthMonitor) monitorSubmitChange() {
 				return
 			}
 
+			log.Infof("Verify change", change)
 			if m.verifyChange(change) {
 				msg := sync.NewMsgApprove(changeId, m.operator.Key.GetAddress())
 				m.operator.AddTxMsg(msg)

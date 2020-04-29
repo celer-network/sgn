@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/sync"
 )
@@ -23,5 +24,6 @@ func (m *EthMonitor) verifySyncBlock(data []byte) bool {
 		return false
 	}
 
+	log.Infof("Verify SyncBlock", block, syncedBlock)
 	return block.Number <= m.blkNum.Uint64() && block.Number > syncedBlock.Number
 }

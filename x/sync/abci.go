@@ -23,9 +23,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	threshold := keeper.GetTallyParams(ctx).Threshold.MulInt(totalToken).TruncateInt()
 	// fetch active changes whose voting periods have ended (are passed the block time)
 	keeper.IterateActiveChangesQueue(ctx, ctx.BlockHeader().Time, func(change Change) bool {
-		tagValue := types.AttributeValueChangeFailed
 		totalVote := sdk.ZeroInt()
-
 		for _, voter := range change.Voters {
 			validator, ok := validatorsByAddr[voter.String()]
 			if !ok {
@@ -34,8 +32,8 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 			totalVote = totalVote.Add(validator.Tokens)
 		}
 
+		tagValue := types.AttributeValueChangeFailed
 		change.Status = StatusFailed
-		tagValue = types.AttributeValueChangeFailed
 
 		if totalVote.GTE(threshold) {
 			err := keeper.ApplyChange(ctx, change)
@@ -48,12 +46,12 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		}
 
 		keeper.SetChange(ctx, change)
-		keeper.RemoveFromActiveChangeQueue(ctx, change.ChangeID, change.VotingEndTime)
+		keeper.RemoveFromActiveChangeQueue(ctx, change.ID, change.VotingEndTime)
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeActiveChange,
-				sdk.NewAttribute(types.AttributeKeyChangeID, fmt.Sprintf("%d", change.ChangeID)),
+				sdk.NewAttribute(types.AttributeKeyChangeID, fmt.Sprintf("%d", change.ID)),
 				sdk.NewAttribute(types.AttributeKeyChangeResult, tagValue),
 			),
 		)

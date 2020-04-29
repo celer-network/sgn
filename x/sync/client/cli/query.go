@@ -144,9 +144,8 @@ func QueryChanges(cliCtx context.CLIContext, queryRoute string, page, limit int,
 	params := types.NewQueryChangesParams(page, limit, changeStatus)
 
 	if len(strChangeStatus) != 0 {
-		changeStatus, err2 := types.ChangeStatusFromString(strChangeStatus)
-		if err2 != nil {
-			err = err2
+		changeStatus, err = types.ChangeStatusFromString(strChangeStatus)
+		if err != nil {
 			return
 		}
 		params.ChangeStatus = changeStatus

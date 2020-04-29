@@ -21,13 +21,13 @@ const (
 // - 'custom/sync/deposits'
 // - 'custom/sync/tally'
 type QueryChangeParams struct {
-	ChangeID uint64
+	ID uint64
 }
 
 // NewQueryChangeParams creates a new instance of QueryChangeParams
 func NewQueryChangeParams(changeID uint64) QueryChangeParams {
 	return QueryChangeParams{
-		ChangeID: changeID,
+		ID: changeID,
 	}
 }
 
