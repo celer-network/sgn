@@ -23,7 +23,7 @@ func (keeper Keeper) SyncBlock(ctx sdk.Context, data []byte) error {
 	keeper.cdc.MustUnmarshalBinaryBare(data, &block)
 
 	keeper.gk.SyncBlock(ctx, block.Number)
-	log.Infof("Sync mainchain block to", block.Number)
+	log.Infoln("Sync mainchain block to", block.Number)
 
 	return nil
 }

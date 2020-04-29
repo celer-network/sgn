@@ -24,6 +24,6 @@ func (m *EthMonitor) verifySyncBlock(data []byte) bool {
 		return false
 	}
 
-	log.Infof("Verify SyncBlock", block, syncedBlock)
+	log.Infoln("Verify SyncBlock", block, syncedBlock)
 	return block.Number <= m.blkNum.Uint64() && block.Number > syncedBlock.Number
 }
