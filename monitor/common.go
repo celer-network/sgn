@@ -70,7 +70,3 @@ func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 	accGetter := types.NewAccountRetriever(m.operator.CliCtx)
 	return accGetter.GetAccount(addr)
 }
-
-func (m *EthMonitor) getGlobalParams() (global.Params, error) {
-	return global.CLIQueryParams(m.operator.CliCtx, global.RouterKey)
-}

@@ -1,7 +1,6 @@
 package global
 
 import (
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -11,16 +10,14 @@ import (
 type Keeper struct {
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc        *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient  *mainchain.EthClient
 	paramstore params.Subspace
 }
 
 // NewKeeper creates new instances of the global Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:   storeKey,
 		cdc:        cdc,
-		ethClient:  ethClient,
 		paramstore: paramstore.WithKeyTable(ParamKeyTable()),
 	}
 }

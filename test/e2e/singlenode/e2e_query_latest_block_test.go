@@ -43,6 +43,8 @@ func queryLatestBlockTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 
+	tc.SleepWithLog(3, "sync block")
+
 	blockSGN, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query latest synced block on sgn")
 	log.Infof("Latest block number on SGN is %d", blockSGN.Number)

@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"math/big"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -10,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -50,16 +50,10 @@ func (m *EthMonitor) handleNewBlock(blkNum *big.Int) {
 		return
 	}
 
-	params, err := m.getGlobalParams()
-	if err != nil {
-		log.Errorln("Query global params", err)
-		return
-	}
-
-	time.Sleep(time.Duration(viper.GetInt64(common.FlagSgnTimeoutCommit)+params.BlkTimeDiffLower) * time.Second)
-
 	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", blkNum)
-	msg := global.NewMsgSyncBlock(blkNum.Uint64(), m.blockSyncer.Key.GetAddress())
+	block := global.NewBlock(blkNum.Uint64())
+	blockData := m.blockSyncer.CliCtx.Codec.MustMarshalBinaryBare(block)
+	msg := sync.NewMsgSubmitChange(sync.SyncBlock, blockData, m.blockSyncer.Key.GetAddress())
 	m.blockSyncer.AddTxMsg(msg)
 }
 

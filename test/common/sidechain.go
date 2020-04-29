@@ -77,7 +77,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
 
 	// self delegate stake
-	err = DelegateStake(E2eProfile.CelrContract, E2eProfile.DPoSAddr, auth, ethAddr, amt)
+	err = DelegateStake(auth, ethAddr, amt)
 	ChkTestErr(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
@@ -159,7 +159,7 @@ func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop
 func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum int) {
 	var validators stypes.Validators
 	var err error
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < 60; retry++ {
 		validators, err = sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 		if err == nil && len(validators) == expNum {
 			break

@@ -168,8 +168,6 @@
     "global": {
       "params": {
         "epochLength": "1",
-        "blkTimeDiffLower": "1",
-        "blkTimeDiffUpper": "30",
         "confirmationCount": "2"
       }
     },
@@ -190,6 +188,16 @@
         "quorum": "0.334000000000000000",
         "threshold": "0.500000000000000000",
         "veto": "0.334000000000000000"
+      }
+    },
+    "sync": {
+      "starting_change_id": "1",
+      "changes": null,
+      "voting_params": {
+        "voting_period": "3000000000"
+      },
+      "tally_params": {
+        "threshold": "0.668000000000000000"
       }
     }
   }
