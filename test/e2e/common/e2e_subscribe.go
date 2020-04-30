@@ -49,7 +49,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on SGN contract")
 	tc.SleepWithLog(20, "passing subscribe event block delay")
 
-	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...", tc.Client0.Address.Hex())
+	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	subscription := stypes.NewSubscription(tc.Client0.Address.Hex())
 	subscription.Deposit = sdk.NewIntFromBigInt(amt)
 	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
@@ -57,7 +57,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn about the subscription info...")
-	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, tc.Client0.Address.Hex(), amt, 0) // defined in Subscription.String()
+	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
 	for retry := 0; retry < 30; retry++ {
 		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, tc.Client0.Address.Hex())
 		if err == nil && expectedRes == subscription.String() {
