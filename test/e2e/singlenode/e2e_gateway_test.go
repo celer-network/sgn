@@ -77,6 +77,7 @@ func gatewayTest(t *testing.T) {
 
 	msg := map[string]interface{}{
 		"ethAddr": tc.Client0.Address.Hex(),
+		"amount": "100000000000000000000"
 	}
 	body, _ := json.Marshal(msg)
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
