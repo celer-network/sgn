@@ -36,7 +36,7 @@ func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 
 	subscription, found := keeper.GetSubscription(ctx, params.EthAddress)
 	if !found {
-		return nil, errors.New("cannot find subscription")
+		return nil, errors.New(fmt.Sprintf("cannot find subscription for %s", params.EthAddress))
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)

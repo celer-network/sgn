@@ -15,7 +15,6 @@ const (
 )
 
 var (
-	NewMsgSubscribe            = types.NewMsgSubscribe
 	NewMsgRequestGuard         = types.NewMsgRequestGuard
 	NewMsgIntendSettle         = types.NewMsgIntendSettle
 	NewMsgGuardProof           = types.NewMsgGuardProof
@@ -35,7 +34,6 @@ var (
 )
 
 type (
-	MsgSubscribe            = types.MsgSubscribe
 	MsgRequestGuard         = types.MsgRequestGuard
 	MsgIntendSettle         = types.MsgIntendSettle
 	MsgGuardProof           = types.MsgGuardProof

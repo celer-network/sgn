@@ -11,6 +11,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -77,6 +78,7 @@ func gatewayTest(t *testing.T) {
 
 	msg := map[string]interface{}{
 		"ethAddr": tc.Client0.Address.Hex(),
+		"amount":  "100000000000000000000",
 	}
 	body, _ := json.Marshal(msg)
 	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
@@ -92,6 +94,6 @@ func gatewayTest(t *testing.T) {
 	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)
 	tc.ChkTestErr(t, err, "failed to unmarshal subscription JSON from gateway")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
-	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
+	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }

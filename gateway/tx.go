@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -42,6 +43,7 @@ func (rs *RestServer) registerTxRoutes() {
 type (
 	SubscribeRequest struct {
 		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
+		Amount  string `json:"amount" yaml:"amount"`
 	}
 
 	RequestGuardRequest struct {
@@ -71,7 +73,16 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		msg := subscribe.NewMsgSubscribe(req.EthAddr, transactor.CliCtx.GetFromAddress())
+		subscription := subscribe.NewSubscription(req.EthAddr)
+		deposit, ok := sdk.NewIntFromString(req.Amount)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid deposit amount")
+			return
+		}
+
+		subscription.Deposit = deposit
+		subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
+		msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
