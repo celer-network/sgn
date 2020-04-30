@@ -13,6 +13,7 @@ const (
 	TypeMsgSubmitChange = "submit_change"
 
 	SyncBlock = "sync_block"
+	Subscribe = "subscribe"
 )
 
 // MsgSubmitChange defines a message to create a sync change

@@ -283,6 +283,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keySync,
 		syncSubspace,
 		app.globalKeeper,
+		app.subscribeKeeper,
 		app.validatorKeeper,
 	)
 

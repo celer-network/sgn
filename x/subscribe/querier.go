@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,9 +35,13 @@ func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 		return nil, errors.New(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
+	keeper.IterateSubscriptions(ctx, func(subscription Subscription) bool {
+		log.Infoln("query subscription", subscription)
+		return false
+	})
 	subscription, found := keeper.GetSubscription(ctx, params.EthAddress)
 	if !found {
-		return nil, errors.New("cannot find subscription")
+		return nil, errors.New(fmt.Sprintf("cannot find subscription for %s", params.EthAddress))
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)

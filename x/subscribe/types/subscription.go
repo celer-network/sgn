@@ -23,5 +23,5 @@ func NewSubscription(ethAddress string) Subscription {
 
 // implement fmt.Stringer
 func (s Subscription) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Deposit: %v, Spend: %v`, s.Deposit, s.Spend))
+	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, Deposit: %v, Spend: %v`, s.EthAddress, s.Deposit, s.Spend))
 }

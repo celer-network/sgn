@@ -27,6 +27,7 @@ const (
 	ParamVoting         = types.ParamVoting
 	ParamTallying       = types.ParamTallying
 	SyncBlock           = types.SyncBlock
+	Subscribe           = types.Subscribe
 	EventTypeSync       = types.EventTypeSync
 	ActionSubmitChange  = types.ActionSubmitChange
 )

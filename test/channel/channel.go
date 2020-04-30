@@ -18,9 +18,11 @@ import (
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/sync"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -107,8 +109,11 @@ func NewRestServer() (rs *RestServer, err error) {
 	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, "Subscribe on SGN contract")
 
 	if gateway == "" {
-		msgSubscribe := subscribe.NewMsgSubscribe(peer1.Address.Hex(), ts.Key.GetAddress())
-		ts.AddTxMsg(msgSubscribe)
+		subscription := subscribe.NewSubscription(peer1.Address.Hex())
+		subscription.Deposit = sdk.NewIntFromBigInt(amt)
+		subscriptionData := ts.CliCtx.Codec.MustMarshalBinaryBare(subscription)
+		msgSubmitChange := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, ts.Key.GetAddress())
+		ts.AddTxMsg(msgSubmitChange)
 	} else {
 		reqBody, err2 := json.Marshal(map[string]string{
 			"ethAddr": peer1.Address.Hex(),

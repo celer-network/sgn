@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
-
 	"testing"
 	"time"
 
@@ -17,7 +16,9 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	stypes "github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
@@ -48,13 +49,15 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on SGN contract")
 	tc.SleepWithLog(20, "passing subscribe event block delay")
 
-	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
-	msgSubscribe := subscribe.NewMsgSubscribe(tc.Client0.Address.Hex(), transactor.Key.GetAddress())
-	transactor.AddTxMsg(msgSubscribe)
+	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...", tc.Client0.Address.Hex())
+	subscription := stypes.NewSubscription(tc.Client0.Address.Hex())
+	subscription.Deposit = sdk.NewIntFromBigInt(amt)
+	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
+	msgSubmitChange := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, transactor.Key.GetAddress())
+	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn about the subscription info...")
-	var subscription stypes.Subscription
-	expectedRes := fmt.Sprintf(`Deposit: %d, Spend: %d`, amt, 0) // defined in Subscription.String()
+	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, tc.Client0.Address.Hex(), amt, 0) // defined in Subscription.String()
 	for retry := 0; retry < 30; retry++ {
 		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, tc.Client0.Address.Hex())
 		if err == nil && expectedRes == subscription.String() {
