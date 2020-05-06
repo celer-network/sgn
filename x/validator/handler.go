@@ -2,16 +2,13 @@ package validator
 
 import (
 	"fmt"
-	"math/big"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 // NewHandler returns a handler for "validator" type messages.
@@ -21,16 +18,12 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
-		case MsgUpdateSidechainAddr:
-			res, err = handleMsgUpdateSidechainAddr(ctx, keeper, msg, logEntry)
 		case MsgSetTransactors:
 			res, err = handleMsgSetTransactors(ctx, keeper, msg, logEntry)
 		case MsgClaimValidator:
 			res, err = handleMsgClaimValidator(ctx, keeper, msg, logEntry)
 		case MsgSyncValidator:
 			res, err = handleMsgSyncValidator(ctx, keeper, msg, logEntry)
-		case MsgSyncDelegator:
-			res, err = handleMsgSyncDelegator(ctx, keeper, msg, logEntry)
 		case MsgWithdrawReward:
 			res, err = handleMsgWithdrawReward(ctx, keeper, msg, logEntry)
 		case MsgSignReward:
@@ -46,39 +39,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		seal.CommitMsgLog(logEntry)
 		return res, err
 	}
-}
-
-// Handle a message to update sidechain address
-func handleMsgUpdateSidechainAddr(ctx sdk.Context, keeper Keeper, msg MsgUpdateSidechainAddr, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
-
-	dposCandidateInfo, err := GetDPoSCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query candidate profile on DPoS contract: %s", err)
-	}
-
-	if !dposCandidateInfo.Initialized {
-		return nil, fmt.Errorf("Candidate has not been initialized")
-	}
-
-	sidechainAddr, err := GetSidechainAddrFromMainchain(ctx, keeper, msg.EthAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query sidechain address on SGN contract: %s", err)
-	}
-
-	accAddress := sdk.AccAddress(sidechainAddr)
-	InitAccount(ctx, keeper, accAddress)
-
-	// TODO: only handle the case of first update (initialization), need to handle the case of replacing sidechain address
-	_, found := keeper.GetCandidate(ctx, msg.EthAddress)
-	if !found {
-		log.Infof("Created a new profile for candidate %s account %x", msg.EthAddress, accAddress)
-		keeper.SetCandidate(ctx, NewCandidate(msg.EthAddress, accAddress))
-	}
-
-	return &sdk.Result{}, nil
 }
 
 // Handle a message to set transactors
@@ -102,7 +62,7 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 
 	candidate.Transactors = msg.Transactors
 	for _, transactor := range candidate.Transactors {
-		InitAccount(ctx, keeper, transactor)
+		keeper.InitAccount(ctx, transactor)
 	}
 
 	keeper.SetCandidate(ctx, candidate)
@@ -183,28 +143,6 @@ func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator
 	}
 
 	updateValidatorToken(ctx, keeper, validator, dposCandidateInfo)
-	return &sdk.Result{}, nil
-}
-
-// Handle a message to sync delegator
-func handleMsgSyncDelegator(ctx sdk.Context, keeper Keeper, msg MsgSyncDelegator, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.CandidateAddr = msg.CandidateAddress
-	logEntry.DelegatorAddr = msg.DelegatorAddress
-
-	delegator := keeper.GetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress)
-	di, err := keeper.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{
-		BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-	}, mainchain.Hex2Addr(msg.CandidateAddress), mainchain.Hex2Addr(msg.DelegatorAddress))
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query delegator info: %s", err)
-	}
-
-	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
-	keeper.SetDelegator(ctx, msg.CandidateAddress, msg.DelegatorAddress, delegator)
-	keeper.SnapshotCandidate(ctx, msg.CandidateAddress)
-
 	return &sdk.Result{}, nil
 }
 

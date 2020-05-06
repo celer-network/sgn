@@ -12,6 +12,8 @@ import (
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/viper"
 )
@@ -193,14 +195,36 @@ func (m *EthMonitor) claimValidator() {
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	log.Infof("SyncValidator %x", address)
-	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.operator.Key.GetAddress())
+	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, address)
+	if err != nil {
+		log.Errorf("Failed to query candidate info: %s", err)
+		return
+	}
+
+	validator := staking.Validator{
+		Description: staking.Description{
+			Identity: address.Hex(),
+		},
+		Tokens: sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
+		Status: mainchain.ParseStatus(ci),
+	}
+	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(validator)
+	msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, validatorData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
 
-	msg := validator.NewMsgSyncDelegator(
-		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.operator.Key.GetAddress())
+	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, candidatorAddr, delegatorAddr)
+	if err != nil {
+		log.Errorf("Failed to query delegator info: %s", err)
+		return
+	}
+
+	delegator := validator.NewDelegator(mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
+	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
+	delegatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(delegator)
+	msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }

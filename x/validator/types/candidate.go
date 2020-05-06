@@ -9,19 +9,22 @@ import (
 )
 
 type Delegator struct {
-	EthAddress     string  `json:"ethAddress"`
+	CandidateAddr  string  `json:"candidateAddr"`
+	DelegatorAddr  string  `json:"delegatorAddr"`
 	DelegatedStake sdk.Int `json:"delegatedStake"`
 }
 
-func NewDelegator(ethAddress string) Delegator {
+func NewDelegator(candidateAddr, delegatorAddr string) Delegator {
 	return Delegator{
-		EthAddress: mainchain.FormatAddrHex(ethAddress),
+		CandidateAddr: mainchain.FormatAddrHex(candidateAddr),
+		DelegatorAddr: mainchain.FormatAddrHex(delegatorAddr),
 	}
 }
 
 // implement fmt.Stringer
-func (c Delegator) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, DelegatedStake: %v`, c.EthAddress, c.DelegatedStake))
+func (d Delegator) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`CandidateAddr: %s, CandidateAddr: %s, DelegatedStake: %v`,
+		d.CandidateAddr, d.DelegatorAddr, d.DelegatedStake))
 }
 
 // operator will be used for running validator node, and transactor will be used for running gateway

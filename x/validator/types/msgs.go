@@ -9,57 +9,13 @@ import (
 const RouterKey = ModuleName // this was defined in your key.go file
 
 const (
-	TypeMsgUpdateSidechainAddr = "update_sidechain_addr"
-	TypeMsgSetTransactors      = "set_transactors"
-	TypeMsgClaimValidator      = "claim_validator"
-	TypeMsgSyncValidator       = "sync_validator"
-	TypeMsgSyncDelegator       = "sync_delegator"
-	TypeMsgWithdrawReward      = "withdraw_reward"
-	TypeMsgSignReward          = "sign_reward"
+	TypeMsgSetTransactors = "set_transactors"
+	TypeMsgClaimValidator = "claim_validator"
+	TypeMsgSyncValidator  = "sync_validator"
+	TypeMsgSyncDelegator  = "sync_delegator"
+	TypeMsgWithdrawReward = "withdraw_reward"
+	TypeMsgSignReward     = "sign_reward"
 )
-
-// MsgUpdateSidechainAddr defines a UpdateSidechainAddr message
-type MsgUpdateSidechainAddr struct {
-	EthAddress string         `json:"ethAddress"`
-	Sender     sdk.AccAddress `json:"sender"`
-}
-
-// NewMsgUpdateSidechainAddr is a constructor function for MsgUpdateSidechainAddr
-func NewMsgUpdateSidechainAddr(ethAddress string, sender sdk.AccAddress) MsgUpdateSidechainAddr {
-	return MsgUpdateSidechainAddr{
-		EthAddress: mainchain.FormatAddrHex(ethAddress),
-		Sender:     sender,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgUpdateSidechainAddr) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgUpdateSidechainAddr) Type() string { return TypeMsgUpdateSidechainAddr }
-
-// ValidateBasic runs stateless checks on the message
-func (msg MsgUpdateSidechainAddr) ValidateBasic() error {
-	if msg.EthAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
-	}
-
-	if msg.Sender.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
-	}
-
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgUpdateSidechainAddr) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgUpdateSidechainAddr) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Sender}
-}
 
 type MsgSetTransactors struct {
 	EthAddress  string           `json:"ethAddress"`
@@ -201,55 +157,6 @@ func (msg MsgSyncValidator) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSyncValidator) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Sender}
-}
-
-// MsgSyncDelegator defines a SyncDelegator message
-type MsgSyncDelegator struct {
-	CandidateAddress string         `json:"candidateAddress"` // ETH address with "0x" prefix
-	DelegatorAddress string         `json:"delegatorAddress"` // ETH address with "0x" prefix
-	Sender           sdk.AccAddress `json:"sender"`
-}
-
-// NewMsgSyncDelegator is a constructor function for MsgSyncDelegator
-func NewMsgSyncDelegator(candidateAddress, delegatorAddress string, sender sdk.AccAddress) MsgSyncDelegator {
-	return MsgSyncDelegator{
-		CandidateAddress: mainchain.FormatAddrHex(candidateAddress),
-		DelegatorAddress: mainchain.FormatAddrHex(delegatorAddress),
-		Sender:           sender,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgSyncDelegator) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgSyncDelegator) Type() string { return TypeMsgSyncDelegator }
-
-// ValidateBasic runs stateless checks on the message
-func (msg MsgSyncDelegator) ValidateBasic() error {
-	if msg.CandidateAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "CandidateAddress cannot be empty")
-	}
-
-	if msg.DelegatorAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "DelegatorAddress cannot be empty")
-	}
-
-	if msg.Sender.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
-	}
-
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgSyncDelegator) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgSyncDelegator) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
