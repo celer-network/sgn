@@ -211,7 +211,7 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	}
 
 	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(validator)
-	msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, validatorData, m.operator.Key.GetAddress())
+	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 
