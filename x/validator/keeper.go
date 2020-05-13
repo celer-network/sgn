@@ -31,12 +31,11 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the validator Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, globalKeeper global.Keeper,
+	accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
-		ethClient:     ethClient,
 		globalKeeper:  globalKeeper,
 		accountKeeper: accountKeeper,
 		stakingKeeper: stakingKeeper,
