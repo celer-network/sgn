@@ -23,7 +23,7 @@ func NewDelegator(candidateAddr, delegatorAddr string) Delegator {
 
 // implement fmt.Stringer
 func (d Delegator) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`CandidateAddr: %s, CandidateAddr: %s, DelegatedStake: %v`,
+	return strings.TrimSpace(fmt.Sprintf(`CandidateAddr: %s, DelegatorAddr: %s, DelegatedStake: %v`,
 		d.CandidateAddr, d.DelegatorAddr, d.DelegatedStake))
 }
 
