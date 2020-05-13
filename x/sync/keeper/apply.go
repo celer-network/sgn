@@ -103,7 +103,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-			return fmt.Errorf("Invalid change iniator %x for validator", change.Initiator, valAddress)
+			return fmt.Errorf("Invalid change iniator %x for validator %x", change.Initiator, valAddress)
 		}
 
 		validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
