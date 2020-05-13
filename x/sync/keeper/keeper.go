@@ -15,11 +15,13 @@ type Keeper struct {
 	// The reference to the Paramstore to get and set sync specific params
 	paramSpace types.ParamSubspace
 
-	gk global.Keeper
+	globalKeeper global.Keeper
 
-	sk subscribe.Keeper
+	subscribeKeeper subscribe.Keeper
 
-	vk validator.Keeper
+	validatorKeeper validator.Keeper
+
+	stakingKeeper staking.Keeper
 
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
@@ -37,18 +39,20 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	gk global.Keeper, sk subscribe.Keeper, vk validator.Keeper,
+	globalKeeper global.Keeper, subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
+	stakingKeeper staking.Keeper,
 ) Keeper {
 	return Keeper{
-		storeKey:   key,
-		paramSpace: paramSpace,
-		gk:         gk,
-		sk:         sk,
-		vk:         vk,
-		cdc:        cdc,
+		storeKey:        key,
+		paramSpace:      paramSpace,
+		globalKeeper:    globalKeeper,
+		subscribeKeeper: subscribeKeeper,
+		validatorKeeper: validatorKeeper,
+		stakingKeeper:   stakingKeeper,
+		cdc:             cdc,
 	}
 }
 
 func (keeper Keeper) GetValidators(ctx sdk.Context) []staking.Validator {
-	return keeper.vk.GetValidators(ctx)
+	return keeper.validatorKeeper.GetValidators(ctx)
 }

@@ -21,8 +21,6 @@ const (
 
 var (
 	NewMsgSetTransactors     = types.NewMsgSetTransactors
-	NewMsgClaimValidator     = types.NewMsgClaimValidator
-	NewMsgSyncValidator      = types.NewMsgSyncValidator
 	NewMsgWithdrawReward     = types.NewMsgWithdrawReward
 	NewMsgSignReward         = types.NewMsgSignReward
 	NewQueryRewardParams     = types.NewQueryRewardParams
@@ -62,8 +60,6 @@ type (
 	QueryCandidateParams = types.QueryCandidateParams
 	QueryRewardParams    = types.QueryRewardParams
 	MsgSetTransactors    = types.MsgSetTransactors
-	MsgClaimValidator    = types.MsgClaimValidator
-	MsgSyncValidator     = types.MsgSyncValidator
 	MsgWithdrawReward    = types.MsgWithdrawReward
 	MsgSignReward        = types.MsgSignReward
 )

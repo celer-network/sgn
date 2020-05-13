@@ -160,7 +160,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, failedValidator.Description.Identity)
 	for _, delegator := range candidate.Delegators {
 		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-		accountAmtPair := NewAccountAmtPair(delegator.EthAddress, penaltyAmt)
+		accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
 		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
 	}
 

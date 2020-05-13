@@ -285,6 +285,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.globalKeeper,
 		app.subscribeKeeper,
 		app.validatorKeeper,
+		app.stakingKeeper,
 	)
 
 	app.mm = module.NewManager(

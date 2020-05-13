@@ -3,12 +3,9 @@ package validator
 import (
 	"fmt"
 
-	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 // NewHandler returns a handler for "validator" type messages.
@@ -20,10 +17,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgSetTransactors:
 			res, err = handleMsgSetTransactors(ctx, keeper, msg, logEntry)
-		case MsgClaimValidator:
-			res, err = handleMsgClaimValidator(ctx, keeper, msg, logEntry)
-		case MsgSyncValidator:
-			res, err = handleMsgSyncValidator(ctx, keeper, msg, logEntry)
 		case MsgWithdrawReward:
 			res, err = handleMsgWithdrawReward(ctx, keeper, msg, logEntry)
 		case MsgSignReward:
@@ -66,83 +59,6 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 	}
 
 	keeper.SetCandidate(ctx, candidate)
-	return &sdk.Result{}, nil
-}
-
-// Handle a message to claim validator
-func handleMsgClaimValidator(ctx sdk.Context, keeper Keeper, msg MsgClaimValidator, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
-	logEntry.PubKey = msg.PubKey
-
-	pk, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, msg.PubKey)
-	if err != nil {
-		return nil, fmt.Errorf("GetConsPubKeyBech32 err: %s", err)
-	}
-
-	dposCandidateInfo, err := GetDPoSCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query candidate profile on DPoS contract: %s", err)
-	}
-
-	if !mainchain.IsBonded(dposCandidateInfo) {
-		return nil, fmt.Errorf("Candidate is not in validator set")
-	}
-
-	sidechainAddr, err := GetSidechainAddrFromMainchain(ctx, keeper, msg.EthAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query sidechain address on SGN contract: %s", err)
-	}
-
-	if !sdk.AccAddress(sidechainAddr).Equals(msg.Sender) {
-		return nil, fmt.Errorf("Sender has different address recorded on mainchain. mainchain record: %x; sender: %x", sdk.AccAddress(sidechainAddr), msg.Sender)
-	}
-
-	// Make sure both val address and pub address have not been used before
-	valAddress := sdk.ValAddress(sidechainAddr)
-	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
-	_, f := keeper.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk))
-	if found != f {
-		return nil, fmt.Errorf("Invalid sender address or public key")
-	}
-
-	if !found {
-		description := staking.Description{
-			Moniker:  msg.EthAddress,
-			Identity: msg.EthAddress,
-		}
-		validator = staking.NewValidator(valAddress, pk, description)
-		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
-	}
-
-	updateValidatorToken(ctx, keeper, validator, dposCandidateInfo)
-	return &sdk.Result{}, nil
-}
-
-// Handle a message to sync validator
-func handleMsgSyncValidator(ctx sdk.Context, keeper Keeper, msg MsgSyncValidator, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
-
-	sidechainAddr, err := GetSidechainAddrFromMainchain(ctx, keeper, msg.EthAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query sidechain address on SGN contract: %s", err)
-	}
-
-	valAddress := sdk.ValAddress(sidechainAddr)
-	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
-	if !found {
-		return &sdk.Result{}, fmt.Errorf("Validator does not exist")
-	}
-
-	dposCandidateInfo, err := GetDPoSCandidateInfoFromMainchain(ctx, keeper, msg.EthAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to query candidate profile on DPoS contract: %s", err)
-	}
-
-	updateValidatorToken(ctx, keeper, validator, dposCandidateInfo)
 	return &sdk.Result{}, nil
 }
 
@@ -200,16 +116,4 @@ func handleMsgSignReward(ctx sdk.Context, keeper Keeper, msg MsgSignReward, logE
 
 	keeper.SetReward(ctx, reward)
 	return &sdk.Result{}, nil
-}
-
-func updateValidatorToken(ctx sdk.Context, keeper Keeper, validator staking.Validator, dposCandidateInfo mainchain.DPoSCandidateInfo) {
-	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Tokens = sdk.NewIntFromBigInt(dposCandidateInfo.StakingPool).QuoRaw(common.TokenDec)
-	validator.Status = mainchain.ParseStatus(dposCandidateInfo)
-	validator.DelegatorShares = validator.Tokens.ToDec()
-	keeper.stakingKeeper.SetValidator(ctx, validator)
-
-	if validator.Status == sdk.Bonded {
-		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
-	}
 }
