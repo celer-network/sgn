@@ -10,7 +10,7 @@
     "constantinopleBlock": 0,
     "petersburgBlock": 0,
     "clique": {
-      "period": 10,
+      "period": 2,
       "epoch": 30000
     }
   },

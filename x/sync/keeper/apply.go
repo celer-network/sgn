@@ -107,6 +107,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 		}
 
 		validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
+		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 	}
 
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
