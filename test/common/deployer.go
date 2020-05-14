@@ -45,7 +45,18 @@ func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
 
 func DeployDPoSSGNContracts(sgnParams *SGNParams) (mainchain.Addr, mainchain.Addr) {
 	ctx := context.Background()
-	dposAddr, tx, _, err := mainchain.DeployDPoS(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, sgnParams.BlameTimeout, sgnParams.MinValidatorNum, sgnParams.MinStakingPool, sgnParams.SidechainGoLiveTimeout, sgnParams.MaxValidatorNum)
+	dposAddr, tx, _, err := mainchain.DeployDPoS(
+		EtherBase.Auth,
+		EtherBase.Client,
+		sgnParams.CelrAddr,
+		sgnParams.GovernProposalDeposit,
+		sgnParams.GovernVoteTimeout,
+		sgnParams.BlameTimeout,
+		sgnParams.MinValidatorNum,
+		sgnParams.MaxValidatorNum,
+		sgnParams.MinStakingPool,
+		sgnParams.IncreaseRateWaitTime,
+		sgnParams.SidechainGoLiveTimeout)
 	ChkErr(err, "failed to deploy DPoS contract")
 	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy DPoS "+dposAddr.Hex())
 
@@ -102,12 +113,15 @@ func DeployCommand() *cobra.Command {
 
 			erc20Addr, erc20 := DeployERC20Contract()
 			sgnParams := &SGNParams{
+				CelrAddr:               erc20Addr,
+				GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+				GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 				BlameTimeout:           big.NewInt(5760),
 				MinValidatorNum:        big.NewInt(3),
-				MinStakingPool:         big.NewInt(10000),
-				SidechainGoLiveTimeout: big.NewInt(5760),
-				CelrAddr:               erc20Addr,
 				MaxValidatorNum:        big.NewInt(7),
+				MinStakingPool:         big.NewInt(10000),
+				IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+				SidechainGoLiveTimeout: big.NewInt(5760),
 			}
 			dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
 			viper.Set(common.FlagEthDPoSAddress, dposAddr)
