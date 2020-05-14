@@ -20,6 +20,7 @@ func setUpGov() []tc.Killable {
 	return res
 }
 
+// FIX
 // func TestE2EGov(t *testing.T) {
 // 	toKill := setUpGov()
 // 	defer tc.TearDown(toKill)

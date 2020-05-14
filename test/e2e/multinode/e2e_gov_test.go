@@ -19,6 +19,7 @@ func setUpGov() {
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
+// FIX
 // func TestE2EGov(t *testing.T) {
 // 	setUpGov()
 
