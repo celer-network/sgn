@@ -27,13 +27,17 @@ import (
 )
 
 type SGNParams struct {
-	CelrAddr               mainchain.Addr
-	BlameTimeout           *big.Int
-	MinValidatorNum        *big.Int
-	MinStakingPool         *big.Int
+	CelrAddr              mainchain.Addr
+	GovernProposalDeposit *big.Int
+	GovernVoteTimeout     *big.Int
+	BlameTimeout          *big.Int
+	MinValidatorNum       *big.Int
+	MaxValidatorNum       *big.Int
+	MinStakingPool        *big.Int
+	IncreaseRateWaitTime  *big.Int
+	// TODO: rename to DposGoLiveTimeout
 	SidechainGoLiveTimeout *big.Int
 	StartGateway           bool
-	MaxValidatorNum        *big.Int
 }
 
 func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase string) *transactor.Transactor {

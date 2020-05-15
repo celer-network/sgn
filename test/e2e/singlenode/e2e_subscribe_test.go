@@ -13,12 +13,15 @@ import (
 
 func setUpSubscribe() []tc.Killable {
 	p := &tc.SGNParams{
+		CelrAddr:               tc.E2eProfile.CelrAddr,
+		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
-		MinStakingPool:         big.NewInt(0),
-		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        big.NewInt(11),
+		MinStakingPool:         big.NewInt(0),
+		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "subscribe")
 	tc.SleepWithLog(10, "sgn being ready")
