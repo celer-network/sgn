@@ -17,7 +17,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState chain.SignedSimplexState) (Request, error) {
+func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState *chain.SignedSimplexState) (Request, error) {
 	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {

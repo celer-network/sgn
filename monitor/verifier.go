@@ -77,7 +77,7 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 		return false
 	}
 
-	r, err := subscribe.GetRequest(m.operator.CliCtx, m.ethClient, signedSimplexState)
+	r, err := subscribe.GetRequest(m.operator.CliCtx, m.ethClient, &signedSimplexState)
 	if err != nil {
 		log.Errorln("Failed to get request through SignedSimplexStateBytes:", err)
 		return false
