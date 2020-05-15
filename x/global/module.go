@@ -3,14 +3,13 @@ package global
 import (
 	"encoding/json"
 
-	"github.com/gorilla/mux"
-	"github.com/spf13/cobra"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/celer-network/sgn/x/global/client/cli"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -62,16 +61,14 @@ func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 type AppModule struct {
 	AppModuleBasic
-	keeper     Keeper
-	coinKeeper bank.Keeper
+	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k Keeper, bankKeeper bank.Keeper) AppModule {
+func NewAppModule(k Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
-		coinKeeper:     bankKeeper,
 	}
 }
 

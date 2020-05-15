@@ -12,6 +12,8 @@ import (
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/viper"
 )
@@ -81,12 +83,11 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.DPoSValida
 
 	if validatorChange.EthAddr == m.ethClient.Address {
 		m.isValidator = isAddValidator
-		if m.isValidator {
-			m.claimValidator()
-			return
-		}
-
 		doSync = true
+
+		if m.isValidator {
+			m.setTransactors()
+		}
 	}
 
 	if doSync {
@@ -168,16 +169,8 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
 }
 
-func (m *EthMonitor) claimValidator() {
-	log.Infof("Claim self as a validator on sidechain, self address %x", m.ethClient.Address)
-
-	claimValidatorMsg := validator.NewMsgClaimValidator(
-		mainchain.Addr2Hex(m.ethClient.Address),
-		viper.GetString(common.FlagSgnPubKey),
-		m.operator.Key.GetAddress(),
-	)
-	m.operator.AddTxMsg(claimValidatorMsg)
-
+func (m *EthMonitor) setTransactors() {
+	log.Infoln("Set transactor")
 	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 	if err != nil {
 		log.Errorln("parse transactors err", err)
@@ -193,14 +186,47 @@ func (m *EthMonitor) claimValidator() {
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	log.Infof("SyncValidator %x", address)
-	msg := validator.NewMsgSyncValidator(mainchain.Addr2Hex(address), m.operator.Key.GetAddress())
+	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, address)
+	if err != nil {
+		log.Errorln("Failed to query candidate info:", err)
+		return
+	}
+
+	validator := staking.Validator{
+		Description: staking.Description{
+			Identity: address.Hex(),
+		},
+		Tokens: sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
+		Status: mainchain.ParseStatus(ci),
+	}
+
+	if m.ethClient.Address == address {
+		pk, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, viper.GetString(common.FlagSgnPubKey))
+		if err != nil {
+			log.Errorln("GetConsPubKeyBech32 err:", err)
+			return
+		}
+
+		validator.ConsPubKey = pk
+	}
+
+	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(validator)
+	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
 
-	msg := validator.NewMsgSyncDelegator(
-		mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr), m.operator.Key.GetAddress())
+	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, candidatorAddr, delegatorAddr)
+	if err != nil {
+		log.Errorf("Failed to query delegator info: %s", err)
+		return
+	}
+
+	delegator := validator.NewDelegator(mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
+	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
+	delegatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(delegator)
+	msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }

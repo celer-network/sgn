@@ -31,12 +31,11 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the validator Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, globalKeeper global.Keeper,
+	accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
-		ethClient:     ethClient,
 		globalKeeper:  globalKeeper,
 		accountKeeper: accountKeeper,
 		stakingKeeper: stakingKeeper,
@@ -103,24 +102,23 @@ func (k Keeper) SetPusher(ctx sdk.Context, pusher Pusher) {
 	store.Set(PusherKey, k.cdc.MustMarshalBinaryBare(pusher))
 }
 
-// Get the entire Delegator metadata for a candidateAddress and delegatorAddress
-func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string) Delegator {
+// Get the entire Delegator metadata for a candidateAddr and delegatorAddr
+func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddr, delegatorAddr string) (delegator Delegator, found bool) {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has(GetDelegatorKey(candidateAddress, delegatorAddress)) {
-		return NewDelegator(delegatorAddress)
+	if !store.Has(GetDelegatorKey(candidateAddr, delegatorAddr)) {
+		return delegator, false
 	}
 
-	var delegator Delegator
-	value := store.Get(GetDelegatorKey(candidateAddress, delegatorAddress))
+	value := store.Get(GetDelegatorKey(candidateAddr, delegatorAddr))
 	k.cdc.MustUnmarshalBinaryBare(value, &delegator)
-	return delegator
+	return delegator, true
 }
 
 // Get the set of all delegators with no limits
-func (k Keeper) GetAllDelegators(ctx sdk.Context, candidateAddress string) (delegators []Delegator) {
+func (k Keeper) GetAllDelegators(ctx sdk.Context, candidateAddr string) (delegators []Delegator) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, GetDelegatorsKey(candidateAddress))
+	iterator := sdk.KVStorePrefixIterator(store, GetDelegatorsKey(candidateAddr))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -131,16 +129,16 @@ func (k Keeper) GetAllDelegators(ctx sdk.Context, candidateAddress string) (dele
 	return delegators
 }
 
-// Sets the entire Delegator metadata for a candidateAddress and delegatorAddress
-func (k Keeper) SetDelegator(ctx sdk.Context, candidateAddress, delegatorAddress string, delegator Delegator) {
+// Sets the entire Delegator metadata for a candidateAddr and delegatorAddr
+func (k Keeper) SetDelegator(ctx sdk.Context, delegator Delegator) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetDelegatorKey(candidateAddress, delegatorAddress), k.cdc.MustMarshalBinaryBare(delegator))
+	store.Set(GetDelegatorKey(delegator.CandidateAddr, delegator.DelegatorAddr), k.cdc.MustMarshalBinaryBare(delegator))
 }
 
 // Get the entire Candidate metadata
-func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddress string) (candidate Candidate, found bool) {
+func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddr string) (candidate Candidate, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	candidateKey := GetCandidateKey(candidateAddress)
+	candidateKey := GetCandidateKey(candidateAddr)
 
 	if !store.Has(candidateKey) {
 		return candidate, false
@@ -219,7 +217,7 @@ func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardTyp
 	for _, candidate := range candidates {
 		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
 		for _, delegator := range candidate.Delegators {
-			reward, _ := k.GetReward(ctx, delegator.EthAddress)
+			reward, _ := k.GetReward(ctx, delegator.DelegatorAddr)
 			rewardAmt := candidateReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
 
 			switch rewardType {
@@ -251,4 +249,13 @@ func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate)
 	}
 
 	return
+}
+
+func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
+	account := k.accountKeeper.GetAccount(ctx, accAddress)
+	if account == nil {
+		log.Infof("Set new account %x", accAddress)
+		account = k.accountKeeper.NewAccountWithAddress(ctx, accAddress)
+		k.accountKeeper.SetAccount(ctx, account)
+	}
 }

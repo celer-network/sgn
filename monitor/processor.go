@@ -9,8 +9,10 @@ import (
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/golang/protobuf/proto"
@@ -108,8 +110,15 @@ func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNU
 	}
 
 	log.Infof("Add UpdateSidechainAddr of %x to transactor msgQueue", updateSidechainAddr.Candidate)
-	msg := validator.NewMsgUpdateSidechainAddr(
-		mainchain.Addr2Hex(updateSidechainAddr.Candidate), m.operator.Key.GetAddress())
+	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, updateSidechainAddr.Candidate)
+	if err != nil {
+		log.Errorln("Query sidechain ddress error:", err)
+		return
+	}
+
+	candidate := validator.NewCandidate(updateSidechainAddr.Candidate.Hex(), sdk.AccAddress(sidechainAddr))
+	candidateData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(candidate)
+	msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 

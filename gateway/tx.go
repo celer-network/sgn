@@ -109,8 +109,9 @@ func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		msg := validator.NewMsgUpdateSidechainAddr(req.EthAddr, transactor.CliCtx.GetFromAddress())
-		writeGenerateStdTxResponse(w, transactor, msg)
+		// FIX
+		// msg := validator.NewMsgUpdateSidechainAddr(req.EthAddr, transactor.CliCtx.GetFromAddress())
+		// writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
 
@@ -122,8 +123,9 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		msg := validator.NewMsgSyncDelegator(req.CandidateAddress, req.DelegatorAddress, transactor.CliCtx.GetFromAddress())
-		writeGenerateStdTxResponse(w, transactor, msg)
+		// FIX
+		// msg := validator.NewMsgSyncDelegator(req.CandidateAddress, req.DelegatorAddress, transactor.CliCtx.GetFromAddress())
+		// writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
 

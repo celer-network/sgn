@@ -96,7 +96,8 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAddr, delegatorAddr mainchain.Addr, expAmt *big.Int) {
 	var delegator vtypes.Delegator
 	var err error
-	expectedRes := fmt.Sprintf(`EthAddress: %s, DelegatedStake: %s`, mainchain.Addr2Hex(delegatorAddr), expAmt) // defined in Delegator.String()
+	expectedRes := fmt.Sprintf(`CandidateAddr: %s, DelegatorAddr: %s, DelegatedStake: %s`,
+		mainchain.Addr2Hex(validatorAddr), mainchain.Addr2Hex(delegatorAddr), expAmt) // defined in Delegator.String()
 	for retry := 0; retry < 30; retry++ {
 		delegator, err = sgnval.CLIQueryDelegator(transactor.CliCtx, sgnval.RouterKey, validatorAddr.Hex(), delegatorAddr.Hex())
 		if err == nil && expectedRes == delegator.String() {

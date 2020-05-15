@@ -2,6 +2,7 @@ package validator
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,7 +59,11 @@ func queryDelegator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	delegator := keeper.GetDelegator(ctx, params.CandidateAddress, params.DelegatorAddress)
+	delegator, found := keeper.GetDelegator(ctx, params.CandidateAddress, params.DelegatorAddress)
+	if !found {
+		return nil, fmt.Errorf("Cannot find delegator %s for candidate %s", params.DelegatorAddress, params.CandidateAddress)
+	}
+
 	res, err := codec.MarshalJSONIndent(keeper.cdc, delegator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
