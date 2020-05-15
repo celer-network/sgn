@@ -23,6 +23,7 @@ message MsgLog {
     Penalty penalty = 8;
     uint64 block_num = 9;
     string deposit = 10;
+    Change change = 11;
 
     string sender = 99;
     double execution_time_ms = 100;
@@ -46,4 +47,10 @@ message Penalty {
     uint64 nonce = 1;
     string validator = 2;
     string reason = 3;
+}
+
+
+message Change {
+    uint64 id = 1;
+    string type = 2;
 }

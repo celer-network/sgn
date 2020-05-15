@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -15,7 +16,7 @@ type Subscription struct {
 
 func NewSubscription(ethAddress string) Subscription {
 	return Subscription{
-		EthAddress: ethAddress,
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
 		Deposit:    sdk.ZeroInt(),
 		Spend:      sdk.ZeroInt(),
 	}
@@ -23,5 +24,5 @@ func NewSubscription(ethAddress string) Subscription {
 
 // implement fmt.Stringer
 func (s Subscription) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Deposit: %v, Spend: %v`, s.Deposit, s.Spend))
+	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, Deposit: %v, Spend: %v`, s.EthAddress, s.Deposit, s.Spend))
 }

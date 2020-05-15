@@ -8,49 +8,6 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
-// MsgSubscribe defines a Subscribe message
-type MsgSubscribe struct {
-	EthAddress string         `json:"ethAddress"`
-	Sender     sdk.AccAddress `json:"sender"`
-}
-
-// NewMsgSubscribe is a constructor function for MsgSubscribe
-func NewMsgSubscribe(ethAddress string, sender sdk.AccAddress) MsgSubscribe {
-	return MsgSubscribe{
-		EthAddress: mainchain.FormatAddrHex(ethAddress),
-		Sender:     sender,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgSubscribe) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgSubscribe) Type() string { return "subscribe" }
-
-// ValidateBasic runs stateless checks on the message
-func (msg MsgSubscribe) ValidateBasic() error {
-	if msg.EthAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Eth adress cannot be empty")
-	}
-
-	if msg.Sender.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
-	}
-
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgSubscribe) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgSubscribe) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Sender}
-}
-
 type MsgRequestGuard struct {
 	EthAddress              string         `json:"ethAddress"`
 	SignedSimplexStateBytes []byte         `json:"signedSimplexStateBytes"`

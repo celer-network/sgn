@@ -15,6 +15,7 @@ import (
 	govclient "github.com/celer-network/sgn/x/gov/client"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -57,6 +58,7 @@ var (
 		gov.NewAppModuleBasic(govclient.ParamProposalHandler),
 		slash.AppModule{},
 		subscribe.AppModule{},
+		sync.AppModule{},
 		validator.AppModuleBasic{},
 	)
 	// account permissions
@@ -96,6 +98,7 @@ type sgnApp struct {
 	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
+	keySync      *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
 
 	// Keepers
@@ -109,6 +112,7 @@ type sgnApp struct {
 	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
 	subscribeKeeper subscribe.Keeper
+	syncKeeper      sync.Keeper
 	validatorKeeper validator.Keeper
 
 	// Module Manager
@@ -168,6 +172,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
+		keySync:      sdk.NewKVStoreKey(sync.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
 
@@ -182,6 +187,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
 	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
+	syncSubspace := app.paramsKeeper.Subspace(sync.DefaultParamspace).WithKeyTable(sync.ParamKeyTable())
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -223,7 +229,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.globalKeeper = global.NewKeeper(
 		app.keyGlobal,
 		app.cdc,
-		ethClient,
 		globalSubspace,
 	)
 
@@ -273,6 +278,15 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		govRouter,
 	)
 
+	app.syncKeeper = sync.NewKeeper(
+		app.cdc,
+		app.keySync,
+		syncSubspace,
+		app.globalKeeper,
+		app.subscribeKeeper,
+		app.validatorKeeper,
+	)
+
 	app.mm = module.NewManager(
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
@@ -285,10 +299,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
 		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
 		gov.NewAppModule(app.govKeeper, app.accountKeeper),
+		sync.NewAppModule(app.syncKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(slash.ModuleName)
-	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName)
+	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName, sync.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
@@ -302,6 +317,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		subscribe.ModuleName,
 		validator.ModuleName,
 		gov.ModuleName,
+		sync.ModuleName,
 	)
 
 	// register all module routes and module queriers
@@ -335,6 +351,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keySubscribe,
 		app.keyValidator,
 		app.keyGov,
+		app.keySync,
 	)
 
 	err = app.LoadLatestVersion(app.keyMain)

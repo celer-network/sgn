@@ -25,8 +25,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
-		case MsgSubscribe:
-			res, err = handleMsgSubscribe(ctx, keeper, msg, logEntry)
 		case MsgRequestGuard:
 			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
 		case MsgIntendSettle:
@@ -44,30 +42,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		seal.CommitMsgLog(logEntry)
 		return res, err
 	}
-}
-
-// Handle a message to subscribe
-func handleMsgSubscribe(ctx sdk.Context, keeper Keeper, msg MsgSubscribe, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
-
-	res := &sdk.Result{}
-	deposit, err := keeper.ethClient.SGN.SubscriptionDeposits(
-		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))},
-		mainchain.Hex2Addr(msg.EthAddress))
-	if err != nil {
-		return res, fmt.Errorf("Failed to query subscription desposit: %s", err)
-	}
-	logEntry.Deposit = deposit.String()
-
-	subscription, found := keeper.GetSubscription(ctx, msg.EthAddress)
-	if !found {
-		subscription = NewSubscription(msg.EthAddress)
-	}
-	subscription.Deposit = sdk.NewIntFromBigInt(deposit)
-	keeper.SetSubscription(ctx, subscription)
-	return res, nil
 }
 
 // Handle a message to request guard

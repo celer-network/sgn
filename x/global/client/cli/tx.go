@@ -1,17 +1,10 @@
 package cli
 
 import (
-	"bufio"
-	"strconv"
-
 	"github.com/celer-network/sgn/x/global/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -24,35 +17,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	globalTxCmd.AddCommand(flags.PostCommands(
-		GetCmdSyncBlock(cdc),
-	)...)
+	globalTxCmd.AddCommand(flags.PostCommands()...)
 
 	return globalTxCmd
-}
-
-// GetCmdSyncBlock is the CLI command for sending a SyncBlock transaction
-func GetCmdSyncBlock(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "sync-block [blockNum]",
-		Short: "sync mainchain block with head",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			blockNumber, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgSyncBlock(blockNumber, cliCtx.GetFromAddress())
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
 }

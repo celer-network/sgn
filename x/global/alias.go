@@ -13,7 +13,6 @@ const (
 	QuerySecureBlockNum = types.QuerySecureBlockNum
 	QueryEpoch          = types.QueryEpoch
 	QueryParameters     = types.QueryParameters
-	TypeMsgSyncBlock    = types.TypeMsgSyncBlock
 )
 
 var (
@@ -21,7 +20,6 @@ var (
 	RegisterCodec          = types.RegisterCodec
 	NewBlock               = types.NewBlock
 	NewEpoch               = types.NewEpoch
-	NewMsgSyncBlock        = types.NewMsgSyncBlock
 	NewQueryEpochParams    = types.NewQueryEpochParams
 	LatestBlockKey         = types.LatestBlockKey
 	GetEpochKey            = types.GetEpochKey
@@ -36,6 +34,5 @@ type (
 	Block            = types.Block
 	Epoch            = types.Epoch
 	Params           = types.Params
-	MsgSyncBlock     = types.MsgSyncBlock
 	QueryEpochParams = types.QueryEpochParams
 )

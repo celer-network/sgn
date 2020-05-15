@@ -25,6 +25,7 @@ require (
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
+	github.com/prometheus/common v0.9.1
 	github.com/prometheus/tsdb v0.10.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.6
@@ -42,6 +43,7 @@ require (
 	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
+	google.golang.org/appengine v1.4.0
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20190709231704-1e4459ed25ff // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect

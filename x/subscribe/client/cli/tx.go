@@ -25,31 +25,10 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	subscribeTxCmd.AddCommand(flags.PostCommands(
-		GetCmdSubscribe(cdc),
 		GetCmdRequestGuard(cdc),
 	)...)
 
 	return subscribeTxCmd
-}
-
-// GetCmdSubscribe is the CLI command for sending a Subscribe transaction
-func GetCmdSubscribe(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "subscribe [eth-addr]",
-		Short: "set subscription info associated with the eth address",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgSubscribe(args[0], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
 }
 
 // GetCmdRequestGuard is the CLI command for sending a request guard transaction
