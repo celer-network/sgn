@@ -17,12 +17,15 @@ import (
 func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 	if sgnParams == nil {
 		sgnParams = &tc.SGNParams{
+			CelrAddr:               tc.E2eProfile.CelrAddr,
+			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+			GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 			BlameTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
-			MinStakingPool:         big.NewInt(100),
-			SidechainGoLiveTimeout: big.NewInt(0),
-			CelrAddr:               tc.E2eProfile.CelrAddr,
 			MaxValidatorNum:        big.NewInt(11),
+			MinStakingPool:         big.NewInt(100),
+			IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
 	tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)

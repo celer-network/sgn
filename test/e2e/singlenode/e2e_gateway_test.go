@@ -21,13 +21,16 @@ import (
 
 func setUpGateway() []tc.Killable {
 	p := &tc.SGNParams{
+		CelrAddr:               tc.E2eProfile.CelrAddr,
+		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
+		MaxValidatorNum:        big.NewInt(11),
 		MinStakingPool:         big.NewInt(0),
+		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
 		SidechainGoLiveTimeout: big.NewInt(0),
 		StartGateway:           true,
-		CelrAddr:               tc.E2eProfile.CelrAddr,
-		MaxValidatorNum:        big.NewInt(11),
 	}
 	res := setupNewSGNEnv(p, "gateway")
 	tc.SleepWithLog(10, "sgn being ready")
