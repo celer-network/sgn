@@ -57,20 +57,21 @@ func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, sgno
 		log.Infoln("Adding validator", i)
 		ethAddr, auth, err := GetAuth(ethkss[i])
 		ChkTestErr(t, err, "failed to get auth")
-		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], amts[i], big.NewInt(1), true)
+		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], amts[i], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 	}
 }
 
 func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ethAddr mainchain.Addr, auth *bind.TransactOpts,
-	sgnop string, amt *big.Int, minAmt *big.Int, isValidator bool) {
+	sgnop string, amt *big.Int, minAmt *big.Int, commissionRate *big.Int,
+	rateLockEndTime *big.Int, isValidator bool) {
 
 	// get sgnAddr
 	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
 	ChkTestErr(t, err, "failed to parse sgn address")
 
 	// add candidate
-	err = InitializeCandidate(auth, sgnAddr, minAmt)
+	err = InitializeCandidate(auth, sgnAddr, minAmt, commissionRate, rateLockEndTime)
 	ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Infof("Query sgn about the validator candidate %s ...", ethAddr.Hex())

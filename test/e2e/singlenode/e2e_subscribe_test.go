@@ -51,7 +51,7 @@ func subscribeTest(t *testing.T) {
 	amt := big.NewInt(1000000000000000000)
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
 	tc.ChkTestErr(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
 	e2ecommon.SubscribteTestCommon(t, transactor, amt, "", 1)
 }
