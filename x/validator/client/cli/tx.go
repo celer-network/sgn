@@ -31,34 +31,11 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	validatorTxCmd.AddCommand(flags.PostCommands(
-		GetCmdUpdateSidechainAddr(cdc),
-		GetCmdClaimValidator(cdc),
-		GetCmdSyncValidator(cdc),
-		GetCmdSyncDelegator(cdc),
+		GetCmdSetTransactors(cdc),
 		GetCmdWithdrawReward(cdc),
 	)...)
 
 	return validatorTxCmd
-}
-
-// GetCmdUpdateSidechainAddr is the CLI command for sending a UpdateSidechainAddr transaction
-func GetCmdUpdateSidechainAddr(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "update-sidechain-addr [eth-addr]",
-		Short: "update sidechain address for the eth address",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgUpdateSidechainAddr(args[0], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
 }
 
 // GetCmdSetTransactors is the CLI command for sending a SetTransactors transaction
@@ -89,69 +66,6 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringSlice(flagTransactors, []string{}, "transactors")
 
 	return cmd
-}
-
-// GetCmdClaimValidator is the CLI command for sending a ClaimValidator transaction
-func GetCmdClaimValidator(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "claim-validator [eth-addr] [val-pubkey]",
-		Short: "claim validator for the eth address",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Info(viper.GetStringSlice(flagTransactors))
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgClaimValidator(args[0], args[1], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdSyncValidator is the CLI command for sending a SyncValidator transaction
-func GetCmdSyncValidator(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "sync-validator [eth-addr]",
-		Short: "sync validator for the eth address",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgSyncValidator(args[0], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-}
-
-// GetCmdSyncDelegator is the CLI command for sending a SyncDelegator transaction
-func GetCmdSyncDelegator(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "sync-delegator [candidate-addr] [delegator-addr]",
-		Short: "sync delegator for the candidate address and delegator address",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgSyncDelegator(args[0], args[1], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
 }
 
 // GetCmdWithdrawReward is the CLI command for sending a WithdrawReward transaction

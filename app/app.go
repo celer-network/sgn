@@ -235,7 +235,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyValidator,
 		app.cdc,
-		ethClient,
 		app.globalKeeper,
 		app.accountKeeper,
 		app.stakingKeeper,
@@ -285,6 +284,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.globalKeeper,
 		app.subscribeKeeper,
 		app.validatorKeeper,
+		app.stakingKeeper,
 	)
 
 	app.mm = module.NewManager(
@@ -293,11 +293,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
-		cron.NewAppModule(app.cronKeeper, app.bankKeeper),
-		global.NewAppModule(app.globalKeeper, app.bankKeeper),
-		slash.NewAppModule(app.slashKeeper, app.bankKeeper),
-		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
-		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
+		cron.NewAppModule(app.cronKeeper),
+		global.NewAppModule(app.globalKeeper),
+		slash.NewAppModule(app.slashKeeper),
+		subscribe.NewAppModule(app.subscribeKeeper),
+		validator.NewAppModule(app.validatorKeeper),
 		gov.NewAppModule(app.govKeeper, app.accountKeeper),
 		sync.NewAppModule(app.syncKeeper),
 	)
