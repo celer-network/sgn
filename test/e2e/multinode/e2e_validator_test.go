@@ -12,12 +12,15 @@ import (
 func setUpValidator(maxValidatorNum *big.Int) {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
+		CelrAddr:               tc.E2eProfile.CelrAddr,
+		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 		BlameTimeout:           big.NewInt(0),
 		MinValidatorNum:        big.NewInt(1),
-		MinStakingPool:         big.NewInt(1),
-		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        maxValidatorNum,
+		MinStakingPool:         big.NewInt(1),
+		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	setupNewSGNEnv(p)
 	tc.SleepWithLog(10, "sgn being ready")
