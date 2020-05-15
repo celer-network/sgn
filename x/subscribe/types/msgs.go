@@ -8,54 +8,6 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
-type MsgRequestGuard struct {
-	EthAddress              string         `json:"ethAddress"`
-	SignedSimplexStateBytes []byte         `json:"signedSimplexStateBytes"`
-	Sender                  sdk.AccAddress `json:"sender"`
-}
-
-// NewMsgRequestGuard is a constructor function for MsgRequestGuard
-func NewMsgRequestGuard(ethAddress string, signedSimplexStateBytes []byte, sender sdk.AccAddress) MsgRequestGuard {
-	return MsgRequestGuard{
-		EthAddress:              mainchain.FormatAddrHex(ethAddress),
-		SignedSimplexStateBytes: signedSimplexStateBytes,
-		Sender:                  sender,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgRequestGuard) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgRequestGuard) Type() string { return "request_guard" }
-
-// ValidateBasic runs stateless checks on the message
-func (msg MsgRequestGuard) ValidateBasic() error {
-	if len(msg.SignedSimplexStateBytes) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "SignedSimplexStateBytes cannot be empty")
-	}
-
-	if msg.EthAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
-	}
-
-	if msg.Sender.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
-	}
-
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgRequestGuard) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Sender}
-}
-
 // MsgIntendSettle defines a Subscribe message
 type MsgIntendSettle struct {
 	ChannelId []byte         `json:"channelId"`

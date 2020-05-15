@@ -19,6 +19,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.SyncBlock(ctx, change)
 	case types.Subscribe:
 		return keeper.Subscribe(ctx, change)
+	case types.Request:
+		return keeper.Request(ctx, change)
 	case types.UpdateSidechainAddr:
 		return keeper.UpdateSidechainAddr(ctx, change)
 	case types.SyncDelegator:
@@ -51,6 +53,29 @@ func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
 	}
 	subscription.Deposit = s.Deposit
 	keeper.subscribeKeeper.SetSubscription(ctx, subscription)
+
+	return nil
+}
+
+func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
+	var r subscribe.Request
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+
+	log.Infoln("Apply new request", r)
+	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetOwnerAddress())
+	if err != nil {
+		return fmt.Errorf("Failed to charge request fee: %s", err)
+	}
+
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerAddress())
+	if found {
+		request.SeqNum = r.SeqNum
+		request.SignedSimplexStateBytes = r.SignedSimplexStateBytes
+	} else {
+		request = r
+	}
+
+	keeper.subscribeKeeper.SetRequest(ctx, request)
 
 	return nil
 }

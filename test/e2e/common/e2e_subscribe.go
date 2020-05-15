@@ -76,15 +76,19 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Request guard...")
-	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(10, channelId[:], tc.Client0.Address.Bytes(), tc.Client0, tc.Client1)
+	seqNum := uint64(10)
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client0.Address.Bytes(), tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
-	msgRequestGuard := subscribe.NewMsgRequestGuard(tc.Client0.Address.Hex(), signedSimplexStateBytes, transactor.Key.GetAddress())
-	transactor.AddTxMsg(msgRequestGuard)
+	request, err := subscribe.GetRequest(transactor.CliCtx, tc.Client0, signedSimplexStateProto)
+	request.SeqNum = seqNum
+	request.SignedSimplexStateBytes = signedSimplexStateBytes
+	requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+	msgSubmitChange = sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
+	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	var request stypes.Request
 	// TxHash now should be empty
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: , GuardTxHash:`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 1, signedSimplexStateBytes)
 	for retry := 0; retry < 30; retry++ {

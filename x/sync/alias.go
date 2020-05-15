@@ -28,6 +28,7 @@ const (
 	ParamTallying       = types.ParamTallying
 	SyncBlock           = types.SyncBlock
 	Subscribe           = types.Subscribe
+	Request             = types.Request
 	UpdateSidechainAddr = types.UpdateSidechainAddr
 	SyncDelegator       = types.SyncDelegator
 	SyncValidator       = types.SyncValidator

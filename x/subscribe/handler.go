@@ -2,16 +2,11 @@ package subscribe
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -25,8 +20,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
-		case MsgRequestGuard:
-			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
 		case MsgIntendSettle:
 			res, err = handleMsgIntendSettle(ctx, keeper, msg, logEntry)
 		case MsgGuardProof:
@@ -42,65 +35,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		seal.CommitMsgLog(logEntry)
 		return res, err
 	}
-}
-
-// Handle a message to request guard
-func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
-
-	res := &sdk.Result{}
-	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
-	if err != nil {
-		return res, fmt.Errorf("Failed to charge request fee: %s", err)
-	}
-
-	var signedSimplexState chain.SignedSimplexState
-	err = proto.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
-	if err != nil {
-		return res, fmt.Errorf("Failed to unmarshal signedSimplexStateBytes: %s", err)
-	}
-
-	var simplexPaymentChannel entity.SimplexPaymentChannel
-	err = proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
-	if err != nil {
-		return res, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
-	}
-
-	// reject guard request if the channel is not Operable
-	// TODO: is this sufficient to handle the racing condition of one guard request and one IntendSettle event
-	cid := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-	logEntry.ChanInfo.ChanId = mainchain.Cid2Hex(cid)
-	logEntry.ChanInfo.SeqNum = simplexPaymentChannel.SeqNum
-
-	status, err := keeper.ethClient.Ledger.GetChannelStatus(
-		&bind.CallOpts{BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx))}, cid)
-	if err != nil {
-		return res, fmt.Errorf("Failed to query channel status: %s", err)
-	}
-	if status != mainchain.OperableChannel {
-		return res, fmt.Errorf("Channel status is not Operable")
-	}
-
-	request, err := getRequest(ctx, keeper, simplexPaymentChannel)
-	if err != nil {
-		return res, fmt.Errorf("Failed to get request: %s", err)
-	}
-	if simplexPaymentChannel.SeqNum < request.SeqNum {
-		return res, fmt.Errorf("Seq num smaller than previous request %d", request.SeqNum)
-	}
-
-	err = verifySignedSimplexStateSigs(request, signedSimplexState)
-	if err != nil {
-		return res, fmt.Errorf("Failed to verify sigs: %s", err)
-	}
-
-	request.SeqNum = simplexPaymentChannel.SeqNum
-	request.SignedSimplexStateBytes = msg.SignedSimplexStateBytes
-	keeper.SetRequest(ctx, request)
-
-	return res, nil
 }
 
 func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (*sdk.Result, error) {

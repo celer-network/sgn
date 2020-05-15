@@ -1,9 +1,12 @@
 package monitor
 
 import (
+	"reflect"
+
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
@@ -11,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/golang/protobuf/proto"
 )
 
 func (m *EthMonitor) verifyChange(change sync.Change) bool {
@@ -19,6 +23,8 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 		return m.verifySyncBlock(change)
 	case sync.Subscribe:
 		return m.verifySubscribe(change)
+	case sync.Request:
+		return m.verifyRequest(change)
 	case sync.UpdateSidechainAddr:
 		return m.verifyUpdateSidechainAddr(change)
 	case sync.SyncDelegator:
@@ -57,6 +63,34 @@ func (m *EthMonitor) verifySubscribe(change sync.Change) bool {
 	}
 
 	return subscription.Deposit.BigInt().Cmp(deposit) == 0
+}
+
+func (m *EthMonitor) verifyRequest(change sync.Change) bool {
+	var request subscribe.Request
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
+	log.Infoln("Verify request", request)
+
+	var signedSimplexState chain.SignedSimplexState
+	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+	if err != nil {
+		log.Errorln("Failed to unmarshal signedSimplexStateBytes:", err)
+		return false
+	}
+
+	r, err := subscribe.GetRequest(m.operator.CliCtx, m.ethClient, signedSimplexState)
+	if err != nil {
+		log.Errorln("Failed to get request through SignedSimplexStateBytes:", err)
+		return false
+	}
+
+	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
+	if err != nil {
+		log.Infoln("Failed to verify sigs:", err)
+		return false
+	}
+
+	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex &&
+		reflect.DeepEqual(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
 }
 
 func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {

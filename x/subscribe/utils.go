@@ -3,35 +3,32 @@ package subscribe
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
+	coscontext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/golang/protobuf/proto"
 )
 
-func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
+func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState chain.SignedSimplexState) (Request, error) {
+	var simplexPaymentChannel entity.SimplexPaymentChannel
+	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
+	if err != nil {
+		return Request{}, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
+	}
+
 	peerFromAddr := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
-	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId, peerFromAddr)
-	if !found {
+	request, err := CLIQueryRequest(cliCtx, RouterKey, simplexPaymentChannel.ChannelId, peerFromAddr)
+	if err != nil {
 		channelId := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-
-		disputeTimeout, err := keeper.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
-			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-		}, channelId)
-		if err != nil {
-			return Request{}, fmt.Errorf("GetDisputeTimeout err: %s", err)
-		}
-
-		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
-			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-		}, channelId)
+		addresses, seqNums, err := ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, channelId)
 		if err != nil {
 			return Request{}, fmt.Errorf("GetStateSeqNumMap err: %s", err)
 		}
@@ -47,10 +44,30 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 		}
 
 		seqNum := seqNums[peerFromIndex].Uint64()
-		request = NewRequest(simplexPaymentChannel.ChannelId, seqNum, peerAddrs, peerFromIndex, disputeTimeout.Uint64())
+		request = NewRequest(simplexPaymentChannel.ChannelId, seqNum, peerAddrs, peerFromIndex)
 	}
 
 	return request, nil
+}
+
+// Make sure signature match peer addresses for the channel
+func VerifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
+	if len(signedSimplexState.Sigs) != 2 {
+		return fmt.Errorf("incorrect sigs count %d", len(signedSimplexState.Sigs))
+	}
+
+	for i := 0; i < 2; i++ {
+		addr, err := mainchain.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[i])
+		if err != nil {
+			return fmt.Errorf("RecoverSigner err: %s", err)
+		}
+
+		if request.PeerAddresses[i] != mainchain.Addr2Hex(addr) {
+			return fmt.Errorf("invalid eth signer %d %s %s", i, request.PeerAddresses[i], mainchain.Addr2Hex(addr))
+		}
+	}
+
+	return nil
 }
 
 func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
@@ -80,26 +97,6 @@ func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	}
 
 	return requestGuards
-}
-
-// Make sure signature match peer addresses for the channel
-func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
-	if len(signedSimplexState.Sigs) != 2 {
-		return fmt.Errorf("incorrect sigs count %d", len(signedSimplexState.Sigs))
-	}
-
-	for i := 0; i < 2; i++ {
-		addr, err := mainchain.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[i])
-		if err != nil {
-			return fmt.Errorf("RecoverSigner err: %s", err)
-		}
-
-		if request.PeerAddresses[i] != mainchain.Addr2Hex(addr) {
-			return fmt.Errorf("invalid eth signer %d %s %s", i, request.PeerAddresses[i], mainchain.Addr2Hex(addr))
-		}
-	}
-
-	return nil
 }
 
 func getAccAddrIndex(addresses []sdk.AccAddress, targetAddress sdk.AccAddress) (index int, found bool) {
