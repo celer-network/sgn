@@ -8,7 +8,6 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
@@ -20,8 +19,6 @@ import (
 
 func (m *EthMonitor) verifyChange(change sync.Change) bool {
 	switch change.Type {
-	case sync.SyncBlock:
-		return m.verifySyncBlock(change)
 	case sync.Subscribe:
 		return m.verifySubscribe(change)
 	case sync.Request:
@@ -39,19 +36,6 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 	default:
 		return false
 	}
-}
-
-func (m *EthMonitor) verifySyncBlock(change sync.Change) bool {
-	var block global.Block
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &block)
-
-	syncedBlock, err := m.getLatestBlock()
-	if err != nil {
-		return false
-	}
-
-	log.Infoln("Verify SyncBlock", block, syncedBlock)
-	return block.Number <= m.blkNum.Uint64() && block.Number > syncedBlock.Number
 }
 
 func (m *EthMonitor) verifySubscribe(change sync.Change) bool {

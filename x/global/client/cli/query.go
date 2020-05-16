@@ -1,10 +1,8 @@
 package cli
 
 import (
-	"encoding/binary"
 	"fmt"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/global/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -28,54 +26,10 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	globalQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdLatestBlock(storeKey, cdc),
 		GetCmdEpoch(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return globalQueryCmd
-}
-
-// GetCmdLatestBlock queries the lastest block
-func GetCmdLatestBlock(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "latest-block",
-		Short: "query last block info",
-		Args:  cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			block, err := QueryLatestBlock(cliCtx, queryRoute)
-			if err != nil {
-				log.Errorln("query error", err)
-				return err
-			}
-
-			return cliCtx.PrintOutput(block)
-		},
-	}
-}
-
-// Query latest block
-func QueryLatestBlock(cliCtx context.CLIContext, queryRoute string) (block types.Block, err error) {
-	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLatestBlock)
-	res, err := common.RobustQuery(cliCtx, route)
-	if err != nil {
-		return
-	}
-
-	err = cliCtx.Codec.UnmarshalJSON(res, &block)
-	return
-}
-
-// Query secure block number
-func QuerySecureBlockNum(cliCtx context.CLIContext, queryRoute string) (secureBlockNum uint64, err error) {
-	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySecureBlockNum)
-	res, err := common.RobustQuery(cliCtx, route)
-	if err != nil {
-		return
-	}
-
-	secureBlockNum = binary.BigEndian.Uint64(res)
-	return
 }
 
 // GetCmdEpoch queries request info

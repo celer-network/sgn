@@ -64,8 +64,8 @@ var (
 	// account permissions
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
-		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
-		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
 
 	monitored = false
@@ -128,6 +128,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
 	viper.SetDefault(common.FlagEthPollInterval, 5)
+	viper.SetDefault(common.FlagEthConfirmCount, 7)
 
 	ethClient, err = mainchain.NewEthClient(
 		viper.GetString(common.FlagEthInstance),

@@ -1,7 +1,10 @@
 package common
 
 const (
-	FlagConfig = "config"
+	FlagConfig  = "config"
+	FlagCLIHome = "cli-home"
+
+	FlagStartMonitor = "startMonitor"
 
 	FlagEthInstance      = "eth.instance"
 	FlagEthDPoSAddress   = "eth.dposAddress"
@@ -10,6 +13,7 @@ const (
 	FlagEthKeystore      = "eth.keystore"
 	FlagEthPassphrase    = "eth.passphrase"
 	FlagEthPollInterval  = "eth.pollInterval"
+	FlagEthConfirmCount  = "eth.confirmCount"
 
 	FlagSgnOperator       = "sgn.operator"
 	FlagSgnTransactors    = "sgn.transactors"
@@ -22,10 +26,7 @@ const (
 	FlagSgnKeyringBackend = "sgn.keyringBackend"
 	FlagSgnBootNode       = "sgn.bootNode"
 
-	FlagLogLevel     = "logLevel"
-	FlagLogColor     = "logColor"
-	FlagLogLongFile  = "logLongFile"
-	FlagStartMonitor = "startMonitor"
-
-	FlagCLIHome = "cli-home"
+	FlagLogLevel    = "log.level"
+	FlagLogColor    = "log.color"
+	FlagLogLongFile = "log.longFile"
 )

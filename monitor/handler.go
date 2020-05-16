@@ -1,13 +1,10 @@
 package monitor
 
 import (
-	"math/big"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
@@ -18,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
+func (m *EthMonitor) processEventQueue() {
 	iterator, err := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -28,7 +25,7 @@ func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		if secureBlockNum < event.Log.BlockNumber {
+		if m.secureBlkNum < event.Log.BlockNumber {
 			continue
 		}
 
@@ -44,19 +41,6 @@ func (m *EthMonitor) processEventQueue(secureBlockNum uint64) {
 			m.handleIntendWithdraw(e)
 		}
 	}
-}
-
-func (m *EthMonitor) handleNewBlock(blkNum *big.Int) {
-	log.Infoln("Catch new mainchain block", blkNum)
-	if !m.isPuller() {
-		return
-	}
-
-	log.Infof("Add MsgSyncBlock %d to transactor msgQueue", blkNum)
-	block := global.NewBlock(blkNum.Uint64())
-	blockData := m.blockSyncer.CliCtx.Codec.MustMarshalBinaryBare(block)
-	msg := sync.NewMsgSubmitChange(sync.SyncBlock, blockData, m.blockSyncer.Key.GetAddress())
-	m.blockSyncer.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.DPoSDelegate) {

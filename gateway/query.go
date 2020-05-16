@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -13,11 +12,6 @@ import (
 )
 
 func (rs *RestServer) registerQueryRoutes() {
-	rs.Mux.HandleFunc(
-		"/global/latestBlock",
-		latestBlockHandlerFn(rs),
-	).Methods(http.MethodGet, http.MethodOptions)
-
 	rs.Mux.HandleFunc(
 		"/subscribe/params",
 		subscribeParamsHandlerFn(rs),
@@ -47,15 +41,6 @@ func (rs *RestServer) registerQueryRoutes() {
 		"/validator/rewardRequest/{ethAddr}",
 		rewardRequestHandlerFn(rs),
 	).Methods(http.MethodGet, http.MethodOptions)
-}
-
-// http request handler to query latest block
-func latestBlockHandlerFn(rs *RestServer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		transactor := rs.transactorPool.GetTransactor()
-		block, err := global.CLIQueryLatestBlock(transactor.CliCtx, global.RouterKey)
-		postProcessResponse(w, transactor.CliCtx, block, err)
-	}
 }
 
 // http request handler to query subscribe params

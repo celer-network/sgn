@@ -5,11 +5,14 @@
     "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
     "passphrase": "",
     "instance": "http://192.168.10.1:8545",
-    "pollInterval": 1
+    "pollInterval": 1,
+    "confirmCount": 1
   },
-  "logcolor": false,
-  "loglevel": "debug",
-  "loglongfile": true,
+  "log": {
+    "color": true,
+    "level": "debug",
+    "longfile": true
+  },
   "sgn": {
     "chainid": "sgnchain",
     "baseGasPrice": 0,
