@@ -77,7 +77,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 
 	log.Infoln("Request guard...")
 	seqNum := uint64(10)
-	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client0.Address.Bytes(), tc.Client0, tc.Client1)
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
