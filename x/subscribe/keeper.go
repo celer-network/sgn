@@ -3,9 +3,7 @@ package subscribe
 import (
 	"errors"
 
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/global"
-	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,22 +14,18 @@ import (
 type Keeper struct {
 	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
-	ethClient       *mainchain.EthClient
 	globalKeeper    global.Keeper
-	slashKeeper     slash.Keeper
 	validatorKeeper validator.Keeper
 	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the subscribe Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, ethClient *mainchain.EthClient,
-	globalKeeper global.Keeper, slashKeeper slash.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec,
+	globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
-		ethClient:       ethClient,
 		globalKeeper:    globalKeeper,
-		slashKeeper:     slashKeeper,
 		validatorKeeper: validatorKeeper,
 		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}
@@ -111,5 +105,5 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, peerFrom string) (
 // Sets the entire Request metadata for a channelId
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRequestKey(request.ChannelId, request.GetPeerAddress()), k.cdc.MustMarshalBinaryBare(request))
+	store.Set(GetRequestKey(request.ChannelId, request.GetOwnerAddress()), k.cdc.MustMarshalBinaryBare(request))
 }

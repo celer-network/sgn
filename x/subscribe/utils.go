@@ -3,35 +3,36 @@ package subscribe
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
+	coscontext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/golang/protobuf/proto"
 )
 
-func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.SimplexPaymentChannel) (Request, error) {
+var (
+	intendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+)
+
+func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState *chain.SignedSimplexState) (Request, error) {
+	var simplexPaymentChannel entity.SimplexPaymentChannel
+	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
+	if err != nil {
+		return Request{}, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
+	}
+
 	peerFromAddr := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
-	request, found := keeper.GetRequest(ctx, simplexPaymentChannel.ChannelId, peerFromAddr)
-	if !found {
+	request, err := CLIQueryRequest(cliCtx, RouterKey, simplexPaymentChannel.ChannelId, peerFromAddr)
+	if err != nil {
 		channelId := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-
-		disputeTimeout, err := keeper.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
-			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-		}, channelId)
-		if err != nil {
-			return Request{}, fmt.Errorf("GetDisputeTimeout err: %s", err)
-		}
-
-		addresses, seqNums, err := keeper.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
-			BlockNumber: new(big.Int).SetUint64(keeper.globalKeeper.GetSecureBlockNum(ctx)),
-		}, channelId)
+		addresses, seqNums, err := ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, channelId)
 		if err != nil {
 			return Request{}, fmt.Errorf("GetStateSeqNumMap err: %s", err)
 		}
@@ -47,43 +48,14 @@ func getRequest(ctx sdk.Context, keeper Keeper, simplexPaymentChannel entity.Sim
 		}
 
 		seqNum := seqNums[peerFromIndex].Uint64()
-		request = NewRequest(simplexPaymentChannel.ChannelId, seqNum, peerAddrs, peerFromIndex, disputeTimeout.Uint64())
+		request = NewRequest(simplexPaymentChannel.ChannelId, seqNum, peerAddrs, peerFromIndex)
 	}
 
 	return request, nil
 }
 
-func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
-	validatorCandidates := keeper.validatorKeeper.GetValidatorCandidates(ctx)
-	sort.Slice(validatorCandidates, func(i, j int) bool {
-		validatorCandidate0 := validatorCandidates[i]
-		validatorCandidate1 := validatorCandidates[j]
-		reqStakeRatio0 := validatorCandidate0.RequestCount.ToDec().QuoInt(validatorCandidate0.StakingPool)
-		reqStakeRatio1 := validatorCandidate1.RequestCount.ToDec().QuoInt(validatorCandidate1.StakingPool)
-
-		if !reqStakeRatio0.Equal(reqStakeRatio1) {
-			return reqStakeRatio0.LT(reqStakeRatio1)
-		}
-
-		return validatorCandidate0.StakingPool.LT(validatorCandidate1.StakingPool)
-	})
-
-	requestGuardCount := int(keeper.RequestGuardCount(ctx))
-	requestGuards := []sdk.AccAddress{}
-
-	for len(requestGuards) < requestGuardCount && len(requestGuards) < len(validatorCandidates) {
-		candidate := validatorCandidates[len(requestGuards)]
-		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
-		keeper.validatorKeeper.SetCandidate(ctx, candidate)
-
-		requestGuards = append(requestGuards, sdk.AccAddress(candidate.Operator))
-	}
-
-	return requestGuards
-}
-
 // Make sure signature match peer addresses for the channel
-func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
+func VerifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
 	if len(signedSimplexState.Sigs) != 2 {
 		return fmt.Errorf("incorrect sigs count %d", len(signedSimplexState.Sigs))
 	}
@@ -102,16 +74,7 @@ func verifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 	return nil
 }
 
-func getAccAddrIndex(addresses []sdk.AccAddress, targetAddress sdk.AccAddress) (index int, found bool) {
-	for i, v := range addresses {
-		if v.Equals(targetAddress) {
-			return i, true
-		}
-	}
-	return 0, false
-}
-
-func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
+func ValidateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
 	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
 	if err != nil {
 		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
@@ -141,7 +104,36 @@ func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash 
 	return log, nil
 }
 
-func validateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
+func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+	validatorCandidates := keeper.validatorKeeper.GetValidatorCandidates(ctx)
+	sort.Slice(validatorCandidates, func(i, j int) bool {
+		validatorCandidate0 := validatorCandidates[i]
+		validatorCandidate1 := validatorCandidates[j]
+		reqStakeRatio0 := validatorCandidate0.RequestCount.ToDec().QuoInt(validatorCandidate0.StakingPool)
+		reqStakeRatio1 := validatorCandidate1.RequestCount.ToDec().QuoInt(validatorCandidate1.StakingPool)
+
+		if !reqStakeRatio0.Equal(reqStakeRatio1) {
+			return reqStakeRatio0.LT(reqStakeRatio1)
+		}
+
+		return validatorCandidate0.StakingPool.LT(validatorCandidate1.StakingPool)
+	})
+
+	requestGuardCount := int(keeper.RequestGuardCount(ctx))
+	requestGuards := []sdk.AccAddress{}
+
+	for len(requestGuards) < requestGuardCount && len(requestGuards) < len(validatorCandidates) {
+		candidate := validatorCandidates[len(requestGuards)]
+		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
+		keeper.validatorKeeper.SetCandidate(ctx, candidate)
+
+		requestGuards = append(requestGuards, sdk.AccAddress(candidate.Operator))
+	}
+
+	return requestGuards
+}
+
+func ValidateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
 	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
 		return fmt.Errorf("Failed to parse CelerLedgerABI: %w", err)

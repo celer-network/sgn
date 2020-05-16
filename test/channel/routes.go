@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
@@ -63,8 +62,9 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			msgRequestGuard := subscribe.NewMsgRequestGuard(rs.peer1.Address.Hex(), signedSimplexStateBytes, rs.transactor.Key.GetAddress())
-			rs.transactor.AddTxMsg(msgRequestGuard)
+			// FIX
+			// msgRequestGuard := subscribe.NewMsgRequestGuard(rs.peer1.Address.Hex(), signedSimplexStateBytes, rs.transactor.Key.GetAddress())
+			// rs.transactor.AddTxMsg(msgRequestGuard)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
 				"ethAddr":                 rs.peer1.Address.Hex(),

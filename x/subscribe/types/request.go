@@ -16,17 +16,27 @@ type Request struct {
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
+	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
 	GuardTxHash             string           `json:"guardTxHash"`
+	GuardTxBlkNum           uint64           `json:"guardTxBlkNum"`
+	GuardSender             string           `json:"guardSender"`
 }
 
-func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8, disputeTimeout uint64) Request {
+func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8) Request {
 	return Request{
-		ChannelId:      channelId,
-		SeqNum:         seqNum,
-		PeerAddresses:  peerAddresses,
-		PeerFromIndex:  peerFromIndex,
-		DisputeTimeout: disputeTimeout,
+		ChannelId:     channelId,
+		SeqNum:        seqNum,
+		PeerAddresses: peerAddresses,
+		PeerFromIndex: peerFromIndex,
 	}
+}
+
+func (r Request) GetOwnerAddress() string {
+	if r.PeerFromIndex == 0 {
+		return r.PeerAddresses[1]
+	}
+
+	return r.PeerAddresses[0]
 }
 
 func (r Request) GetPeerAddress() string {

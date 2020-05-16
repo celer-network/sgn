@@ -131,7 +131,17 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 			return
 		}
 
-		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.operator.Key.GetAddress())
+		disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
+		if err != nil {
+			log.Errorln("GetDisputeTimeout err:", err)
+			return
+		}
+
+		request.DisputeTimeout = disputeTimeout.Uint64()
+		request.TriggerTxHash = intendSettle.Raw.TxHash.Hex()
+		request.TriggerTxBlkNum = intendSettle.Raw.BlockNumber
+		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.IntendSettle, requestData, m.operator.Key.GetAddress())
 		m.operator.AddTxMsg(msg)
 	}
 }
@@ -186,7 +196,11 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.operator.Key.GetAddress())
+		request.GuardTxHash = res.BlockHash.Hex()
+		request.GuardTxBlkNum = res.BlockNumber.Uint64()
+		request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
+		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
 		m.operator.AddTxMsg(msg)
 	}
 }

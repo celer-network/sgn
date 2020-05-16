@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
@@ -95,9 +94,10 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		msg := subscribe.NewMsgRequestGuard(req.EthAddr, signedSimplexStateBytes, transactor.CliCtx.GetFromAddress())
-		writeGenerateStdTxResponse(w, transactor, msg)
+		// FIX
+		// signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
+		// msg := subscribe.NewMsgRequestGuard(req.EthAddr, signedSimplexStateBytes, transactor.CliCtx.GetFromAddress())
+		// writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
 
