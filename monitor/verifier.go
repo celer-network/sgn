@@ -78,7 +78,13 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 		return false
 	}
 
-	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex &&
+	ownerAddr, err := mainchain.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
+	if err != nil {
+		log.Infoln("Failed to recover signer:", err)
+		return false
+	}
+
+	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex && request.GetOwnerAddress() == mainchain.Addr2Hex(ownerAddr) &&
 		bytes.Equal(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
 }
 

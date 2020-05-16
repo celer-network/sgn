@@ -13,8 +13,9 @@ type Request struct {
 	PeerAddresses           []string         `json:"peerAddresses"`
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
 	DisputeTimeout          uint64           `json:"disputeTimeout"`
-	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
+	OwnerSig                []byte           `json:"ownerSig"`
+	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
 	GuardTxHash             string           `json:"guardTxHash"`

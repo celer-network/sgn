@@ -62,6 +62,7 @@ func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
 	if found {
 		request.SeqNum = r.SeqNum
 		request.SignedSimplexStateBytes = r.SignedSimplexStateBytes
+		request.OwnerSig = r.OwnerSig
 	} else {
 		request = r
 	}
