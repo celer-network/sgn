@@ -131,6 +131,13 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 			return
 		}
 
+		disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
+		if err != nil {
+			log.Errorln("GetDisputeTimeout err:", err)
+			return
+		}
+
+		request.DisputeTimeout = disputeTimeout.Uint64()
 		request.TriggerTxHash = intendSettle.Raw.TxHash.Hex()
 		request.TriggerTxBlkNum = intendSettle.Raw.BlockNumber
 		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)

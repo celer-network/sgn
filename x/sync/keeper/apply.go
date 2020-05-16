@@ -96,6 +96,7 @@ func (keeper Keeper) IntendSettle(ctx sdk.Context, change types.Change) error {
 
 	request.TriggerTxHash = r.TriggerTxHash
 	request.TriggerTxBlkNum = r.TriggerTxBlkNum
+	request.DisputeTimeout = r.DisputeTimeout
 	request.RequestGuards = subscribe.GetRequestGuards(ctx, keeper.subscribeKeeper)
 	keeper.subscribeKeeper.SetRequest(ctx, request)
 
