@@ -17,6 +17,10 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+var (
+	intendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+)
+
 func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState *chain.SignedSimplexState) (Request, error) {
 	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
@@ -129,16 +133,7 @@ func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	return requestGuards
 }
 
-func getAccAddrIndex(addresses []sdk.AccAddress, targetAddress sdk.AccAddress) (index int, found bool) {
-	for i, v := range addresses {
-		if v.Equals(targetAddress) {
-			return i, true
-		}
-	}
-	return 0, false
-}
-
-func validateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
+func ValidateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
 	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
 		return fmt.Errorf("Failed to parse CelerLedgerABI: %w", err)

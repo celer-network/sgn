@@ -23,6 +23,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.Request(ctx, change)
 	case types.IntendSettle:
 		return keeper.IntendSettle(ctx, change)
+	case types.GuardProof:
+		return keeper.GuardProof(ctx, change)
 	case types.UpdateSidechainAddr:
 		return keeper.UpdateSidechainAddr(ctx, change)
 	case types.SyncDelegator:
@@ -86,16 +88,54 @@ func (keeper Keeper) IntendSettle(ctx sdk.Context, change types.Change) error {
 	var r subscribe.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
-	log.Infoln("Apply new request", r)
-
+	log.Infoln("Apply intend settle", r)
 	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerAddress())
 	if !found {
 		return fmt.Errorf("failed to get request with channelId %x and peer %s", r.ChannelId, r.GetPeerAddress())
 	}
 
 	request.TriggerTxHash = r.TriggerTxHash
+	request.TriggerTxBlkNum = r.TriggerTxBlkNum
 	request.RequestGuards = subscribe.GetRequestGuards(ctx, keeper.subscribeKeeper)
 	keeper.subscribeKeeper.SetRequest(ctx, request)
+
+	return nil
+}
+
+func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
+	var r subscribe.Request
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+
+	log.Infoln("Apply guard proof", r)
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerAddress())
+	if !found {
+		return fmt.Errorf("failed to get request with channelId %x and peer %s", r.ChannelId, r.GetPeerAddress())
+	}
+
+	request.GuardTxHash = r.GuardTxHash
+	request.GuardTxBlkNum = r.GuardTxBlkNum
+	keeper.subscribeKeeper.SetRequest(ctx, request)
+
+	requestGuards := request.RequestGuards
+	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum
+	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+
+	var rewardValidator sdk.AccAddress
+	if guardIndex < len(requestGuards) {
+		rewardValidator = request.RequestGuards[guardIndex]
+	} else {
+		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, request.GuardSender)
+		if found {
+			rewardValidator = rewardCandidate.Operator
+		}
+
+		guardIndex = len(requestGuards)
+	}
+
+	// punish corresponding guards and reward corresponding validator
+	for i := 0; i < guardIndex; i++ {
+		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
+	}
 
 	return nil
 }

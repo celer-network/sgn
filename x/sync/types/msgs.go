@@ -16,6 +16,7 @@ const (
 	Subscribe           = "subscribe"
 	Request             = "request"
 	IntendSettle        = "intend_settle"
+	GuardProof          = "guard_proof"
 	UpdateSidechainAddr = "update_sidechain_addr"
 	SyncDelegator       = "sync_delegator"
 	SyncValidator       = "sync_validator"

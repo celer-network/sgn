@@ -15,7 +15,6 @@ const (
 )
 
 var (
-	NewMsgGuardProof           = types.NewMsgGuardProof
 	ModuleCdc                  = types.ModuleCdc
 	RegisterCodec              = types.RegisterCodec
 	NewSubscription            = types.NewSubscription
@@ -32,7 +31,6 @@ var (
 )
 
 type (
-	MsgGuardProof           = types.MsgGuardProof
 	Subscription            = types.Subscription
 	Request                 = types.Request
 	Params                  = types.Params

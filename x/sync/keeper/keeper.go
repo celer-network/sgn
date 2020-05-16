@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
@@ -23,6 +24,8 @@ type Keeper struct {
 
 	stakingKeeper staking.Keeper
 
+	slashKeeper slash.Keeper
+
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
 
@@ -40,7 +43,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
 	globalKeeper global.Keeper, subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
-	stakingKeeper staking.Keeper,
+	stakingKeeper staking.Keeper, slashKeeper slash.Keeper,
 ) Keeper {
 	return Keeper{
 		storeKey:        key,
@@ -49,6 +52,7 @@ func NewKeeper(
 		subscribeKeeper: subscribeKeeper,
 		validatorKeeper: validatorKeeper,
 		stakingKeeper:   stakingKeeper,
+		slashKeeper:     slashKeeper,
 		cdc:             cdc,
 	}
 }

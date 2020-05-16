@@ -27,6 +27,8 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 		return m.verifyRequest(change)
 	case sync.IntendSettle:
 		return m.verifyIntendSettle(change)
+	case sync.GuardProof:
+		return m.verifyGuardProof(change)
 	case sync.UpdateSidechainAddr:
 		return m.verifyUpdateSidechainAddr(change)
 	case sync.SyncDelegator:
@@ -100,7 +102,7 @@ func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	log.Infoln("Verify IntendSettle", request)
 
-	_, err := subscribe.ValidateIntendSettle(
+	triggerLog, err := subscribe.ValidateIntendSettle(
 		"Trigger", m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorln(err)
@@ -113,7 +115,44 @@ func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
 		return false
 	}
 
-	return request.DisputeTimeout == disputeTimeout.Uint64()
+	return request.TriggerTxBlkNum == triggerLog.BlockNumber && request.DisputeTimeout == disputeTimeout.Uint64()
+}
+
+func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
+	var request subscribe.Request
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
+	log.Infoln("Verify GuardProof", request)
+
+	if request.TriggerTxHash == "" {
+		log.Errorln("IntendSettle Trigger event has not been submitted")
+		return false
+	}
+
+	guardLog, err := subscribe.ValidateIntendSettle(
+		"Guard", m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	if err != nil {
+		log.Errorln(err)
+		return false
+	}
+
+	if guardLog.BlockNumber <= request.TriggerTxBlkNum {
+		log.Errorf("Invalid block number for GuardTx %d TriggerTx %d", guardLog.BlockNumber, request.TriggerTxBlkNum)
+		return false
+	}
+
+	err = subscribe.ValidateIntendSettleSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
+	if err != nil {
+		log.Errorln(err)
+		return false
+	}
+
+	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, request.GuardTxHash)
+	if err != nil {
+		log.Errorln(err)
+		return false
+	}
+
+	return request.GuardTxBlkNum == guardLog.BlockNumber && request.GuardSender == guardSender
 }
 
 func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {

@@ -132,6 +132,7 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 		}
 
 		request.TriggerTxHash = intendSettle.Raw.TxHash.Hex()
+		request.TriggerTxBlkNum = intendSettle.Raw.BlockNumber
 		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
 		msg := sync.NewMsgSubmitChange(sync.IntendSettle, requestData, m.operator.Key.GetAddress())
 		m.operator.AddTxMsg(msg)
@@ -188,7 +189,11 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		msg := subscribe.NewMsgGuardProof(request.ChannelId, request.GetPeerAddress(), tx.Hash().Hex(), m.operator.Key.GetAddress())
+		request.GuardTxHash = res.BlockHash.Hex()
+		request.GuardTxBlkNum = res.BlockNumber.Uint64()
+		request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
+		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
 		m.operator.AddTxMsg(msg)
 	}
 }

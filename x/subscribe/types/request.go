@@ -16,7 +16,10 @@ type Request struct {
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
+	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
 	GuardTxHash             string           `json:"guardTxHash"`
+	GuardTxBlkNum           uint64           `json:"guardTxBlkNum"`
+	GuardSender             string           `json:"guardSender"`
 }
 
 func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8) Request {
