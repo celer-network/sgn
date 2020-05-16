@@ -51,7 +51,12 @@ func (m *EthMonitor) verifySubscribe(change sync.Change) bool {
 		return false
 	}
 
-	return subscription.Deposit.BigInt().Cmp(deposit) == 0
+	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
+		log.Error("Deposit is incorrect")
+		return false
+	}
+
+	return true
 }
 
 func (m *EthMonitor) verifyRequest(change sync.Change) bool {
@@ -74,18 +79,42 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 
 	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
-		log.Infoln("Failed to verify sigs:", err)
+		log.Errorln("Failed to verify sigs:", err)
 		return false
 	}
 
 	ownerAddr, err := mainchain.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
 	if err != nil {
-		log.Infoln("Failed to recover signer:", err)
+		log.Errorln("Failed to recover signer:", err)
 		return false
 	}
 
-	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex && request.GetOwnerAddress() == mainchain.Addr2Hex(ownerAddr) &&
-		bytes.Equal(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
+	if request.SeqNum <= r.SeqNum {
+		log.Error("SeqNum is smaller than expected")
+		return false
+	}
+
+	if request.PeerFromIndex != r.PeerFromIndex {
+		log.Error("PeerFromIndex is incorrect")
+		return false
+	}
+
+	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
+		log.Error("Owner sig is incorrect")
+		return false
+	}
+
+	if !bytes.Equal(request.ChannelId, r.ChannelId) {
+		log.Error("ChannelId is incorrect")
+		return false
+	}
+
+	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
+		log.Error("PeerAddresses is incorrect")
+		return false
+	}
+
+	return true
 }
 
 func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
@@ -106,7 +135,16 @@ func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
 		return false
 	}
 
-	return request.TriggerTxBlkNum == triggerLog.BlockNumber && request.DisputeTimeout == disputeTimeout.Uint64()
+	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
+		log.Error("TriggerTxBlkNum is incorrect")
+		return false
+	}
+	if request.DisputeTimeout != disputeTimeout.Uint64() {
+		log.Error("DisputeTimeout is incorrect")
+		return false
+	}
+
+	return true
 }
 
 func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
@@ -143,7 +181,16 @@ func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
 		return false
 	}
 
-	return request.GuardTxBlkNum == guardLog.BlockNumber && request.GuardSender == guardSender
+	if request.GuardTxBlkNum != guardLog.BlockNumber {
+		log.Error("GuardTxBlkNum is incorrect")
+		return false
+	}
+	if request.GuardSender != guardSender {
+		log.Error("GuardSender is incorrect")
+		return false
+	}
+
+	return true
 }
 
 func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
@@ -157,7 +204,12 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 		return false
 	}
 
-	return candidate.Operator.Equals(sdk.AccAddress(sidechainAddr))
+	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
+		log.Error("Operator is incorrect")
+		return false
+	}
+
+	return true
 }
 
 func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
@@ -172,7 +224,12 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 		return false
 	}
 
-	return delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) == 0
+	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
+		log.Error("DelegatedStake is incorrect")
+		return false
+	}
+
+	return true
 }
 
 func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
@@ -186,6 +243,15 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 		return false
 	}
 
-	return validator.Status.Equal(mainchain.ParseStatus(ci)) &&
-		validator.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec))
+	if !validator.Status.Equal(mainchain.ParseStatus(ci)) {
+		log.Error("Status is incorrect")
+		return false
+	}
+
+	if !validator.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)) {
+		log.Error("Tokens is incorrect")
+		return false
+	}
+
+	return true
 }
