@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"bytes"
 	"reflect"
 
 	"github.com/celer-network/goutils/log"
@@ -94,7 +95,7 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 	}
 
 	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex &&
-		reflect.DeepEqual(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
+		bytes.Compare(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
 }
 
 func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {

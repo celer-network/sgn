@@ -196,7 +196,7 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 		}
 
 		log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-		request.GuardTxHash = res.BlockHash.Hex()
+		request.GuardTxHash = tx.Hash().Hex()
 		request.GuardTxBlkNum = res.BlockNumber.Uint64()
 		request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
 		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
