@@ -95,7 +95,7 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 	}
 
 	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex &&
-		bytes.Compare(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
+		bytes.Equal(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
 }
 
 func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
