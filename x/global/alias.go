@@ -6,28 +6,23 @@ import (
 )
 
 const (
-	ModuleName          = types.ModuleName
-	RouterKey           = types.RouterKey
-	StoreKey            = types.StoreKey
-	QueryLatestBlock    = types.QueryLatestBlock
-	QuerySecureBlockNum = types.QuerySecureBlockNum
-	QueryEpoch          = types.QueryEpoch
-	QueryParameters     = types.QueryParameters
+	ModuleName      = types.ModuleName
+	RouterKey       = types.RouterKey
+	StoreKey        = types.StoreKey
+	QueryEpoch      = types.QueryEpoch
+	QueryParameters = types.QueryParameters
 )
 
 var (
-	ModuleCdc              = types.ModuleCdc
-	RegisterCodec          = types.RegisterCodec
-	NewBlock               = types.NewBlock
-	NewEpoch               = types.NewEpoch
-	NewQueryEpochParams    = types.NewQueryEpochParams
-	LatestBlockKey         = types.LatestBlockKey
-	GetEpochKey            = types.GetEpochKey
-	GetLatestEpochKey      = types.GetLatestEpochKey
-	DefaultParams          = types.DefaultParams
-	CLIQueryLatestBlock    = cli.QueryLatestBlock
-	CLIQuerySecureBlockNum = cli.QuerySecureBlockNum
-	CLIQueryParams         = cli.QueryParams
+	ModuleCdc           = types.ModuleCdc
+	RegisterCodec       = types.RegisterCodec
+	NewBlock            = types.NewBlock
+	NewEpoch            = types.NewEpoch
+	NewQueryEpochParams = types.NewQueryEpochParams
+	GetEpochKey         = types.GetEpochKey
+	GetLatestEpochKey   = types.GetLatestEpochKey
+	DefaultParams       = types.DefaultParams
+	CLIQueryParams      = cli.QueryParams
 )
 
 type (

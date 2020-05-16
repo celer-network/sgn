@@ -14,10 +14,6 @@ import (
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
-		case QueryLatestBlock:
-			return queryLatestBlock(ctx, req, keeper)
-		case QuerySecureBlockNum:
-			return querySecureBlockNum(ctx, req, keeper)
 		case QueryEpoch:
 			return queryEpoch(ctx, req, keeper)
 		case QueryParameters:
@@ -26,22 +22,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Unknown global query endpoint")
 		}
 	}
-}
-
-func queryLatestBlock(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	latestBlock := keeper.GetLatestBlock(ctx)
-	res, err := codec.MarshalJSONIndent(keeper.cdc, latestBlock)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return res, nil
-}
-
-func querySecureBlockNum(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	secureBlockNum := keeper.GetSecureBlockNum(ctx)
-	res := sdk.Uint64ToBigEndian(secureBlockNum)
-	return res, nil
 }
 
 func queryEpoch(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {

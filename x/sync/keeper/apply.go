@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
@@ -15,8 +14,6 @@ import (
 
 func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 	switch change.Type {
-	case types.SyncBlock:
-		return keeper.SyncBlock(ctx, change)
 	case types.Subscribe:
 		return keeper.Subscribe(ctx, change)
 	case types.Request:
@@ -34,16 +31,6 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 	default:
 		return errors.New("Invalid change type")
 	}
-}
-
-func (keeper Keeper) SyncBlock(ctx sdk.Context, change types.Change) error {
-	var block global.Block
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &block)
-
-	log.Infoln("Sync mainchain block to", block.Number)
-	keeper.globalKeeper.SyncBlock(ctx, block.Number)
-
-	return nil
 }
 
 func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {

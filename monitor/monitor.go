@@ -47,6 +47,7 @@ type EthMonitor struct {
 	sgnContract    *watcher.BoundContract
 	ledgerContract *watcher.BoundContract
 	blkNum         *big.Int
+	secureBlkNum   uint64
 	isValidator    bool
 }
 
@@ -127,7 +128,7 @@ func (m *EthMonitor) monitorBlockHead() {
 		}
 
 		m.blkNum = blkNum
-		m.handleNewBlock(blkNum)
+		m.secureBlkNum = blkNum.Uint64() - viper.GetUint64(common.FlagEthConfirmCount)
 		m.processQueue()
 	}
 }

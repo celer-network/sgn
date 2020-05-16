@@ -22,37 +22,6 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspa
 	}
 }
 
-// Gets the lastest Block metadata
-func (k Keeper) GetLatestBlock(ctx sdk.Context) (lastestBlock Block) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(LatestBlockKey)
-	if bz == nil {
-		return
-	}
-
-	k.cdc.MustUnmarshalBinaryBare(bz, &lastestBlock)
-	return lastestBlock
-}
-
-// Gets the secure block number
-func (k Keeper) GetSecureBlockNum(ctx sdk.Context) uint64 {
-	latestBlock := k.GetLatestBlock(ctx)
-	confirmationCount := k.ConfirmationCount(ctx)
-
-	if latestBlock.Number < confirmationCount {
-		return 0
-	}
-
-	return latestBlock.Number - confirmationCount
-}
-
-// Sync the lastest Block metadata
-func (k Keeper) SyncBlock(ctx sdk.Context, blockNumber uint64) {
-	store := ctx.KVStore(k.storeKey)
-	newBlock := NewBlock(blockNumber)
-	store.Set(LatestBlockKey, k.cdc.MustMarshalBinaryBare(newBlock))
-}
-
 // Gets the entire Epoch metadata for a epochId
 func (k Keeper) GetEpoch(ctx sdk.Context, epochId sdk.Int) (epoch Epoch, found bool) {
 	store := ctx.KVStore(k.storeKey)

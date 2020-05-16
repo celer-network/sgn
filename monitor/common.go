@@ -3,7 +3,6 @@ package monitor
 import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -56,14 +55,6 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, eventBlockNumber 
 
 func (m *EthMonitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
 	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, peerFrom)
-}
-
-func (m *EthMonitor) getLatestBlock() (global.Block, error) {
-	return global.CLIQueryLatestBlock(m.operator.CliCtx, global.RouterKey)
-}
-
-func (m *EthMonitor) getSecureBlockNum() (uint64, error) {
-	return global.CLIQuerySecureBlockNum(m.operator.CliCtx, global.RouterKey)
 }
 
 func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {

@@ -12,7 +12,6 @@ const (
 	TypeMsgApprove      = "approve_change"
 	TypeMsgSubmitChange = "submit_change"
 
-	SyncBlock           = "sync_block"
 	Subscribe           = "subscribe"
 	Request             = "request"
 	IntendSettle        = "intend_settle"

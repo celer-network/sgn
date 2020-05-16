@@ -26,7 +26,6 @@ const (
 	QueryChange         = types.QueryChange
 	ParamVoting         = types.ParamVoting
 	ParamTallying       = types.ParamTallying
-	SyncBlock           = types.SyncBlock
 	Subscribe           = types.Subscribe
 	Request             = types.Request
 	IntendSettle        = types.IntendSettle
