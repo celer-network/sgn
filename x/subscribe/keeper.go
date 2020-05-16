@@ -105,5 +105,5 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, peerFrom string) (
 // Sets the entire Request metadata for a channelId
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRequestKey(request.ChannelId, request.GetPeerAddress()), k.cdc.MustMarshalBinaryBare(request))
+	store.Set(GetRequestKey(request.ChannelId, request.GetOwnerAddress()), k.cdc.MustMarshalBinaryBare(request))
 }
