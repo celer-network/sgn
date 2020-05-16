@@ -70,7 +70,37 @@ func VerifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 	return nil
 }
 
-func getRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+func ValidateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
+	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
+	if err != nil {
+		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
+	}
+
+	if receipt.Status != mainchain.TxSuccess {
+		return nil, fmt.Errorf(txType+"Tx failed. Error: %w", err)
+	}
+
+	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle event is the last one
+
+	// check ledger contract
+	if log.Address != ethClient.LedgerAddress {
+		return nil, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
+	}
+
+	// check event type
+	if log.Topics[0] != intendSettleEventSig {
+		return nil, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
+	}
+
+	// check channel ID
+	if log.Topics[1] != cid {
+		return nil, fmt.Errorf(txType+"Tx's channel ID is wrong. Error: %w", err)
+	}
+
+	return log, nil
+}
+
+func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	validatorCandidates := keeper.validatorKeeper.GetValidatorCandidates(ctx)
 	sort.Slice(validatorCandidates, func(i, j int) bool {
 		validatorCandidate0 := validatorCandidates[i]
@@ -106,36 +136,6 @@ func getAccAddrIndex(addresses []sdk.AccAddress, targetAddress sdk.AccAddress) (
 		}
 	}
 	return 0, false
-}
-
-func validateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
-	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
-	if err != nil {
-		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
-	}
-
-	if receipt.Status != mainchain.TxSuccess {
-		return nil, fmt.Errorf(txType+"Tx failed. Error: %w", err)
-	}
-
-	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle event is the last one
-
-	// check ledger contract
-	if log.Address != ethClient.LedgerAddress {
-		return nil, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
-	}
-
-	// check event type
-	if log.Topics[0] != intendSettleEventSig {
-		return nil, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
-	}
-
-	// check channel ID
-	if log.Topics[1] != cid {
-		return nil, fmt.Errorf(txType+"Tx's channel ID is wrong. Error: %w", err)
-	}
-
-	return log, nil
 }
 
 func validateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {

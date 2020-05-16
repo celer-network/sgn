@@ -25,6 +25,8 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 		return m.verifySubscribe(change)
 	case sync.Request:
 		return m.verifyRequest(change)
+	case sync.IntendSettle:
+		return m.verifyIntendSettle(change)
 	case sync.UpdateSidechainAddr:
 		return m.verifyUpdateSidechainAddr(change)
 	case sync.SyncDelegator:
@@ -91,6 +93,27 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 
 	return request.SeqNum > r.SeqNum && request.PeerFromIndex == r.PeerFromIndex &&
 		reflect.DeepEqual(request.ChannelId, r.ChannelId) && reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses)
+}
+
+func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
+	var request subscribe.Request
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
+	log.Infoln("Verify IntendSettle", request)
+
+	_, err := subscribe.ValidateIntendSettle(
+		"Trigger", m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	if err != nil {
+		log.Errorln(err)
+		return false
+	}
+
+	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
+	if err != nil {
+		log.Errorln("GetDisputeTimeout err:", err)
+		return false
+	}
+
+	return request.DisputeTimeout == disputeTimeout.Uint64()
 }
 
 func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {

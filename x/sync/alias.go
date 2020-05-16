@@ -29,6 +29,7 @@ const (
 	SyncBlock           = types.SyncBlock
 	Subscribe           = types.Subscribe
 	Request             = types.Request
+	IntendSettle        = types.IntendSettle
 	UpdateSidechainAddr = types.UpdateSidechainAddr
 	SyncDelegator       = types.SyncDelegator
 	SyncValidator       = types.SyncValidator

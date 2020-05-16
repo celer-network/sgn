@@ -15,7 +15,6 @@ const (
 )
 
 var (
-	NewMsgIntendSettle         = types.NewMsgIntendSettle
 	NewMsgGuardProof           = types.NewMsgGuardProof
 	ModuleCdc                  = types.ModuleCdc
 	RegisterCodec              = types.RegisterCodec
@@ -33,7 +32,6 @@ var (
 )
 
 type (
-	MsgIntendSettle         = types.MsgIntendSettle
 	MsgGuardProof           = types.MsgGuardProof
 	Subscription            = types.Subscription
 	Request                 = types.Request

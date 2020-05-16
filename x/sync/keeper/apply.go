@@ -21,6 +21,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.Subscribe(ctx, change)
 	case types.Request:
 		return keeper.Request(ctx, change)
+	case types.IntendSettle:
+		return keeper.IntendSettle(ctx, change)
 	case types.UpdateSidechainAddr:
 		return keeper.UpdateSidechainAddr(ctx, change)
 	case types.SyncDelegator:
@@ -75,6 +77,24 @@ func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
 		request = r
 	}
 
+	keeper.subscribeKeeper.SetRequest(ctx, request)
+
+	return nil
+}
+
+func (keeper Keeper) IntendSettle(ctx sdk.Context, change types.Change) error {
+	var r subscribe.Request
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+
+	log.Infoln("Apply new request", r)
+
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerAddress())
+	if !found {
+		return fmt.Errorf("failed to get request with channelId %x and peer %s", r.ChannelId, r.GetPeerAddress())
+	}
+
+	request.TriggerTxHash = r.TriggerTxHash
+	request.RequestGuards = subscribe.GetRequestGuards(ctx, keeper.subscribeKeeper)
 	keeper.subscribeKeeper.SetRequest(ctx, request)
 
 	return nil

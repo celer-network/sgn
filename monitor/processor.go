@@ -131,7 +131,9 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 			return
 		}
 
-		msg := subscribe.NewMsgIntendSettle(request.ChannelId, request.GetPeerAddress(), intendSettle.Raw.TxHash.Hex(), m.operator.Key.GetAddress())
+		request.TriggerTxHash = intendSettle.Raw.TxHash.Hex()
+		requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.IntendSettle, requestData, m.operator.Key.GetAddress())
 		m.operator.AddTxMsg(msg)
 	}
 }

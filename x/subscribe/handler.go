@@ -20,8 +20,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
-		case MsgIntendSettle:
-			res, err = handleMsgIntendSettle(ctx, keeper, msg, logEntry)
 		case MsgGuardProof:
 			res, err = handleMsgGuardProof(ctx, keeper, msg, logEntry)
 		default:
@@ -35,32 +33,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		seal.CommitMsgLog(logEntry)
 		return res, err
 	}
-}
-
-func handleMsgIntendSettle(ctx sdk.Context, keeper Keeper, msg MsgIntendSettle, logEntry *seal.MsgLog) (*sdk.Result, error) {
-	logEntry.Type = msg.Type()
-	logEntry.Sender = msg.Sender.String()
-	logEntry.ChanInfo.ChanId = mainchain.Bytes2Hex(msg.ChannelId)
-	logEntry.ChanInfo.PeerFrom = msg.PeerFrom
-	logEntry.ChanInfo.TriggerTxHash = msg.TxHash
-
-	res := &sdk.Result{}
-	request, found := keeper.GetRequest(ctx, msg.ChannelId, msg.PeerFrom)
-	if !found {
-		return res, fmt.Errorf("Cannot find request for channel ID")
-	}
-
-	_, err := validateIntendSettle(
-		"Trigger", keeper.ethClient, mainchain.Hex2Hash(msg.TxHash), mainchain.Bytes2Cid(msg.ChannelId))
-	if err != nil {
-		return res, err
-	}
-
-	request.TriggerTxHash = msg.TxHash
-	request.RequestGuards = getRequestGuards(ctx, keeper)
-	keeper.SetRequest(ctx, request)
-
-	return res, nil
 }
 
 // Handle a message to submit guard proof
@@ -83,13 +55,13 @@ func handleMsgGuardProof(ctx sdk.Context, keeper Keeper, msg MsgGuardProof, logE
 		return res, fmt.Errorf("IntendSettle Trigger event has not been submitted")
 	}
 
-	triggerLog, err := validateIntendSettle(
+	triggerLog, err := ValidateIntendSettle(
 		"Trigger", keeper.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return res, err
 	}
 
-	guardLog, err := validateIntendSettle(
+	guardLog, err := ValidateIntendSettle(
 		"Guard", keeper.ethClient, mainchain.Hex2Hash(msg.TxHash), mainchain.Bytes2Cid(msg.ChannelId))
 	if err != nil {
 		return res, err
