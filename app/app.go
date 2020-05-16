@@ -251,9 +251,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.subscribeKeeper = subscribe.NewKeeper(
 		app.keySubscribe,
 		app.cdc,
-		ethClient,
 		app.globalKeeper,
-		app.slashKeeper,
 		app.validatorKeeper,
 		subscribeSubspace,
 	)
