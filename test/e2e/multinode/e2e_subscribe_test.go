@@ -59,11 +59,21 @@ func subscribeTest(t *testing.T) {
 	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	_, auth, err := tc.GetAuth(tc.ValEthKs[1])
+	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
+	tc.ChkTestErr(t, err, "failed to delegate stake")
+
 	turnOffMonitor(2)
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
-	e2ecommon.SubscribteTestCommon(t, transactor, amt, "400000000000000000", 2)
+	// Request cost is 1000000000000000000, validator0 has a half of stake,
+	// so it is going to get 500000000000000000 to distribute to its delegators.
+	// validators0 commission rate is 0.01%, so the comission fee it collections is 50000000000000
+	// The self delegated stake of validator0 is 2/3 of total stake of validator0,
+	// so validator0 gets (500000000000000000 - 50000000000000) * 2/3 = 333300000000000000 reward.
+	// The total service reward of validator0 is 333300000000000000 + 50000000000000 = 333350000000000000
+	e2ecommon.SubscribteTestCommon(t, transactor, amt, "333350000000000000", 2)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)

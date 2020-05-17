@@ -17,6 +17,8 @@ const (
 	TypeMsgWithdrawReward  = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress = types.AttributeKeyEthAddress
 	ActionInitiateWithdraw = types.ActionInitiateWithdraw
+	ServiceReward          = types.ServiceReward
+	MiningReward           = types.MiningReward
 )
 
 var (
@@ -56,6 +58,7 @@ type (
 	Delegator            = types.Delegator
 	Candidate            = types.Candidate
 	Reward               = types.Reward
+	RewardType           = types.RewardType
 	QueryDelegatorParams = types.QueryDelegatorParams
 	QueryCandidateParams = types.QueryCandidateParams
 	QueryRewardParams    = types.QueryRewardParams

@@ -103,6 +103,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 
 	request.GuardTxHash = r.GuardTxHash
 	request.GuardTxBlkNum = r.GuardTxBlkNum
+	request.GuardSender = r.GuardSender
 	keeper.subscribeKeeper.SetRequest(ctx, request)
 
 	requestGuards := request.RequestGuards
@@ -185,6 +186,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	}
 
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
+	validator.Commission = v.Commission
 	validator.Tokens = v.Tokens
 	validator.Status = v.Status
 	validator.DelegatorShares = v.Tokens.ToDec()
@@ -193,6 +195,9 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	}
+
+	candidate.CommissionRate = v.Commission.CommissionRates.Rate
+	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
 	return nil
 }

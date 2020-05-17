@@ -13,6 +13,13 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+type RewardType int
+
+const (
+	ServiceReward = iota
+	MiningReward
+)
+
 type Reward struct {
 	Receiver         string       `json:"receiver"`
 	MiningReward     sdk.Int      `json:"miningReward"`

@@ -47,12 +47,12 @@ func (m *EthMonitor) verifySubscribe(change sync.Change) bool {
 		&bind.CallOpts{},
 		mainchain.Hex2Addr(subscription.EthAddress))
 	if err != nil {
-		log.Errorf("Failed to query subscription desposit: %s", err)
+		log.Errorln("Failed to query subscription desposit:", err)
 		return false
 	}
 
 	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
-		log.Error("Deposit is incorrect")
+		log.Errorln("Deposit is incorrect")
 		return false
 	}
 
@@ -90,27 +90,27 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 	}
 
 	if request.SeqNum <= r.SeqNum {
-		log.Error("SeqNum is smaller than expected")
+		log.Errorln("SeqNum is smaller than expected")
 		return false
 	}
 
 	if request.PeerFromIndex != r.PeerFromIndex {
-		log.Error("PeerFromIndex is incorrect")
+		log.Errorln("PeerFromIndex is incorrect")
 		return false
 	}
 
 	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		log.Error("Owner sig is incorrect")
+		log.Errorln("Owner sig is incorrect")
 		return false
 	}
 
 	if !bytes.Equal(request.ChannelId, r.ChannelId) {
-		log.Error("ChannelId is incorrect")
+		log.Errorln("ChannelId is incorrect")
 		return false
 	}
 
 	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
-		log.Error("PeerAddresses is incorrect")
+		log.Errorln("PeerAddresses is incorrect")
 		return false
 	}
 
@@ -136,11 +136,11 @@ func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
 	}
 
 	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
-		log.Error("TriggerTxBlkNum is incorrect")
+		log.Errorln("TriggerTxBlkNum is incorrect")
 		return false
 	}
 	if request.DisputeTimeout != disputeTimeout.Uint64() {
-		log.Error("DisputeTimeout is incorrect")
+		log.Errorln("DisputeTimeout is incorrect")
 		return false
 	}
 
@@ -182,11 +182,11 @@ func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
 	}
 
 	if request.GuardTxBlkNum != guardLog.BlockNumber {
-		log.Error("GuardTxBlkNum is incorrect")
+		log.Errorln("GuardTxBlkNum is incorrect")
 		return false
 	}
 	if request.GuardSender != guardSender {
-		log.Error("GuardSender is incorrect")
+		log.Errorln("GuardSender is incorrect")
 		return false
 	}
 
@@ -205,7 +205,7 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	}
 
 	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
-		log.Error("Operator is incorrect")
+		log.Errorln("Operator is incorrect")
 		return false
 	}
 
@@ -215,17 +215,17 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	var delegator validator.Delegator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
-	log.Infoln("Verify delegator", delegator)
+	log.Infoln("Verify sync delegator", delegator)
 
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{},
 		mainchain.Hex2Addr(delegator.CandidateAddr), mainchain.Hex2Addr(delegator.DelegatorAddr))
 	if err != nil {
-		log.Errorf("Failed to query delegator info: %s", err)
+		log.Errorln("Failed to query delegator info:", err)
 		return false
 	}
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
-		log.Error("DelegatedStake is incorrect")
+		log.Errorln("DelegatedStake is incorrect")
 		return false
 	}
 
@@ -235,21 +235,32 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	var validator staking.Validator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &validator)
-	log.Infoln("Verify validator", validator)
+	log.Infoln("Verify sync validator", validator)
 
 	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(validator.Description.Identity))
 	if err != nil {
-		log.Errorf("Failed to query candidate info: %s", err)
+		log.Errorln("Failed to query candidate info:", err)
 		return false
 	}
 
 	if !validator.Status.Equal(mainchain.ParseStatus(ci)) {
-		log.Error("Status is incorrect")
+		log.Errorln("Status is incorrect")
 		return false
 	}
 
 	if !validator.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)) {
-		log.Error("Tokens is incorrect")
+		log.Errorln("Tokens is incorrect")
+		return false
+	}
+
+	commission, err := common.NewCommission(m.ethClient, ci.CommissionRate)
+	if err != nil {
+		log.Errorln("Failed to create new commission:", err)
+		return false
+	}
+
+	if !validator.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
+		log.Errorln("Commission is incorrect")
 		return false
 	}
 

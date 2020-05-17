@@ -1,12 +1,17 @@
 package common
 
 import (
+	"math/big"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 const (
@@ -43,4 +48,19 @@ func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) (
 	}
 
 	return
+}
+
+func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (staking.Commission, error) {
+	commissionBase, err := ethClient.DPoS.COMMISSIONRATEBASE(&bind.CallOpts{})
+	if err != nil {
+		return staking.Commission{}, err
+	}
+
+	prec := int64(len(commissionBase.String()) - 1)
+
+	return staking.Commission{
+		CommissionRates: staking.CommissionRates{
+			Rate: sdk.NewDecFromBigIntWithPrec(commissionRate, prec),
+		},
+	}, nil
 }
