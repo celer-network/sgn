@@ -94,6 +94,18 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
+		request, err := subscribe.GetRequest(transactor.CliCtx, tc.Client0, req.SignedSimplexStateBytes)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
+			return
+		}
+
+		request.SeqNum = seqNum
+		request.SignedSimplexStateBytes = signedSimplexStateBytes
+		request.OwnerSig = requestSig
+		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msgSubmitChange = sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
+
 		// FIX
 		// signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		// msg := subscribe.NewMsgRequestGuard(req.EthAddr, signedSimplexStateBytes, transactor.CliCtx.GetFromAddress())

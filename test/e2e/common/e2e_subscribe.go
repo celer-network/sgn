@@ -84,6 +84,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	requestSig, err := mainchain.SignMessage(tc.Client0.PrivateKey, signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
 	request, err := subscribe.GetRequest(transactor.CliCtx, tc.Client0, signedSimplexStateProto)
+	tc.ChkTestErr(t, err, "failed to get request")
 	request.SeqNum = seqNum
 	request.SignedSimplexStateBytes = signedSimplexStateBytes
 	request.OwnerSig = requestSig
