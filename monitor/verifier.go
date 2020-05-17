@@ -215,7 +215,7 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	var delegator validator.Delegator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
-	log.Infoln("Verify delegator", delegator)
+	log.Infoln("Verify sync delegator", delegator)
 
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{},
 		mainchain.Hex2Addr(delegator.CandidateAddr), mainchain.Hex2Addr(delegator.DelegatorAddr))
@@ -235,7 +235,7 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	var validator staking.Validator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &validator)
-	log.Infoln("Verify validator", validator)
+	log.Infoln("Verify sync validator", validator)
 
 	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(validator.Description.Identity))
 	if err != nil {

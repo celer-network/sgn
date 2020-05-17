@@ -103,6 +103,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 
 	request.GuardTxHash = r.GuardTxHash
 	request.GuardTxBlkNum = r.GuardTxBlkNum
+	request.GuardSender = r.GuardSender
 	keeper.subscribeKeeper.SetRequest(ctx, request)
 
 	requestGuards := request.RequestGuards

@@ -46,6 +46,7 @@ func (r Request) GetPeerAddress() string {
 
 // implement fmt.Stringer
 func (r Request) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %s, PeerFromIndex: %d, SignedSimplexStateBytes: %x, TriggerTxHash: %s, GuardTxHash: %s`,
-		r.SeqNum, r.PeerAddresses, r.PeerFromIndex, r.SignedSimplexStateBytes, r.TriggerTxHash, r.GuardTxHash))
+	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, PeerAddresses: %s, PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: %s, TriggerTxBlkNum: %d, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s`,
+		r.SeqNum, r.PeerAddresses, r.PeerFromIndex, r.DisputeTimeout,
+		r.TriggerTxHash, r.TriggerTxBlkNum, r.GuardTxHash, r.GuardTxBlkNum, r.GuardSender))
 }
