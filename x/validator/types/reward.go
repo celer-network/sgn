@@ -79,16 +79,6 @@ func (r *Reward) AddSig(sig []byte, expectedSigner string) error {
 	return nil
 }
 
-// Add more reward
-func (r *Reward) Add(rewardType RewardType, amount sdk.Int) {
-	switch rewardType {
-	case ServiceReward:
-		r.ServiceReward = r.ServiceReward.Add(amount)
-	case MiningReward:
-		r.MiningReward = r.MiningReward.Add(amount)
-	}
-}
-
 // Generate rewardRequest msg
 func (r Reward) GetRewardRequest() []byte {
 	var sigs [][]byte

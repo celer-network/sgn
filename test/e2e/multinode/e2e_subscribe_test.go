@@ -59,11 +59,15 @@ func subscribeTest(t *testing.T) {
 	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	_, auth, err := tc.GetAuth(tc.ValEthKs[1])
+	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
+	tc.ChkTestErr(t, err, "failed to delegate stake")
+
 	turnOffMonitor(2)
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
-	e2ecommon.SubscribteTestCommon(t, transactor, amt, "400000000000000000", 2)
+	e2ecommon.SubscribteTestCommon(t, transactor, amt, "333350000000000000", 2)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
