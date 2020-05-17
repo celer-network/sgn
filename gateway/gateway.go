@@ -40,7 +40,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	err := transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetStringSlice(common.FlagSgnTransactors)[1:],
+		viper.GetStringSlice(common.FlagSgnTransactors),
 	)
 	if err != nil {
 		return nil, err
