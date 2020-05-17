@@ -67,6 +67,12 @@ func subscribeTest(t *testing.T) {
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
+	// Request cost is 1000000000000000000, validator0 has a half of stake,
+	// so it is going to get 500000000000000000 to distribute to its delegators.
+	// validators0 commission rate is 0.01%, so the comission fee it collections is 50000000000000
+	// The self delegated stake of validator0 is 2/3 of total stake of validator0,
+	// so validator0 gets (500000000000000000 - 50000000000000) * 2/3 = 333300000000000000 reward.
+	// The total service reward of validator0 is 333300000000000000 + 50000000000000 = 333350000000000000
 	e2ecommon.SubscribteTestCommon(t, transactor, amt, "333350000000000000", 2)
 
 	log.Infoln("Query sgn to check penalty")

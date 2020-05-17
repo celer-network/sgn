@@ -227,7 +227,6 @@ func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardTyp
 		delegatorsReward := candidateReward.Sub(commission)
 		for _, delegator := range candidate.Delegators {
 			rewardAmt := delegatorsReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-			log.Infoln("delegator reward", rewardType, delegator, rewardAmt)
 			k.AddReward(ctx, delegator.DelegatorAddr, rewardAmt, rewardType)
 		}
 	}
