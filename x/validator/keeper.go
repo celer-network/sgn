@@ -12,13 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 )
 
-type RewardType int
-
-const (
-	ServiceReward = iota
-	MiningReward
-)
-
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	storeKey      sdk.StoreKey // Unexposed key to access store from sdk.Context
@@ -205,6 +198,18 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 	store.Set(GetRewardKey(reward.Receiver), k.cdc.MustMarshalBinaryBare(reward))
 }
 
+// AddReward add reward to a specific ethAddress
+func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, amount sdk.Int, rewardType RewardType) {
+	reward, _ := k.GetReward(ctx, ethAddress)
+	switch rewardType {
+	case ServiceReward:
+		reward.ServiceReward = reward.ServiceReward.Add(amount)
+	case MiningReward:
+		reward.MiningReward = reward.MiningReward.Add(amount)
+	}
+	k.SetReward(ctx, reward)
+}
+
 // DistributeServiceReward distributes rewards to candidates and their delegators
 func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardType RewardType) {
 	candidates := k.GetValidatorCandidates(ctx)
@@ -216,17 +221,13 @@ func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardTyp
 
 	for _, candidate := range candidates {
 		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
-		for _, delegator := range candidate.Delegators {
-			reward, _ := k.GetReward(ctx, delegator.DelegatorAddr)
-			rewardAmt := candidateReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+		commission := candidate.CommissionRate.MulInt(candidateReward).RoundInt()
+		k.AddReward(ctx, candidate.EthAddress, commission, rewardType)
 
-			switch rewardType {
-			case ServiceReward:
-				reward.ServiceReward = reward.ServiceReward.Add(rewardAmt)
-			case MiningReward:
-				reward.MiningReward = reward.MiningReward.Add(rewardAmt)
-			}
-			k.SetReward(ctx, reward)
+		delegatorsReward := candidateReward.Sub(commission)
+		for _, delegator := range candidate.Delegators {
+			rewardAmt := delegatorsReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+			k.AddReward(ctx, delegator.DelegatorAddr, rewardAmt, rewardType)
 		}
 	}
 }

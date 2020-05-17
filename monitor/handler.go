@@ -176,12 +176,19 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 		return
 	}
 
+	commission, err := common.NewCommission(m.ethClient, ci.CommissionRate)
+	if err != nil {
+		log.Errorln("Failed to create new commission:", err)
+		return
+	}
+
 	validator := staking.Validator{
 		Description: staking.Description{
 			Identity: address.Hex(),
 		},
-		Tokens: sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
-		Status: mainchain.ParseStatus(ci),
+		Tokens:     sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
+		Status:     mainchain.ParseStatus(ci),
+		Commission: commission,
 	}
 
 	if m.ethClient.Address == address {

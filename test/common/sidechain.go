@@ -79,7 +79,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ChkTestErr(t, err, "failed to initialize candidate")
 
 	log.Infof("Query sgn about the validator candidate %s ...", ethAddr.Hex())
-	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
+	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0), big.NewInt(0))
 
 	// self delegate stake
 	err = DelegateStake(auth, ethAddr, amt)
@@ -89,7 +89,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	CheckDelegator(t, transactor, ethAddr, ethAddr, amt)
 
 	log.Info("Query sgn about the candidate to check if it has correct stakes...")
-	CheckCandidate(t, transactor, ethAddr, sgnop, amt)
+	CheckCandidate(t, transactor, ethAddr, sgnop, amt, commissionRate)
 
 	if isValidator {
 		log.Info("Query sgn about the validators to check if it has correct stakes...")
@@ -114,10 +114,10 @@ func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 	assert.Equal(t, expectedRes, delegator.String(), "The expected result should be: "+expectedRes)
 }
 
-func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, sgnop string, expAmt *big.Int) {
+func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, sgnop string, expAmt, commissionRate *big.Int) {
 	var candidate vtypes.Candidate
 	var err error
-	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %s`, sgnop, expAmt) // defined in Candidate.String()
+	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %s, CommissionRate: %v`, sgnop, expAmt, sdk.NewDecFromBigIntWithPrec(commissionRate, 4)) // defined in Candidate.String()
 	for retry := 0; retry < 30; retry++ {
 		candidate, err = sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
 		if err == nil && expectedRes == candidate.String() {

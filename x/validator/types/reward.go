@@ -13,6 +13,13 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+type RewardType int
+
+const (
+	ServiceReward = iota
+	MiningReward
+)
+
 type Reward struct {
 	Receiver         string       `json:"receiver"`
 	MiningReward     sdk.Int      `json:"miningReward"`
@@ -70,6 +77,16 @@ func (r *Reward) AddSig(sig []byte, expectedSigner string) error {
 
 	r.Sigs = sigs
 	return nil
+}
+
+// Add more reward
+func (r *Reward) Add(rewardType RewardType, amount sdk.Int) {
+	switch rewardType {
+	case ServiceReward:
+		r.ServiceReward = r.ServiceReward.Add(amount)
+	case MiningReward:
+		r.MiningReward = r.MiningReward.Add(amount)
+	}
 }
 
 // Generate rewardRequest msg
