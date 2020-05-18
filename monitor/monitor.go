@@ -106,6 +106,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	go m.monitorBlockHead()
 	go m.monitorUpdateSidechainAddr()
 	go m.monitorDelegate()
+	go m.monitorCandidateUnbonded()
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdraw()
 	go m.monitorIntendSettle()
@@ -146,6 +147,17 @@ func (m *EthMonitor) monitorDelegate() {
 	_, err := m.ms.Monitor(string(Delegate), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
 		event := NewEvent(Delegate, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *EthMonitor) monitorCandidateUnbonded() {
+	_, err := m.ms.Monitor(string(CandidateUnbonded), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
+		event := NewEvent(CandidateUnbonded, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 	})
 	if err != nil {

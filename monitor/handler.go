@@ -35,6 +35,8 @@ func (m *EthMonitor) processEventQueue() {
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.DPoSDelegate:
 			m.handleDelegate(e)
+		case *mainchain.DPoSCandidateUnbonded:
+			m.handleCandidateUnbonded(e)
 		case *mainchain.DPoSValidatorChange:
 			m.handleValidatorChange(e)
 		case *mainchain.DPoSIntendWithdraw:
@@ -57,6 +59,14 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
 		m.syncValidator(delegate.Candidate)
 	} else {
 		m.claimValidatorOnMainchain()
+	}
+}
+
+func (m *EthMonitor) handleCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
+	log.Infof("New candidate unbonded %x", candidateUnbonded.Candidate)
+
+	if m.isPullerOrOwner(candidateUnbonded.Candidate) {
+		m.syncValidator(candidateUnbonded.Candidate)
 	}
 }
 
