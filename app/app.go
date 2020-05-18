@@ -430,7 +430,6 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		return
 	}
 
-	gpe := transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI))
 	operator, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
 		ctx.ChainID(),
@@ -438,24 +437,11 @@ func (app *sgnApp) startMonitor(ctx sdk.Context) {
 		viper.GetString(common.FlagSgnOperator),
 		viper.GetString(common.FlagSgnPassphrase),
 		app.cdc,
-		gpe,
+		transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
 	)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
 
-	transactor, err := transactor.NewTransactor(
-		viper.GetString(common.FlagCLIHome),
-		ctx.ChainID(),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[0],
-		viper.GetString(common.FlagSgnPassphrase),
-		app.cdc,
-		gpe,
-	)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-
-	monitor.NewEthMonitor(ethClient, operator, transactor)
+	monitor.NewEthMonitor(ethClient, operator)
 }

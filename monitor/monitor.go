@@ -40,7 +40,6 @@ var (
 type EthMonitor struct {
 	ethClient      *mainchain.EthClient
 	operator       *transactor.Transactor
-	blockSyncer    *transactor.Transactor
 	db             *dbm.GoLevelDB
 	ms             *watcher.Service
 	dposContract   *watcher.BoundContract
@@ -51,7 +50,7 @@ type EthMonitor struct {
 	isValidator    bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transactor.Transactor) {
+func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor) {
 	dataDir := filepath.Join(viper.GetString(flags.FlagHome), "data")
 	db, err := dbm.NewGoLevelDB("monitor", dataDir)
 	if err != nil {
@@ -95,7 +94,6 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator, blockSyncer *transa
 	m := EthMonitor{
 		ethClient:      ethClient,
 		operator:       operator,
-		blockSyncer:    blockSyncer,
 		db:             db,
 		ms:             ms,
 		blkNum:         ms.GetCurrentBlockNumber(),

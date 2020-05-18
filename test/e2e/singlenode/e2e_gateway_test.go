@@ -60,7 +60,7 @@ func gatewayTest(t *testing.T) {
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		sgnTransactors[1],
+		sgnTransactors[0],
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
