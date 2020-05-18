@@ -196,6 +196,11 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	}
 
+	if validator.Status == sdk.Unbonded {
+		validator.Tokens = sdk.ZeroInt()
+		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
+	}
+
 	candidate.CommissionRate = v.Commission.CommissionRates.Rate
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 

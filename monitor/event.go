@@ -12,6 +12,7 @@ type EventName string
 const (
 	UpdateSidechainAddr EventName = "UpdateSidechainAddr"
 	Delegate            EventName = "Delegate"
+	CandidateUnbonded   EventName = "CandidateUnbonded"
 	ValidatorChange     EventName = "ValidatorChange"
 	IntendWithdraw      EventName = "IntendWithdraw"
 	IntendSettle        EventName = "IntendSettle"
