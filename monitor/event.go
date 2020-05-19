@@ -90,13 +90,13 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 
 type PenaltyEvent struct {
 	Nonce      uint64 `json:"nonce"`
-	ReTryCount uint64 `json:"reTryCount"`
+	RetryCount uint64 `json:"retryCount"`
 }
 
 func NewPenaltyEvent(nonce uint64) PenaltyEvent {
 	return PenaltyEvent{
 		Nonce:      nonce,
-		ReTryCount: 0,
+		RetryCount: 0,
 	}
 }
 

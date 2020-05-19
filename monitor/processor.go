@@ -224,8 +224,8 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 
 	tx, err := m.ethClient.DPoS.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
-		if penaltyEvent.ReTryCount < maxPunishRetry {
-			penaltyEvent.ReTryCount = penaltyEvent.ReTryCount + 1
+		if penaltyEvent.RetryCount < maxPunishRetry {
+			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
 			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 			return
 		}
