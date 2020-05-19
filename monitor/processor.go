@@ -18,6 +18,10 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+const (
+	maxPunishRetry = 5
+)
+
 func (m *EthMonitor) processQueue() {
 	m.processEventQueue()
 	m.processPullerQueue()
@@ -220,8 +224,12 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 
 	tx, err := m.ethClient.DPoS.Punish(m.ethClient.Auth, penaltyRequest)
 	if err != nil {
+		if penaltyEvent.RetryCount < maxPunishRetry {
+			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
+			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			return
+		}
 		log.Errorln("Punish err", err)
-		m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 		return
 	}
 	log.Infoln("Punish tx submitted", tx.Hash().Hex())
