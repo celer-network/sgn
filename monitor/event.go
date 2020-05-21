@@ -14,7 +14,7 @@ const (
 	Delegate              EventName = "Delegate"
 	CandidateUnbonded     EventName = "CandidateUnbonded"
 	ValidatorChange       EventName = "ValidatorChange"
-	IntendWithdrawSgn     EventName = "IntendWithdrawSgn"
+	IntendWithdrawSgn     EventName = "IntendWithdraw"
 	IntendWithdrawChannel EventName = "IntendWithdrawChannel"
 	IntendSettle          EventName = "IntendSettle"
 )
@@ -67,6 +67,8 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 		res, err = ethClient.DPoS.ParseValidatorChange(e.Log)
 	case IntendWithdrawSgn:
 		res, err = ethClient.DPoS.ParseIntendWithdraw(e.Log)
+	case IntendWithdrawChannel:
+		res, err = ethClient.Ledger.ParseIntendWithdraw(e.Log)
 	case IntendSettle:
 		res, err = ethClient.Ledger.ParseIntendSettle(e.Log)
 	default:

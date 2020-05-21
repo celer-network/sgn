@@ -188,7 +188,7 @@ func (m *EthMonitor) monitorIntendWithdrawSgn() {
 }
 
 func (m *EthMonitor) monitorIntendWithdrawChannel() {
-	_, err := m.ms.Monitor(string(IntendWithdrawChannel), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+	_, err := m.ms.Monitor("IntendWithdraw", m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
 		event := NewEvent(IntendWithdrawChannel, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
