@@ -108,7 +108,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	go m.monitorDelegate()
 	go m.monitorCandidateUnbonded()
 	go m.monitorValidatorChange()
-	go m.monitorIntendWithdraw()
+	go m.monitorIntendWithdrawSgn()
 	go m.monitorIntendSettle()
 	go m.monitorWithdrawReward()
 	go m.monitorSlash()
@@ -176,10 +176,21 @@ func (m *EthMonitor) monitorValidatorChange() {
 	}
 }
 
-func (m *EthMonitor) monitorIntendWithdraw() {
-	_, err := m.ms.Monitor(string(IntendWithdraw), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
-		log.Infof("Catch event IntendWithdraw, tx hash: %x", eLog.TxHash)
-		event := NewEvent(IntendWithdraw, eLog)
+func (m *EthMonitor) monitorIntendWithdrawSgn() {
+	_, err := m.ms.Monitor(string(IntendWithdrawSgn), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event IntendWithdrawSgn, tx hash: %x", eLog.TxHash)
+		event := NewEvent(IntendWithdrawSgn, eLog)
+		m.db.Set(GetEventKey(eLog), event.MustMarshal())
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *EthMonitor) monitorIntendWithdrawChannel() {
+	_, err := m.ms.Monitor(string(IntendWithdrawChannel), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
+		event := NewEvent(IntendWithdrawChannel, eLog)
 		m.db.Set(GetEventKey(eLog), event.MustMarshal())
 	})
 	if err != nil {

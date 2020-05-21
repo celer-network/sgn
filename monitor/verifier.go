@@ -122,8 +122,7 @@ func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	log.Infoln("Verify IntendSettle", request)
 
-	triggerLog, err := subscribe.ValidateIntendSettle(
-		"Trigger", m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	triggerLog, err := subscribe.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorln(err)
 		return false
@@ -157,8 +156,7 @@ func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
 		return false
 	}
 
-	guardLog, err := subscribe.ValidateIntendSettle(
-		"Guard", m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	guardLog, err := subscribe.ValidateGuardTx(m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorln(err)
 		return false
@@ -169,7 +167,7 @@ func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
 		return false
 	}
 
-	err = subscribe.ValidateIntendSettleSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
+	err = subscribe.ValidateSnapshotSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
 	if err != nil {
 		log.Errorln(err)
 		return false

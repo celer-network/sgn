@@ -17,10 +17,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-var (
-	intendSettleEventSig = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
-)
-
 func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState *chain.SignedSimplexState) (Request, error) {
 	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
@@ -74,31 +70,62 @@ func VerifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 	return nil
 }
 
-func ValidateIntendSettle(txType string, ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
+func ValidateTriggerTx(ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
 	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
 	if err != nil {
-		return nil, fmt.Errorf(txType+"TxHash is not found on mainchain. Error: %w", err)
+		return nil, fmt.Errorf("Trigger TxHash is not found on mainchain. Error: %w", err)
 	}
 
 	if receipt.Status != mainchain.TxSuccess {
-		return nil, fmt.Errorf(txType+"Tx failed. Error: %w", err)
+		return nil, fmt.Errorf("Trigger Tx failed. Error: %w", err)
 	}
 
-	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle event is the last one
+	log := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
 
 	// check ledger contract
 	if log.Address != ethClient.LedgerAddress {
-		return nil, fmt.Errorf(txType+"Tx is not associated with ledger contract. Error: %w", err)
+		return nil, fmt.Errorf("Trigger Tx is not associated with ledger contract. Error: %w", err)
 	}
 
 	// check event type
-	if log.Topics[0] != intendSettleEventSig {
-		return nil, fmt.Errorf(txType+"Tx is not for IntendSettle event. Error: %w", err)
+	if log.Topics[0] != mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])") ||
+		log.Topics[0] != mainchain.GetEventSignature("IntendWithdraw(bytes32,address,uint256)") {
+		return nil, fmt.Errorf("Trigger Tx is not for IntendSettle/IntendWithdraw event. Error: %w", err)
 	}
 
 	// check channel ID
 	if log.Topics[1] != cid {
-		return nil, fmt.Errorf(txType+"Tx's channel ID is wrong. Error: %w", err)
+		return nil, fmt.Errorf("Trigger Tx's channel ID is wrong. Error: %w", err)
+	}
+
+	return log, nil
+}
+
+func ValidateGuardTx(ethClient *mainchain.EthClient, txHash mainchain.HashType, cid mainchain.CidType) (*ethtypes.Log, error) {
+	receipt, err := ethClient.Client.TransactionReceipt(context.Background(), txHash)
+	if err != nil {
+		return nil, fmt.Errorf("Guard TxHash is not found on mainchain. Error: %w", err)
+	}
+
+	if receipt.Status != mainchain.TxSuccess {
+		return nil, fmt.Errorf("Guard Tx failed. Error: %w", err)
+	}
+
+	log := receipt.Logs[len(receipt.Logs)-1] // SnapshotStates event is the last one
+
+	// check ledger contract
+	if log.Address != ethClient.LedgerAddress {
+		return nil, fmt.Errorf("Guard Tx is not associated with ledger contract. Error: %w", err)
+	}
+
+	// check event type
+	if log.Topics[0] != mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])") {
+		return nil, fmt.Errorf("Guard Tx is not for SnapshotStates event. Error: %w", err)
+	}
+
+	// check channel ID
+	if log.Topics[1] != cid {
+		return nil, fmt.Errorf("Guard Tx's channel ID is wrong. Error: %w", err)
 	}
 
 	return log, nil
@@ -133,20 +160,20 @@ func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	return requestGuards
 }
 
-func ValidateIntendSettleSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
+func ValidateSnapshotSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
 	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
 		return fmt.Errorf("Failed to parse CelerLedgerABI: %w", err)
 	}
 
-	var intendSettle mainchain.CelerLedgerIntendSettle
-	err = ledgerABI.Unpack(&intendSettle, "IntendSettle", logDate)
+	var snapshotStates mainchain.CelerLedgerSnapshotStates
+	err = ledgerABI.Unpack(&snapshotStates, "SnapshotStates", logDate)
 	if err != nil {
-		return fmt.Errorf("Failed to unpack IntendSettle event: %w", err)
+		return fmt.Errorf("Failed to unpack SnapshotStates event: %w", err)
 	}
 
-	if intendSettle.SeqNums[seqNumIndex].Uint64() != expectedNum {
-		return fmt.Errorf("Unexpected seqNum of IntendSettle event. SeqNumIndex: %d, expected: %d, actual: %d", seqNumIndex, expectedNum, intendSettle.SeqNums[seqNumIndex].Uint64())
+	if snapshotStates.SeqNums[seqNumIndex].Uint64() != expectedNum {
+		return fmt.Errorf("Unexpected seqNum of SnapshotStates event. SeqNumIndex: %d, expected: %d, actual: %d", seqNumIndex, expectedNum, snapshotStates.SeqNums[seqNumIndex].Uint64())
 	}
 
 	return nil
