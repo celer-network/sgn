@@ -175,7 +175,7 @@ func (m *EthMonitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain
 	}
 }
 
-func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log) {
+func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, eventName EventName) {
 	if request.GuardTxHash != "" {
 		log.Errorln("Request has been fulfilled")
 		return
@@ -203,9 +203,19 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 		return
 	}
 
-	tx, err := m.ethClient.Ledger.SnapshotStates(m.ethClient.Auth, signedSimplexStateArrayBytes)
+	// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
+	var tx *ethtypes.Transaction
+	switch eventName {
+	case IntendWithdrawChannel:
+		tx, err = m.ethClient.Ledger.SnapshotStates(m.ethClient.Auth, signedSimplexStateArrayBytes)
+	case IntendSettle:
+		tx, err = m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
+	default:
+		log.Errorln("Invalid eventName", eventName)
+		return
+
 	if err != nil {
-		log.Errorln("intendSettle err", err)
+		log.Errorln("intendSettle/snapshotStates err", err)
 		return
 	}
 

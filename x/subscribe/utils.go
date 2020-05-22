@@ -17,6 +17,12 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+var (
+	intendSettleEventSig   = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+	intendWithdrawEventSig = mainchain.GetEventSignature("IntendWithdraw(bytes32,address,uint256)")
+	snapshotStatesEventSig = mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])")
+)
+
 func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState *chain.SignedSimplexState) (Request, error) {
 	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
@@ -88,8 +94,7 @@ func ValidateTriggerTx(ethClient *mainchain.EthClient, txHash mainchain.HashType
 	}
 
 	// check event type
-	if log.Topics[0] != mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])") ||
-		log.Topics[0] != mainchain.GetEventSignature("IntendWithdraw(bytes32,address,uint256)") {
+	if log.Topics[0] != intendSettleEventSig || log.Topics[0] != intendWithdrawEventSig {
 		return nil, fmt.Errorf("Trigger Tx is not for IntendSettle/IntendWithdraw event. Error: %w", err)
 	}
 
@@ -119,7 +124,7 @@ func ValidateGuardTx(ethClient *mainchain.EthClient, txHash mainchain.HashType, 
 	}
 
 	// check event type
-	if log.Topics[0] != mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])") {
+	if log.Topics[0] != intendSettleEventSig || log.Topics[0] != snapshotStatesEventSig {
 		return nil, fmt.Errorf("Guard Tx is not for SnapshotStates event. Error: %w", err)
 	}
 
