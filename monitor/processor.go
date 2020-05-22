@@ -163,7 +163,7 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getRequests(intendSettle.ChannelId)
 	for _, request := range requests {
-		m.guardRequest(request, intendSettle.Raw)
+		m.guardRequest(request, intendSettle.Raw, IntendSettle)
 	}
 }
 
@@ -171,7 +171,7 @@ func (m *EthMonitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain
 	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getRequests(intendWithdrawChannel.ChannelId)
 	for _, request := range requests {
-		m.guardRequest(request, intendWithdrawChannel.Raw)
+		m.guardRequest(request, intendWithdrawChannel.Raw, IntendWithdrawChannel)
 	}
 }
 
@@ -213,6 +213,7 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 	default:
 		log.Errorln("Invalid eventName", eventName)
 		return
+	}
 
 	if err != nil {
 		log.Errorln("intendSettle/snapshotStates err", err)
