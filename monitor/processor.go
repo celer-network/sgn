@@ -176,6 +176,7 @@ func (m *EthMonitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain
 }
 
 func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, eventName EventName) {
+	log.Infoln("Guard request", request)
 	if request.GuardTxHash != "" {
 		log.Errorln("Request has been fulfilled")
 		return

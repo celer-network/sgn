@@ -125,7 +125,7 @@ func ValidateGuardTx(ethClient *mainchain.EthClient, txHash mainchain.HashType, 
 
 	// check event type
 	if log.Topics[0] != intendSettleEventSig || log.Topics[0] != snapshotStatesEventSig {
-		return nil, fmt.Errorf("Guard Tx is not for SnapshotStates event. Error: %w", err)
+		return nil, fmt.Errorf("Guard Tx is not for IntendSettle/SnapshotStates event. Error: %w", err)
 	}
 
 	// check channel ID
