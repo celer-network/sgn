@@ -28,7 +28,7 @@ const (
 	ParamTallying       = types.ParamTallying
 	Subscribe           = types.Subscribe
 	Request             = types.Request
-	IntendSettle        = types.IntendSettle
+	TriggerGuard        = types.TriggerGuard
 	GuardProof          = types.GuardProof
 	UpdateSidechainAddr = types.UpdateSidechainAddr
 	SyncDelegator       = types.SyncDelegator
