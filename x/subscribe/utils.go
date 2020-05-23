@@ -94,7 +94,7 @@ func ValidateTriggerTx(ethClient *mainchain.EthClient, txHash mainchain.HashType
 	}
 
 	// check event type
-	if log.Topics[0] != intendSettleEventSig || log.Topics[0] != intendWithdrawEventSig {
+	if log.Topics[0] != intendSettleEventSig && log.Topics[0] != intendWithdrawEventSig {
 		return nil, fmt.Errorf("Trigger Tx is not for IntendSettle/IntendWithdraw event. Error: %w", err)
 	}
 
@@ -124,7 +124,7 @@ func ValidateGuardTx(ethClient *mainchain.EthClient, txHash mainchain.HashType, 
 	}
 
 	// check event type
-	if log.Topics[0] != intendSettleEventSig || log.Topics[0] != snapshotStatesEventSig {
+	if log.Topics[0] != intendSettleEventSig && log.Topics[0] != snapshotStatesEventSig {
 		return nil, fmt.Errorf("Guard Tx is not for IntendSettle/SnapshotStates event. Error: %w", err)
 	}
 
