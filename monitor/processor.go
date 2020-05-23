@@ -155,7 +155,7 @@ func (m *EthMonitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log
 	request.TriggerTxHash = rawLog.TxHash.Hex()
 	request.TriggerTxBlkNum = rawLog.BlockNumber
 	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
-	msg := sync.NewMsgSubmitChange(sync.IntendSettle, requestData, m.operator.Key.GetAddress())
+	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, requestData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)
 }
 

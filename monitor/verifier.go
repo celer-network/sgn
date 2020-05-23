@@ -23,8 +23,8 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 		return m.verifySubscribe(change)
 	case sync.Request:
 		return m.verifyRequest(change)
-	case sync.IntendSettle:
-		return m.verifyIntendSettle(change)
+	case sync.TriggerGuard:
+		return m.verifyTriggerGuard(change)
 	case sync.GuardProof:
 		return m.verifyGuardProof(change)
 	case sync.UpdateSidechainAddr:
@@ -117,10 +117,10 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifyIntendSettle(change sync.Change) bool {
+func (m *EthMonitor) verifyTriggerGuard(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	log.Infoln("Verify IntendSettle", request)
+	log.Infoln("Verify TriggerGuard", request)
 
 	triggerLog, err := subscribe.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
@@ -152,7 +152,7 @@ func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
 	log.Infoln("Verify GuardProof", request)
 
 	if request.TriggerTxHash == "" {
-		log.Errorln("IntendSettle Trigger event has not been submitted")
+		log.Errorln("Request Trigger event has not been submitted")
 		return false
 	}
 
