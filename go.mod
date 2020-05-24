@@ -17,6 +17,7 @@ require (
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.4
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/mux v1.7.4
