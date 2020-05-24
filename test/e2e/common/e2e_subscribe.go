@@ -107,7 +107,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client0.Address.Bytes(), tc.Client0, tc.Client1)
+	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},

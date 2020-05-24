@@ -200,7 +200,7 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(candidate.EthAddress))
 	if err != nil {
-		log.Errorln("Query sidechain ddress error:", err)
+		log.Errorln("Query sidechain address error:", err)
 		return false
 	}
 

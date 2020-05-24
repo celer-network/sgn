@@ -7,6 +7,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
@@ -22,6 +23,7 @@ import (
 // RestServer represents the Light Client Rest server
 type RestServer struct {
 	Mux            *mux.Router
+	ethClient      *mainchain.EthClient
 	transactorPool *transactor.TransactorPool
 	listener       net.Listener
 	logger         tlog.Logger
@@ -29,6 +31,21 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
+	ethClient := &mainchain.EthClient{}
+	err := ethClient.SetClient(viper.GetString(common.FlagEthInstance))
+	if err != nil {
+		return nil, err
+	}
+
+	err = ethClient.SetContracts(
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	gpe := transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI))
 	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
@@ -37,7 +54,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		gpe,
 	)
 
-	err := transactorPool.AddTransactors(
+	err = transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
 		viper.GetStringSlice(common.FlagSgnTransactors),
@@ -60,6 +77,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 
 	return &RestServer{
 		Mux:            r,
+		ethClient:      ethClient,
 		transactorPool: transactorPool,
 		logger:         logger,
 	}, nil

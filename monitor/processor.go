@@ -109,7 +109,7 @@ func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNU
 	log.Infof("Add UpdateSidechainAddr of %x to transactor msgQueue", updateSidechainAddr.Candidate)
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, updateSidechainAddr.Candidate)
 	if err != nil {
-		log.Errorln("Query sidechain ddress error:", err)
+		log.Errorln("Query sidechain address error:", err)
 		return
 	}
 

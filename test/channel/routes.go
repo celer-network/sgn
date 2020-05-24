@@ -10,6 +10,8 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	tc "github.com/celer-network/sgn/test/common"
+	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
@@ -49,7 +51,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer1.Address.Bytes(), rs.peer1, rs.peer2)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer2.Address.Bytes(), rs.peer1, rs.peer2)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -61,13 +63,26 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
+		ownerSig, err := rs.peer1.SignMessage(signedSimplexStateBytes)
+		if err != nil {
+			return
+		}
+
 		if rs.gateway == "" {
-			// FIX
-			// msgRequestGuard := subscribe.NewMsgRequestGuard(rs.peer1.Address.Hex(), signedSimplexStateBytes, rs.transactor.Key.GetAddress())
-			// rs.transactor.AddTxMsg(msgRequestGuard)
+			request, err := subscribe.GetRequest(rs.transactor.CliCtx, rs.peer1, signedSimplexStateProto)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
+				return
+			}
+
+			request.SignedSimplexStateBytes = signedSimplexStateBytes
+			request.OwnerSig = ownerSig
+			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+			msg := sync.NewMsgSubmitChange(sync.Request, requestData, rs.transactor.Key.GetAddress())
+			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
-				"ethAddr":                 rs.peer1.Address.Hex(),
+				"ownerSig":                mainchain.Bytes2Hex(ownerSig),
 				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
 			})
 			if err != nil {
@@ -94,7 +109,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer1.Address.Bytes(), rs.peer1, rs.peer2)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer2.Address.Bytes(), rs.peer1, rs.peer2)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
