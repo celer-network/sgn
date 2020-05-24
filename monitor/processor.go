@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
@@ -53,6 +54,8 @@ func (m *EthMonitor) processPullerQueue() {
 		m.db.Delete(iterator.Key())
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.DPoSConfirmParamProposal:
+			m.syncConfirmParamProposal(e)
 		case *mainchain.SGNUpdateSidechainAddr:
 			m.syncUpdateSidechainAddr(e)
 		case *mainchain.CelerLedgerIntendSettle:
@@ -102,7 +105,14 @@ func (m *EthMonitor) processPenaltyQueue() {
 	}
 }
 
-// TODO: need to handle update after first initialization
+func (m *EthMonitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
+	log.Infof("Confirm paramProposal, Record %v, NewValue %v", confirmParamProposal.Record, confirmParamProposal.NewValue)
+	paramChange := global.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
+	paramChangeData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
+	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.operator.Key.GetAddress())
+	m.operator.AddTxMsg(msg)
+}
+
 func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
 	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
 	if err == nil {

@@ -11,6 +11,7 @@ type EventName string
 
 const (
 	UpdateSidechainAddr   EventName = "UpdateSidechainAddr"
+	ConfirmParamProposal  EventName = "ConfirmParamProposal"
 	Delegate              EventName = "Delegate"
 	CandidateUnbonded     EventName = "CandidateUnbonded"
 	ValidatorChange       EventName = "ValidatorChange"
@@ -61,6 +62,8 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 	switch e.Name {
 	case UpdateSidechainAddr:
 		res, err = ethClient.SGN.ParseUpdateSidechainAddr(e.Log)
+	case ConfirmParamProposal:
+		res, err = ethClient.DPoS.ParseConfirmParamProposal(e.Log)
 	case Delegate:
 		res, err = ethClient.DPoS.ParseDelegate(e.Log)
 	case ValidatorChange:

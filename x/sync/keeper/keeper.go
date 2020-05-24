@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
@@ -18,13 +19,15 @@ type Keeper struct {
 
 	globalKeeper global.Keeper
 
-	subscribeKeeper subscribe.Keeper
+	paramsKeeper params.Keeper
 
-	validatorKeeper validator.Keeper
+	slashKeeper slash.Keeper
 
 	stakingKeeper staking.Keeper
 
-	slashKeeper slash.Keeper
+	subscribeKeeper subscribe.Keeper
+
+	validatorKeeper validator.Keeper
 
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
@@ -42,17 +45,18 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	globalKeeper global.Keeper, subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
-	stakingKeeper staking.Keeper, slashKeeper slash.Keeper,
+	globalKeeper global.Keeper, paramsKeeper params.Keeper, slashKeeper slash.Keeper,
+	stakingKeeper staking.Keeper, subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
 ) Keeper {
 	return Keeper{
 		storeKey:        key,
 		paramSpace:      paramSpace,
 		globalKeeper:    globalKeeper,
+		paramsKeeper:    paramsKeeper,
+		slashKeeper:     slashKeeper,
+		stakingKeeper:   stakingKeeper,
 		subscribeKeeper: subscribeKeeper,
 		validatorKeeper: validatorKeeper,
-		stakingKeeper:   stakingKeeper,
-		slashKeeper:     slashKeeper,
 		cdc:             cdc,
 	}
 }

@@ -18,6 +18,7 @@ var (
 	RegisterCodec       = types.RegisterCodec
 	NewBlock            = types.NewBlock
 	NewEpoch            = types.NewEpoch
+	NewParamChange      = types.NewParamChange
 	NewQueryEpochParams = types.NewQueryEpochParams
 	GetEpochKey         = types.GetEpochKey
 	GetLatestEpochKey   = types.GetLatestEpochKey
@@ -28,6 +29,7 @@ var (
 type (
 	Block            = types.Block
 	Epoch            = types.Epoch
+	ParamChange      = types.ParamChange
 	Params           = types.Params
 	QueryEpochParams = types.QueryEpochParams
 )
