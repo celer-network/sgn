@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
@@ -14,6 +16,14 @@ import (
 
 func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 	switch change.Type {
+	case types.ConfirmParamProposal:
+		return keeper.ConfirmParamProposal(ctx, change)
+	case types.UpdateSidechainAddr:
+		return keeper.UpdateSidechainAddr(ctx, change)
+	case types.SyncDelegator:
+		return keeper.SyncDelegator(ctx, change)
+	case types.SyncValidator:
+		return keeper.SyncValidator(ctx, change)
 	case types.Subscribe:
 		return keeper.Subscribe(ctx, change)
 	case types.Request:
@@ -22,109 +32,25 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.TriggerGuard(ctx, change)
 	case types.GuardProof:
 		return keeper.GuardProof(ctx, change)
-	case types.UpdateSidechainAddr:
-		return keeper.UpdateSidechainAddr(ctx, change)
-	case types.SyncDelegator:
-		return keeper.SyncDelegator(ctx, change)
-	case types.SyncValidator:
-		return keeper.SyncValidator(ctx, change)
 	default:
 		return errors.New("Invalid change type")
 	}
 }
 
-func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
-	var s subscribe.Subscription
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &s)
+func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) error {
+	var paramChange global.ParamChange
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &paramChange)
 
-	log.Infoln("Apply new subscription", s)
-	subscription, found := keeper.subscribeKeeper.GetSubscription(ctx, s.EthAddress)
-	if !found {
-		subscription = subscribe.NewSubscription(s.EthAddress)
-	}
-	subscription.Deposit = s.Deposit
-	keeper.subscribeKeeper.SetSubscription(ctx, subscription)
-
-	return nil
-}
-
-func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
-	var r subscribe.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
-
-	log.Infoln("Apply new request", r)
-	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetOwnerAddress())
-	if err != nil {
-		return fmt.Errorf("Failed to charge request fee: %s", err)
-	}
-
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
-	if found {
-		request.SeqNum = r.SeqNum
-		request.SignedSimplexStateBytes = r.SignedSimplexStateBytes
-		request.OwnerSig = r.OwnerSig
-	} else {
-		request = r
-	}
-
-	keeper.subscribeKeeper.SetRequest(ctx, request)
-
-	return nil
-}
-
-func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
-	var r subscribe.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
-
-	log.Infoln("Apply intend settle", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
-	if !found {
-		return fmt.Errorf("failed to get request with channelId %x and owner %s", r.ChannelId, r.GetOwnerAddress())
-	}
-
-	request.TriggerTxHash = r.TriggerTxHash
-	request.TriggerTxBlkNum = r.TriggerTxBlkNum
-	request.DisputeTimeout = r.DisputeTimeout
-	request.RequestGuards = subscribe.GetRequestGuards(ctx, keeper.subscribeKeeper)
-	keeper.subscribeKeeper.SetRequest(ctx, request)
-
-	return nil
-}
-
-func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
-	var r subscribe.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
-
-	log.Infoln("Apply guard proof", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
-	if !found {
-		return fmt.Errorf("failed to get request with channelId %x and owner %s", r.ChannelId, r.GetOwnerAddress())
-	}
-
-	request.GuardTxHash = r.GuardTxHash
-	request.GuardTxBlkNum = r.GuardTxBlkNum
-	request.GuardSender = r.GuardSender
-	keeper.subscribeKeeper.SetRequest(ctx, request)
-
-	requestGuards := request.RequestGuards
-	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum
-	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
-
-	var rewardValidator sdk.AccAddress
-	if guardIndex < len(requestGuards) {
-		rewardValidator = request.RequestGuards[guardIndex]
-	} else {
-		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, request.GuardSender)
-		if found {
-			rewardValidator = rewardCandidate.Operator
+	log.Infoln("Apply confirm param proposal", paramChange)
+	switch paramChange.Record.Uint64() {
+	case mainchain.MaxValidatorNum:
+		ss, ok := keeper.paramsKeeper.GetSubspace(staking.DefaultParamspace)
+		if !ok {
+			return fmt.Errorf("Fail to get staking subspace")
 		}
 
-		guardIndex = len(requestGuards)
-	}
-
-	// punish corresponding guards and reward corresponding validator
-	for i := 0; i < guardIndex; i++ {
-		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
+		err := ss.Update(ctx, staking.KeyMaxValidators, keeper.cdc.MustMarshalBinaryBare(uint16(paramChange.NewValue.Uint64())))
+		return err
 	}
 
 	return nil
@@ -171,7 +97,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	log.Infoln("Apply sync validator", v)
 	candidate, found := keeper.validatorKeeper.GetCandidate(ctx, v.Description.Identity)
 	if !found {
-		return fmt.Errorf("failed to get candidate for: %s", v.Description.Identity)
+		return fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
 	}
 
 	valAddress := sdk.ValAddress(candidate.Operator)
@@ -203,6 +129,103 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 
 	candidate.CommissionRate = v.Commission.CommissionRates.Rate
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
+
+	return nil
+}
+
+func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
+	var s subscribe.Subscription
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &s)
+
+	log.Infoln("Apply new subscription", s)
+	subscription, found := keeper.subscribeKeeper.GetSubscription(ctx, s.EthAddress)
+	if !found {
+		subscription = subscribe.NewSubscription(s.EthAddress)
+	}
+	subscription.Deposit = s.Deposit
+	keeper.subscribeKeeper.SetSubscription(ctx, subscription)
+
+	return nil
+}
+
+func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
+	var r subscribe.Request
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+
+	log.Infoln("Apply new request", r)
+	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetOwnerAddress())
+	if err != nil {
+		return fmt.Errorf("Fail to charge request fee: %s", err)
+	}
+
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
+	if found {
+		request.SeqNum = r.SeqNum
+		request.SignedSimplexStateBytes = r.SignedSimplexStateBytes
+		request.OwnerSig = r.OwnerSig
+	} else {
+		request = r
+	}
+
+	keeper.subscribeKeeper.SetRequest(ctx, request)
+
+	return nil
+}
+
+func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
+	var r subscribe.Request
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+
+	log.Infoln("Apply intend settle", r)
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
+	if !found {
+		return fmt.Errorf("Fail to get request with channelId %x and owner %s", r.ChannelId, r.GetOwnerAddress())
+	}
+
+	request.TriggerTxHash = r.TriggerTxHash
+	request.TriggerTxBlkNum = r.TriggerTxBlkNum
+	request.DisputeTimeout = r.DisputeTimeout
+	request.RequestGuards = subscribe.GetRequestGuards(ctx, keeper.subscribeKeeper)
+	keeper.subscribeKeeper.SetRequest(ctx, request)
+
+	return nil
+}
+
+func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
+	var r subscribe.Request
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+
+	log.Infoln("Apply guard proof", r)
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
+	if !found {
+		return fmt.Errorf("Fail to get request with channelId %x and owner %s", r.ChannelId, r.GetOwnerAddress())
+	}
+
+	request.GuardTxHash = r.GuardTxHash
+	request.GuardTxBlkNum = r.GuardTxBlkNum
+	request.GuardSender = r.GuardSender
+	keeper.subscribeKeeper.SetRequest(ctx, request)
+
+	requestGuards := request.RequestGuards
+	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum
+	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+
+	var rewardValidator sdk.AccAddress
+	if guardIndex < len(requestGuards) {
+		rewardValidator = request.RequestGuards[guardIndex]
+	} else {
+		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, request.GuardSender)
+		if found {
+			rewardValidator = rewardCandidate.Operator
+		}
+
+		guardIndex = len(requestGuards)
+	}
+
+	// punish corresponding guards and reward corresponding validator
+	for i := 0; i < guardIndex; i++ {
+		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
+	}
 
 	return nil
 }

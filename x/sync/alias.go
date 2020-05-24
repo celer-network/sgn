@@ -9,32 +9,33 @@ import (
 )
 
 const (
-	DefaultPeriod       = types.DefaultPeriod
-	ModuleName          = types.ModuleName
-	StoreKey            = types.StoreKey
-	RouterKey           = types.RouterKey
-	QuerierRoute        = types.QuerierRoute
-	DefaultParamspace   = types.DefaultParamspace
-	TypeMsgApprove      = types.TypeMsgApprove
-	TypeMsgSubmitChange = types.TypeMsgSubmitChange
-	StatusNil           = types.StatusNil
-	StatusVotingPeriod  = types.StatusVotingPeriod
-	StatusPassed        = types.StatusPassed
-	StatusFailed        = types.StatusFailed
-	QueryParams         = types.QueryParams
-	QueryChanges        = types.QueryChanges
-	QueryChange         = types.QueryChange
-	ParamVoting         = types.ParamVoting
-	ParamTallying       = types.ParamTallying
-	Subscribe           = types.Subscribe
-	Request             = types.Request
-	TriggerGuard        = types.TriggerGuard
-	GuardProof          = types.GuardProof
-	UpdateSidechainAddr = types.UpdateSidechainAddr
-	SyncDelegator       = types.SyncDelegator
-	SyncValidator       = types.SyncValidator
-	EventTypeSync       = types.EventTypeSync
-	ActionSubmitChange  = types.ActionSubmitChange
+	DefaultPeriod        = types.DefaultPeriod
+	ModuleName           = types.ModuleName
+	StoreKey             = types.StoreKey
+	RouterKey            = types.RouterKey
+	QuerierRoute         = types.QuerierRoute
+	DefaultParamspace    = types.DefaultParamspace
+	TypeMsgApprove       = types.TypeMsgApprove
+	TypeMsgSubmitChange  = types.TypeMsgSubmitChange
+	StatusNil            = types.StatusNil
+	StatusVotingPeriod   = types.StatusVotingPeriod
+	StatusPassed         = types.StatusPassed
+	StatusFailed         = types.StatusFailed
+	QueryParams          = types.QueryParams
+	QueryChanges         = types.QueryChanges
+	QueryChange          = types.QueryChange
+	ParamVoting          = types.ParamVoting
+	ParamTallying        = types.ParamTallying
+	ConfirmParamProposal = types.ConfirmParamProposal
+	UpdateSidechainAddr  = types.UpdateSidechainAddr
+	SyncDelegator        = types.SyncDelegator
+	SyncValidator        = types.SyncValidator
+	Subscribe            = types.Subscribe
+	Request              = types.Request
+	TriggerGuard         = types.TriggerGuard
+	GuardProof           = types.GuardProof
+	EventTypeSync        = types.EventTypeSync
+	ActionSubmitChange   = types.ActionSubmitChange
 )
 
 var (

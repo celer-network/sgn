@@ -12,13 +12,14 @@ const (
 	TypeMsgApprove      = "approve_change"
 	TypeMsgSubmitChange = "submit_change"
 
-	Subscribe           = "subscribe"
-	Request             = "request"
-	TriggerGuard        = "trigger_guard"
-	GuardProof          = "guard_proof"
-	UpdateSidechainAddr = "update_sidechain_addr"
-	SyncDelegator       = "sync_delegator"
-	SyncValidator       = "sync_validator"
+	ConfirmParamProposal = "confirm_param_proposal"
+	UpdateSidechainAddr  = "update_sidechain_addr"
+	SyncDelegator        = "sync_delegator"
+	SyncValidator        = "sync_validator"
+	Subscribe            = "subscribe"
+	Request              = "request"
+	TriggerGuard         = "trigger_guard"
+	GuardProof           = "guard_proof"
 )
 
 // MsgSubmitChange defines a message to create a sync change

@@ -1,12 +1,23 @@
 package mainchain
 
 const (
+	// ValidatorChangeType
 	AddValidator    = 0
 	RemoveValidator = 1
 
+	// CandidateStatus
 	Unbonded  = 0
 	Bonded    = 1
 	Unbonding = 2
+
+	// ParamNames
+	ProposalDeposit      = 0
+	GovernVoteTimeout    = 1
+	BlameTimeout         = 2
+	MinValidatorNum      = 3
+	MaxValidatorNum      = 4
+	MinStakeInPool       = 5
+	IncreaseRateWaitTime = 6
 
 	TxFailure = 0
 	TxSuccess = 1

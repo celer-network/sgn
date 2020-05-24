@@ -143,6 +143,17 @@ func (m *EthMonitor) monitorUpdateSidechainAddr() {
 	}
 }
 
+func (m *EthMonitor) monitorConfirmParamProposal() {
+	_, err := m.ms.Monitor(string(ConfirmParamProposal), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
+		log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
+		event := NewEvent(ConfirmParamProposal, eLog)
+		m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (m *EthMonitor) monitorDelegate() {
 	_, err := m.ms.Monitor(string(Delegate), m.dposContract, m.blkNum, nil, false, func(cb watcher.CallbackID, eLog ethtypes.Log) {
 		log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
