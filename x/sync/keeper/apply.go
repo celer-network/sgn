@@ -18,8 +18,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.Subscribe(ctx, change)
 	case types.Request:
 		return keeper.Request(ctx, change)
-	case types.IntendSettle:
-		return keeper.IntendSettle(ctx, change)
+	case types.TriggerGuard:
+		return keeper.TriggerGuard(ctx, change)
 	case types.GuardProof:
 		return keeper.GuardProof(ctx, change)
 	case types.UpdateSidechainAddr:
@@ -72,7 +72,7 @@ func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
 	return nil
 }
 
-func (keeper Keeper) IntendSettle(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 	var r subscribe.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 

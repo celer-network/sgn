@@ -14,7 +14,7 @@ const (
 
 	Subscribe           = "subscribe"
 	Request             = "request"
-	IntendSettle        = "intend_settle"
+	TriggerGuard        = "trigger_guard"
 	GuardProof          = "guard_proof"
 	UpdateSidechainAddr = "update_sidechain_addr"
 	SyncDelegator       = "sync_delegator"

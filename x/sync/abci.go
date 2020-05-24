@@ -34,6 +34,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 
 		tagValue := types.AttributeValueChangeFailed
 		change.Status = StatusFailed
+		log.Infoln("Change type", change.Type, totalVote, threshold)
 
 		if totalVote.GTE(threshold) {
 			err := keeper.ApplyChange(ctx, change)
