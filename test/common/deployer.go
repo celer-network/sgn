@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/test/channel-eth-go/deploy"
 	"github.com/celer-network/sgn/test/channel-eth-go/ledger"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,29 +24,25 @@ func DeployLedgerContract() mainchain.Addr {
 	LogBlkNum(EtherBase.Client)
 	ledgerContract, err := ledger.NewCelerLedger(ledgerAddr, EtherBase.Client)
 	ChkErr(err, "failed to NewCelerLedger")
-	tx, err := ledgerContract.DisableBalanceLimits(EtherBase.Auth)
+	_, err = ledgerContract.DisableBalanceLimits(EtherBase.Auth)
 	ChkErr(err, "failed disable channel deposit limits")
-	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Disable balance limit")
 
 	log.Infoln("Ledger address:", ledgerAddr.String())
 	return ledgerAddr
 }
 
-func DeployERC20Contract() (mainchain.Addr, *mainchain.ERC20) {
-	ctx := context.Background()
+func DeployERC20Contract() (*types.Transaction, mainchain.Addr, *mainchain.ERC20) {
 	initAmt := new(big.Int)
 	initAmt.SetString("1"+strings.Repeat("0", 28), 10)
 	erc20Addr, tx, erc20, err := mainchain.DeployERC20(EtherBase.Auth, EtherBase.Client, initAmt, "Celer", 18, "CELR")
 	ChkErr(err, "failed to deploy ERC20")
-	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy ERC20 "+erc20Addr.Hex())
 
 	log.Infoln("Erc20 address:", erc20Addr.String())
-	return erc20Addr, erc20
+	return tx, erc20Addr, erc20
 }
 
-func DeployDPoSSGNContracts(sgnParams *SGNParams) (mainchain.Addr, mainchain.Addr) {
-	ctx := context.Background()
-	dposAddr, tx, _, err := mainchain.DeployDPoS(
+func DeployDPoSSGNContracts(sgnParams *SGNParams) (*types.Transaction, mainchain.Addr, mainchain.Addr) {
+	dposAddr, _, _, err := mainchain.DeployDPoS(
 		EtherBase.Auth,
 		EtherBase.Client,
 		sgnParams.CelrAddr,
@@ -58,25 +55,22 @@ func DeployDPoSSGNContracts(sgnParams *SGNParams) (mainchain.Addr, mainchain.Add
 		sgnParams.IncreaseRateWaitTime,
 		sgnParams.SidechainGoLiveTimeout)
 	ChkErr(err, "failed to deploy DPoS contract")
-	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy DPoS "+dposAddr.Hex())
 
-	ctx = context.Background()
 	sgnAddr, tx, _, err := mainchain.DeploySGN(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, dposAddr)
 	ChkErr(err, "failed to deploy SGN contract")
-	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Deploy SGN "+sgnAddr.Hex())
 
 	// TODO: register SGN address on DPoS contract
-	ctx = context.Background()
 	dpos, err := mainchain.NewDPoS(dposAddr, EtherBase.Client)
 	ChkErr(err, "failed to new DPoS instance")
+	EtherBase.Auth.GasLimit = 8000000
 	tx, err = dpos.RegisterSidechain(EtherBase.Auth, sgnAddr)
+	EtherBase.Auth.GasLimit = 0
 	ChkErr(err, "failed to register SGN address on DPoS contract")
-	WaitMinedWithChk(ctx, EtherBase.Client, tx, 0, "Register SGN")
 
 	log.Infoln("DPoS address:", dposAddr.String())
 	log.Infoln("SGN address:", sgnAddr.String())
 
-	return dposAddr, sgnAddr
+	return tx, dposAddr, sgnAddr
 }
 
 func DeployCommand() *cobra.Command {
@@ -111,7 +105,7 @@ func DeployCommand() *cobra.Command {
 			ledgerAddr := DeployLedgerContract()
 			viper.Set(common.FlagEthLedgerAddress, ledgerAddr)
 
-			erc20Addr, erc20 := DeployERC20Contract()
+			_, erc20Addr, erc20 := DeployERC20Contract()
 			sgnParams := &SGNParams{
 				CelrAddr:               erc20Addr,
 				GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
@@ -123,7 +117,9 @@ func DeployCommand() *cobra.Command {
 				IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
 				SidechainGoLiveTimeout: big.NewInt(5760),
 			}
-			dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
+			tx, dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
+			WaitMinedWithChk(context.Background(), EtherBase.Client, tx, 0, "DeployDPoSContracts")
+
 			viper.Set(common.FlagEthDPoSAddress, dposAddr)
 			viper.Set(common.FlagEthSGNAddress, sgnAddr)
 			err = viper.WriteConfig()

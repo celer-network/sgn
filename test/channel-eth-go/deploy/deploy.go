@@ -72,86 +72,49 @@ func DeployAll(
 	blockDelay uint64) CelerChannelAddrBundle {
 	/********** contracts without need of linking **********/
 	// Deploy VirtContractResolver contract
-	log.Println("Deploying VirtContractResolver contract...")
 	virtresolverAddr, tx, _, err := virtresolver.DeployVirtContractResolver(auth, conn)
 	if err != nil {
 		log.Fatalf("Failed to deploy VirtContractResolver contract: %v", err)
 	}
-	receipt, err := WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined VirtContractResolver: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed VirtContractResolver contract at 0x%x\n", virtresolverAddr)
+	log.Printf("Deploying VirtContractResolver contract at 0x%x\n", virtresolverAddr)
 
 	// Deploy EthPool contract
-	log.Println("Deploying EthPool contract...")
 	ethPoolAddr, tx, _, err := ethpool.DeployEthPool(auth, conn)
 	if err != nil {
 		log.Fatalf("Failed to deploy EthPool contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined EthPool: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed EthPool contract at 0x%x\n", ethPoolAddr)
+	log.Printf("Deploying EthPool contract at 0x%x\n", ethPoolAddr)
 
 	// Deploy PayRegistry contract
-	log.Println("Deploying PayRegistry contract...")
 	payRegistryAddr, tx, _, err := payregistry.DeployPayRegistry(auth, conn)
 	if err != nil {
 		log.Fatalf("Failed to deploy PayRegistry contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined PayRegistry: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed PayRegistry contract at 0x%x\n", payRegistryAddr)
+	log.Printf("Deploying PayRegistry contract at 0x%x\n", payRegistryAddr)
 
 	// Deploy PayResolver contract
-	log.Println("Deploying PayResolver contract...")
 	payResolverAddr, tx, _, err := payresolver.DeployPayResolver(auth, conn, payRegistryAddr, virtresolverAddr)
 	if err != nil {
 		log.Fatalf("Failed to deploy PayResolver contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined PayResolver: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed PayResolver contract at 0x%x\n", payResolverAddr)
+	log.Printf("Deploying PayResolver contract at 0x%x\n", payResolverAddr)
 
 	// Deploy CelerWallet contract
-	log.Println("Deploying CelerWallet contract...")
 	walletAddr, tx, _, err := wallet.DeployCelerWallet(auth, conn)
 	if err != nil {
 		log.Fatalf("Failed to deploy CelerWallet contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined CelerWallet: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed CelerWallet contract at 0x%x\n", walletAddr)
+	log.Printf("Deploying CelerWallet contract at 0x%x\n", walletAddr)
 
 	// Deploy LedgerStruct contract
-	log.Println("Deploying LedgerStruct contract...")
 	ledgerstructAddr, tx, _, err := ledgerstruct.DeployLedgerStruct(auth, conn)
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerStruct contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerStruct: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed LedgerStruct contract at 0x%x\n", ledgerstructAddr)
+	log.Printf("Deploying LedgerStruct contract at 0x%x\n", ledgerstructAddr)
 
 	/********** contracts with need of linking **********/
 	// Deploy LedgerChannel contract
-	log.Println("Deploying LedgerChannel contract...")
 	channelAddr, tx, _, err := DeployContractWithLinks(
 		auth,
 		conn,
@@ -162,15 +125,9 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerChannel contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerChannel: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed LedgerChannel contract at 0x%x\n", channelAddr)
+	log.Printf("Deploying LedgerChannel contract at 0x%x\n", channelAddr)
 
 	// Deploy LedgerBalanceLimit contract
-	log.Println("Deploying LedgerBalanceLimit contract...")
 	balancelimitAddr, tx, _, err := DeployContractWithLinks(
 		auth,
 		conn,
@@ -181,15 +138,9 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerBalanceLimit contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerBalanceLimit: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed LedgerBalanceLimit contract at 0x%x\n", balancelimitAddr)
+	log.Printf("Deploying LedgerBalanceLimit contract at 0x%x\n", balancelimitAddr)
 
 	// Deploy LedgerOperation contract
-	log.Println("Deploying LedgerOperation contract...")
 	operationAddr, tx, _, err := DeployContractWithLinks(
 		auth,
 		conn,
@@ -200,15 +151,9 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerOperation contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerOperation: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed LedgerOperation contract at 0x%x\n", operationAddr)
+	log.Printf("Deploying LedgerOperation contract at 0x%x\n", operationAddr)
 
 	// Deploy LedgerMigrate contract
-	log.Println("Deploying LedgerMigrate contract...")
 	migrateAddr, tx, _, err := DeployContractWithLinks(
 		auth,
 		conn,
@@ -223,12 +168,7 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerMigrate contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerMigrate: %v", err)
-	}
-	log.Printf("Transaction status: %x", receipt.Status)
-	log.Printf("Deployed LedgerMigrate contract at 0x%x\n", migrateAddr)
+	log.Printf("Deploying LedgerMigrate contract at 0x%x\n", migrateAddr)
 
 	// Deploy CelerLedger contract
 	log.Println("Deploying CelerLedger contract...")
@@ -251,7 +191,7 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy CelerLedger contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
+	receipt, err := WaitMined(ctx, conn, tx, blockDelay)
 	if err != nil {
 		log.Fatalf("Failed to WaitMined CelerLedger: %v", err)
 	}

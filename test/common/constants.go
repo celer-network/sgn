@@ -19,7 +19,7 @@ const (
 	SgnBlockInterval = 1
 	DefaultTimeout   = 60 * time.Second
 	waitMinedTimeout = 180 * time.Second
-	BlockDelay       = 1
+	BlockDelay       = 0
 	DisputeTimeout   = 100
 )
 

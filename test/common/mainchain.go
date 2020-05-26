@@ -71,7 +71,8 @@ func SetContracts(dposAddr, sgnAddr, ledgerAddr mainchain.Addr) error {
 func SetupE2eProfile() {
 	ledgerAddr := DeployLedgerContract()
 	// Deploy sample ERC20 contract (CELR)
-	erc20Addr, erc20 := DeployERC20Contract()
+	tx, erc20Addr, erc20 := DeployERC20Contract()
+	WaitMinedWithChk(context.Background(), EtherBase.Client, tx, BlockDelay, "DeployERC20")
 
 	E2eProfile = &TestProfile{
 		// hardcoded values
@@ -84,15 +85,16 @@ func SetupE2eProfile() {
 }
 
 func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
-	conn, auth, ctx, senderAddr, err := prepareEtherBaseClient()
-	if err != nil {
-		return err
+	conn, auth, ctx, senderAddr, connErr := prepareEtherBaseClient()
+	if connErr != nil {
+		return connErr
 	}
 	value := big.NewInt(0)
 	value.SetString(amt, 10)
 	auth.Value = value
 	chainID := big.NewInt(883) // Private Mainchain Testnet
 	var gasLimit uint64 = 21000
+	var lastTx *types.Transaction
 	for _, addr := range recipients {
 		nonce, err := conn.PendingNonceAt(ctx, senderAddr)
 		if err != nil {
@@ -117,21 +119,24 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 		if err != nil {
 			return err
 		}
-		ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
-		defer cancel()
-		receipt, err := mainchain.WaitMined(ctx2, conn, tx, 0)
-		if err != nil {
-			log.Error(err)
-		}
-		if receipt.Status != 1 {
-			log.Errorf("tx failed. tx hash: %x", receipt.TxHash)
-		} else {
+		lastTx = tx
+	}
+	ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
+	defer cancel()
+	receipt, err := mainchain.WaitMined(ctx2, conn, lastTx, 0)
+	if err != nil {
+		log.Error(err)
+	}
+	if receipt.Status != 1 {
+		log.Errorf("last tx failed. tx hash: %x", receipt.TxHash)
+	} else {
+		for _, addr := range recipients {
 			if addr == mainchain.ZeroAddr {
 				head, _ := conn.HeaderByNumber(ctx, nil)
 				log.Infoln("Current block number:", head.Number.String())
 			} else {
 				bal, _ := conn.BalanceAt(ctx, addr, nil)
-				log.Infoln("Tx done.", addr.String(), "bal:", bal.String())
+				log.Infoln("Funded.", addr.String(), "bal:", bal.String())
 			}
 		}
 	}
@@ -145,18 +150,17 @@ func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount str
 	}
 	tokenAmt := new(big.Int)
 	tokenAmt.SetString(amount, 10)
+	var lastTx *types.Transaction
 	for _, addr := range addrs {
-		tx, err := erc20Contract.Transfer(EtherBase.Auth, addr, tokenAmt)
-		if err != nil {
-			return err
+		tx, transferErr := erc20Contract.Transfer(EtherBase.Auth, addr, tokenAmt)
+		if transferErr != nil {
+			return transferErr
 		}
+		lastTx = tx
 		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, EtherBase.Auth.From)
-		_, err = mainchain.WaitMined(context.Background(), EtherBase.Client, tx, 0)
-		if err != nil {
-			return err
-		}
 	}
-	return nil
+	_, err = mainchain.WaitMined(context.Background(), EtherBase.Client, lastTx, 0)
+	return err
 }
 
 func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err error) {
@@ -236,7 +240,7 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
-	log.Info("Call intendWithdraw on dpos contract using the validator eth address...")
+	log.Info("Call intendWithdraw on dpos cotract using the validator eth address...")
 	tx, err := dposContract.IntendWithdraw(auth, candidateAddr, amt)
 	if err != nil {
 		return err
@@ -258,12 +262,13 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "DPoS InitializeCandidate")
 
 	ctx, cancel = context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 	log.Infof("Call updateSidechainAddr on sgn contract using the validator eth address, sgnAddr: %x", sgnAddr.Bytes())
+	auth.GasLimit = 8000000
 	tx, err = sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
+	auth.GasLimit = 0
 	if err != nil {
 		return err
 	}
@@ -283,9 +288,10 @@ func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, 0, "Approve CELR to DPoS contract")
 
+	fromAuth.GasLimit = 8000000
 	tx, err = dposContract.Delegate(fromAuth, toEthAddress, amt)
+	fromAuth.GasLimit = 0
 	if err != nil {
 		return err
 	}

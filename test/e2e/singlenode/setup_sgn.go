@@ -3,6 +3,7 @@
 package singlenode
 
 import (
+	"context"
 	"math/big"
 	"os"
 	"os/exec"
@@ -11,6 +12,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tc "github.com/celer-network/sgn/test/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 )
 
@@ -28,7 +30,9 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
-	tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
+	var tx *types.Transaction
+	tx, tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
+	tc.WaitMinedWithChk(context.Background(), tc.EtherBase.Client, tx, tc.BlockDelay, "DeployDPoSSGNContracts")
 
 	updateSGNConfig()
 
