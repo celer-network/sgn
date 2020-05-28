@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
@@ -38,7 +38,7 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 }
 
 func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) error {
-	var paramChange global.ParamChange
+	var paramChange common.ParamChange
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &paramChange)
 
 	log.Infoln("Apply confirm param proposal", paramChange)

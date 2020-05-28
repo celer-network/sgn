@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync/types"
@@ -16,8 +15,6 @@ import (
 type Keeper struct {
 	// The reference to the Paramstore to get and set sync specific params
 	paramSpace types.ParamSubspace
-
-	globalKeeper global.Keeper
 
 	paramsKeeper params.Keeper
 
@@ -45,13 +42,12 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	globalKeeper global.Keeper, paramsKeeper params.Keeper, slashKeeper slash.Keeper,
-	stakingKeeper staking.Keeper, subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
+	paramsKeeper params.Keeper, slashKeeper slash.Keeper, stakingKeeper staking.Keeper,
+	subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
 ) Keeper {
 	return Keeper{
 		storeKey:        key,
 		paramSpace:      paramSpace,
-		globalKeeper:    globalKeeper,
 		paramsKeeper:    paramsKeeper,
 		slashKeeper:     slashKeeper,
 		stakingKeeper:   stakingKeeper,

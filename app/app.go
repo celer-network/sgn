@@ -10,7 +10,6 @@ import (
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/cron"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/gov"
 	govclient "github.com/celer-network/sgn/x/gov/client"
 	"github.com/celer-network/sgn/x/slash"
@@ -54,7 +53,6 @@ var (
 		supply.AppModuleBasic{},
 
 		cron.AppModule{},
-		global.AppModule{},
 		gov.NewAppModuleBasic(govclient.ParamProposalHandler),
 		slash.AppModule{},
 		subscribe.AppModule{},
@@ -94,7 +92,6 @@ type sgnApp struct {
 	keyStaking   *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
 	keyCron      *sdk.KVStoreKey
-	keyGlobal    *sdk.KVStoreKey
 	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
 	keySubscribe *sdk.KVStoreKey
@@ -108,7 +105,6 @@ type sgnApp struct {
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
 	cronKeeper      cron.Keeper
-	globalKeeper    global.Keeper
 	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
 	subscribeKeeper subscribe.Keeper
@@ -169,7 +165,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
 		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
-		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
 		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
@@ -183,7 +178,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
-	globalSubspace := app.paramsKeeper.Subspace(global.DefaultParamspace)
 	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
@@ -227,16 +221,9 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		staking.NewMultiStakingHooks(),
 	)
 
-	app.globalKeeper = global.NewKeeper(
-		app.keyGlobal,
-		app.cdc,
-		globalSubspace,
-	)
-
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyValidator,
 		app.cdc,
-		app.globalKeeper,
 		app.accountKeeper,
 		app.stakingKeeper,
 		validatorSubspace,
@@ -252,7 +239,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.subscribeKeeper = subscribe.NewKeeper(
 		app.keySubscribe,
 		app.cdc,
-		app.globalKeeper,
 		app.validatorKeeper,
 		subscribeSubspace,
 	)
@@ -280,7 +266,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.cdc,
 		app.keySync,
 		syncSubspace,
-		app.globalKeeper,
 		app.paramsKeeper,
 		app.slashKeeper,
 		app.stakingKeeper,
@@ -295,7 +280,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		cron.NewAppModule(app.cronKeeper),
-		global.NewAppModule(app.globalKeeper),
 		slash.NewAppModule(app.slashKeeper),
 		subscribe.NewAppModule(app.subscribeKeeper),
 		validator.NewAppModule(app.validatorKeeper),
@@ -313,7 +297,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		bank.ModuleName,
 		genutil.ModuleName,
 		cron.ModuleName,
-		global.ModuleName,
 		slash.ModuleName,
 		subscribe.ModuleName,
 		validator.ModuleName,
@@ -347,7 +330,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keyStaking,
 		app.keyParams,
 		app.keyCron,
-		app.keyGlobal,
 		app.keySlash,
 		app.keySubscribe,
 		app.keyValidator,

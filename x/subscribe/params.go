@@ -28,10 +28,17 @@ func (k Keeper) RequestCost(ctx sdk.Context) (res sdk.Int) {
 	return
 }
 
+// EpochLength - Epoch length based on seconds
+func (k Keeper) EpochLength(ctx sdk.Context) (res uint64) {
+	k.paramstore.Get(ctx, types.KeyEpochLength, &res)
+	return
+}
+
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.RequestGuardCount(ctx),
+		k.EpochLength(ctx),
 		k.RequestCost(ctx),
 	)
 }

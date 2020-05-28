@@ -12,6 +12,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+const (
+	flagEpochId = "epochId"
 )
 
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
@@ -25,6 +30,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	subscribeQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdSubscription(storeKey, cdc),
 		GetCmdRequest(storeKey, cdc),
+		GetCmdEpoch(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return subscribeQueryCmd
@@ -119,6 +125,37 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			return cliCtx.PrintOutput(params)
 		},
 	}
+}
+
+// GetCmdEpoch queries request info
+func GetCmdEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "epoch",
+		Short: "query epoch info by epochId",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			epochId := viper.GetInt64(flagEpochId)
+			data, err := cdc.MarshalJSON(types.NewQueryEpochParams(epochId))
+			if err != nil {
+				return err
+			}
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryEpoch)
+			bz, _, err := cliCtx.QueryWithData(route, data)
+			if err != nil {
+				return err
+			}
+
+			var epoch types.Epoch
+			cdc.MustUnmarshalJSON(bz, &epoch)
+			return cliCtx.PrintOutput(epoch)
+		},
+	}
+
+	cmd.Flags().Int64(flagEpochId, 0, "Epoch id")
+
+	return cmd
 }
 
 // Query params info

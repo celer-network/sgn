@@ -1,9 +1,9 @@
 {
-  "title": "Global Param Change",
+  "title": "Subscribe Param Change",
   "description": "Update EpochLength",
   "changes": [
     {
-      "subspace": "global",
+      "subspace": "subscribe",
       "key": "EpochLength",
       "value": "3"
     }
