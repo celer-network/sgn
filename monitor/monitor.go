@@ -63,7 +63,7 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	}
 
 	dal := watcher.NewDAL(st)
-	ws := watcher.NewWatchService(ethClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
+	ws := watcher.NewWatchService(ethClient.Client, dal, viper.GetFloat64(common.FlagEthPollInterval))
 	if ws == nil {
 		log.Fatalln("Cannot create watch service")
 	}

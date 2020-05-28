@@ -107,7 +107,7 @@ func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 		if err == nil && expectedRes == delegator.String() {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 	ChkTestErr(t, err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator's delegator:", delegator)
@@ -118,12 +118,12 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 	var candidate vtypes.Candidate
 	var err error
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %s`, sgnop, expAmt) // defined in Candidate.String()
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < 200; retry++ {
 		candidate, err = sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
 		if err == nil && expectedRes == candidate.String() {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 	ChkTestErr(t, err, "failed to queryCandidate")
 	log.Infoln("Query sgn about the validator candidate:", candidate)
@@ -133,12 +133,16 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop string, expAmt *big.Int, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < 200; retry++ {
 		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnop)
-		if err == nil && validator.Status == expStatus && validator.Tokens.BigInt().Cmp(expAmt) == 0 {
-			break
+		if err == nil &&
+			validator.Status == expStatus {
+			expToken := sdk.NewIntFromBigInt(expAmt).QuoRaw(common.TokenDec).String()
+			if expToken == validator.Tokens.String() {
+				break
+			}
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
@@ -150,12 +154,12 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop strin
 func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop string, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < 200; retry++ {
 		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnop)
 		if err == nil && validator.Status == expStatus {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 	ChkTestErr(t, err, "failed to queryValidator")
 	log.Infoln("Query sgn about the validator:\n", validator)
@@ -165,12 +169,12 @@ func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop
 func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum int) {
 	var validators stypes.Validators
 	var err error
-	for retry := 0; retry < 60; retry++ {
+	for retry := 0; retry < 200; retry++ {
 		validators, err = sgnval.CLIQueryBondedValidators(transactor.CliCtx, staking.RouterKey)
 		if err == nil && len(validators) == expNum {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 	ChkTestErr(t, err, "failed to queryValidators")
 	log.Infoln("Query sgn about the validators:\n", validators)
@@ -178,12 +182,12 @@ func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum i
 }
 
 func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes.ProposalStatus) (proposal govtypes.Proposal, err error) {
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < 200; retry++ {
 		proposal, err = gov.CLIQueryProposal(cliCtx, gov.RouterKey, proposalID)
 		if err == nil && status == proposal.Status {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	if err != nil {
@@ -198,12 +202,12 @@ func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes
 }
 
 func QueryPenalty(cliCtx context.CLIContext, nonce uint64, sigCount int) (penalty slash.Penalty, err error) {
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < 200; retry++ {
 		penalty, err = slash.CLIQueryPenalty(cliCtx, slash.StoreKey, nonce)
 		if err == nil && len(penalty.PenaltyProtoBytes) > 0 && len(penalty.Sigs) == sigCount {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	if err != nil {
