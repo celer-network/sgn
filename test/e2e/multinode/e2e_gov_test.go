@@ -117,7 +117,7 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err = subscribe.CLIQueryParams(transactor0.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(3), subscribeParams.EpochLength, "EpochLength params should change to 3")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should change to 3")
 
 	log.Info("======================== Test change epochlengh rejected due to 1/3 veto ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("subscribe", "EpochLength", "\"5\"")}
@@ -143,7 +143,7 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err = subscribe.CLIQueryParams(transactor0.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
 
 	nonce = uint64(1)
 	penalty, err = tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
@@ -179,7 +179,7 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err = subscribe.CLIQueryParams(transactor0.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
 
 	log.Info("======================== Test change epochlengh passed for over 1/2 yes ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("subscribe", "EpochLength", "\"5\"")}
@@ -203,6 +203,6 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err = subscribe.CLIQueryParams(transactor0.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(5), subscribeParams.EpochLength, "EpochLength params should stay 5")
+	assert.Equal(t, uint64(5), subscribeParams.EpochLength, "EpochLength params should stay 5")
 
 }

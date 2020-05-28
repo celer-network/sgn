@@ -68,7 +68,7 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(3), subscribeParams.EpochLength, "EpochLength params should be updated to 3")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should be updated to 3")
 
 	log.Info("======================== Test change epochlengh rejected ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("subscribe", "EpochLength", "\"5\"")}
@@ -89,7 +89,7 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err = subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
 
 	transactor.AddTxMsg(submitProposalmsg)
 	proposalID = uint64(3)
