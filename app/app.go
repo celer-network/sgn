@@ -65,9 +65,6 @@ var (
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
-
-	monitored = false
-	ethClient *mainchain.EthClient
 )
 
 // MakeCodec generates the necessary codecs for Amino
@@ -125,18 +122,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	viper.SetDefault(common.FlagStartMonitor, true)
 	viper.SetDefault(common.FlagEthPollInterval, 5)
 	viper.SetDefault(common.FlagEthConfirmCount, 7)
-
-	ethClient, err = mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-		viper.GetString(common.FlagEthKeystore),
-		viper.GetString(common.FlagEthPassphrase),
-	)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
 
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
@@ -342,6 +327,10 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		tmos.Exit(err.Error())
 	}
 
+	if viper.GetBool(common.FlagStartMonitor) {
+		go app.startMonitor()
+	}
+
 	return app
 }
 
@@ -364,10 +353,6 @@ func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.
 }
 
 func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if !monitored {
-		monitored = true
-		go app.startMonitor(ctx)
-	}
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -408,14 +393,22 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-func (app *sgnApp) startMonitor(ctx sdk.Context) {
-	if !viper.GetBool(common.FlagStartMonitor) {
-		return
+func (app *sgnApp) startMonitor() {
+	ethClient, err := mainchain.NewEthClient(
+		viper.GetString(common.FlagEthInstance),
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+		viper.GetString(common.FlagEthKeystore),
+		viper.GetString(common.FlagEthPassphrase),
+	)
+	if err != nil {
+		tmos.Exit(err.Error())
 	}
 
 	operator, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
-		ctx.ChainID(),
+		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnOperator),
 		viper.GetString(common.FlagSgnPassphrase),
