@@ -3,7 +3,6 @@ package subscribe
 import (
 	"errors"
 
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,18 +13,16 @@ import (
 type Keeper struct {
 	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
-	globalKeeper    global.Keeper
 	validatorKeeper validator.Keeper
 	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the subscribe Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec,
-	globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
+	validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
-		globalKeeper:    globalKeeper,
 		validatorKeeper: validatorKeeper,
 		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}
@@ -81,9 +78,9 @@ func (k Keeper) ChargeRequestFee(ctx sdk.Context, ethAddr string) error {
 	subscription.Spend = subscription.Spend.Add(k.RequestCost(ctx))
 	k.SetSubscription(ctx, subscription)
 
-	latestEpoch := k.globalKeeper.GetLatestEpoch(ctx)
+	latestEpoch := k.GetLatestEpoch(ctx)
 	latestEpoch.TotalFee = latestEpoch.TotalFee.Add(requestCost)
-	k.globalKeeper.SetLatestEpoch(ctx, latestEpoch)
+	k.SetLatestEpoch(ctx, latestEpoch)
 
 	return nil
 }
@@ -106,4 +103,45 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, peerFrom string) (
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRequestKey(request.ChannelId, request.GetOwnerAddress()), k.cdc.MustMarshalBinaryBare(request))
+}
+
+// Gets the entire Epoch metadata for a epochId
+func (k Keeper) GetEpoch(ctx sdk.Context, epochId sdk.Int) (epoch Epoch, found bool) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetEpochKey(epochId)) {
+		return epoch, false
+	}
+
+	value := store.Get(GetEpochKey(epochId))
+	k.cdc.MustUnmarshalBinaryBare(value, &epoch)
+	return epoch, true
+}
+
+// Sets the entire Epoch metadata for a epochId
+func (k Keeper) SetEpoch(ctx sdk.Context, epoch Epoch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetEpochKey(epoch.Id), k.cdc.MustMarshalBinaryBare(epoch))
+}
+
+// Gets the entire latest Epoch metadata
+func (k Keeper) GetLatestEpoch(ctx sdk.Context) (epoch Epoch) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetLatestEpochKey()) {
+		epoch = NewEpoch(sdk.NewInt(1), ctx.BlockTime().Unix())
+		k.SetLatestEpoch(ctx, epoch)
+		return
+	}
+
+	value := store.Get(GetLatestEpochKey())
+	k.cdc.MustUnmarshalBinaryBare(value, &epoch)
+	return
+}
+
+// Sets the entire LatestEpoch metadata
+func (k Keeper) SetLatestEpoch(ctx sdk.Context, epoch Epoch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetLatestEpochKey(), k.cdc.MustMarshalBinaryBare(epoch))
+	k.SetEpoch(ctx, epoch)
 }

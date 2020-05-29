@@ -8,7 +8,6 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
@@ -42,7 +41,7 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 }
 
 func (m *EthMonitor) verifyConfirmParamProposal(change sync.Change) bool {
-	var paramChange global.ParamChange
+	var paramChange common.ParamChange
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &paramChange)
 	log.Infoln("Verify paramChange", paramChange)
 

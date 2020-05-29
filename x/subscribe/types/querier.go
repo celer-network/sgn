@@ -7,6 +7,7 @@ import (
 const (
 	QuerySubscription = "subscription"
 	QueryRequest      = "request"
+	QueryEpoch        = "epoch"
 	QueryParameters   = "parameters"
 )
 
@@ -29,5 +30,15 @@ func NewQueryRequestParams(channelId []byte, peerFrom string) QueryRequestParams
 	return QueryRequestParams{
 		ChannelId: channelId,
 		PeerFrom:  mainchain.FormatAddrHex(peerFrom),
+	}
+}
+
+type QueryEpochParams struct {
+	EpochId int64
+}
+
+func NewQueryEpochParams(epochId int64) QueryEpochParams {
+	return QueryEpochParams{
+		EpochId: epochId,
 	}
 }

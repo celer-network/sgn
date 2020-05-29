@@ -6,8 +6,8 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/global"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
+	"github.com/celer-network/sgn/x/subscribe"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -43,8 +43,8 @@ func govTest(t *testing.T) {
 	)
 
 	log.Info("======================== Test change epochlengh passed ===========================")
-	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"3\"")}
-	content := govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
+	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("subscribe", "EpochLength", "\"3\"")}
+	content := govtypes.NewParameterProposal("Subscribe Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(0), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
@@ -66,13 +66,13 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusPassed)
 	tc.ChkTestErr(t, err, "failed to query proposal 1 with passed status")
 
-	globalParams, err := global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
-	tc.ChkTestErr(t, err, "failed to query global params")
-	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should be updated to 3")
+	subscribeParams, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+	tc.ChkTestErr(t, err, "failed to query subscribe params")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should be updated to 3")
 
 	log.Info("======================== Test change epochlengh rejected ===========================")
-	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("global", "EpochLength", "\"5\"")}
-	content = govtypes.NewParameterProposal("Global Param Change", "Update EpochLength", paramChanges)
+	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("subscribe", "EpochLength", "\"5\"")}
+	content = govtypes.NewParameterProposal("Subscribe Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
@@ -87,9 +87,9 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusRejected)
 	tc.ChkTestErr(t, err, "failed to query proposal 2 with rejected status")
 
-	globalParams, err = global.CLIQueryParams(transactor.CliCtx, global.RouterKey)
-	tc.ChkTestErr(t, err, "failed to query global params")
-	assert.Equal(t, int64(3), globalParams.EpochLength, "EpochLength params should stay 3")
+	subscribeParams, err = subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+	tc.ChkTestErr(t, err, "failed to query subscribe params")
+	assert.Equal(t, uint64(3), subscribeParams.EpochLength, "EpochLength params should stay 3")
 
 	transactor.AddTxMsg(submitProposalmsg)
 	proposalID = uint64(3)

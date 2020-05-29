@@ -8,7 +8,6 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
@@ -107,7 +106,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 
 func (m *EthMonitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
 	log.Infof("Confirm paramProposal, Record %v, NewValue %v", confirmParamProposal.Record, confirmParamProposal.NewValue)
-	paramChange := global.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
+	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
 	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.operator.Key.GetAddress())
 	m.operator.AddTxMsg(msg)

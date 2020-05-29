@@ -20,6 +20,7 @@
     "subscribe": {
       "params": {
         "requestGuardCount": "3",
+        "epochLength": "1",
         "requestCost": "1000000000000000000"
       }
     },
@@ -164,12 +165,6 @@
           }
         }
       ]
-    },
-    "global": {
-      "params": {
-        "epochLength": "1",
-        "confirmationCount": "2"
-      }
     },
     "govern": {
       "starting_proposal_id": "1",
