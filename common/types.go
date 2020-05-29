@@ -55,7 +55,7 @@ func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) (newSigs 
 	}
 
 	for _, s := range sigs {
-		if mainchain.FormatAddrHex(s.Signer) == signerAddr {
+		if s.Signer == signerAddr {
 			err = fmt.Errorf("repeated signer %s", signerAddr)
 			return
 		}
