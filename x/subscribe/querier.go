@@ -19,6 +19,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return querySubscription(ctx, req, keeper)
 		case QueryRequest:
 			return queryRequest(ctx, req, keeper)
+		case QueryEpoch:
+			return queryEpoch(ctx, req, keeper)
 		case QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
@@ -64,6 +66,33 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 
+	}
+
+	return res, nil
+}
+
+func queryEpoch(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	var params QueryEpochParams
+	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	var epoch Epoch
+
+	// Get the latest epoch if user does not specify the epoch id
+	if params.EpochId <= 0 {
+		epoch = keeper.GetLatestEpoch(ctx)
+	} else {
+		epoch, _ = keeper.GetEpoch(ctx, sdk.NewInt(params.EpochId))
+		if epoch.Id.IsZero() {
+			return nil, errors.New("Could not find corresponding epoch")
+		}
+	}
+
+	res, err := codec.MarshalJSONIndent(keeper.cdc, epoch)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return res, nil
