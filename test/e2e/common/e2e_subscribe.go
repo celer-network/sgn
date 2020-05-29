@@ -58,12 +58,12 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 
 	log.Infoln("Query sgn about the subscription info...")
 	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < tc.RetryLimit; retry++ {
 		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, tc.Client0.Address.Hex())
 		if err == nil && expectedRes == subscription.String() {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query subscription on sgn")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
@@ -95,12 +95,12 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	// TxHash now should be empty
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, Disputetimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
@@ -121,12 +121,12 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{3}, GuardSender: [a-f0-9]{40}`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0, 100)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
-	for retry := 0; retry < 60; retry++ {
+	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && r.MatchString(strings.ToLower(request.String())) {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
@@ -151,12 +151,12 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	transactor.AddTxMsg(msgWithdrawReward)
 
 	log.Infoln("Query sgn to check if reward gets signature...")
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < tc.RetryLimit; retry++ {
 		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])
 		if err == nil && len(reward.Sigs) == rewardSigLen {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query reward on sgn")
 	assert.Equal(t, rewardSigLen, len(reward.Sigs), "The length of reward signatures mismatch")

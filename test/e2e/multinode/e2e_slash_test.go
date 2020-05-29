@@ -68,13 +68,13 @@ func slashTest(t *testing.T) {
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
-	for retry := 0; retry < 30; retry++ {
+	for retry := 0; retry < tc.RetryLimit; retry++ {
 		ci, _ := tc.Client0.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "990000000000000000" {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(tc.RetryPeriod)
 	}
 	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 }

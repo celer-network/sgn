@@ -21,6 +21,9 @@ const (
 	waitMinedTimeout = 180 * time.Second
 	BlockDelay       = 0
 	DisputeTimeout   = 100
+
+	RetryPeriod = 100 * time.Millisecond
+	RetryLimit  = 600
 )
 
 var (

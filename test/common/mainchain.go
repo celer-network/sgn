@@ -240,7 +240,7 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
-	log.Info("Call intendWithdraw on dpos cotract using the validator eth address...")
+	log.Info("Call intendWithdraw on dpos contract using the validator eth address...")
 	tx, err := dposContract.IntendWithdraw(auth, candidateAddr, amt)
 	if err != nil {
 		return err
