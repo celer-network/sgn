@@ -287,7 +287,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 
 func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
 	// TODO: blockdelay
-	res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, 2)
+	res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, viper.GetUint64(common.FlagEthConfirmCount))
 	if err != nil {
 		log.Errorln("Punish tx WaitMined err", err, tx.Hash().Hex())
 		return

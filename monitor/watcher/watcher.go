@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"sync"
@@ -90,11 +91,11 @@ type WatchDAL interface {
 }
 
 // Create a watch service.
-func NewWatchService(client WatchClient, dal WatchDAL, polling uint64) *WatchService {
+func NewWatchService(client WatchClient, dal WatchDAL, polling float64) *WatchService {
 	// Note: the incoming polling interval is in seconds.  Purely for
 	// unit testing purposes, the internal "polling" variable is in
 	// milliseconds to allow tests to set faster polling intervals.
-	return makeWatchService(client, dal, polling*1000)
+	return makeWatchService(client, dal, uint64(math.Round(polling*1000)))
 }
 
 // Helper (for testing) to create a watch service with msec polling interval.
