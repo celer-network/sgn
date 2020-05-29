@@ -13,6 +13,9 @@ import (
 const (
 	// Default number of guards for guarding request
 	DefaultRequestGuardCount uint64 = 3
+
+	// Default epoch length based on seconds
+	DefaultEpochLength uint64 = 60
 )
 
 var (
@@ -23,6 +26,7 @@ var (
 // nolint - Keys for parameter access
 var (
 	KeyRequestGuardCount = []byte("RequestGuardCount")
+	KeyEpochLength       = []byte("EpochLength")
 	KeyRequestCost       = []byte("RequestCost")
 )
 
@@ -31,14 +35,16 @@ var _ params.ParamSet = (*Params)(nil)
 // Params defines the high level settings for subscribe
 type Params struct {
 	RequestGuardCount uint64  `json:"requestGuardCount" yaml:"requestGuardCount"` // request guard count
+	EpochLength       uint64  `json:"epochLength" yaml:"epochLength"`             // epoch length based on seconds
 	RequestCost       sdk.Int `json:"requestCost" yaml:"requestCost"`             // request limit per epoch
 }
 
 // NewParams creates a new Params instance
-func NewParams(requestGuardCount uint64, requestCost sdk.Int) Params {
+func NewParams(requestGuardCount, epochLength uint64, requestCost sdk.Int) Params {
 
 	return Params{
 		RequestGuardCount: requestGuardCount,
+		EpochLength:       epochLength,
 		RequestCost:       requestCost,
 	}
 }
@@ -47,6 +53,7 @@ func NewParams(requestGuardCount uint64, requestCost sdk.Int) Params {
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		params.NewParamSetPair(KeyRequestGuardCount, &p.RequestGuardCount, validateRequestGuardCount),
+		params.NewParamSetPair(KeyEpochLength, &p.EpochLength, validateEpochLength),
 		params.NewParamSetPair(KeyRequestCost, &p.RequestCost, validateRequestCost),
 	}
 }
@@ -60,15 +67,16 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultRequestGuardCount, DefaultRequestCost)
+	return NewParams(DefaultRequestGuardCount, DefaultEpochLength, DefaultRequestCost)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-  RequestGuardCount:    %d,
+	RequestGuardCount:    %d,
+  EpochLength:    %d
   RequestCost:    %s`,
-		p.RequestGuardCount, p.RequestCost)
+		p.RequestGuardCount, p.EpochLength, p.RequestCost)
 }
 
 // unmarshal the current subscribe params value from store key or panic
@@ -94,6 +102,11 @@ func (p Params) Validate() error {
 	if err := validateRequestGuardCount(p.RequestGuardCount); err != nil {
 		return err
 	}
+
+	if err := validateEpochLength(p.EpochLength); err != nil {
+		return err
+	}
+
 	if err := validateRequestCost(p.RequestCost); err != nil {
 		return err
 	}
@@ -109,6 +122,19 @@ func validateRequestGuardCount(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("subscribe parameter RequestGuardCount must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateEpochLength(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("subscribe parameter EpochLength must be positive: %d", v)
 	}
 
 	return nil
