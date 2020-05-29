@@ -155,6 +155,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {
 		log.Errorln("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
+		return
 	}
 
 	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, failedValidator.Description.Identity)
