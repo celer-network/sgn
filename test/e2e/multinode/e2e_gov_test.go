@@ -83,7 +83,7 @@ func govTest(t *testing.T) {
 
 	subscribeParams, err := subscribe.CLIQueryParams(transactor1.CliCtx, subscribe.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query subscribe params")
-	assert.Equal(t, int64(1), subscribeParams.EpochLength, "EpochLength params should stay 1")
+	assert.Equal(t, uint64(1), subscribeParams.EpochLength, "EpochLength params should stay 1")
 
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
