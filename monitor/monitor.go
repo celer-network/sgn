@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/allegro/bigcache"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -36,16 +37,17 @@ var (
 )
 
 type EthMonitor struct {
-	ethClient      *mainchain.EthClient
-	operator       *transactor.Transactor
-	db             *dbm.GoLevelDB
-	ms             *watcher.Service
-	dposContract   *watcher.BoundContract
-	sgnContract    *watcher.BoundContract
-	ledgerContract *watcher.BoundContract
-	blkNum         *big.Int
-	secureBlkNum   uint64
-	isValidator    bool
+	ethClient       *mainchain.EthClient
+	operator        *transactor.Transactor
+	db              *dbm.GoLevelDB
+	ms              *watcher.Service
+	dposContract    *watcher.BoundContract
+	sgnContract     *watcher.BoundContract
+	ledgerContract  *watcher.BoundContract
+	verifiedChanges *bigcache.BigCache
+	blkNum          *big.Int
+	secureBlkNum    uint64
+	isValidator     bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor) {
@@ -89,16 +91,22 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 		log.Fatalln("ledgerContract err", err)
 	}
 
+	verifiedChanges, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
+	if err != nil {
+		log.Fatalln("NewBigCache err", err)
+	}
+
 	m := EthMonitor{
-		ethClient:      ethClient,
-		operator:       operator,
-		db:             db,
-		ms:             ms,
-		blkNum:         ms.GetCurrentBlockNumber(),
-		dposContract:   dposContract,
-		sgnContract:    sgnContract,
-		ledgerContract: ledgerContract,
-		isValidator:    mainchain.IsBonded(dposCandidateInfo),
+		ethClient:       ethClient,
+		operator:        operator,
+		db:              db,
+		ms:              ms,
+		blkNum:          ms.GetCurrentBlockNumber(),
+		dposContract:    dposContract,
+		sgnContract:     sgnContract,
+		ledgerContract:  ledgerContract,
+		verifiedChanges: verifiedChanges,
+		isValidator:     mainchain.IsBonded(dposCandidateInfo),
 	}
 
 	go m.monitorBlockHead()

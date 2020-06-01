@@ -3,6 +3,7 @@ package monitor
 import (
 	"bytes"
 	"reflect"
+	"strconv"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -25,7 +26,13 @@ func (m *EthMonitor) verifyActiveChanges() {
 	}
 
 	for _, change := range activeChanges {
+		_, err = m.verifiedChanges.Get(strconv.Itoa(int(change.ID)))
+		if err == nil {
+			continue
+		}
+
 		if m.verifyChange(change) {
+			m.verifiedChanges.Set(strconv.Itoa(int(change.ID)), []byte{})
 			msg := sync.NewMsgApprove(change.ID, m.operator.Key.GetAddress())
 			m.operator.AddTxMsg(msg)
 		}

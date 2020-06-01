@@ -34,9 +34,9 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 			totalVote = totalVote.Add(validator.Tokens)
 		}
 
-		log.Infoln("Change type", change.Type, totalVote, threshold)
-
 		if totalVote.GTE(threshold) {
+			log.Infoln("Change type", change.Type, totalVote, threshold)
+
 			err := keeper.ApplyChange(ctx, change)
 			if err != nil {
 				log.Errorln("Apply change err:", err)
