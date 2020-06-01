@@ -8,9 +8,10 @@ import (
 
 // query endpoints supported by the sync Querier
 const (
-	QueryParams  = "params"
-	QueryChanges = "changes"
-	QueryChange  = "change"
+	QueryParams        = "params"
+	QueryChange        = "change"
+	QueryChanges       = "changes"
+	QueryActiveChanges = "activeChanges"
 
 	ParamVoting   = "voting"
 	ParamTallying = "tallying"

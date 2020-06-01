@@ -14,7 +14,6 @@ import (
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,7 +33,6 @@ const (
 var (
 	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
-	submitChangeEvent           = fmt.Sprintf("%s.%s='%s'", sync.EventTypeSync, sdk.AttributeKeyAction, sync.ActionSubmitChange)
 )
 
 type EthMonitor struct {
@@ -112,7 +110,6 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	go m.monitorIntendSettle()
 	go m.monitorWithdrawReward()
 	go m.monitorSlash()
-	go m.monitorSubmitChange()
 }
 
 func (m *EthMonitor) monitorBlockHead() {
@@ -129,6 +126,7 @@ func (m *EthMonitor) monitorBlockHead() {
 		m.blkNum = blkNum
 		m.secureBlkNum = blkNum.Uint64() - viper.GetUint64(common.FlagEthConfirmCount)
 		m.processQueue()
+		m.verifyActiveChanges()
 	}
 }
 
@@ -252,35 +250,6 @@ func (m *EthMonitor) monitorSlash() {
 			penaltyEvent := NewPenaltyEvent(nonce)
 			m.handlePenalty(penaltyEvent)
 			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
-		}
-	})
-}
-
-func (m *EthMonitor) monitorSubmitChange() {
-	m.monitorTendermintEvent(submitChangeEvent, func(e abci.Event) {
-		if !m.isValidator && !viper.GetBool(common.FlagSgnBootNode) {
-			return
-		}
-
-		event := sdk.StringifyEvent(e)
-		if event.Type == sync.EventTypeSync && event.Attributes[0].Value == sync.ActionSubmitChange {
-			changeId, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
-			if err != nil {
-				log.Errorln("Parse changeId error", err)
-				return
-			}
-
-			change, err := sync.CLIQueryChange(m.operator.CliCtx, sync.RouterKey, changeId)
-			if err != nil {
-				log.Errorln("Query change error", err)
-				return
-			}
-
-			log.Infoln("Verify change", change)
-			if m.verifyChange(change) {
-				msg := sync.NewMsgApprove(changeId, m.operator.Key.GetAddress())
-				m.operator.AddTxMsg(msg)
-			}
 		}
 	})
 }

@@ -15,12 +15,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryParams:
 			return queryParams(ctx, path[1:], req, keeper)
-
-		case types.QueryChanges:
-			return queryChanges(ctx, path[1:], req, keeper)
-
 		case types.QueryChange:
 			return queryChange(ctx, path[1:], req, keeper)
+		case types.QueryChanges:
+			return queryChanges(ctx, path[1:], req, keeper)
+		case types.QueryActiveChanges:
+			return queryActiveChanges(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
@@ -82,6 +82,17 @@ func queryChanges(ctx sdk.Context, _ []string, req abci.RequestQuery, keeper Kee
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, changes)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryActiveChanges(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	activeChanges := keeper.GetActiveChanges(ctx)
+
+	bz, err := codec.MarshalJSONIndent(keeper.cdc, activeChanges)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

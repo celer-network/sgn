@@ -18,7 +18,7 @@ const (
 	TypeMsgApprove       = types.TypeMsgApprove
 	TypeMsgSubmitChange  = types.TypeMsgSubmitChange
 	StatusNil            = types.StatusNil
-	StatusVotingPeriod   = types.StatusVotingPeriod
+	StatusActive         = types.StatusActive
 	StatusPassed         = types.StatusPassed
 	StatusFailed         = types.StatusFailed
 	QueryParams          = types.QueryParams
@@ -40,38 +40,34 @@ const (
 
 var (
 	// functions aliases
-	NewKeeper                   = keeper.NewKeeper
-	NewQuerier                  = keeper.NewQuerier
-	RegisterCodec               = types.RegisterCodec
-	RegisterChangeTypeCodec     = types.RegisterChangeTypeCodec
-	ErrUnknownChange            = types.ErrUnknownChange
-	ErrInactiveChange           = types.ErrInactiveChange
-	ErrInvalidChangeType        = types.ErrInvalidChangeType
-	ErrInvalidGenesis           = types.ErrInvalidGenesis
-	NewGenesisState             = types.NewGenesisState
-	DefaultGenesisState         = types.DefaultGenesisState
-	ValidateGenesis             = types.ValidateGenesis
-	GetChangeIDBytes            = types.GetChangeIDBytes
-	GetChangeIDFromBytes        = types.GetChangeIDFromBytes
-	ChangeKey                   = types.ChangeKey
-	ActiveChangeByTimeKey       = types.ActiveChangeByTimeKey
-	ActiveChangeQueueKey        = types.ActiveChangeQueueKey
-	SplitChangeKey              = types.SplitChangeKey
-	SplitActiveChangeQueueKey   = types.SplitActiveChangeQueueKey
-	SplitInactiveChangeQueueKey = types.SplitInactiveChangeQueueKey
-	NewMsgSubmitChange          = types.NewMsgSubmitChange
-	NewMsgApprove               = types.NewMsgApprove
-	ParamKeyTable               = types.ParamKeyTable
-	NewTallyParams              = types.NewTallyParams
-	NewVotingParams             = types.NewVotingParams
-	NewParams                   = types.NewParams
-	NewChange                   = types.NewChange
-	ChangeStatusFromString      = types.ChangeStatusFromString
-	ValidChangeStatus           = types.ValidChangeStatus
-	NewQueryChangeParams        = types.NewQueryChangeParams
-	NewQueryChangesParams       = types.NewQueryChangesParams
-	CLIQueryChanges             = cli.QueryChanges
-	CLIQueryChange              = cli.QueryChange
+	NewKeeper               = keeper.NewKeeper
+	NewQuerier              = keeper.NewQuerier
+	RegisterCodec           = types.RegisterCodec
+	RegisterChangeTypeCodec = types.RegisterChangeTypeCodec
+	ErrUnknownChange        = types.ErrUnknownChange
+	ErrInactiveChange       = types.ErrInactiveChange
+	ErrInvalidChangeType    = types.ErrInvalidChangeType
+	ErrInvalidGenesis       = types.ErrInvalidGenesis
+	NewGenesisState         = types.NewGenesisState
+	DefaultGenesisState     = types.DefaultGenesisState
+	ValidateGenesis         = types.ValidateGenesis
+	GetChangeIDBytes        = types.GetChangeIDBytes
+	GetChangeIDFromBytes    = types.GetChangeIDFromBytes
+	ChangeKey               = types.ChangeKey
+	ActiveChangeQueueKey    = types.ActiveChangeQueueKey
+	NewMsgSubmitChange      = types.NewMsgSubmitChange
+	NewMsgApprove           = types.NewMsgApprove
+	ParamKeyTable           = types.ParamKeyTable
+	NewTallyParams          = types.NewTallyParams
+	NewVotingParams         = types.NewVotingParams
+	NewParams               = types.NewParams
+	NewChange               = types.NewChange
+	ChangeStatusFromString  = types.ChangeStatusFromString
+	ValidChangeStatus       = types.ValidChangeStatus
+	NewQueryChangeParams    = types.NewQueryChangeParams
+	NewQueryChangesParams   = types.NewQueryChangesParams
+	CLIQueryActiveChanges   = cli.QueryActiveChanges
+	CLIQueryChange          = cli.QueryChange
 
 	// variable aliases
 	ModuleCdc                 = types.ModuleCdc

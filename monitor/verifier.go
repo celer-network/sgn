@@ -17,6 +17,21 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func (m *EthMonitor) verifyActiveChanges() {
+	activeChanges, err := sync.CLIQueryActiveChanges(m.operator.CliCtx, sync.RouterKey)
+	if err != nil {
+		log.Errorln("Query active changes error:", err)
+		return
+	}
+
+	for _, change := range activeChanges {
+		if m.verifyChange(change) {
+			msg := sync.NewMsgApprove(change.ID, m.operator.Key.GetAddress())
+			m.operator.AddTxMsg(msg)
+		}
+	}
+}
+
 func (m *EthMonitor) verifyChange(change sync.Change) bool {
 	switch change.Type {
 	case sync.ConfirmParamProposal:
