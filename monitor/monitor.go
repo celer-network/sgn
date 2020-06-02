@@ -286,7 +286,7 @@ func (m *EthMonitor) monitorSubmitChange() {
 }
 
 func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client, err := client.NewHTTPWithTimeout(m.operator.CliCtx.NodeURI, "/websocket", 5)
+	client, err := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
 	if err != nil {
 		log.Errorln("Fail to start create http client", err)
 		return
