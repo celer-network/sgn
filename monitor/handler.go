@@ -135,7 +135,9 @@ func (m *EthMonitor) handlePenalty(penaltyEvent PenaltyEvent) {
 }
 
 func (m *EthMonitor) claimValidatorOnMainchain() {
-	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
+	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, m.ethClient.Address)
 	if err != nil {
 		log.Errorln("GetCandidateInfo err", err)
 		return
@@ -145,7 +147,9 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 		return
 	}
 
-	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
+	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
 		return
@@ -180,7 +184,9 @@ func (m *EthMonitor) setTransactors() {
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	log.Infof("SyncValidator %x", address)
-	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, address)
+	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, address)
 	if err != nil {
 		log.Errorln("Failed to query candidate info:", err)
 		return
@@ -219,7 +225,9 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
 
-	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, candidatorAddr, delegatorAddr)
+	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, candidatorAddr, delegatorAddr)
 	if err != nil {
 		log.Errorf("Failed to query delegator info: %s", err)
 		return
