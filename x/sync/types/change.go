@@ -15,7 +15,7 @@ const DefaultStartingChangeID uint64 = 1
 // Change defines a struct used by the sync module to allow for voting
 // on network changes.
 type Change struct {
-	ID      uint64           `json:"id" yaml:"id"` //  ID of the change
+	ID            uint64           `json:"id" yaml:"id"` //  ID of the change
 	Type          string           `json:"type" yaml:"type"`
 	Data          []byte           `json:"data" yaml:"data"`
 	Initiator     sdk.AccAddress   `json:"initiator" yaml:"initiator"`
@@ -28,11 +28,11 @@ type Change struct {
 // NewChange creates a new Change instance
 func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndTime time.Time, initiatorAddr sdk.AccAddress) Change {
 	return Change{
-		ID:      id,
+		ID:            id,
 		Type:          changeType,
 		Data:          data,
 		Initiator:     initiatorAddr,
-		Status:        StatusVotingPeriod,
+		Status:        StatusActive,
 		SubmitTime:    submitTime,
 		VotingEndTime: votingEndTime,
 	}
@@ -75,17 +75,17 @@ type (
 
 // Valid Change statuses
 const (
-	StatusNil          ChangeStatus = 0x00
-	StatusVotingPeriod ChangeStatus = 0x01
-	StatusPassed       ChangeStatus = 0x02
-	StatusFailed       ChangeStatus = 0x03
+	StatusNil    ChangeStatus = 0x00
+	StatusActive ChangeStatus = 0x01
+	StatusPassed ChangeStatus = 0x02
+	StatusFailed ChangeStatus = 0x03
 )
 
 // ChangeStatusFromString turns a string into a ChangeStatus
 func ChangeStatusFromString(str string) (ChangeStatus, error) {
 	switch str {
 	case "VotingPeriod":
-		return StatusVotingPeriod, nil
+		return StatusActive, nil
 	case "Passed":
 		return StatusPassed, nil
 	case "Failed":
@@ -101,7 +101,7 @@ func ChangeStatusFromString(str string) (ChangeStatus, error) {
 // ValidChangeStatus returns true if the change status is valid and false
 // otherwise.
 func ValidChangeStatus(status ChangeStatus) bool {
-	if status == StatusVotingPeriod ||
+	if status == StatusActive ||
 		status == StatusPassed ||
 		status == StatusFailed {
 		return true
@@ -145,7 +145,7 @@ func (status *ChangeStatus) UnmarshalJSON(data []byte) error {
 // String implements the Stringer interface.
 func (status ChangeStatus) String() string {
 	switch status {
-	case StatusVotingPeriod:
+	case StatusActive:
 		return "VotingPeriod"
 	case StatusPassed:
 		return "Passed"

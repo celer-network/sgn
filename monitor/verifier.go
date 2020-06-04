@@ -3,6 +3,7 @@ package monitor
 import (
 	"bytes"
 	"reflect"
+	"strconv"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -16,6 +17,27 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
 )
+
+func (m *EthMonitor) verifyActiveChanges() {
+	activeChanges, err := sync.CLIQueryActiveChanges(m.operator.CliCtx, sync.RouterKey)
+	if err != nil {
+		log.Errorln("Query active changes error:", err)
+		return
+	}
+
+	for _, change := range activeChanges {
+		_, err = m.verifiedChanges.Get(strconv.Itoa(int(change.ID)))
+		if err == nil {
+			continue
+		}
+
+		if m.verifyChange(change) {
+			m.verifiedChanges.Set(strconv.Itoa(int(change.ID)), []byte{})
+			msg := sync.NewMsgApprove(change.ID, m.operator.Key.GetAddress())
+			m.operator.AddTxMsg(msg)
+		}
+	}
+}
 
 func (m *EthMonitor) verifyChange(change sync.Change) bool {
 	switch change.Type {

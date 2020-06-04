@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/allegro/bigcache"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor/watcher"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,20 +34,20 @@ const (
 var (
 	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
 	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
-	submitChangeEvent           = fmt.Sprintf("%s.%s='%s'", sync.EventTypeSync, sdk.AttributeKeyAction, sync.ActionSubmitChange)
 )
 
 type EthMonitor struct {
-	ethClient      *mainchain.EthClient
-	operator       *transactor.Transactor
-	db             *dbm.GoLevelDB
-	ms             *watcher.Service
-	dposContract   *watcher.BoundContract
-	sgnContract    *watcher.BoundContract
-	ledgerContract *watcher.BoundContract
-	blkNum         *big.Int
-	secureBlkNum   uint64
-	isValidator    bool
+	ethClient       *mainchain.EthClient
+	operator        *transactor.Transactor
+	db              *dbm.GoLevelDB
+	ms              *watcher.Service
+	dposContract    *watcher.BoundContract
+	sgnContract     *watcher.BoundContract
+	ledgerContract  *watcher.BoundContract
+	verifiedChanges *bigcache.BigCache
+	blkNum          *big.Int
+	secureBlkNum    uint64
+	isValidator     bool
 }
 
 func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor) {
@@ -91,16 +91,22 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 		log.Fatalln("ledgerContract err", err)
 	}
 
+	verifiedChanges, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
+	if err != nil {
+		log.Fatalln("NewBigCache err", err)
+	}
+
 	m := EthMonitor{
-		ethClient:      ethClient,
-		operator:       operator,
-		db:             db,
-		ms:             ms,
-		blkNum:         ms.GetCurrentBlockNumber(),
-		dposContract:   dposContract,
-		sgnContract:    sgnContract,
-		ledgerContract: ledgerContract,
-		isValidator:    mainchain.IsBonded(dposCandidateInfo),
+		ethClient:       ethClient,
+		operator:        operator,
+		db:              db,
+		ms:              ms,
+		blkNum:          ms.GetCurrentBlockNumber(),
+		dposContract:    dposContract,
+		sgnContract:     sgnContract,
+		ledgerContract:  ledgerContract,
+		verifiedChanges: verifiedChanges,
+		isValidator:     mainchain.IsBonded(dposCandidateInfo),
 	}
 
 	go m.monitorBlockHead()
@@ -112,7 +118,6 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	go m.monitorIntendSettle()
 	go m.monitorWithdrawReward()
 	go m.monitorSlash()
-	go m.monitorSubmitChange()
 }
 
 func (m *EthMonitor) monitorBlockHead() {
@@ -129,6 +134,7 @@ func (m *EthMonitor) monitorBlockHead() {
 		m.blkNum = blkNum
 		m.secureBlkNum = blkNum.Uint64() - viper.GetUint64(common.FlagEthConfirmCount)
 		m.processQueue()
+		m.verifyActiveChanges()
 	}
 }
 
@@ -252,35 +258,6 @@ func (m *EthMonitor) monitorSlash() {
 			penaltyEvent := NewPenaltyEvent(nonce)
 			m.handlePenalty(penaltyEvent)
 			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
-		}
-	})
-}
-
-func (m *EthMonitor) monitorSubmitChange() {
-	m.monitorTendermintEvent(submitChangeEvent, func(e abci.Event) {
-		if !m.isValidator && !viper.GetBool(common.FlagSgnBootNode) {
-			return
-		}
-
-		event := sdk.StringifyEvent(e)
-		if event.Type == sync.EventTypeSync && event.Attributes[0].Value == sync.ActionSubmitChange {
-			changeId, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
-			if err != nil {
-				log.Errorln("Parse changeId error", err)
-				return
-			}
-
-			change, err := sync.CLIQueryChange(m.operator.CliCtx, sync.RouterKey, changeId)
-			if err != nil {
-				log.Errorln("Query change error", err)
-				return
-			}
-
-			log.Infoln("Verify change", change)
-			if m.verifyChange(change) {
-				msg := sync.NewMsgApprove(changeId, m.operator.Key.GetAddress())
-				m.operator.AddTxMsg(msg)
-			}
 		}
 	})
 }

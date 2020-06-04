@@ -120,7 +120,9 @@ func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNU
 	}
 
 	log.Infof("Add UpdateSidechainAddr of %x to transactor msgQueue", updateSidechainAddr.Candidate)
-	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, updateSidechainAddr.Candidate)
+	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, updateSidechainAddr.Candidate)
 	if err != nil {
 		log.Errorln("Query sidechain address error:", err)
 		return
@@ -154,7 +156,9 @@ func (m *EthMonitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log
 		return
 	}
 
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
+	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorln("GetDisputeTimeout err:", err)
 		return
@@ -253,7 +257,9 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
@@ -301,7 +307,9 @@ func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
 
 func (m *EthMonitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
 	channelId := cid[:]
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
+		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
+	}, cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
 		return

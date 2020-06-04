@@ -3,7 +3,7 @@ module github.com/celer-network/sgn
 go 1.13
 
 require (
-	github.com/allegro/bigcache v1.2.1 // indirect
+	github.com/allegro/bigcache v1.2.1
 	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
 	github.com/celer-network/goutils v0.1.2
 	github.com/cespare/cp v1.1.1 // indirect

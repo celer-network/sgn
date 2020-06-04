@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -85,7 +86,7 @@ func QueryChange(cliCtx context.CLIContext, queryRoute string, changeID uint64) 
 		return
 	}
 
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/change", queryRoute), bz)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryChange), bz)
 	if err != nil {
 		return
 	}
@@ -156,12 +157,23 @@ func QueryChanges(cliCtx context.CLIContext, queryRoute string, page, limit int,
 		return
 	}
 
-	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/changes", queryRoute), bz)
+	res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryChanges), bz)
 	if err != nil {
 		return
 	}
 
 	err = cdc.UnmarshalJSON(res, &matchingChanges)
+	return
+}
+
+func QueryActiveChanges(cliCtx context.CLIContext, queryRoute string) (changes types.Changes, err error) {
+	cdc := cliCtx.Codec
+	res, err := common.RobustQuery(cliCtx, fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryActiveChanges))
+	if err != nil {
+		return
+	}
+
+	err = cdc.UnmarshalJSON(res, &changes)
 	return
 }
 
