@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -17,6 +18,7 @@ import (
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -417,6 +419,12 @@ func (app *sgnApp) startMonitor() {
 	)
 	if err != nil {
 		tmos.Exit(err.Error())
+	}
+
+	_, err = rpc.GetChainHeight(operator.CliCtx)
+	for err != nil {
+		time.Sleep(time.Second)
+		_, err = rpc.GetChainHeight(operator.CliCtx)
 	}
 
 	monitor.NewEthMonitor(ethClient, operator)
