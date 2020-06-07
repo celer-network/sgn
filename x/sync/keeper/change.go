@@ -19,6 +19,7 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 	submitTime := ctx.BlockHeader().Time
 	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
 	change := types.NewChange(changeID, changeType, data, submitTime, submitTime.Add(votingPeriod), initiatorAddr)
+	change.Rewardable = keeper.checkRewardable(ctx, change)
 
 	keeper.SetChange(ctx, change)
 	keeper.InsertActiveChangeQueue(ctx, changeID)
@@ -33,6 +34,19 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 	)
 
 	return change, nil
+}
+
+func (keeper Keeper) checkRewardable(ctx sdk.Context, change types.Change) bool {
+	puller := keeper.validatorKeeper.GetPuller(ctx)
+
+	if !puller.ValidatorAddr.Equals(change.Initiator) {
+		return false
+	}
+
+	changeType := change.Type
+
+	return changeType == types.UpdateSidechainAddr || changeType == types.TriggerGuard ||
+		changeType == types.SyncDelegator || changeType == types.SyncValidator
 }
 
 // ApproveChange adds a vote on a specific change
