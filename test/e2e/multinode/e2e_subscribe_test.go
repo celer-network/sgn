@@ -30,6 +30,7 @@ func setUpSubscribe() {
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	setupNewSGNEnv(p)
+	tc.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2ESubscribe(t *testing.T) {
