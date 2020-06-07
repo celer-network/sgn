@@ -87,14 +87,11 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	log.Infoln("Verify candidate", candidate)
 
 	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, candidate.EthAddress)
-	if err != nil {
-		log.Errorln("Query candidate error:", err)
-		return false
-	}
-
-	if candidate.Operator.Equals(c.Operator) {
-		log.Errorln("Invalid change for the same Operator value")
-		return false
+	if err == nil {
+		if candidate.Operator.Equals(c.Operator) {
+			log.Errorln("Invalid change for the same Operator value")
+			return false
+		}
 	}
 
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(candidate.EthAddress))
@@ -117,14 +114,11 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	log.Infoln("Verify sync delegator", delegator)
 
 	d, err := validator.CLIQueryDelegator(m.operator.CliCtx, validator.RouterKey, delegator.CandidateAddr, delegator.DelegatorAddr)
-	if err != nil {
-		log.Errorln("Query delegator error:", err)
-		return false
-	}
-
-	if delegator.DelegatedStake.Equal(d.DelegatedStake) {
-		log.Errorln("Invalid change for the same DelegatedStake value")
-		return false
+	if err == nil {
+		if delegator.DelegatedStake.Equal(d.DelegatedStake) {
+			log.Errorln("Invalid change for the same DelegatedStake value")
+			return false
+		}
 	}
 
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{},
@@ -148,14 +142,11 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	log.Infoln("Verify sync validator", vt)
 
 	v, err := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, vt.Description.Identity)
-	if err != nil {
-		log.Errorln("Query validator error:", err)
-		return false
-	}
-
-	if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
-		log.Errorln("Invalid change for the same Status/Tokens/Commission value")
-		return false
+	if err == nil {
+		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
+			log.Errorln("Invalid change for the same Status/Tokens/Commission value")
+			return false
+		}
 	}
 
 	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(vt.Description.Identity))
