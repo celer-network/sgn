@@ -41,10 +41,11 @@ func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndT
 
 // String implements stringer interface
 func (c Change) String() string {
-	return fmt.Sprintf(`Change %d:
+	return fmt.Sprintf(`
+	Change: 						%d
   Type:               %s
-  Initiator:               %s
-  Rewardable:               %t
+  Initiator:          %s
+  Rewardable:         %t
   Status:             %s
   Submit Time:        %s
   Voting End Time:    %s`,
