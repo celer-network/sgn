@@ -45,7 +45,7 @@ var (
 	RegisterCodec           = types.RegisterCodec
 	RegisterChangeTypeCodec = types.RegisterChangeTypeCodec
 	ErrUnknownChange        = types.ErrUnknownChange
-	ErrInactiveChange       = types.ErrInactiveChange
+	ErrDoubleVote           = types.ErrDoubleVote
 	ErrInvalidChangeType    = types.ErrInvalidChangeType
 	ErrInvalidGenesis       = types.ErrInvalidGenesis
 	NewGenesisState         = types.NewGenesisState

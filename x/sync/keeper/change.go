@@ -55,8 +55,16 @@ func (keeper Keeper) ApproveChange(ctx sdk.Context, changeID uint64, voterAddr s
 	if !ok {
 		return sdkerrors.Wrapf(types.ErrUnknownChange, "%d", changeID)
 	}
+
 	if change.Status != types.StatusActive {
-		return sdkerrors.Wrapf(types.ErrInactiveChange, "%d", changeID)
+		// Exit if the change has been approved or expired
+		return nil
+	}
+
+	for _, voter := range change.Voters {
+		if voter.Equals(voterAddr) {
+			return sdkerrors.Wrapf(types.ErrDoubleVote, "%d", changeID)
+		}
 	}
 
 	change.Voters = append(change.Voters, sdk.ValAddress(voterAddr))
