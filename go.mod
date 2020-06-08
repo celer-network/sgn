@@ -3,9 +3,9 @@ module github.com/celer-network/sgn
 go 1.13
 
 require (
+	github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798 // indirect
 	github.com/allegro/bigcache v1.2.1
-	github.com/aristanetworks/goarista v0.0.0-20191015010157-ce4ff66f8dba // indirect
-	github.com/celer-network/goutils v0.1.2
+	github.com/celer-network/goutils v0.1.12-0.20200606003214-4842c1f84748
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/cosmos/cosmos-sdk v0.38.1
@@ -24,14 +24,12 @@ require (
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/prometheus/common v0.9.1
 	github.com/prometheus/tsdb v0.10.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
-	github.com/status-im/keycard-go v0.0.0-20200107115650-f38e9a19958e // indirect
 	github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570 // indirect
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/stretchr/testify v1.5.1
@@ -43,10 +41,8 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
-	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
 	google.golang.org/appengine v1.4.0
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
-	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20190709231704-1e4459ed25ff // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 

@@ -76,12 +76,38 @@ func NewRestServer() (rs *RestServer, err error) {
 		}
 	}
 
-	peer1, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthDPoSAddress), viper.GetString(common.FlagEthSGNAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer1Flag), "")
+	peer1, err := mainchain.NewEthClient(
+		viper.GetString(common.FlagEthInstance),
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+		viper.GetString(peer1Flag),
+		"",
+		&mainchain.TransactorConfig{
+			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
+			QuickCatchBlockDelay: viper.GetUint64(common.FlagEthConfirmCount),
+			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
+			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
+		},
+	)
 	if err != nil {
 		return
 	}
 
-	peer2, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), viper.GetString(common.FlagEthDPoSAddress), viper.GetString(common.FlagEthSGNAddress), viper.GetString(common.FlagEthLedgerAddress), viper.GetString(peer2Flag), "")
+	peer2, err := mainchain.NewEthClient(
+		viper.GetString(common.FlagEthInstance),
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+		viper.GetString(peer2Flag),
+		"",
+		&mainchain.TransactorConfig{
+			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
+			QuickCatchBlockDelay: viper.GetUint64(common.FlagEthConfirmCount),
+			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
+			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
+		},
+	)
 	if err != nil {
 		return
 	}
@@ -102,11 +128,11 @@ func NewRestServer() (rs *RestServer, err error) {
 	amt.SetString("1"+strings.Repeat("0", 18), 10)
 	tx, err := tokenContract.Approve(peer1.Auth, peer1.DPoSAddress, amt)
 	tc.ChkErr(err, "failed to approve erc20")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, 0, "approve erc20")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, tc.BlockDelay, tc.PollingInterval, "approve erc20")
 
 	tx, err = peer1.SGN.Subscribe(peer1.Auth, amt)
 	tc.ChkErr(err, "failed to subscribe")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, "Subscribe on SGN contract")
+	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, tc.PollingInterval, "Subscribe on SGN contract")
 
 	if gateway == "" {
 		subscription := subscribe.NewSubscription(peer1.Address.Hex())

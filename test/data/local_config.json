@@ -5,8 +5,9 @@
     "ledgeraddress": "0x960eb3B6Dd75652B0C6A359E3E976c6e20478A03",
     "passphrase": "",
     "instance": "http://127.0.0.1:8545",
-    "pollInterval": 0.5,
-    "confirmCount": 0
+    "pollInterval": 1,
+    "confirmCount": 0,
+    "chainID": 883
   },
   "log": {
     "color": true,

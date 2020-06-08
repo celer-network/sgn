@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
 	"time"
 
@@ -403,6 +404,12 @@ func (app *sgnApp) startMonitor() {
 		viper.GetString(common.FlagEthLedgerAddress),
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
+		&mainchain.TransactorConfig{
+			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
+			QuickCatchBlockDelay: viper.GetUint64(common.FlagEthConfirmCount),
+			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
+			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
+		},
 	)
 	if err != nil {
 		tmos.Exit(err.Error())
