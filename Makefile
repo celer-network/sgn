@@ -55,12 +55,6 @@ build: go.sum
 build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
-GETH_VER = geth-linux-amd64-1.9.1-b7b2f60f
-.PHONY: get-geth
-get-geth:
-	mkdir -p ./build
-	curl -sL https://gethstore.blob.core.windows.net/builds/$(GETH_VER).tar.gz | tar -xz --strip 1 $(GETH_VER)/geth && mv geth ./build;
-
 .PHONY: build-dockers
 build-dockers:
 	docker build --tag celer-network/geth networks/local/geth
@@ -69,7 +63,7 @@ build-dockers:
 
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env
-prepare-docker-env: build-dockers get-geth build-linux prepare-geth-data
+prepare-docker-env: build-dockers prepare-geth-data
 
 # Run geth
 .PHONY: localnet-start-geth
