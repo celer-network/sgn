@@ -61,8 +61,8 @@ func (keeper Keeper) GetValidators(ctx sdk.Context) []staking.Validator {
 	return keeper.validatorKeeper.GetValidators(ctx)
 }
 
-func (keeper Keeper) MiningReward(ctx sdk.Context) sdk.Int {
-	return keeper.validatorKeeper.MiningReward(ctx)
+func (keeper Keeper) PullerReward(ctx sdk.Context) sdk.Int {
+	return keeper.validatorKeeper.PullerReward(ctx)
 }
 
 func (keeper Keeper) AddReward(ctx sdk.Context, ethAddress string, amount sdk.Int, rewardType validator.RewardType) {

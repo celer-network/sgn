@@ -17,6 +17,7 @@ const (
 
 var (
 	DefaultMiningReward = sdk.NewInt(10000000000000)
+	DefaultPullerReward = sdk.NewInt(500000000000)
 )
 
 // nolint - Keys for parameter access
@@ -24,6 +25,7 @@ var (
 	KeyPullerDuration = []byte("PullerDuration")
 	KeyPusherDuration = []byte("PusherDuration")
 	KeyMiningReward   = []byte("MiningReward")
+	KeyPullerReward   = []byte("PullerReward")
 )
 
 var _ params.ParamSet = (*Params)(nil)
@@ -32,15 +34,17 @@ type Params struct {
 	PullerDuration uint    `json:"pullerDuration" yaml:"pullerDuration"`
 	PusherDuration uint    `json:"pusherDuration" yaml:"pusherDuration"`
 	MiningReward   sdk.Int `json:"miningReward" yaml:"miningReward"`
+	PullerReward   sdk.Int `json:"pullerReward" yaml:"pullerReward"`
 }
 
 // NewParams creates a new Params instance
-func NewParams(pullerDuration uint, pusherDuration uint, miningReward sdk.Int) Params {
+func NewParams(pullerDuration uint, pusherDuration uint, miningReward, pullerReward sdk.Int) Params {
 
 	return Params{
 		PullerDuration: pullerDuration,
 		PusherDuration: pusherDuration,
 		MiningReward:   miningReward,
+		PullerReward:   pullerReward,
 	}
 }
 
@@ -50,6 +54,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyPullerDuration, &p.PullerDuration, validatePullerDuration),
 		params.NewParamSetPair(KeyPusherDuration, &p.PusherDuration, validatePusherDuration),
 		params.NewParamSetPair(KeyMiningReward, &p.MiningReward, validateMiningReward),
+		params.NewParamSetPair(KeyPullerReward, &p.PullerReward, validatePullerReward),
 	}
 }
 
@@ -62,7 +67,7 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultPullerDuration, DefaultPusherDuration, DefaultMiningReward)
+	return NewParams(DefaultPullerDuration, DefaultPusherDuration, DefaultMiningReward, DefaultPullerReward)
 }
 
 // String returns a human readable string representation of the parameters.
@@ -70,8 +75,9 @@ func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   PullerDuration:    %d,
   PusherDuration:    %d,
-  MiningReward:    %s`,
-		p.PullerDuration, p.PusherDuration, p.MiningReward)
+	MiningReward:    %s
+	PullerReward:    %s`,
+		p.PullerDuration, p.PusherDuration, p.MiningReward, p.PullerReward)
 }
 
 // unmarshal the current validator params value from store key or panic
@@ -105,6 +111,11 @@ func (p Params) Validate() error {
 	if !p.MiningReward.IsPositive() {
 		return fmt.Errorf("validator parameter MiningReward must be a positive integer")
 	}
+
+	if !p.PullerReward.IsPositive() {
+		return fmt.Errorf("validator parameter PullerReward must be a positive integer")
+	}
+
 	return nil
 }
 
@@ -142,6 +153,19 @@ func validateMiningReward(i interface{}) error {
 
 	if v.IsNegative() {
 		return fmt.Errorf("subscribe parameter MiningReward cannot be negative: %s", v)
+	}
+
+	return nil
+}
+
+func validatePullerReward(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("subscribe parameter PullerReward cannot be negative: %s", v)
 	}
 
 	return nil

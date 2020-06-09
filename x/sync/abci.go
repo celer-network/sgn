@@ -23,7 +23,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	}
 
 	threshold := keeper.GetTallyParams(ctx).Threshold.MulInt(totalToken).TruncateInt()
-	miningReward := keeper.MiningReward(ctx).QuoRaw(int64(len(validators)))
+	pullerReward := keeper.PullerReward(ctx)
 	activeChanges := keeper.GetActiveChanges(ctx)
 
 	for _, change := range activeChanges {
@@ -47,7 +47,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 			} else {
 				if change.Rewardable {
 					initiatorEthAddr := validatorsByAddr[sdk.ValAddress(change.Initiator).String()].Description.Identity
-					keeper.AddReward(ctx, initiatorEthAddr, miningReward, validator.MiningReward)
+					keeper.AddReward(ctx, initiatorEthAddr, pullerReward, validator.MiningReward)
 				}
 
 				change.Status = StatusPassed
