@@ -57,8 +57,8 @@ build-linux: go.sum
 
 .PHONY: build-dockers
 build-dockers:
-	docker build --tag celer-network/geth networks/local/geth
-	docker build --tag celer-network/sgnnode .
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/geth networks/local/geth
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/sgnnode .
 	# $(MAKE) -C networks/local
 
 # Prepare docker environment for multinode testing
