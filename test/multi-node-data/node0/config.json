@@ -6,7 +6,8 @@
     "passphrase": "",
     "instance": "http://192.168.10.1:8545",
     "pollInterval": 1,
-    "confirmCount": 1
+    "confirmCount": 1,
+    "chainID": 883
   },
   "log": {
     "color": true,
