@@ -5,6 +5,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/sync/types"
+	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -22,16 +23,17 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	}
 
 	threshold := keeper.GetTallyParams(ctx).Threshold.MulInt(totalToken).TruncateInt()
-
+	pullerReward := keeper.PullerReward(ctx)
 	activeChanges := keeper.GetActiveChanges(ctx)
+
 	for _, change := range activeChanges {
 		totalVote := sdk.ZeroInt()
 		for _, voter := range change.Voters {
-			validator, ok := validatorsByAddr[voter.String()]
+			v, ok := validatorsByAddr[voter.String()]
 			if !ok {
 				continue
 			}
-			totalVote = totalVote.Add(validator.Tokens)
+			totalVote = totalVote.Add(v.Tokens)
 		}
 
 		if totalVote.GTE(threshold) {
@@ -43,6 +45,11 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 				change.Status = StatusFailed
 				tagValue = types.AttributeValueChangeFailed
 			} else {
+				if change.Rewardable {
+					initiatorEthAddr := validatorsByAddr[sdk.ValAddress(change.Initiator).String()].Description.Identity
+					keeper.AddReward(ctx, initiatorEthAddr, pullerReward, validator.MiningReward)
+				}
+
 				change.Status = StatusPassed
 				tagValue = types.AttributeValueChangePassed
 			}

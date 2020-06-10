@@ -23,13 +23,13 @@ func NewQuerySubscriptionParams(addr string) QuerySubscriptionParams {
 
 type QueryRequestParams struct {
 	ChannelId []byte
-	PeerFrom  string
+	Owner     string
 }
 
-func NewQueryRequestParams(channelId []byte, peerFrom string) QueryRequestParams {
+func NewQueryRequestParams(channelId []byte, owner string) QueryRequestParams {
 	return QueryRequestParams{
 		ChannelId: channelId,
-		PeerFrom:  mainchain.FormatAddrHex(peerFrom),
+		Owner:     mainchain.FormatAddrHex(owner),
 	}
 }
 

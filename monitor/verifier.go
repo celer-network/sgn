@@ -74,7 +74,7 @@ func (m *EthMonitor) verifyConfirmParamProposal(change sync.Change) bool {
 	}
 
 	if !paramChange.NewValue.Equal(sdk.NewIntFromBigInt(paramValue)) {
-		log.Errorln("Param newValue is incorrect")
+		log.Errorln("Param newValue does not match maichain value")
 		return false
 	}
 
@@ -86,6 +86,14 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &candidate)
 	log.Infoln("Verify candidate", candidate)
 
+	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, candidate.EthAddress)
+	if err == nil {
+		if candidate.Operator.Equals(c.Operator) {
+			log.Errorln("Invalid change for the same Operator value")
+			return false
+		}
+	}
+
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(candidate.EthAddress))
 	if err != nil {
 		log.Errorln("Query sidechain address error:", err)
@@ -93,7 +101,7 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	}
 
 	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
-		log.Errorln("Operator is incorrect")
+		log.Errorln("Operator does not match maichain value")
 		return false
 	}
 
@@ -105,6 +113,14 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
 	log.Infoln("Verify sync delegator", delegator)
 
+	d, err := validator.CLIQueryDelegator(m.operator.CliCtx, validator.RouterKey, delegator.CandidateAddr, delegator.DelegatorAddr)
+	if err == nil {
+		if delegator.DelegatedStake.Equal(d.DelegatedStake) {
+			log.Errorln("Invalid change for the same DelegatedStake value")
+			return false
+		}
+	}
+
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{},
 		mainchain.Hex2Addr(delegator.CandidateAddr), mainchain.Hex2Addr(delegator.DelegatorAddr))
 	if err != nil {
@@ -113,7 +129,7 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	}
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
-		log.Errorln("DelegatedStake is incorrect")
+		log.Errorln("DelegatedStake does not match maichain value")
 		return false
 	}
 
@@ -121,23 +137,31 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 }
 
 func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
-	var validator staking.Validator
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &validator)
-	log.Infoln("Verify sync validator", validator)
+	var vt staking.Validator
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
+	log.Infoln("Verify sync validator", vt)
 
-	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(validator.Description.Identity))
+	v, err := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, vt.Description.Identity)
+	if err == nil {
+		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
+			log.Errorln("Invalid change for the same Status/Tokens/Commission value")
+			return false
+		}
+	}
+
+	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(vt.Description.Identity))
 	if err != nil {
 		log.Errorln("Failed to query candidate info:", err)
 		return false
 	}
 
-	if !validator.Status.Equal(mainchain.ParseStatus(ci)) {
-		log.Errorln("Status is incorrect")
+	if !vt.Status.Equal(mainchain.ParseStatus(ci)) {
+		log.Errorln("Status does not match maichain value")
 		return false
 	}
 
-	if !validator.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)) {
-		log.Errorln("Tokens is incorrect")
+	if !vt.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)) {
+		log.Errorln("Tokens does not match maichain value")
 		return false
 	}
 
@@ -147,8 +171,8 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 		return false
 	}
 
-	if !validator.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
-		log.Errorln("Commission is incorrect")
+	if !vt.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
+		log.Errorln("Commission does not match maichain value")
 		return false
 	}
 
@@ -169,7 +193,7 @@ func (m *EthMonitor) verifySubscribe(change sync.Change) bool {
 	}
 
 	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
-		log.Errorln("Deposit is incorrect")
+		log.Errorln("Deposit does not match maichain value")
 		return false
 	}
 
@@ -212,22 +236,22 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 	}
 
 	if request.PeerFromIndex != r.PeerFromIndex {
-		log.Errorln("PeerFromIndex is incorrect")
+		log.Errorln("PeerFromIndex does not match maichain value")
 		return false
 	}
 
 	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		log.Errorln("Owner sig is incorrect")
+		log.Errorln("Owner sig does not match maichain value")
 		return false
 	}
 
 	if !bytes.Equal(request.ChannelId, r.ChannelId) {
-		log.Errorln("ChannelId is incorrect")
+		log.Errorln("ChannelId does not match maichain value")
 		return false
 	}
 
 	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
-		log.Errorln("PeerAddresses is incorrect")
+		log.Errorln("PeerAddresses does not match maichain value")
 		return false
 	}
 
@@ -238,6 +262,17 @@ func (m *EthMonitor) verifyTriggerGuard(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	log.Infoln("Verify TriggerGuard", request)
+
+	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetOwnerAddress())
+	if err != nil {
+		log.Errorln("Query request error:", err)
+		return false
+	}
+
+	if request.TriggerTxBlkNum == r.TriggerTxBlkNum && request.DisputeTimeout == r.DisputeTimeout {
+		log.Errorln("Invalid change for the same TriggerTxBlkNum/DisputeTimeout value")
+		return false
+	}
 
 	triggerLog, err := subscribe.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
@@ -252,11 +287,11 @@ func (m *EthMonitor) verifyTriggerGuard(change sync.Change) bool {
 	}
 
 	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
-		log.Errorln("TriggerTxBlkNum is incorrect")
+		log.Errorln("TriggerTxBlkNum does not match maichain value")
 		return false
 	}
 	if request.DisputeTimeout != disputeTimeout.Uint64() {
-		log.Errorln("DisputeTimeout is incorrect")
+		log.Errorln("DisputeTimeout does not match maichain value")
 		return false
 	}
 
@@ -297,11 +332,11 @@ func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
 	}
 
 	if request.GuardTxBlkNum != guardLog.BlockNumber {
-		log.Errorln("GuardTxBlkNum is incorrect")
+		log.Errorln("GuardTxBlkNum does not match maichain value")
 		return false
 	}
 	if request.GuardSender != guardSender {
-		log.Errorln("GuardSender is incorrect")
+		log.Errorln("GuardSender does not match maichain value")
 		return false
 	}
 

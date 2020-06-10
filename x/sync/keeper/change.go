@@ -19,6 +19,7 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 	submitTime := ctx.BlockHeader().Time
 	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
 	change := types.NewChange(changeID, changeType, data, submitTime, submitTime.Add(votingPeriod), initiatorAddr)
+	change.Rewardable = keeper.checkRewardable(ctx, change)
 
 	keeper.SetChange(ctx, change)
 	keeper.InsertActiveChangeQueue(ctx, changeID)
@@ -35,14 +36,35 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 	return change, nil
 }
 
+func (keeper Keeper) checkRewardable(ctx sdk.Context, change types.Change) bool {
+	puller := keeper.validatorKeeper.GetPuller(ctx)
+
+	if !puller.ValidatorAddr.Equals(change.Initiator) {
+		return false
+	}
+
+	changeType := change.Type
+
+	return changeType == types.UpdateSidechainAddr || changeType == types.TriggerGuard ||
+		changeType == types.SyncDelegator || changeType == types.SyncValidator
+}
+
 // ApproveChange adds a vote on a specific change
 func (keeper Keeper) ApproveChange(ctx sdk.Context, changeID uint64, voterAddr sdk.AccAddress) error {
 	change, ok := keeper.GetChange(ctx, changeID)
 	if !ok {
 		return sdkerrors.Wrapf(types.ErrUnknownChange, "%d", changeID)
 	}
+
 	if change.Status != types.StatusActive {
-		return sdkerrors.Wrapf(types.ErrInactiveChange, "%d", changeID)
+		// Exit if the change has been approved or expired
+		return nil
+	}
+
+	for _, voter := range change.Voters {
+		if voter.Equals(voterAddr) {
+			return sdkerrors.Wrapf(types.ErrDoubleVote, "%d", changeID)
+		}
 	}
 
 	change.Voters = append(change.Voters, sdk.ValAddress(voterAddr))

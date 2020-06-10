@@ -23,6 +23,7 @@ type Change struct {
 	Status        ChangeStatus     `json:"change_status" yaml:"change_status"`     // Status of the Change {Pending, Active, Passed, Rejected}
 	SubmitTime    time.Time        `json:"submit_time" yaml:"submit_time"`         // Time of the block where TxGovSubmitChange was included
 	VotingEndTime time.Time        `json:"voting_end_time" yaml:"voting_end_time"` // Time that the VotingPeriod for this change will end and votes will be tallied
+	Rewardable    bool             `json:"rewardable" yaml:"rewardable"`
 }
 
 // NewChange creates a new Change instance
@@ -40,13 +41,15 @@ func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndT
 
 // String implements stringer interface
 func (c Change) String() string {
-	return fmt.Sprintf(`Change %d:
+	return fmt.Sprintf(`
+	Change: 						%d
   Type:               %s
-  Initiator:               %s
+  Initiator:          %s
+  Rewardable:         %t
   Status:             %s
   Submit Time:        %s
   Voting End Time:    %s`,
-		c.ID, c.Type, c.Initiator,
+		c.ID, c.Type, c.Initiator, c.Rewardable,
 		c.Status, c.SubmitTime, c.VotingEndTime,
 	)
 }

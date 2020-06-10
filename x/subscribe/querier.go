@@ -57,7 +57,7 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	request, found := keeper.GetRequest(ctx, params.ChannelId, params.PeerFrom)
+	request, found := keeper.GetRequest(ctx, params.ChannelId, params.Owner)
 	if !found {
 		return nil, errors.New("Could not find corresponding request")
 	}
