@@ -118,7 +118,7 @@ func DeployCommand() *cobra.Command {
 				SidechainGoLiveTimeout: big.NewInt(5760),
 			}
 			tx, dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
-			WaitMinedWithChk(context.Background(), EtherBase.Client, tx, 0, "DeployDPoSContracts")
+			WaitMinedWithChk(context.Background(), EtherBase.Client, tx, BlockDelay, PollingInterval, "DeployDPoSContracts")
 
 			viper.Set(common.FlagEthDPoSAddress, dposAddr)
 			viper.Set(common.FlagEthSGNAddress, sgnAddr)
@@ -130,7 +130,7 @@ func DeployCommand() *cobra.Command {
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
 				tx, err := erc20.Approve(EtherBase.Auth, dposAddr, amt)
 				ChkErr(err, "failed to approve erc20")
-				WaitMinedWithChk(context.Background(), EtherBase.Client, tx, 0, "approve erc20")
+				WaitMinedWithChk(context.Background(), EtherBase.Client, tx, BlockDelay, PollingInterval, "approve erc20")
 			}
 
 			return nil

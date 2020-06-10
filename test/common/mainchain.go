@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
@@ -72,7 +73,7 @@ func SetupE2eProfile() {
 	ledgerAddr := DeployLedgerContract()
 	// Deploy sample ERC20 contract (CELR)
 	tx, erc20Addr, erc20 := DeployERC20Contract()
-	WaitMinedWithChk(context.Background(), EtherBase.Client, tx, BlockDelay, "DeployERC20")
+	WaitMinedWithChk(context.Background(), EtherBase.Client, tx, BlockDelay, PollingInterval, "DeployERC20")
 
 	E2eProfile = &TestProfile{
 		// hardcoded values
@@ -123,7 +124,7 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 	}
 	ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
 	defer cancel()
-	receipt, err := mainchain.WaitMined(ctx2, conn, lastTx, 0)
+	receipt, err := eth.WaitMined(ctx2, conn, lastTx, BlockDelay, PollingInterval)
 	if err != nil {
 		log.Error(err)
 	}
@@ -159,7 +160,7 @@ func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount str
 		lastTx = tx
 		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, EtherBase.Auth.From)
 	}
-	_, err = mainchain.WaitMined(context.Background(), EtherBase.Client, lastTx, 0)
+	_, err = eth.WaitMined(context.Background(), EtherBase.Client, lastTx, BlockDelay, PollingInterval)
 	return err
 }
 
@@ -198,12 +199,12 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 		return
 	}
 
-	siglo, err := mainchain.SignMessage(lo.PrivateKey, paymentChannelInitializerBytes)
+	siglo, err := lo.SignMessage(paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
 
-	sighi, err := mainchain.SignMessage(hi.PrivateKey, paymentChannelInitializerBytes)
+	sighi, err := hi.SignMessage(paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
@@ -222,7 +223,7 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
-	WaitMinedWithChk(ctx, Client0.Client, tx, 0, "OpenChannel")
+	WaitMinedWithChk(ctx, Client0.Client, tx, BlockDelay, PollingInterval, "OpenChannel")
 
 	receipt, err := Client0.Client.TransactionReceipt(context.Background(), tx.Hash())
 	if err != nil {
@@ -246,7 +247,7 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 		return err
 	}
 
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "IntendWithdraw")
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, PollingInterval, "IntendWithdraw")
 	return nil
 }
 
@@ -272,7 +273,7 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "SGN UpdateSidechainAddr")
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, PollingInterval, "SGN UpdateSidechainAddr")
 
 	return nil
 }
@@ -295,7 +296,7 @@ func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	if err != nil {
 		return err
 	}
-	WaitMinedWithChk(ctx, conn, tx, BlockDelay, "Delegate to validator")
+	WaitMinedWithChk(ctx, conn, tx, BlockDelay, PollingInterval, "Delegate to validator")
 	return nil
 }
 

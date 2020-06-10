@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -12,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 )
 
@@ -159,7 +161,13 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 		return
 	}
 
-	_, err = m.ethClient.DPoS.ClaimValidator(m.ethClient.Auth)
+	_, err = m.ethClient.Transactor.Transact(
+		nil,
+		&eth.TxConfig{QuickCatch: true},
+		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+			return m.ethClient.DPoS.ClaimValidator(opts)
+		},
+	)
 	if err != nil {
 		log.Errorln("ClaimValidator tx err", err)
 		return

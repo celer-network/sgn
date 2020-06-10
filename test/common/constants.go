@@ -20,6 +20,7 @@ const (
 	DefaultTimeout   = 60 * time.Second
 	waitMinedTimeout = 180 * time.Second
 	BlockDelay       = 0
+	PollingInterval  = 1
 	DisputeTimeout   = 100
 
 	RetryPeriod = 100 * time.Millisecond

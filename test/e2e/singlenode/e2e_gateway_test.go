@@ -72,11 +72,11 @@ func gatewayTest(t *testing.T) {
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
 	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
 	tc.ChkTestErr(t, err, "failed to approve CELR on mainchain")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, 0, "Approve CELR to SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to SGN contract")
 
 	tx, err = tc.Client0.SGN.Subscribe(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to subscribe on mainchain")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, "Subscribe on SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
 	tc.SleepWithLog(10, "passing subscribe event block delay")
 
 	msg := map[string]interface{}{

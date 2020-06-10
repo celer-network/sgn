@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -218,12 +219,22 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 	}
 
 	// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
-	var tx *ethtypes.Transaction
+	var receipt *ethtypes.Receipt
 	switch eventName {
 	case IntendWithdrawChannel:
-		tx, err = m.ethClient.Ledger.SnapshotStates(m.ethClient.Auth, signedSimplexStateArrayBytes)
+		receipt, err = m.ethClient.Transactor.TransactWaitMined(
+			"SnapshotStates",
+			&eth.TxConfig{QuickCatch: true},
+			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
+			})
 	case IntendSettle:
-		tx, err = m.ethClient.Ledger.IntendSettle(m.ethClient.Auth, signedSimplexStateArrayBytes)
+		receipt, err = m.ethClient.Transactor.TransactWaitMined(
+			"IntendSettle",
+			&eth.TxConfig{QuickCatch: true},
+			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
+			})
 	default:
 		log.Errorln("Invalid eventName", eventName)
 		return
@@ -234,20 +245,10 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 		return
 	}
 
-	// TODO: 1) bockDelay, 2) may need a better way than wait mined,
-	res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, viper.GetUint64(common.FlagEthConfirmCount))
-	if err != nil {
-		log.Errorln("intendSettle WaitMined err", err, tx.Hash().Hex())
-		return
-	}
-	if res.Status != ethtypes.ReceiptStatusSuccessful {
-		log.Errorln("intendSettle failed", tx.Hash().Hex())
-		return
-	}
-
-	log.Infof("Add MsgGuardProof %x to transactor msgQueue", tx.Hash())
-	request.GuardTxHash = tx.Hash().Hex()
-	request.GuardTxBlkNum = res.BlockNumber.Uint64()
+	txHash := receipt.TxHash
+	log.Infof("Add MsgGuardProof %x to transactor msgQueue", txHash)
+	request.GuardTxHash = txHash.Hex()
+	request.GuardTxBlkNum = receipt.BlockNumber.Uint64()
 	request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
 	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
 	msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
@@ -276,7 +277,13 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	tx, err := m.ethClient.DPoS.Punish(m.ethClient.Auth, penaltyRequest)
+	tx, err := m.ethClient.Transactor.Transact(
+		nil,
+		&eth.TxConfig{QuickCatch: true},
+		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+			return m.ethClient.DPoS.Punish(opts, penaltyRequest)
+		},
+	)
 	if err != nil {
 		if penaltyEvent.RetryCount < maxPunishRetry {
 			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
@@ -292,8 +299,13 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 }
 
 func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
-	// TODO: blockdelay
-	res, err := mainchain.WaitMined(context.Background(), m.ethClient.Client, tx, viper.GetUint64(common.FlagEthConfirmCount))
+	res, err := eth.WaitMined(
+		context.Background(),
+		m.ethClient.Client,
+		tx,
+		viper.GetUint64(common.FlagEthConfirmCount),
+		viper.GetUint64(common.FlagEthPollInterval),
+	)
 	if err != nil {
 		log.Errorln("Punish tx WaitMined err", err, tx.Hash().Hex())
 		return

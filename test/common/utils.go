@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
@@ -52,11 +53,17 @@ func GetEthPrivateKey(ksfile string) (*ecdsa.PrivateKey, error) {
 	return key.PrivateKey, nil
 }
 
-func WaitMinedWithChk(ctx context.Context, conn *ethclient.Client,
-	tx *ethtypes.Transaction, BlockDelay uint64, txname string) {
+func WaitMinedWithChk(
+	ctx context.Context,
+	conn *ethclient.Client,
+	tx *ethtypes.Transaction,
+	blockDelay uint64,
+	pollingInterval uint64,
+	txname string,
+) {
 	ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
 	defer cancel()
-	receipt, err := mainchain.WaitMined(ctx2, conn, tx, BlockDelay)
+	receipt, err := eth.WaitMined(ctx2, conn, tx, blockDelay, pollingInterval)
 	ChkErr(err, "WaitMined error")
 	if receipt.Status != ethtypes.ReceiptStatusSuccessful {
 		log.Fatalln(txname, "tx failed")
@@ -124,12 +131,12 @@ func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, peer0,
 		lo, hi = peer1, peer0
 	}
 
-	siglo, err := mainchain.SignMessage(lo.PrivateKey, simplexPaymentChannelBytes)
+	siglo, err := lo.SignMessage(simplexPaymentChannelBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	sighi, err := mainchain.SignMessage(hi.PrivateKey, simplexPaymentChannelBytes)
+	sighi, err := hi.SignMessage(simplexPaymentChannelBytes)
 	if err != nil {
 		return nil, err
 	}
