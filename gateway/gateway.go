@@ -118,16 +118,16 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gateway",
 		Short: "Start a local REST server",
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			viper.SetConfigFile("config.json")
-			err = viper.MergeInConfig()
+			err := viper.MergeInConfig()
 			if err != nil {
-				return
+				return err
 			}
 
 			rs, err := NewRestServer(cdc)
 			if err != nil {
-				return
+				return err
 			}
 
 			rs.registerRoutes()
@@ -140,7 +140,7 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 				uint(viper.GetInt(sdkFlags.FlagRPCWriteTimeout)),
 			)
 
-			return
+			return err
 		},
 	}
 

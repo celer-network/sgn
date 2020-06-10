@@ -29,26 +29,26 @@ func EnableLogLongFile() {
 	}
 }
 
-func RobustQuery(cliCtx context.CLIContext, route string) (res []byte, err error) {
-	res, _, err = cliCtx.Query(route)
+func RobustQuery(cliCtx context.CLIContext, route string) ([]byte, error) {
+	res, _, err := cliCtx.Query(route)
 	if err != nil {
 		time.Sleep(retryTimeout)
 		res, _, err = cliCtx.Query(route)
-		return
+		return res, err
 	}
 
-	return
+	return res, err
 }
 
-func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) (res []byte, err error) {
-	res, _, err = cliCtx.QueryWithData(route, data)
+func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) ([]byte, error) {
+	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
 		time.Sleep(retryTimeout)
 		res, _, err = cliCtx.QueryWithData(route, data)
-		return
+		return res, err
 	}
 
-	return
+	return res, err
 }
 
 func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (staking.Commission, error) {

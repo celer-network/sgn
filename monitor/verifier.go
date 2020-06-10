@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/celer-network/goutils/eth"
+
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -224,7 +226,7 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 		return false
 	}
 
-	ownerAddr, err := mainchain.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
+	ownerAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
 	if err != nil {
 		log.Errorln("Failed to recover signer:", err)
 		return false

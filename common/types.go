@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/celer-network/goutils/eth"
+
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -42,25 +44,24 @@ func (r Sig) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`Signer: %s, Sig: %x,`, r.Signer, r.Sig))
 }
 
-func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) (newSigs []Sig, err error) {
-	signer, err := mainchain.RecoverSigner(msg, sig)
+func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) ([]Sig, error) {
+	signer, err := eth.RecoverSigner(msg, sig)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	signerAddr := mainchain.Addr2Hex(signer)
 	if signerAddr != mainchain.FormatAddrHex(expectedSigner) {
 		err = fmt.Errorf("invalid signer address %s %s", signerAddr, expectedSigner)
-		return
+		return nil, err
 	}
 
 	for _, s := range sigs {
 		if s.Signer == signerAddr {
 			err = fmt.Errorf("repeated signer %s", signerAddr)
-			return
+			return nil, err
 		}
 	}
 
-	newSigs = append(sigs, NewSig(signerAddr, sig))
-	return
+	return append(sigs, NewSig(signerAddr, sig)), nil
 }
