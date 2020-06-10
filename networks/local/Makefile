@@ -5,8 +5,8 @@ all: sgn geth
 
 .PHONY: sgn
 sgn:
-	docker build --tag celer-network/sgnnode sgnnode
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/sgnnode sgnnode
 
 .PHONY: geth
 geth:
-	docker build --tag celer-network/geth geth
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/geth geth
