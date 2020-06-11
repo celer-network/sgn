@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/celer-network/goutils/eth"
+
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -63,7 +65,7 @@ func VerifySignedSimplexStateSigs(request Request, signedSimplexState chain.Sign
 	}
 
 	for i := 0; i < 2; i++ {
-		addr, err := mainchain.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[i])
+		addr, err := eth.RecoverSigner(signedSimplexState.SimplexState, signedSimplexState.Sigs[i])
 		if err != nil {
 			return fmt.Errorf("RecoverSigner err: %s", err)
 		}

@@ -3,47 +3,22 @@ module github.com/celer-network/sgn
 go 1.13
 
 require (
-	github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798 // indirect
 	github.com/allegro/bigcache v1.2.1
-	github.com/celer-network/goutils v0.1.12-0.20200606003214-4842c1f84748
-	github.com/cespare/cp v1.1.1 // indirect
-	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
+	github.com/celer-network/goutils v0.1.13-0.20200610074927-e894fc9397b0
 	github.com/cosmos/cosmos-sdk v0.38.1
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
-	github.com/cpuguy83/go-md2man v1.0.10 // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
-	github.com/elastic/gosigar v0.10.5 // indirect
 	github.com/ethereum/go-ethereum v1.9.6
-	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
-	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
-	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.4
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/mux v1.7.4
-	github.com/huin/goupnp v1.0.0 // indirect
-	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
-	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/olekukonko/tablewriter v0.0.4 // indirect
-	github.com/prometheus/common v0.9.1
-	github.com/prometheus/tsdb v0.10.0 // indirect
-	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
-	github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570 // indirect
-	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/tendermint v0.33.3
 	github.com/tendermint/tm-db v0.5.0
-	github.com/thoas/go-funk v0.5.0
-	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
-	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
-	google.golang.org/appengine v1.4.0
-	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
-	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 
 replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.38.3-0
