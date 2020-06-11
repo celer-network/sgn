@@ -8,7 +8,28 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/common"
 )
+
+type MonitorContractInfo struct {
+	address common.Address
+	abi     string
+}
+
+func (info *MonitorContractInfo) GetAddr() common.Address {
+	return info.address
+}
+
+func (info *MonitorContractInfo) GetABI() string {
+	return info.abi
+}
+
+func NewMonitorContractInfo(address common.Address, abi string) *MonitorContractInfo {
+	return &MonitorContractInfo{
+		address: address,
+		abi:     abi,
+	}
+}
 
 func (m *EthMonitor) isPuller() bool {
 	puller, err := validator.CLIQueryPuller(m.operator.CliCtx, validator.StoreKey)

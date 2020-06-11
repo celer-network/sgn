@@ -10,14 +10,15 @@ import (
 type EventName string
 
 const (
-	UpdateSidechainAddr   EventName = "UpdateSidechainAddr"
-	ConfirmParamProposal  EventName = "ConfirmParamProposal"
-	Delegate              EventName = "Delegate"
-	CandidateUnbonded     EventName = "CandidateUnbonded"
-	ValidatorChange       EventName = "ValidatorChange"
-	IntendWithdrawSgn     EventName = "IntendWithdraw"
-	IntendWithdrawChannel EventName = "IntendWithdrawChannel"
-	IntendSettle          EventName = "IntendSettle"
+	UpdateSidechainAddr          EventName = "UpdateSidechainAddr"
+	ConfirmParamProposal         EventName = "ConfirmParamProposal"
+	Delegate                     EventName = "Delegate"
+	CandidateUnbonded            EventName = "CandidateUnbonded"
+	ValidatorChange              EventName = "ValidatorChange"
+	IntendWithdrawSgn            EventName = "IntendWithdraw"
+	IntendWithdrawChannel        EventName = "IntendWithdraw"
+	IntendWithdrawChannelWrapped EventName = "IntendWithdrawChannel"
+	IntendSettle                 EventName = "IntendSettle"
 )
 
 // Wrapper for ethereum Event
@@ -57,7 +58,8 @@ func (e *EventWrapper) MustUnMarshal(input []byte) {
 	}
 }
 
-func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
+func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
+	var res interface{}
 	var err error
 	switch e.Name {
 	case UpdateSidechainAddr:
@@ -70,7 +72,7 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 		res, err = ethClient.DPoS.ParseValidatorChange(e.Log)
 	case IntendWithdrawSgn:
 		res, err = ethClient.DPoS.ParseIntendWithdraw(e.Log)
-	case IntendWithdrawChannel:
+	case IntendWithdrawChannelWrapped:
 		res, err = ethClient.Ledger.ParseIntendWithdraw(e.Log)
 	case IntendSettle:
 		res, err = ethClient.Ledger.ParseIntendSettle(e.Log)
@@ -91,7 +93,7 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 		res = tmp
 	}
 
-	return
+	return res
 }
 
 type PenaltyEvent struct {
