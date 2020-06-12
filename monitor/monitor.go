@@ -27,7 +27,6 @@ import (
 )
 
 const (
-	pollingInterval  = 1
 	prefixEthMonitor = "em"
 )
 
@@ -123,7 +122,6 @@ func (m *EthMonitor) monitorUpdateSidechainAddr() {
 			EventName:  string(UpdateSidechainAddr),
 			Contract:   m.sgnContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
@@ -142,7 +140,6 @@ func (m *EthMonitor) monitorConfirmParamProposal() {
 			EventName:  string(ConfirmParamProposal),
 			Contract:   m.dposContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
@@ -160,7 +157,6 @@ func (m *EthMonitor) monitorDelegate() {
 			EventName:  string(Delegate),
 			Contract:   m.dposContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
@@ -178,7 +174,6 @@ func (m *EthMonitor) monitorCandidateUnbonded() {
 			EventName:  string(CandidateUnbonded),
 			Contract:   m.dposContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
@@ -196,7 +191,6 @@ func (m *EthMonitor) monitorValidatorChange() {
 			EventName:  string(ValidatorChange),
 			Contract:   m.dposContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
@@ -211,10 +205,9 @@ func (m *EthMonitor) monitorValidatorChange() {
 func (m *EthMonitor) monitorIntendWithdrawSgn() {
 	_, err := m.monitorService.Monitor(
 		&monitor.Config{
-			EventName:  string(IntendWithdrawSgn),
+			EventName:  string(IntendWithdraw),
 			Contract:   m.dposContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawSgn, tx hash: %x", eLog.TxHash)
@@ -229,14 +222,13 @@ func (m *EthMonitor) monitorIntendWithdrawSgn() {
 func (m *EthMonitor) monitorIntendWithdrawChannel() {
 	_, err := m.monitorService.Monitor(
 		&monitor.Config{
-			EventName:  string(IntendWithdrawChannel),
+			EventName:  string(IntendWithdraw),
 			Contract:   m.ledgerContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendWithdrawChannelWrapped, eLog)
+			event := NewEvent(IntendWithdrawChannel, eLog)
 			m.db.Set(GetEventKey(eLog), event.MustMarshal())
 		})
 	if err != nil {
@@ -250,7 +242,6 @@ func (m *EthMonitor) monitorIntendSettle() {
 			EventName:  string(IntendSettle),
 			Contract:   m.ledgerContract,
 			StartBlock: m.blkNum,
-			QuickCatch: true,
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)

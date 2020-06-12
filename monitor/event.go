@@ -10,15 +10,15 @@ import (
 type EventName string
 
 const (
-	UpdateSidechainAddr          EventName = "UpdateSidechainAddr"
-	ConfirmParamProposal         EventName = "ConfirmParamProposal"
-	Delegate                     EventName = "Delegate"
-	CandidateUnbonded            EventName = "CandidateUnbonded"
-	ValidatorChange              EventName = "ValidatorChange"
-	IntendWithdrawSgn            EventName = "IntendWithdraw"
-	IntendWithdrawChannel        EventName = "IntendWithdraw"
-	IntendWithdrawChannelWrapped EventName = "IntendWithdrawChannel"
-	IntendSettle                 EventName = "IntendSettle"
+	UpdateSidechainAddr   EventName = "UpdateSidechainAddr"
+	ConfirmParamProposal  EventName = "ConfirmParamProposal"
+	Delegate              EventName = "Delegate"
+	CandidateUnbonded     EventName = "CandidateUnbonded"
+	ValidatorChange       EventName = "ValidatorChange"
+	IntendWithdraw        EventName = "IntendWithdraw"
+	IntendWithdrawSgn     EventName = "IntendWithdrawSgn"
+	IntendWithdrawChannel EventName = "IntendWithdrawChannel"
+	IntendSettle          EventName = "IntendSettle"
 )
 
 // Wrapper for ethereum Event
@@ -72,7 +72,7 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 		res, err = ethClient.DPoS.ParseValidatorChange(e.Log)
 	case IntendWithdrawSgn:
 		res, err = ethClient.DPoS.ParseIntendWithdraw(e.Log)
-	case IntendWithdrawChannelWrapped:
+	case IntendWithdrawChannel:
 		res, err = ethClient.Ledger.ParseIntendWithdraw(e.Log)
 	case IntendSettle:
 		res, err = ethClient.Ledger.ParseIntendSettle(e.Log)
