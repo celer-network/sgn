@@ -63,7 +63,7 @@ build-dockers:
 
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env
-prepare-docker-env: build-dockers prepare-geth-data
+prepare-docker-env: build-dockers build-linux prepare-geth-data
 
 # Run geth
 .PHONY: localnet-start-geth
