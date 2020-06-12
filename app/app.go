@@ -331,7 +331,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	}
 
 	if viper.GetBool(common.FlagStartMonitor) {
-		go app.startMonitor()
+		go app.startMonitor(db)
 	}
 
 	return app
@@ -396,7 +396,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-func (app *sgnApp) startMonitor() {
+func (app *sgnApp) startMonitor(db dbm.DB) {
 	ethClient, err := mainchain.NewEthClient(
 		viper.GetString(common.FlagEthInstance),
 		viper.GetString(common.FlagEthDPoSAddress),
@@ -434,5 +434,5 @@ func (app *sgnApp) startMonitor() {
 		_, err = rpc.GetChainHeight(operator.CliCtx)
 	}
 
-	monitor.NewEthMonitor(ethClient, operator)
+	monitor.NewEthMonitor(ethClient, operator, db)
 }

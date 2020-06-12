@@ -15,7 +15,8 @@ const (
 	Delegate              EventName = "Delegate"
 	CandidateUnbonded     EventName = "CandidateUnbonded"
 	ValidatorChange       EventName = "ValidatorChange"
-	IntendWithdrawSgn     EventName = "IntendWithdraw"
+	IntendWithdraw        EventName = "IntendWithdraw"
+	IntendWithdrawSgn     EventName = "IntendWithdrawSgn"
 	IntendWithdrawChannel EventName = "IntendWithdrawChannel"
 	IntendSettle          EventName = "IntendSettle"
 )
@@ -57,7 +58,8 @@ func (e *EventWrapper) MustUnMarshal(input []byte) {
 	}
 }
 
-func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{}) {
+func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
+	var res interface{}
 	var err error
 	switch e.Name {
 	case UpdateSidechainAddr:
@@ -91,7 +93,7 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) (res interface{
 		res = tmp
 	}
 
-	return
+	return res
 }
 
 type PenaltyEvent struct {
