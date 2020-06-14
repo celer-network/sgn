@@ -143,7 +143,22 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
 	log.Infoln("Verify sync validator", vt)
 
-	v, err := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, vt.Description.Identity)
+	candidateEthAddr := vt.Description.Identity
+	candidate, err := validator.CLIQueryCandidate(
+		m.operator.CliCtx,
+		validator.RouterKey,
+		candidateEthAddr,
+	)
+	if err != nil {
+		log.Errorln("Failed to query candidate:", err)
+		return false
+	}
+
+	v, err := validator.CLIQueryValidator(
+		m.operator.CliCtx,
+		staking.RouterKey,
+		candidate.Operator.String(),
+	)
 	if err == nil {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
 			log.Errorln("Invalid change for the same Status/Tokens/Commission value")
