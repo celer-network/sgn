@@ -21,7 +21,7 @@
 #### Test Logs
 
 - geth log path: docker-volumes/geth-env/geth.log
-- sgn nodeN log path: docker-volumes/nodeN/sgn/sgn.log
+- sgn nodeN log path: docker-volumes/nodeN/sgn/sgnd.log
 
 ### Manual Tests
 
@@ -32,6 +32,6 @@
 1. `make install-all`
 1. `sgntest deploy`
 1. `sgntest osp`
-1. `sgn start`
+1. `sgnd start`
 1. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
 1. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'`
