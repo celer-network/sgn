@@ -101,12 +101,12 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 		return nil, err
 	}
 
-	cmd = exec.Command("sgn", "start")
+	cmd = exec.Command("sgnd", "start")
 	cmd.Dir, _ = filepath.Abs("../../..")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		log.Errorln("Failed to run \"sgn start\": ", err)
+		log.Errorln("Failed to run \"sgnd start\": ", err)
 		return nil, err
 	}
 
