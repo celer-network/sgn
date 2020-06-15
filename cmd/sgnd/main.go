@@ -35,8 +35,8 @@ func main() {
 	ctx := server.NewDefaultContext()
 
 	rootCmd := &cobra.Command{
-		Use:               "sgn",
-		Short:             "sgn App Daemon (server)",
+		Use:               "sgnd",
+		Short:             "SGN App Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 	// CLI commands to initialize the chain

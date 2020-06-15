@@ -4,13 +4,13 @@ RUN apk add --no-cache g++ musl-dev linux-headers leveldb-dev
 
 WORKDIR /sgn
 ADD . /sgn
-RUN go build -tags "cleveldb" -o /sgn/bin/sgn ./cmd/sgn
+RUN go build -tags "cleveldb" -o /sgn/bin/sgnd ./cmd/sgnd
 
 FROM alpine:latest
 RUN apk add leveldb
 VOLUME /sgn/env
 WORKDIR /sgn/env
 EXPOSE 26656 26657
-COPY --from=builder /sgn/bin/sgn /usr/local/bin
-CMD ["/bin/sh", "-c", "sgn start --cli-home /sgn/env/sgncli --home /sgn/env/sgn 2>&1 | tee /sgn/env/sgn/sgn.log"]
+COPY --from=builder /sgn/bin/sgnd /usr/local/bin
+CMD ["/bin/sh", "-c", "sgnd start --cli-home /sgn/env/sgncli --home /sgn/env/sgnd 2>&1 | tee /sgn/env/sgnd/sgnd.log"]
 STOPSIGNAL SIGTERM

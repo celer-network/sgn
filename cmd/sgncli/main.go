@@ -37,7 +37,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "sgncli",
-		Short: "sgn Client",
+		Short: "SGN Client",
 	}
 
 	// Add --chain-id to persistent flags and mark it required

@@ -11,7 +11,7 @@ all: lint install
 
 .PHONY: install
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/sgn
+		go install $(BUILD_FLAGS) ./cmd/sgnd
 		go install $(BUILD_FLAGS) ./cmd/sgncli
 
 install-test: go.sum
@@ -31,24 +31,24 @@ lint:
 	go mod verify
 
 copy-test-data:
-	cp -r test/data/.sgn ~/.sgn
+	cp -r test/data/.sgnd ~/.sgnd
 	cp -r test/data/.sgncli ~/.sgncli
 
 remove-test-data:
-	rm -rf ~/.sgn ~/.sgncli
+	rm -rf ~/.sgnd ~/.sgncli
 
 .PHONY: update-test-data
 update-test-data: remove-test-data copy-test-data
 
 copy-test-config:
-	cp test/data/.sgn/config/genesis.json ~/.sgn/config/genesis.json
+	cp test/data/.sgnd/config/genesis.json ~/.sgnd/config/genesis.json
 	cp test/data/.sgncli/config/config.toml ~/.sgncli/config/config.toml
 
 ################################ Docker related ################################
 .PHONY: build
 build: go.sum
 	mkdir -p ./build
-	go build -o ./build/sgn ./cmd/sgn
+	go build -o ./build/sgnd ./cmd/sgnd
 	go build -o ./build/sgncli ./cmd/sgncli
 
 .PHONY: build-linux
