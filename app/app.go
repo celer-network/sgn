@@ -130,9 +130,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
 	}
-	if viper.GetBool(common.FlagLogLongFile) {
-		common.EnableLogLongFile()
-	}
 
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()

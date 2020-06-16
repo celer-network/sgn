@@ -27,7 +27,6 @@ const (
 	FlagSgnKeyringBackend = "sgn.keyringBackend"
 	FlagSgnBootNode       = "sgn.bootNode"
 
-	FlagLogLevel    = "log.level"
-	FlagLogColor    = "log.color"
-	FlagLogLongFile = "log.longFile"
+	FlagLogLevel = "log.level"
+	FlagLogColor = "log.color"
 )
