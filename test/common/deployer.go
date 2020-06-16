@@ -56,14 +56,14 @@ func DeployDPoSSGNContracts(sgnParams *SGNParams) (*types.Transaction, mainchain
 		sgnParams.SidechainGoLiveTimeout)
 	ChkErr(err, "failed to deploy DPoS contract")
 
-	sgnAddr, tx, _, err := mainchain.DeploySGN(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, dposAddr)
+	sgnAddr, _, _, err := mainchain.DeploySGN(EtherBase.Auth, EtherBase.Client, sgnParams.CelrAddr, dposAddr)
 	ChkErr(err, "failed to deploy SGN contract")
 
 	// TODO: register SGN address on DPoS contract
 	dpos, err := mainchain.NewDPoS(dposAddr, EtherBase.Client)
 	ChkErr(err, "failed to new DPoS instance")
 	EtherBase.Auth.GasLimit = 8000000
-	tx, err = dpos.RegisterSidechain(EtherBase.Auth, sgnAddr)
+	tx, err := dpos.RegisterSidechain(EtherBase.Auth, sgnAddr)
 	EtherBase.Auth.GasLimit = 0
 	ChkErr(err, "failed to register SGN address on DPoS contract")
 
