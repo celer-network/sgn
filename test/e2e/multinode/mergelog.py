@@ -1,17 +1,20 @@
 #! /usr/bin/env python
-import os, glob
+import os
+import glob
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-filenames = glob.glob(dir_path+"/../../../docker-volumes/node*/sgn/sgn.log")
+filenames = glob.glob(dir_path+"/../../../docker-volumes/node*/sgnd/sgnd.log")
 files = []
 for filename in filenames:
     files.append(open(filename, "r"))
+
 
 def readnext(f):
     line = f.readline()
     while not ((len(line) > 24 and line[1] != '[' and line[24] == '|') or line == ""):
         line = f.readline()
     return line.rstrip('\n')
+
 
 def select(lines):
     time, line, index = "", "", -1
@@ -20,6 +23,7 @@ def select(lines):
         if t != "" and (time == "" or t < time):
             line, time, index = lines[i], t, i
     return line, index
+
 
 def merge(files):
     mergelog = []
@@ -30,8 +34,9 @@ def merge(files):
         line, index = select(lines)
         if index == -1:
             break
-        print("n%d: %s"%(index, line))
+        print("n%d: %s" % (index, line))
         lines[index] = readnext(files[index])
+
 
 if __name__ == '__main__':
     merge(files)
