@@ -3,9 +3,9 @@ package gov
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/x/gov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/celer-network/sgn/x/gov/types"
 )
 
 // NewHandler creates an sdk.Handler for all the gov type messages
