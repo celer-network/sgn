@@ -2,13 +2,9 @@ package common
 
 import (
 	"math/big"
-	"runtime"
-	"strings"
 	"time"
 
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -18,16 +14,6 @@ import (
 const (
 	retryTimeout = 500 * time.Millisecond
 )
-
-// EnableLogLongFile set the log file splitter from the sgn root folder
-func EnableLogLongFile() {
-	log.EnableLongFile()
-	_, file, _, ok := runtime.Caller(0)
-	if ok {
-		pref := file[:strings.LastIndex(file[:strings.LastIndex(file, "/")], "/")+1]
-		log.SetFilePathSplit(pref)
-	}
-}
 
 func RobustQuery(cliCtx context.CLIContext, route string) ([]byte, error) {
 	res, _, err := cliCtx.Query(route)

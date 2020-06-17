@@ -256,19 +256,17 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	dposContract := EtherBase.DPoS
 	sgnContract := EtherBase.SGN
 
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
-	defer cancel()
 	log.Infof("Call initializeCandidate on dpos contract using the validator eth address %x, minSelfStake: %d, commissionRate: %d, rateLockEndTime: %d", auth.From.Bytes(), minSelfStake, commissionRate, rateLockEndTime)
-	tx, err := dposContract.InitializeCandidate(auth, minSelfStake, commissionRate, rateLockEndTime)
+	_, err := dposContract.InitializeCandidate(auth, minSelfStake, commissionRate, rateLockEndTime)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel = context.WithTimeout(context.Background(), DefaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 	log.Infof("Call updateSidechainAddr on sgn contract using the validator eth address, sgnAddr: %x", sgnAddr.Bytes())
 	auth.GasLimit = 8000000
-	tx, err = sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
+	tx, err := sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
 	auth.GasLimit = 0
 	if err != nil {
 		return err
@@ -285,13 +283,13 @@ func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	defer cancel()
 
 	log.Info("Call delegate on dpos contract to delegate stake to the validator eth address...")
-	tx, err := E2eProfile.CelrContract.Approve(fromAuth, E2eProfile.DPoSAddr, amt)
+	_, err := E2eProfile.CelrContract.Approve(fromAuth, E2eProfile.DPoSAddr, amt)
 	if err != nil {
 		return err
 	}
 
 	fromAuth.GasLimit = 8000000
-	tx, err = dposContract.Delegate(fromAuth, toEthAddress, amt)
+	tx, err := dposContract.Delegate(fromAuth, toEthAddress, amt)
 	fromAuth.GasLimit = 0
 	if err != nil {
 		return err

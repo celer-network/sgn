@@ -67,9 +67,6 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
 	}
-	if viper.GetBool(common.FlagLogLongFile) {
-		common.EnableLogLongFile()
-	}
 
 	r := mux.NewRouter()
 	r.Use(mux.CORSMethodMiddleware(r))

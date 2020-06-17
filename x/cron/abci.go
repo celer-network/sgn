@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -24,10 +25,18 @@ func resetRateLimit(ctx sdk.Context, keeper Keeper) {
 		totalAccounts := int64(len(candidate.Transactors) + 1)
 		quota := sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, candidate.StakingPool.QuoRaw(common.TokenDec).QuoRaw(totalAccounts)))
 		// NOTE: make sure sendEnable is false
-		keeper.bankKeeper.SetCoins(ctx, candidate.Operator, quota)
+		err := keeper.bankKeeper.SetCoins(ctx, candidate.Operator, quota)
+		if err != nil {
+			log.Errorln("SetCoins err", err)
+			continue
+		}
 
 		for _, transactor := range candidate.Transactors {
-			keeper.bankKeeper.SetCoins(ctx, transactor, quota)
+			err = keeper.bankKeeper.SetCoins(ctx, transactor, quota)
+			if err != nil {
+				log.Errorln("SetCoins err", err)
+				continue
+			}
 		}
 	}
 }

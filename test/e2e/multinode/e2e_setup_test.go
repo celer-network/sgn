@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/test/common"
 )
@@ -20,8 +19,6 @@ import (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	log.EnableColor()
-	common.EnableLogLongFile()
-
 	repoRoot, _ := filepath.Abs("../../..")
 
 	log.Infoln("make localnet-down")

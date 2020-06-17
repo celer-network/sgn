@@ -126,7 +126,10 @@ func (m *EthMonitor) monitorUpdateSidechainAddr() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
 			event := NewEvent(UpdateSidechainAddr, eLog)
-			m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		},
 	)
 	if err != nil {
@@ -144,7 +147,10 @@ func (m *EthMonitor) monitorConfirmParamProposal() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
 			event := NewEvent(ConfirmParamProposal, eLog)
-			m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -161,7 +167,10 @@ func (m *EthMonitor) monitorDelegate() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
 			event := NewEvent(Delegate, eLog)
-			m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -178,7 +187,10 @@ func (m *EthMonitor) monitorCandidateUnbonded() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
-			m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -195,7 +207,10 @@ func (m *EthMonitor) monitorValidatorChange() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
 			event := NewEvent(ValidatorChange, eLog)
-			m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -212,7 +227,10 @@ func (m *EthMonitor) monitorIntendWithdrawSgn() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawSgn, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendWithdrawSgn, eLog)
-			m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -229,7 +247,10 @@ func (m *EthMonitor) monitorIntendWithdrawChannel() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendWithdrawChannel, eLog)
-			m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -246,8 +267,14 @@ func (m *EthMonitor) monitorIntendSettle() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendSettle, eLog)
-			m.db.Set(GetPullerKey(eLog), event.MustMarshal())
-			m.db.Set(GetPusherKey(eLog), event.MustMarshal())
+			err2 := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
+			err2 = m.db.Set(GetPusherKey(eLog), event.MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -284,7 +311,10 @@ func (m *EthMonitor) monitorSlash() {
 
 			penaltyEvent := NewPenaltyEvent(nonce)
 			m.handlePenalty(penaltyEvent)
-			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			err = m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
+			}
 		}
 	})
 }

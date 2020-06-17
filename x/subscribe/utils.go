@@ -161,7 +161,7 @@ func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
 		keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
-		requestGuards = append(requestGuards, sdk.AccAddress(candidate.Operator))
+		requestGuards = append(requestGuards, candidate.Operator)
 	}
 
 	return requestGuards

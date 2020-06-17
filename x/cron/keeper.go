@@ -3,6 +3,7 @@ package cron
 import (
 	"time"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,7 +37,10 @@ func (k Keeper) GetDailyTimestamp(ctx sdk.Context) (t time.Time) {
 		return
 	}
 
-	t.UnmarshalBinary(bz)
+	err := t.UnmarshalBinary(bz)
+	if err != nil {
+		log.Errorln("UnmarshalBinary err", err)
+	}
 	return
 }
 

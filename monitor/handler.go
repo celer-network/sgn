@@ -32,7 +32,11 @@ func (m *EthMonitor) processEventQueue() {
 		}
 
 		log.Infoln("Process mainchain event", event.Name, "at mainchain block", event.Log.BlockNumber)
-		m.db.Delete(iterator.Key())
+		err := m.db.Delete(iterator.Key())
+		if err != nil {
+			log.Errorln("db Delete err", err)
+			continue
+		}
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.DPoSDelegate:

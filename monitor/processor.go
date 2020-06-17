@@ -51,7 +51,11 @@ func (m *EthMonitor) processPullerQueue() {
 		}
 
 		log.Infoln("Process puller event", event.Name, "at mainchain block", event.Log.BlockNumber)
-		m.db.Delete(iterator.Key())
+		err = m.db.Delete(iterator.Key())
+		if err != nil {
+			log.Errorln("db Delete err", err)
+			continue
+		}
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.DPoSConfirmParamProposal:
@@ -77,7 +81,11 @@ func (m *EthMonitor) processPusherQueue() {
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
 		log.Infoln("Process pusher event", event.Name)
-		m.db.Delete(iterator.Key())
+		err = m.db.Delete(iterator.Key())
+		if err != nil {
+			log.Errorln("db Delete err", err)
+			continue
+		}
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.CelerLedgerIntendSettle:
@@ -100,7 +108,11 @@ func (m *EthMonitor) processPenaltyQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewPenaltyEventFromBytes(iterator.Value())
-		m.db.Delete(iterator.Key())
+		err = m.db.Delete(iterator.Key())
+		if err != nil {
+			log.Errorln("db Delete err", err)
+			continue
+		}
 		m.submitPenalty(event)
 	}
 }
@@ -199,7 +211,10 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 	if !m.isRequestGuard(request, rawLog.BlockNumber) {
 		log.Infof("Not valid guard at current mainchain block")
 		event := NewEvent(IntendSettle, rawLog)
-		m.db.Set(GetPusherKey(rawLog), event.MustMarshal())
+		err := m.db.Set(GetPusherKey(rawLog), event.MustMarshal())
+		if err != nil {
+			log.Errorln("db Set err", err)
+		}
 		return
 	}
 
@@ -287,7 +302,10 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	if err != nil {
 		if penaltyEvent.RetryCount < maxPunishRetry {
 			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
-			m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			err = m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
+			}
 			return
 		}
 		log.Errorln("Punish err", err)

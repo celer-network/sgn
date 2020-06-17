@@ -34,7 +34,11 @@ func (m *EthMonitor) verifyActiveChanges() {
 		}
 
 		if m.verifyChange(change) {
-			m.verifiedChanges.Set(strconv.Itoa(int(change.ID)), []byte{})
+			err = m.verifiedChanges.Set(strconv.Itoa(int(change.ID)), []byte{})
+			if err != nil {
+				log.Errorln("verifiedChanges Set err", err)
+				continue
+			}
 			msg := sync.NewMsgApprove(change.ID, m.operator.Key.GetAddress())
 			m.operator.AddTxMsg(msg)
 		}
