@@ -1,7 +1,6 @@
 package mainchain
 
 import (
-	"crypto/ecdsa"
 	"encoding/hex"
 	"io/ioutil"
 	"math/big"
@@ -19,7 +18,6 @@ type EthClient struct {
 	// initialized by SetClient()
 	Client *ethclient.Client
 	// initialized by SetAuth()
-	PrivateKey *ecdsa.PrivateKey
 	Address    Addr
 	Auth       *bind.TransactOpts
 	Transactor *eth.Transactor
@@ -145,7 +143,6 @@ func (ethClient *EthClient) setAuthWithKeystoreBytes(ksBytes []byte, passphrase 
 		return err
 	}
 
-	ethClient.PrivateKey = key.PrivateKey
 	ethClient.Address = key.Address
 	ethClient.Auth = auth
 	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)))
