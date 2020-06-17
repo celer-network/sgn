@@ -107,7 +107,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		request, err := subscribe.GetRequest(transactor.CliCtx, rs.ethClient, &signedSimplexState)
+		request, err := subscribe.GetRequest(transactor.CliCtx, rs.ethClient.Ledger, &signedSimplexState)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
 			return

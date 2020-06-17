@@ -25,7 +25,7 @@ var (
 	snapshotStatesEventSig = mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])")
 )
 
-func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, signedSimplexState *chain.SignedSimplexState) (Request, error) {
+func GetRequest(cliCtx coscontext.CLIContext, ledger *mainchain.CelerLedger, signedSimplexState *chain.SignedSimplexState) (Request, error) {
 	var simplexPaymentChannel entity.SimplexPaymentChannel
 	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
 	if err != nil {
@@ -36,7 +36,7 @@ func GetRequest(cliCtx coscontext.CLIContext, ethClient *mainchain.EthClient, si
 	request, err := CLIQueryRequest(cliCtx, RouterKey, simplexPaymentChannel.ChannelId, peerFromAddr)
 	if err != nil {
 		channelId := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-		addresses, seqNums, err := ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, channelId)
+		addresses, seqNums, err := ledger.GetStateSeqNumMap(&bind.CallOpts{}, channelId)
 		if err != nil {
 			return Request{}, fmt.Errorf("GetStateSeqNumMap err: %s", err)
 		}
