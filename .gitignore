@@ -16,4 +16,4 @@ build
 
 # Test
 docker-volumes
-config.json
+/config.json
