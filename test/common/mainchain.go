@@ -26,9 +26,9 @@ import (
 var (
 	etherBaseKs = EnvDir + "/keystore/etherbase.json"
 
-	EtherBase = &mainchain.EthClient{}
-	Client0   = &mainchain.EthClient{}
-	Client1   = &mainchain.EthClient{}
+	EtherBase *mainchain.EthClient
+	Client0   *mainchain.EthClient
+	Client1   *mainchain.EthClient
 )
 
 func SetEthBaseKs(prefix string) {
@@ -44,11 +44,10 @@ func SetupEthClients() {
 }
 
 func setupEthClient(ksfile string) *mainchain.EthClient {
-	ethClient := &mainchain.EthClient{}
-	err := ethClient.SetClient(LocalGeth)
-	ChkErr(err, "failed to connect to the Ethereum")
-	err = ethClient.SetAuth(ksfile, "")
-	ChkErr(err, "failed to create auth")
+	ethClient, err := mainchain.NewEthClient(LocalGeth, ksfile, "", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return ethClient
 }
 

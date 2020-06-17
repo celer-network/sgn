@@ -15,15 +15,14 @@ import (
 )
 
 type EthClient struct {
-	// initialized by SetClient()
-	Client *ethclient.Client
-	// initialized by SetAuth()
-	Address    Addr
+	// init by NewEthClient
+	Client     *ethclient.Client
 	Auth       *bind.TransactOpts
 	Transactor *eth.Transactor
-	Signer     *eth.CelerSigner
+	Signer     eth.Signer
+	Address    Addr
 
-	// initialized by SetContracts()
+	// init by SetContracts
 	DPoSAddress   Addr
 	DPoS          *DPoS
 	SGNAddress    Addr
@@ -34,73 +33,46 @@ type EthClient struct {
 
 type TransactorConfig struct {
 	BlockDelay           uint64
-	QuickCatchBlockDelay uint64
 	BlockPollingInterval uint64
 	ChainId              *big.Int
 }
 
-// NewEthClient creates a new eth client and initializes all fields
 func NewEthClient(
-	ws string,
-	dposAddrStr string,
-	sgnAddrStr string,
-	ledgerAddrStr string,
-	ksPath string,
+	ethurl string,
+	ksfile string,
 	passphrase string,
-	transactorConfig *TransactorConfig,
-) (*EthClient, error) {
+	transactorConfig *TransactorConfig) (*EthClient, error) {
 	ethClient := &EthClient{}
-	err := ethClient.SetClient(ws)
+
+	rpcClient, err := ethrpc.Dial(ethurl)
 	if err != nil {
 		return nil, err
 	}
-
-	ksBytes, err := ioutil.ReadFile(ksPath)
-	if err != nil {
-		return nil, err
-	}
-
-	ks := string(ksBytes)
-	err = ethClient.setAuthWithKeystoreBytes(ksBytes, passphrase)
-	if err != nil {
-		return nil, err
-	}
-
-	transactor, err := eth.NewTransactor(ks, passphrase, ethClient.Client)
-	if err != nil {
-		return nil, err
-	}
-	eth.SetBlockDelay(transactorConfig.BlockDelay)
-	eth.SetQuickCatchBlockDelay(transactorConfig.QuickCatchBlockDelay)
-	eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
-	eth.SetChainId(transactorConfig.ChainId)
-	// TODO: GasLimit and WaitMinedConfig
-	ethClient.Transactor = transactor
-
-	err = ethClient.SetContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
-	if err != nil {
-		return nil, err
-	}
-
-	return ethClient, nil
-}
-
-func (ethClient *EthClient) SetClient(ws string) error {
-	rpcClient, err := ethrpc.Dial(ws)
-	if err != nil {
-		return err
-	}
-
 	ethClient.Client = ethclient.NewClient(rpcClient)
-	return nil
-}
 
-func (ethClient *EthClient) SetAuth(ksPath string, passphrase string) error {
-	ksBytes, err := ioutil.ReadFile(ksPath)
-	if err != nil {
-		return err
+	if ksfile != "" {
+		ksBytes, err := ioutil.ReadFile(ksfile)
+		if err != nil {
+			return nil, err
+		}
+
+		ks := string(ksBytes)
+		err = ethClient.setAuthWithKeystoreBytes(ksBytes, passphrase)
+		if err != nil {
+			return nil, err
+		}
+
+		transactor, err := eth.NewTransactor(ks, passphrase, ethClient.Client)
+		if err != nil {
+			return nil, err
+		}
+		eth.SetBlockDelay(transactorConfig.BlockDelay)
+		eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
+		eth.SetChainId(transactorConfig.ChainId)
+		// TODO: GasLimit and WaitMinedConfig
+		ethClient.Transactor = transactor
 	}
-	return ethClient.setAuthWithKeystoreBytes(ksBytes, passphrase)
+	return ethClient, nil
 }
 
 func (ethClient *EthClient) SetContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {

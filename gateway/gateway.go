@@ -31,8 +31,7 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
-	ethClient := &mainchain.EthClient{}
-	err := ethClient.SetClient(viper.GetString(common.FlagEthInstance))
+	ethClient, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), "", "", nil)
 	if err != nil {
 		return nil, err
 	}

@@ -84,18 +84,17 @@ func DeployCommand() *cobra.Command {
 				return
 			}
 
-			ws := viper.GetString(common.FlagEthInstance)
-			err = EtherBase.SetClient(ws)
+			ethurl := viper.GetString(common.FlagEthInstance)
+			EtherBase, err = mainchain.NewEthClient(
+				ethurl,
+				viper.GetString(common.FlagEthKeystore),
+				viper.GetString(common.FlagEthPassphrase),
+				nil)
 			if err != nil {
 				return
 			}
 
-			err = EtherBase.SetAuth(viper.GetString(common.FlagEthKeystore), viper.GetString(common.FlagEthPassphrase))
-			if err != nil {
-				return
-			}
-
-			if ws == LocalGeth {
+			if ethurl == LocalGeth {
 				SetEthBaseKs("./docker-volumes/geth-env")
 				err = FundAddrsETH("1"+strings.Repeat("0", 20),
 					[]mainchain.Addr{mainchain.Hex2Addr(ValEthAddrs[0]), mainchain.Hex2Addr(ValEthAddrs[1])})
@@ -125,7 +124,7 @@ func DeployCommand() *cobra.Command {
 			err = viper.WriteConfig()
 			ChkErr(err, "failed to write config")
 
-			if ws == LocalGeth {
+			if ethurl == LocalGeth {
 				amt := new(big.Int)
 				amt.SetString("1"+strings.Repeat("0", 19), 10)
 				tx, err := erc20.Approve(EtherBase.Auth, dposAddr, amt)

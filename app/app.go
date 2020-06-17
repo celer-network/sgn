@@ -396,18 +396,22 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 func (app *sgnApp) startMonitor(db dbm.DB) {
 	ethClient, err := mainchain.NewEthClient(
 		viper.GetString(common.FlagEthInstance),
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
 		&mainchain.TransactorConfig{
 			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
-			QuickCatchBlockDelay: viper.GetUint64(common.FlagEthConfirmCount),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
 		},
 	)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	err = ethClient.SetContracts(
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress))
 	if err != nil {
 		tmos.Exit(err.Error())
 	}

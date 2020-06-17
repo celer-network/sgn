@@ -78,14 +78,10 @@ func NewRestServer() (rs *RestServer, err error) {
 
 	peer1, err := mainchain.NewEthClient(
 		viper.GetString(common.FlagEthInstance),
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
 		viper.GetString(peer1Flag),
 		"",
 		&mainchain.TransactorConfig{
 			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
-			QuickCatchBlockDelay: viper.GetUint64(common.FlagEthConfirmCount),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
 		},
@@ -94,20 +90,32 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
-	peer2, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
+	err = peer1.SetContracts(
 		viper.GetString(common.FlagEthDPoSAddress),
 		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
+		viper.GetString(common.FlagEthLedgerAddress))
+	if err != nil {
+		return
+	}
+
+	peer2, err := mainchain.NewEthClient(
+		viper.GetString(common.FlagEthInstance),
 		viper.GetString(peer2Flag),
 		"",
 		&mainchain.TransactorConfig{
 			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
-			QuickCatchBlockDelay: viper.GetUint64(common.FlagEthConfirmCount),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
 		},
 	)
+	if err != nil {
+		return
+	}
+
+	err = peer2.SetContracts(
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress))
 	if err != nil {
 		return
 	}
