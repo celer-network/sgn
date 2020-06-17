@@ -66,10 +66,12 @@ func NewEthClient(
 		if err != nil {
 			return nil, err
 		}
-		eth.SetBlockDelay(transactorConfig.BlockDelay)
-		eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
-		eth.SetChainId(transactorConfig.ChainId)
-		// TODO: GasLimit and WaitMinedConfig
+		if transactorConfig != nil {
+			eth.SetBlockDelay(transactorConfig.BlockDelay)
+			eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
+			eth.SetChainId(transactorConfig.ChainId)
+			// TODO: GasLimit and WaitMinedConfig
+		}
 		ethClient.Transactor = transactor
 	}
 	return ethClient, nil
