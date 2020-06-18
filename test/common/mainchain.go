@@ -77,7 +77,7 @@ func SetupTestEthClient(ksfile string) (*TestEthClient, error) {
 		Auth:    auth,
 	}
 	ksBytes, err := ioutil.ReadFile(ksfile)
-	testClient.Signer, err = eth.NewSignerFromKeystore(string(ksBytes), "")
+	testClient.Signer, err = eth.NewSignerFromKeystore(string(ksBytes), "", nil)
 	return testClient, nil
 }
 
@@ -154,7 +154,7 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 	}
 	ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
 	defer cancel()
-	receipt, err := eth.WaitMined(ctx2, conn, lastTx, BlockDelay, PollingInterval)
+	receipt, err := eth.WaitMined(ctx2, conn, lastTx, eth.WithBlockDelay(BlockDelay), eth.WithPollingInterval(PollingInterval))
 	if err != nil {
 		log.Error(err)
 	}
@@ -190,7 +190,7 @@ func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount str
 		lastTx = tx
 		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, EtherBaseAuth.From)
 	}
-	_, err = eth.WaitMined(context.Background(), EthClient, lastTx, BlockDelay, PollingInterval)
+	_, err = eth.WaitMined(context.Background(), EthClient, lastTx, eth.WithBlockDelay(BlockDelay), eth.WithPollingInterval(PollingInterval))
 	return err
 }
 

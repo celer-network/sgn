@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/allegro/bigcache v1.2.1
-	github.com/celer-network/goutils v0.1.13-0.20200610074927-e894fc9397b0
+	github.com/celer-network/goutils v0.1.13
 	github.com/cosmos/cosmos-sdk v0.38.1
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/ethereum/go-ethereum v1.9.6
@@ -15,7 +15,6 @@ require (
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
-	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/tendermint v0.33.3
 	github.com/tendermint/tm-db v0.5.0
