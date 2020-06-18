@@ -13,6 +13,8 @@ import (
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,24 +25,34 @@ import (
 // RestServer represents the Light Client Rest server
 type RestServer struct {
 	Mux            *mux.Router
-	ethClient      *mainchain.EthClient
 	transactorPool *transactor.TransactorPool
 	listener       net.Listener
 	logger         tlog.Logger
+
+	dposContract   *mainchain.DPoS
+	sgnContract    *mainchain.SGN
+	ledgerContract *mainchain.CelerLedger
 }
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
-	ethClient, err := mainchain.NewEthClient(viper.GetString(common.FlagEthInstance), "", "", nil)
+	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthInstance))
 	if err != nil {
 		return nil, err
 	}
-
-	err = ethClient.SetContracts(
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-	)
+	ethClient := ethclient.NewClient(rpcClient)
+	dposContract, err := mainchain.NewDPoS(
+		mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)), ethClient)
+	if err != nil {
+		return nil, err
+	}
+	sgnContract, err := mainchain.NewSGN(
+		mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress)), ethClient)
+	if err != nil {
+		return nil, err
+	}
+	ledgerContract, err := mainchain.NewCelerLedger(
+		mainchain.Hex2Addr(viper.GetString(common.FlagEthLedgerAddress)), ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +85,11 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 
 	return &RestServer{
 		Mux:            r,
-		ethClient:      ethClient,
 		transactorPool: transactorPool,
 		logger:         logger,
+		dposContract:   dposContract,
+		sgnContract:    sgnContract,
+		ledgerContract: ledgerContract,
 	}, nil
 }
 

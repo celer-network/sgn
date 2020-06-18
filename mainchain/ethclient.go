@@ -35,10 +35,9 @@ type TransactorConfig struct {
 }
 
 func NewEthClient(
-	ethurl string,
-	ksfile string,
-	passphrase string,
-	transactorConfig *TransactorConfig) (*EthClient, error) {
+	ethurl, ksfile, passphrase string,
+	transactorConfig *TransactorConfig,
+	dposAddrStr, sgnAddrStr, ledgerAddrStr string) (*EthClient, error) {
 	ethClient := &EthClient{}
 
 	rpcClient, err := ethrpc.Dial(ethurl)
@@ -47,39 +46,43 @@ func NewEthClient(
 	}
 	ethClient.Client = ethclient.NewClient(rpcClient)
 
-	if ksfile != "" {
-		ksBytes, err := ioutil.ReadFile(ksfile)
-		if err != nil {
-			return nil, err
-		}
-
-		key, err := keystore.DecryptKey(ksBytes, passphrase)
-		if err != nil {
-			return nil, err
-		}
-		ethClient.Address = key.Address
-
-		ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)))
-		if err != nil {
-			return nil, err
-		}
-
-		transactor, err := eth.NewTransactor(string(ksBytes), passphrase, ethClient.Client)
-		if err != nil {
-			return nil, err
-		}
-		if transactorConfig != nil {
-			eth.SetBlockDelay(transactorConfig.BlockDelay)
-			eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
-			eth.SetChainId(transactorConfig.ChainId)
-			// TODO: GasLimit and WaitMinedConfig
-		}
-		ethClient.Transactor = transactor
+	ksBytes, err := ioutil.ReadFile(ksfile)
+	if err != nil {
+		return nil, err
 	}
+
+	key, err := keystore.DecryptKey(ksBytes, passphrase)
+	if err != nil {
+		return nil, err
+	}
+	ethClient.Address = key.Address
+
+	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)))
+	if err != nil {
+		return nil, err
+	}
+
+	transactor, err := eth.NewTransactor(string(ksBytes), passphrase, ethClient.Client)
+	if err != nil {
+		return nil, err
+	}
+	if transactorConfig != nil {
+		eth.SetBlockDelay(transactorConfig.BlockDelay)
+		eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
+		eth.SetChainId(transactorConfig.ChainId)
+		// TODO: GasLimit and WaitMinedConfig
+	}
+	ethClient.Transactor = transactor
+
+	err = ethClient.setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
+	if err != nil {
+		return nil, err
+	}
+
 	return ethClient, nil
 }
 
-func (ethClient *EthClient) SetContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
+func (ethClient *EthClient) setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
 	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
 	dpos, err := NewDPoS(ethClient.DPoSAddress, ethClient.Client)
 	if err != nil {

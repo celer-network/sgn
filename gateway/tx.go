@@ -107,7 +107,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		request, err := subscribe.GetRequest(transactor.CliCtx, rs.ethClient.Ledger, &signedSimplexState)
+		request, err := subscribe.GetRequest(transactor.CliCtx, rs.ledgerContract, &signedSimplexState)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
 			return
@@ -129,7 +129,7 @@ func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		sidechainAddr, err := rs.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(req.EthAddr))
+		sidechainAddr, err := rs.sgnContract.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(req.EthAddr))
 		if err != nil {
 			log.Errorln("Query sidechain address error:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to query sidechain address")
@@ -151,7 +151,7 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		di, err := rs.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, mainchain.Hex2Addr(req.CandidateAddress), mainchain.Hex2Addr(req.DelegatorAddress))
+		di, err := rs.dposContract.GetDelegatorInfo(&bind.CallOpts{}, mainchain.Hex2Addr(req.CandidateAddress), mainchain.Hex2Addr(req.DelegatorAddress))
 		if err != nil {
 			log.Errorf("Failed to query delegator info: %s", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to query delegator info")
