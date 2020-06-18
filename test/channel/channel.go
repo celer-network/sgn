@@ -24,6 +24,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,8 +39,8 @@ type RestServer struct {
 	listener   net.Listener
 	logger     tlog.Logger
 	transactor *transactor.Transactor
-	peer1      *mainchain.EthClient
-	peer2      *mainchain.EthClient
+	peer1      *tc.TestEthClient
+	peer2      *tc.TestEthClient
 	cdc        *codec.Codec
 	channelID  mainchain.CidType
 	gateway    string
@@ -76,71 +78,49 @@ func NewRestServer() (rs *RestServer, err error) {
 		}
 	}
 
-	peer1, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
-		viper.GetString(peer1Flag),
-		"",
-		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
-			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
-			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
-		},
-	)
+	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthInstance))
+	if err != nil {
+		return
+	}
+	tc.EthClient = ethclient.NewClient(rpcClient)
+
+	peer1, err := tc.SetupTestEthClient(viper.GetString(peer1Flag))
 	if err != nil {
 		return
 	}
 
-	err = peer1.SetContracts(
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress))
+	peer2, err := tc.SetupTestEthClient(viper.GetString(peer2Flag))
 	if err != nil {
 		return
 	}
 
-	peer2, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
-		viper.GetString(peer2Flag),
-		"",
-		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
-			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
-			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
-		},
-	)
+	err = tc.SetContracts(
+		mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)),
+		mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress)),
+		mainchain.Hex2Addr(viper.GetString(common.FlagEthLedgerAddress)))
 	if err != nil {
 		return
 	}
-
-	err = peer2.SetContracts(
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress))
-	if err != nil {
-		return
-	}
-
-	tc.Client0 = peer1
 
 	log.Infof("Subscribe to sgn")
-	tokenAddr, err := peer1.DPoS.CelerToken(&bind.CallOpts{})
+	tokenAddr, err := tc.DposContract.CelerToken(&bind.CallOpts{})
 	if err != nil {
 		return
 	}
-	tokenContract, err := mainchain.NewERC20(tokenAddr, peer1.Client)
+	tokenContract, err := mainchain.NewERC20(tokenAddr, tc.EthClient)
 	if err != nil {
 		return
 	}
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 18), 10)
-	tx, err := tokenContract.Approve(peer1.Auth, peer1.DPoSAddress, amt)
+	tx, err := tokenContract.Approve(peer1.Auth, mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)), amt)
 	tc.ChkErr(err, "failed to approve erc20")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, tc.BlockDelay, tc.PollingInterval, "approve erc20")
+	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "approve erc20")
 
-	tx, err = peer1.SGN.Subscribe(peer1.Auth, amt)
+	tx, err = tc.SgnContract.Subscribe(peer1.Auth, amt)
 	tc.ChkErr(err, "failed to subscribe")
-	tc.WaitMinedWithChk(context.Background(), peer1.Client, tx, viper.GetUint64(blockDelayFlag)+3, tc.PollingInterval, "Subscribe on SGN contract")
+	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, viper.GetUint64(blockDelayFlag)+3, tc.PollingInterval, "Subscribe on SGN contract")
 
 	if gateway == "" {
 		subscription := subscribe.NewSubscription(peer1.Address.Hex())

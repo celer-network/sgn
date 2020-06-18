@@ -63,13 +63,13 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		ownerSig, err := rs.peer1.SignMessage(signedSimplexStateBytes)
+		ownerSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
 		if err != nil {
 			return
 		}
 
 		if rs.gateway == "" {
-			request, err := subscribe.GetRequest(rs.transactor.CliCtx, rs.peer1.Ledger, signedSimplexStateProto)
+			request, err := subscribe.GetRequest(rs.transactor.CliCtx, tc.LedgerContract, signedSimplexStateProto)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
 				return
@@ -123,7 +123,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		_, err = rs.peer2.Ledger.IntendSettle(rs.peer2.Auth, signedSimplexStateArrayBytes)
+		_, err = tc.LedgerContract.IntendSettle(rs.peer2.Auth, signedSimplexStateArrayBytes)
 		if err != nil {
 			log.Errorln("could not intendSettle:", err)
 			return
@@ -138,7 +138,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 
 func getChannelInfoHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		addresses, seqNums, err := rs.peer1.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, rs.channelID)
+		addresses, seqNums, err := tc.LedgerContract.GetStateSeqNumMap(&bind.CallOpts{}, rs.channelID)
 		if err != nil {
 			log.Errorln("Query StateSeqNumMap err", err)
 			return

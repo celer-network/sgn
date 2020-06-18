@@ -57,14 +57,20 @@ func SetupEthClients() {
 	EthClient = ethclient.NewClient(rpcClient)
 
 	_, EtherBaseAuth, err = GetAuth(etherBaseKs)
-	Client0 = setupTestEthClient(ClientEthKs[0])
-	Client1 = setupTestEthClient(ClientEthKs[1])
-}
-
-func setupTestEthClient(ksfile string) *TestEthClient {
-	addr, auth, err := GetAuth(ksfile)
+	Client0, err = SetupTestEthClient(ClientEthKs[0])
 	if err != nil {
 		log.Fatal(err)
+	}
+	Client1, err = SetupTestEthClient(ClientEthKs[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func SetupTestEthClient(ksfile string) (*TestEthClient, error) {
+	addr, auth, err := GetAuth(ksfile)
+	if err != nil {
+		return nil, err
 	}
 	testClient := &TestEthClient{
 		Address: addr,
@@ -72,7 +78,7 @@ func setupTestEthClient(ksfile string) *TestEthClient {
 	}
 	ksBytes, err := ioutil.ReadFile(ksfile)
 	testClient.Signer, err = eth.NewSignerFromKeystore(string(ksBytes), "")
-	return testClient
+	return testClient, nil
 }
 
 func SetContracts(dposAddr, sgnAddr, ledgerAddr mainchain.Addr) error {

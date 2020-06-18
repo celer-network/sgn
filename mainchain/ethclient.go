@@ -4,10 +4,8 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"math/big"
-	"strings"
 
 	"github.com/celer-network/goutils/eth"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -17,7 +15,6 @@ import (
 type EthClient struct {
 	// init by NewEthClient
 	Client     *ethclient.Client
-	Auth       *bind.TransactOpts
 	Transactor *eth.Transactor
 	Signer     eth.Signer
 	Address    Addr
@@ -56,13 +53,18 @@ func NewEthClient(
 			return nil, err
 		}
 
-		ks := string(ksBytes)
-		err = ethClient.setAuthWithKeystoreBytes(ksBytes, passphrase)
+		key, err := keystore.DecryptKey(ksBytes, passphrase)
+		if err != nil {
+			return nil, err
+		}
+		ethClient.Address = key.Address
+
+		ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)))
 		if err != nil {
 			return nil, err
 		}
 
-		transactor, err := eth.NewTransactor(ks, passphrase, ethClient.Client)
+		transactor, err := eth.NewTransactor(string(ksBytes), passphrase, ethClient.Client)
 		if err != nil {
 			return nil, err
 		}
@@ -104,24 +106,4 @@ func (ethClient *EthClient) SetContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr 
 
 func (ethClient *EthClient) SignMessage(data []byte) ([]byte, error) {
 	return ethClient.Signer.SignEthMessage(data)
-}
-
-func (ethClient *EthClient) setAuthWithKeystoreBytes(ksBytes []byte, passphrase string) error {
-	key, err := keystore.DecryptKey(ksBytes, passphrase)
-	if err != nil {
-		return err
-	}
-
-	auth, err := bind.NewTransactor(strings.NewReader(string(ksBytes)), passphrase)
-	if err != nil {
-		return err
-	}
-
-	ethClient.Address = key.Address
-	ethClient.Auth = auth
-	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)))
-	if err != nil {
-		return err
-	}
-	return nil
 }
