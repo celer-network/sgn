@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"math/big"
+	"time"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -36,7 +37,7 @@ type TransactorConfig struct {
 
 func NewEthClient(
 	ethurl, ksfile, passphrase string,
-	transactorConfig *TransactorConfig,
+	tconfig *TransactorConfig,
 	dposAddrStr, sgnAddrStr, ledgerAddrStr string) (*EthClient, error) {
 	ethClient := &EthClient{}
 
@@ -57,20 +58,17 @@ func NewEthClient(
 	}
 	ethClient.Address = key.Address
 
-	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)))
+	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)), tconfig.ChainId)
 	if err != nil {
 		return nil, err
 	}
 
-	transactor, err := eth.NewTransactor(string(ksBytes), passphrase, ethClient.Client)
+	transactor, err := eth.NewTransactor(
+		string(ksBytes), passphrase, ethClient.Client, tconfig.ChainId,
+		eth.WithBlockDelay(tconfig.BlockDelay),
+		eth.WithPollingInterval(time.Duration(tconfig.BlockPollingInterval)*time.Second))
 	if err != nil {
 		return nil, err
-	}
-	if transactorConfig != nil {
-		eth.SetBlockDelay(transactorConfig.BlockDelay)
-		eth.SetBlockPollingInterval(transactorConfig.BlockPollingInterval)
-		eth.SetChainId(transactorConfig.ChainId)
-		// TODO: GasLimit and WaitMinedConfig
 	}
 	ethClient.Transactor = transactor
 

@@ -58,12 +58,12 @@ func WaitMinedWithChk(
 	conn *ethclient.Client,
 	tx *ethtypes.Transaction,
 	blockDelay uint64,
-	pollingInterval uint64,
+	pollingInterval time.Duration,
 	txname string,
 ) {
 	ctx2, cancel := context.WithTimeout(ctx, waitMinedTimeout)
 	defer cancel()
-	receipt, err := eth.WaitMined(ctx2, conn, tx, blockDelay, pollingInterval)
+	receipt, err := eth.WaitMined(ctx2, conn, tx, eth.WithBlockDelay(blockDelay), eth.WithPollingInterval(pollingInterval))
 	ChkErr(err, "WaitMined error")
 	if receipt.Status != ethtypes.ReceiptStatusSuccessful {
 		log.Fatalln(txname, "tx failed")

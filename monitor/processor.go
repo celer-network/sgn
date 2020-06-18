@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"context"
 	"math/big"
 
 	"github.com/celer-network/goutils/eth"
@@ -18,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/golang/protobuf/proto"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -239,14 +237,12 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 	case IntendWithdrawChannel:
 		receipt, err = m.ethClient.Transactor.TransactWaitMined(
 			"SnapshotStates",
-			&eth.TxConfig{QuickCatch: true},
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
 	case IntendSettle:
 		receipt, err = m.ethClient.Transactor.TransactWaitMined(
 			"IntendSettle",
-			&eth.TxConfig{QuickCatch: true},
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
@@ -293,8 +289,18 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	}
 
 	tx, err := m.ethClient.Transactor.Transact(
-		nil,
-		&eth.TxConfig{QuickCatch: true},
+		&eth.TransactionStateHandler{
+			OnMined: func(receipt *ethtypes.Receipt) {
+				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
+					log.Infof("Punish transaction %x succeeded", receipt.TxHash)
+				} else {
+					log.Errorf("Punish transaction %x failed", receipt.TxHash)
+				}
+			},
+			OnError: func(tx *ethtypes.Transaction, err error) {
+				log.Errorf("Punish transaction %x err: %s", tx.Hash(), err)
+			},
+		},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return m.ethClient.DPoS.Punish(opts, penaltyRequest)
 		},
@@ -312,27 +318,6 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 	log.Infoln("Punish tx submitted", tx.Hash().Hex())
-
-	go m.waitPunishMined(tx)
-}
-
-func (m *EthMonitor) waitPunishMined(tx *ethtypes.Transaction) {
-	res, err := eth.WaitMined(
-		context.Background(),
-		m.ethClient.Client,
-		tx,
-		viper.GetUint64(common.FlagEthConfirmCount),
-		viper.GetUint64(common.FlagEthPollInterval),
-	)
-	if err != nil {
-		log.Errorln("Punish tx WaitMined err", err, tx.Hash().Hex())
-		return
-	}
-	if res.Status != ethtypes.ReceiptStatusSuccessful {
-		log.Errorln("Punish tx failed", tx.Hash().Hex())
-		return
-	}
-	log.Infoln("Punish tx mined", tx.Hash().Hex())
 }
 
 func (m *EthMonitor) getRequests(cid [32]byte) (requests []subscribe.Request) {

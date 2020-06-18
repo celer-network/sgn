@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -167,7 +166,6 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 
 	_, err = m.ethClient.Transactor.Transact(
 		nil,
-		&eth.TxConfig{QuickCatch: true},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return m.ethClient.DPoS.ClaimValidator(opts)
 		},
