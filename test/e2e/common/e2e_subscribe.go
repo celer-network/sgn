@@ -35,18 +35,18 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 
 	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
 	tc.ChkTestErr(t, err, "failed to approve CELR to DPoS contract")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to DPoS contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to DPoS contract")
 
 	tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
 	tc.ChkTestErr(t, err, "failed to approve CELR to SGN contract")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to SGN contract")
 
-	_, err = tc.EtherBase.DPoS.ContributeToMiningPool(tc.Client0.Auth, amt)
+	_, err = tc.DposContract.ContributeToMiningPool(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to call ContributeToMiningPool of DPoS contract")
 
-	tx, err = tc.Client0.SGN.Subscribe(tc.Client0.Auth, amt)
+	tx, err = tc.SgnContract.Subscribe(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to call subscribe of SGN contract")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
 	tc.SleepWithLog(20, "passing subscribe event block delay")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
@@ -81,9 +81,9 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
-	requestSig, err := tc.Client0.SignMessage(signedSimplexStateBytes)
+	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
-	request, err := subscribe.GetRequest(transactor.CliCtx, tc.Client0.Ledger, signedSimplexStateProto)
+	request, err := subscribe.GetRequest(transactor.CliCtx, tc.LedgerContract, signedSimplexStateProto)
 	tc.ChkTestErr(t, err, "failed to get request")
 	request.SeqNum = seqNum
 	request.SignedSimplexStateBytes = signedSimplexStateBytes
@@ -113,9 +113,9 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
 	})
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateArrayBytes")
-	tx, err = tc.Client0.Ledger.IntendSettle(tc.Client0.Auth, signedSimplexStateArrayBytes)
+	tx, err = tc.LedgerContract.IntendSettle(tc.Client0.Auth, signedSimplexStateArrayBytes)
 	tc.ChkTestErr(t, err, "failed to IntendSettle")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
 	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{3}, GuardSender: [a-f0-9]{40}`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0, 100)
@@ -162,10 +162,10 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	assert.Equal(t, rewardSigLen, len(reward.Sigs), "The length of reward signatures mismatch")
 
 	log.Infoln("Call redeemReward on sgn contract...")
-	tx, err = tc.Client0.SGN.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())
+	tx, err = tc.SgnContract.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())
 	tc.ChkTestErr(t, err, "failed to redeem reward")
-	tc.WaitMinedWithChk(ctx, tc.Client0.Client, tx, tc.BlockDelay, tc.PollingInterval, "redeem reward on SGN contract")
-	rsr, err := tc.Client0.SGN.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "redeem reward on SGN contract")
+	rsr, err := tc.SgnContract.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 	tc.ChkTestErr(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 }

@@ -20,15 +20,27 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/golang/protobuf/proto"
 )
+
+type TestEthClient struct {
+	Address mainchain.Addr
+	Auth    *bind.TransactOpts
+	Signer  eth.Signer
+}
 
 var (
 	etherBaseKs = EnvDir + "/keystore/etherbase.json"
 
-	EtherBase *mainchain.EthClient
-	Client0   *mainchain.EthClient
-	Client1   *mainchain.EthClient
+	EthClient      *ethclient.Client
+	EtherBaseAuth  *bind.TransactOpts
+	DposContract   *mainchain.DPoS
+	SgnContract    *mainchain.SGN
+	LedgerContract *mainchain.CelerLedger
+
+	Client0 *TestEthClient
+	Client1 *TestEthClient
 )
 
 func SetEthBaseKs(prefix string) {
@@ -38,30 +50,43 @@ func SetEthBaseKs(prefix string) {
 // SetupEthClients sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
 // Contracts part (DPoSAddress, DPoS, SGNAddress, SGN, LedgerAddress, Ledger) is set after deploying DPoS and SGN contracts in setupNewSGNEnv()
 func SetupEthClients() {
-	EtherBase = setupEthClient(etherBaseKs)
-	Client0 = setupEthClient(ClientEthKs[0])
-	Client1 = setupEthClient(ClientEthKs[1])
-}
-
-func setupEthClient(ksfile string) *mainchain.EthClient {
-	ethClient, err := mainchain.NewEthClient(LocalGeth, ksfile, "", nil)
+	rpcClient, err := rpc.Dial(LocalGeth)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return ethClient
+	EthClient = ethclient.NewClient(rpcClient)
+
+	_, EtherBaseAuth, err = GetAuth(etherBaseKs)
+	Client0 = setupTestEthClient(ClientEthKs[0])
+	Client1 = setupTestEthClient(ClientEthKs[1])
+}
+
+func setupTestEthClient(ksfile string) *TestEthClient {
+	addr, auth, err := GetAuth(ksfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	testClient := &TestEthClient{
+		Address: addr,
+		Auth:    auth,
+	}
+	ksBytes, err := ioutil.ReadFile(ksfile)
+	testClient.Signer, err = eth.NewSignerFromKeystore(string(ksBytes), "")
+	return testClient
 }
 
 func SetContracts(dposAddr, sgnAddr, ledgerAddr mainchain.Addr) error {
 	log.Infof("set contracts dpos %x sgn %x ledger %x", dposAddr, sgnAddr, ledgerAddr)
-	err := EtherBase.SetContracts(dposAddr.String(), sgnAddr.String(), ledgerAddr.String())
+	var err error
+	DposContract, err = mainchain.NewDPoS(dposAddr, EthClient)
 	if err != nil {
 		return err
 	}
-	err = Client0.SetContracts(dposAddr.String(), sgnAddr.String(), ledgerAddr.String())
+	SgnContract, err = mainchain.NewSGN(sgnAddr, EthClient)
 	if err != nil {
 		return err
 	}
-	err = Client1.SetContracts(dposAddr.String(), sgnAddr.String(), ledgerAddr.String())
+	LedgerContract, err = mainchain.NewCelerLedger(ledgerAddr, EthClient)
 	if err != nil {
 		return err
 	}
@@ -72,7 +97,7 @@ func SetupE2eProfile() {
 	ledgerAddr := DeployLedgerContract()
 	// Deploy sample ERC20 contract (CELR)
 	tx, erc20Addr, erc20 := DeployERC20Contract()
-	WaitMinedWithChk(context.Background(), EtherBase.Client, tx, BlockDelay, PollingInterval, "DeployERC20")
+	WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "DeployERC20")
 
 	E2eProfile = &TestProfile{
 		// hardcoded values
@@ -144,7 +169,7 @@ func FundAddrsETH(amt string, recipients []mainchain.Addr) error {
 }
 
 func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount string) error {
-	erc20Contract, err := mainchain.NewERC20(erc20Addr, EtherBase.Client)
+	erc20Contract, err := mainchain.NewERC20(erc20Addr, EthClient)
 	if err != nil {
 		return err
 	}
@@ -152,18 +177,18 @@ func FundAddrsErc20(erc20Addr mainchain.Addr, addrs []mainchain.Addr, amount str
 	tokenAmt.SetString(amount, 10)
 	var lastTx *types.Transaction
 	for _, addr := range addrs {
-		tx, transferErr := erc20Contract.Transfer(EtherBase.Auth, addr, tokenAmt)
+		tx, transferErr := erc20Contract.Transfer(EtherBaseAuth, addr, tokenAmt)
 		if transferErr != nil {
 			return transferErr
 		}
 		lastTx = tx
-		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, EtherBase.Auth.From)
+		log.Infof("Sending ERC20 %s to %x from %x", amount, addr, EtherBaseAuth.From)
 	}
-	_, err = eth.WaitMined(context.Background(), EtherBase.Client, lastTx, BlockDelay, PollingInterval)
+	_, err = eth.WaitMined(context.Background(), EthClient, lastTx, BlockDelay, PollingInterval)
 	return err
 }
 
-func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err error) {
+func OpenChannel(peer0, peer1 *TestEthClient) (channelId [32]byte, err error) {
 	log.Infoln("Call openChannel on ledger contract", mainchain.Addr2Hex(peer0.Address), mainchain.Addr2Hex(peer1.Address))
 
 	lo, hi := peer0, peer1
@@ -198,12 +223,12 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 		return
 	}
 
-	siglo, err := lo.SignMessage(paymentChannelInitializerBytes)
+	siglo, err := lo.Signer.SignEthMessage(paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
 
-	sighi, err := hi.SignMessage(paymentChannelInitializerBytes)
+	sighi, err := hi.Signer.SignEthMessage(paymentChannelInitializerBytes)
 	if err != nil {
 		return
 	}
@@ -216,15 +241,15 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 		return
 	}
 
-	tx, err := Client0.Ledger.OpenChannel(Client0.Auth, requestBytes)
+	tx, err := LedgerContract.OpenChannel(Client0.Auth, requestBytes)
 	if err != nil {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
-	WaitMinedWithChk(ctx, Client0.Client, tx, BlockDelay, PollingInterval, "OpenChannel")
+	WaitMinedWithChk(ctx, EthClient, tx, BlockDelay, PollingInterval, "OpenChannel")
 
-	receipt, err := Client0.Client.TransactionReceipt(context.Background(), tx.Hash())
+	receipt, err := EthClient.TransactionReceipt(context.Background(), tx.Hash())
 	if err != nil {
 		return
 	}
@@ -235,8 +260,8 @@ func OpenChannel(peer0, peer1 *mainchain.EthClient) (channelId [32]byte, err err
 }
 
 func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *big.Int) error {
-	conn := EtherBase.Client
-	dposContract := EtherBase.DPoS
+	conn := EthClient
+	dposContract := DposContract
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
@@ -251,9 +276,9 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 }
 
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int, commissionRate *big.Int, rateLockEndTime *big.Int) error {
-	conn := EtherBase.Client
-	dposContract := EtherBase.DPoS
-	sgnContract := EtherBase.SGN
+	conn := EthClient
+	dposContract := DposContract
+	sgnContract := SgnContract
 
 	log.Infof("Call initializeCandidate on dpos contract using the validator eth address %x, minSelfStake: %d, commissionRate: %d, rateLockEndTime: %d", auth.From.Bytes(), minSelfStake, commissionRate, rateLockEndTime)
 	_, err := dposContract.InitializeCandidate(auth, minSelfStake, commissionRate, rateLockEndTime)
@@ -276,8 +301,8 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 }
 
 func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
-	conn := EtherBase.Client
-	dposContract := EtherBase.DPoS
+	conn := EthClient
+	dposContract := DposContract
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 

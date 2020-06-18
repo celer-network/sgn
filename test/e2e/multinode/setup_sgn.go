@@ -33,7 +33,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 	}
 	var tx *types.Transaction
 	tx, tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
-	tc.WaitMinedWithChk(context.Background(), tc.EtherBase.Client, tx, tc.BlockDelay, tc.PollingInterval, "DeployDPoSSGNContracts")
+	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "DeployDPoSSGNContracts")
 
 	log.Infoln("make localnet-down-nodes")
 	cmd := exec.Command("make", "localnet-down-nodes")
