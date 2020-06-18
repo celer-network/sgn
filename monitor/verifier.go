@@ -21,6 +21,11 @@ import (
 )
 
 func (m *EthMonitor) verifyActiveChanges() {
+	v, err := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, m.operator.Key.GetAddress().String())
+	if v.GetStatus() != sdk.Bonded {
+		log.Debugln("skip verifying changes as I am not a bonded validator yet")
+		return
+	}
 	activeChanges, err := sync.CLIQueryActiveChanges(m.operator.CliCtx, sync.RouterKey)
 	if err != nil {
 		log.Errorln("Query active changes error:", err)
