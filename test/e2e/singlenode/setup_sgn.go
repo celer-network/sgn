@@ -32,7 +32,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 	}
 	var tx *types.Transaction
 	tx, tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
-	tc.WaitMinedWithChk(context.Background(), tc.EtherBase.Client, tx, tc.BlockDelay, tc.PollingInterval, "DeployDPoSSGNContracts")
+	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "DeployDPoSSGNContracts")
 
 	updateSGNConfig()
 

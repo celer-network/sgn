@@ -112,9 +112,9 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 		return
 	}
 
-	sig, err := m.ethClient.SignMessage(reward.RewardProtoBytes)
+	sig, err := m.ethClient.SignEthMessage(reward.RewardProtoBytes)
 	if err != nil {
-		log.Errorln("SignMessage err", err)
+		log.Errorln("SignEthMessage err", err)
 		return
 	}
 
@@ -130,9 +130,9 @@ func (m *EthMonitor) handlePenalty(penaltyEvent PenaltyEvent) {
 	}
 	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, penaltyEvent.Nonce)
 
-	sig, err := m.ethClient.SignMessage(penalty.PenaltyProtoBytes)
+	sig, err := m.ethClient.SignEthMessage(penalty.PenaltyProtoBytes)
 	if err != nil {
-		log.Errorln("SignMessage err", err)
+		log.Errorln("SignEthMessage err", err)
 		return
 	}
 

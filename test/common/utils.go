@@ -116,7 +116,7 @@ func ParseGatewayQueryResponse(resp *http.Response, cdc *codec.Codec) (json.RawM
 	return responseWithHeight.Result, nil
 }
 
-func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, peer0, peer1 *mainchain.EthClient) (*chain.SignedSimplexState, error) {
+func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, peer0, peer1 *TestEthClient) (*chain.SignedSimplexState, error) {
 	simplexPaymentChannelBytes, err := proto.Marshal(&entity.SimplexPaymentChannel{
 		SeqNum:    seqNum,
 		ChannelId: channelId,
@@ -131,12 +131,12 @@ func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, peer0,
 		lo, hi = peer1, peer0
 	}
 
-	siglo, err := lo.SignMessage(simplexPaymentChannelBytes)
+	siglo, err := lo.Signer.SignEthMessage(simplexPaymentChannelBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	sighi, err := hi.SignMessage(simplexPaymentChannelBytes)
+	sighi, err := hi.Signer.SignEthMessage(simplexPaymentChannelBytes)
 	if err != nil {
 		return nil, err
 	}
