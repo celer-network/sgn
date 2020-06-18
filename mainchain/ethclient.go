@@ -107,6 +107,6 @@ func (ethClient *EthClient) setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr 
 	return nil
 }
 
-func (ethClient *EthClient) SignMessage(data []byte) ([]byte, error) {
+func (ethClient *EthClient) SignEthMessage(data []byte) ([]byte, error) {
 	return ethClient.Signer.SignEthMessage(data)
 }
