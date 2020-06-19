@@ -21,9 +21,9 @@ import (
 )
 
 func (m *EthMonitor) verifyActiveChanges() {
-	v, err := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, m.operator.Key.GetAddress().String())
+	v, _ := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, m.operator.Key.GetAddress().String())
 	if v.GetStatus() != sdk.Bonded {
-		log.Debugln("skip verifying changes as I am not a bonded validator yet")
+		log.Debugln("skip verifying changes as I am not a bonded validator")
 		return
 	}
 	activeChanges, err := sync.CLIQueryActiveChanges(m.operator.CliCtx, sync.RouterKey)
@@ -100,7 +100,7 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, candidate.EthAddress)
 	if err == nil {
 		if candidate.Operator.Equals(c.Operator) {
-			log.Errorln("Invalid change for the same Operator value")
+			log.Errorf("Invalid change for the same Candidate %s Operator %s", candidate.EthAddress, c.Operator.String())
 			return false
 		}
 	}
@@ -127,7 +127,8 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	d, err := validator.CLIQueryDelegator(m.operator.CliCtx, validator.RouterKey, delegator.CandidateAddr, delegator.DelegatorAddr)
 	if err == nil {
 		if delegator.DelegatedStake.Equal(d.DelegatedStake) {
-			log.Errorln("Invalid change for the same DelegatedStake value")
+			log.Errorf("Invalid change for the same Delegator %s Candidate %s Stake %s",
+				delegator.DelegatorAddr, delegator.CandidateAddr, delegator.DelegatedStake)
 			return false
 		}
 	}
@@ -170,7 +171,8 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	)
 	if err == nil {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
-			log.Errorln("Invalid change for the same Status/Tokens/Commission value")
+			log.Errorf("Invalid change for the same Candidate %s Status %s Tokens %s Commission %s",
+				candidate.Operator.String(), vt.Status, vt.Tokens, vt.Commission)
 			return false
 		}
 	}

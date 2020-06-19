@@ -37,7 +37,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		}
 
 		if totalVote.GTE(threshold) {
-			log.Infoln("Change type", change.Type, totalVote, threshold)
+			log.Infof("Change type: %s, total vote: %s, threshold %s", change.Type, totalVote, threshold)
 
 			err := keeper.ApplyChange(ctx, change)
 			if err != nil {

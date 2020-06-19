@@ -52,7 +52,7 @@ func (m *EthMonitor) processEventQueue() {
 
 func (m *EthMonitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
 	if delegate.Candidate != m.ethClient.Address {
-		log.Infof("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
+		log.Debugf("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
 		return
 	}
 
@@ -178,7 +178,6 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 }
 
 func (m *EthMonitor) setTransactors() {
-	log.Infoln("Set transactor")
 	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 	if err != nil {
 		log.Errorln("parse transactors err", err)
@@ -189,11 +188,11 @@ func (m *EthMonitor) setTransactors() {
 		transactors,
 		m.operator.Key.GetAddress(),
 	)
+	log.Infoln("set transactors", transactors)
 	m.operator.AddTxMsg(setTransactorsMsg)
 }
 
 func (m *EthMonitor) syncValidator(address mainchain.Addr) {
-	log.Infof("SyncValidator %x", address)
 	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, address)
@@ -229,12 +228,11 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 
 	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(validator)
 	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: sync validator %x", address)
 	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
-	log.Infof("SyncDelegator candidate: %x, delegator: %x", candidatorAddr, delegatorAddr)
-
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, candidatorAddr, delegatorAddr)
@@ -247,5 +245,6 @@ func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr)
 	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 	delegatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(delegator)
 	msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: sync delegator %x candidate %x stake %s", delegatorAddr, candidatorAddr, delegator.DelegatedStake)
 	m.operator.AddTxMsg(msg)
 }
