@@ -13,7 +13,7 @@ func main() {
 	cobra.EnableCommandSorting = false
 
 	rootCmd := &cobra.Command{
-		Use:   "sgntops",
+		Use:   "sgnops",
 		Short: "sgn ops utility",
 	}
 
