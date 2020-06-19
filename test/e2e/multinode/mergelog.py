@@ -8,10 +8,14 @@ files = []
 for filename in filenames:
     files.append(open(filename, "r"))
 
+def isTendermintLog(line):
+    if (len(line) > 27 and line[1] == '[' and line[12] == "|" and line[25] == ']'):
+        return True
+    return False
 
 def readnext(f):
     line = f.readline()
-    while not ((len(line) > 24 and line[1] != '[' and line[24] == '|') or line == ""):
+    while isTendermintLog(line):
         line = f.readline()
     return line.rstrip('\n')
 
@@ -26,7 +30,6 @@ def select(lines):
 
 
 def merge(files):
-    mergelog = []
     lines = []
     for f in files:
         lines.append(readnext(f))
