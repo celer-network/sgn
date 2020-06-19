@@ -11,8 +11,7 @@
   },
   "log": {
     "color": true,
-    "level": "debug",
-    "longfile": true
+    "level": "debug"
   },
   "sgn": {
     "chainid": "sgnchain",
@@ -26,7 +25,6 @@
       "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
     ],
     "keyringBackend": "file",
-    "timeoutCommit": 2,
-    "bootNode": true
+    "timeoutCommit": 2
   }
 }
