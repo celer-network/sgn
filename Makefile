@@ -14,12 +14,12 @@ install: go.sum
 		go install $(BUILD_FLAGS) ./cmd/sgnd
 		go install $(BUILD_FLAGS) ./cmd/sgncli
 
-install-test: go.sum
-	go install $(BUILD_FLAGS) ./cmd/sgntest
+install-ops: go.sum
+	go install $(BUILD_FLAGS) ./cmd/sgnops
 
 install-all: go.sum
 	make install
-	make install-test
+	make install-ops
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
