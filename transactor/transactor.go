@@ -38,6 +38,9 @@ type Transactor struct {
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
 	kb, err := keys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
 		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
+	if err != nil {
+		return nil, err
+	}
 
 	addr, err := sdk.AccAddressFromBech32(accAddr)
 	if err != nil {
