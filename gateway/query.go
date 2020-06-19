@@ -79,6 +79,11 @@ func guardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 // http request handler to query candidate
 func candidateHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
