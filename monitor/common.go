@@ -62,10 +62,11 @@ func (m *Monitor) isRequestGuard(request subscribe.Request, eventBlockNumber uin
 		return false
 	}
 
-	blockNumberDiff := m.blkNum.Uint64() - eventBlockNumber
+	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+	blockNumberDiff := blkNum - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
-	log.Infoln("IsRequestGuard", m.blkNum.Uint64(), eventBlockNumber, guardIndex, requestGuards)
+	log.Infoln("IsRequestGuard", blkNum, eventBlockNumber, guardIndex, requestGuards)
 	// All other validators need to guard
 	if guardIndex >= uint64(len(requestGuards)) {
 		return true
