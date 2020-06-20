@@ -19,7 +19,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func (m *EthMonitor) verifyActiveChanges() {
+func (m *Monitor) verifyActiveChanges() {
 	v, _ := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, m.operator.Key.GetAddress().String())
 	if v.GetStatus() != sdk.Bonded {
 		log.Debugln("skip verifying changes as I am not a bonded validator")
@@ -49,7 +49,7 @@ func (m *EthMonitor) verifyActiveChanges() {
 	}
 }
 
-func (m *EthMonitor) verifyChange(change sync.Change) bool {
+func (m *Monitor) verifyChange(change sync.Change) bool {
 	switch change.Type {
 	case sync.ConfirmParamProposal:
 		return m.verifyConfirmParamProposal(change)
@@ -72,7 +72,7 @@ func (m *EthMonitor) verifyChange(change sync.Change) bool {
 	}
 }
 
-func (m *EthMonitor) verifyConfirmParamProposal(change sync.Change) bool {
+func (m *Monitor) verifyConfirmParamProposal(change sync.Change) bool {
 	var paramChange common.ParamChange
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &paramChange)
 	log.Infoln("Verify paramChange", paramChange)
@@ -91,7 +91,7 @@ func (m *EthMonitor) verifyConfirmParamProposal(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
+func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	var candidate validator.Candidate
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &candidate)
 	log.Infoln("Verify candidate", candidate)
@@ -118,7 +118,7 @@ func (m *EthMonitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
+func (m *Monitor) verifySyncDelegator(change sync.Change) bool {
 	var delegator validator.Delegator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
 	log.Infoln("Verify sync delegator", delegator)
@@ -147,7 +147,7 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
+func (m *Monitor) verifySyncValidator(change sync.Change) bool {
 	var vt staking.Validator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
 
@@ -210,7 +210,7 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifySubscribe(change sync.Change) bool {
+func (m *Monitor) verifySubscribe(change sync.Change) bool {
 	var subscription subscribe.Subscription
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &subscription)
 	log.Infoln("Verify subscription", subscription)
@@ -231,7 +231,7 @@ func (m *EthMonitor) verifySubscribe(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifyRequest(change sync.Change) bool {
+func (m *Monitor) verifyRequest(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	log.Infoln("Verify request", request)
@@ -289,7 +289,7 @@ func (m *EthMonitor) verifyRequest(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifyTriggerGuard(change sync.Change) bool {
+func (m *Monitor) verifyTriggerGuard(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	log.Infoln("Verify TriggerGuard", request)
@@ -329,7 +329,7 @@ func (m *EthMonitor) verifyTriggerGuard(change sync.Change) bool {
 	return true
 }
 
-func (m *EthMonitor) verifyGuardProof(change sync.Change) bool {
+func (m *Monitor) verifyGuardProof(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	log.Infoln("Verify GuardProof", request)

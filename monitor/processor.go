@@ -23,14 +23,14 @@ const (
 	maxPunishRetry = 5
 )
 
-func (m *EthMonitor) processQueue() {
+func (m *Monitor) processQueue() {
 	m.processEventQueue()
 	m.processPullerQueue()
 	m.processPusherQueue()
 	m.processPenaltyQueue()
 }
 
-func (m *EthMonitor) processPullerQueue() {
+func (m *Monitor) processPullerQueue() {
 	if !m.isPuller() {
 		return
 	}
@@ -68,7 +68,7 @@ func (m *EthMonitor) processPullerQueue() {
 	}
 }
 
-func (m *EthMonitor) processPusherQueue() {
+func (m *Monitor) processPusherQueue() {
 	iterator, err := m.db.Iterator(PusherKeyPrefix, storetypes.PrefixEndBytes(PusherKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -92,7 +92,7 @@ func (m *EthMonitor) processPusherQueue() {
 	}
 }
 
-func (m *EthMonitor) processPenaltyQueue() {
+func (m *Monitor) processPenaltyQueue() {
 	if !m.isPusher() {
 		return
 	}
@@ -115,7 +115,7 @@ func (m *EthMonitor) processPenaltyQueue() {
 	}
 }
 
-func (m *EthMonitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
+func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
 	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
 	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.operator.Key.GetAddress())
@@ -123,7 +123,7 @@ func (m *EthMonitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DP
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
+func (m *Monitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, updateSidechainAddr.Candidate)
@@ -145,7 +145,7 @@ func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNU
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getRequests(intendSettle.ChannelId)
 	for _, request := range requests {
@@ -153,7 +153,7 @@ func (m *EthMonitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendS
 	}
 }
 
-func (m *EthMonitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
+func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getRequests(intendWithdrawChannel.ChannelId)
 	for _, request := range requests {
@@ -161,7 +161,7 @@ func (m *EthMonitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.
 	}
 }
 
-func (m *EthMonitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log) {
+func (m *Monitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log) {
 	if request.TriggerTxHash != "" {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return
@@ -184,7 +184,7 @@ func (m *EthMonitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getRequests(intendSettle.ChannelId)
 	for _, request := range requests {
@@ -192,7 +192,7 @@ func (m *EthMonitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntend
 	}
 }
 
-func (m *EthMonitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
+func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
 	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getRequests(intendWithdrawChannel.ChannelId)
 	for _, request := range requests {
@@ -200,7 +200,7 @@ func (m *EthMonitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain
 	}
 }
 
-func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, eventName EventName) {
+func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, eventName EventName) {
 	log.Infoln("Guard request", request)
 	if request.GuardTxHash != "" {
 		log.Errorln("Request has been fulfilled")
@@ -268,7 +268,7 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
+func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
 	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{
@@ -322,7 +322,7 @@ func (m *EthMonitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Punish tx submitted", tx.Hash().Hex())
 }
 
-func (m *EthMonitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
+func (m *Monitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
 	channelId := cid[:]
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),

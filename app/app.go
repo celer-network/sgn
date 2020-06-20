@@ -430,5 +430,5 @@ func (app *sgnApp) startMonitor(db dbm.DB) {
 		_, err = rpc.GetChainHeight(operator.CliCtx)
 	}
 
-	monitor.NewEthMonitor(ethClient, operator, db)
+	monitor.NewMonitor(ethClient, operator, db)
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (m *EthMonitor) processEventQueue() {
+func (m *Monitor) processEventQueue() {
 	iterator, err := m.db.Iterator(EventKeyPrefix, storetypes.PrefixEndBytes(EventKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -50,7 +50,7 @@ func (m *EthMonitor) processEventQueue() {
 	}
 }
 
-func (m *EthMonitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
+func (m *Monitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
 	if delegate.Candidate != m.ethClient.Address {
 		log.Debugf("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
 		return
@@ -67,7 +67,7 @@ func (m *EthMonitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
 	}
 }
 
-func (m *EthMonitor) handleCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
+func (m *Monitor) handleCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
 	log.Infof("New candidate unbonded %x", candidateUnbonded.Candidate)
 
 	if m.isPullerOrOwner(candidateUnbonded.Candidate) {
@@ -75,7 +75,7 @@ func (m *EthMonitor) handleCandidateUnbonded(candidateUnbonded *mainchain.DPoSCa
 	}
 }
 
-func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
+func (m *Monitor) handleValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
 	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	isAddValidator := validatorChange.ChangeType == mainchain.AddValidator
 	doSync := m.isPuller() && !isAddValidator
@@ -94,7 +94,7 @@ func (m *EthMonitor) handleValidatorChange(validatorChange *mainchain.DPoSValida
 	}
 }
 
-func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
+func (m *Monitor) handleIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
 	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate) {
@@ -102,7 +102,7 @@ func (m *EthMonitor) handleIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWi
 	}
 }
 
-func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
+func (m *Monitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Infoln("New initiate withdraw", ethAddr)
 
 	reward, err := validator.CLIQueryReward(m.operator.CliCtx, validator.StoreKey, ethAddr)
@@ -121,7 +121,7 @@ func (m *EthMonitor) handleInitiateWithdrawReward(ethAddr string) {
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) handlePenalty(penaltyEvent PenaltyEvent) {
+func (m *Monitor) handlePenalty(penaltyEvent PenaltyEvent) {
 	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
 	if err != nil {
 		log.Errorf("Query penalty %d err %s", penaltyEvent.Nonce, err)
@@ -139,7 +139,7 @@ func (m *EthMonitor) handlePenalty(penaltyEvent PenaltyEvent) {
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) claimValidatorOnMainchain() {
+func (m *Monitor) claimValidatorOnMainchain() {
 	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, m.ethClient.Address)
@@ -177,7 +177,7 @@ func (m *EthMonitor) claimValidatorOnMainchain() {
 	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
 }
 
-func (m *EthMonitor) setTransactors() {
+func (m *Monitor) setTransactors() {
 	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 	if err != nil {
 		log.Errorln("parse transactors err", err)
@@ -192,7 +192,7 @@ func (m *EthMonitor) setTransactors() {
 	m.operator.AddTxMsg(setTransactorsMsg)
 }
 
-func (m *EthMonitor) syncValidator(address mainchain.Addr) {
+func (m *Monitor) syncValidator(address mainchain.Addr) {
 	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, address)
@@ -232,7 +232,7 @@ func (m *EthMonitor) syncValidator(address mainchain.Addr) {
 	m.operator.AddTxMsg(msg)
 }
 
-func (m *EthMonitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+func (m *Monitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, candidatorAddr, delegatorAddr)

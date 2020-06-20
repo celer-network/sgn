@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	prefixEthMonitorWatcher = "emw" // event name -> monitorBlockInfo
+	prefixMonitorWatcher = "emw" // event name -> monitorBlockInfo
 )
 
 type watcherDAL struct {
@@ -23,7 +23,7 @@ type monitorBlockInfo struct {
 
 func newWatcherDAL(db tmdb.DB) *watcherDAL {
 	return &watcherDAL{
-		db: tmdb.NewPrefixDB(db, []byte(prefixEthMonitorWatcher)),
+		db: tmdb.NewPrefixDB(db, []byte(prefixMonitorWatcher)),
 	}
 }
 

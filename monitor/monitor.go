@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	prefixEthMonitor = "em"
+	prefixMonitor = "em"
 )
 
 var (
@@ -35,11 +35,11 @@ var (
 	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
-type EthMonitor struct {
+type Monitor struct {
 	ethClient       *mainchain.EthClient
 	operator        *transactor.Transactor
 	db              dbm.DB
-	monitorService  *monitor.Service
+	ethMonitor      *monitor.Service
 	dposContract    monitor.Contract
 	sgnContract     monitor.Contract
 	ledgerContract  monitor.Contract
@@ -49,16 +49,16 @@ type EthMonitor struct {
 	isValidator     bool
 }
 
-func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, db dbm.DB) {
-	monitorDb := dbm.NewPrefixDB(db, []byte(prefixEthMonitor))
+func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, db dbm.DB) {
+	monitorDb := dbm.NewPrefixDB(db, []byte(prefixMonitor))
 	dal := newWatcherDAL(monitorDb)
 	watchService := watcher.NewWatchService(ethClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
 	if watchService == nil {
 		log.Fatalln("Cannot create watch service")
 	}
 
-	monitorService := monitor.NewService(watchService, 0 /* blockDelay */, true /* enabled */)
-	monitorService.Init()
+	ethMonitor := monitor.NewService(watchService, 0 /* blockDelay */, true /* enabled */)
+	ethMonitor.Init()
 
 	dposCandidateInfo, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 	if err != nil {
@@ -74,12 +74,12 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 		log.Fatalln("NewBigCache err", err)
 	}
 
-	m := EthMonitor{
+	m := Monitor{
 		ethClient:       ethClient,
 		operator:        operator,
 		db:              db,
-		monitorService:  monitorService,
-		blkNum:          monitorService.GetCurrentBlockNumber(),
+		ethMonitor:      ethMonitor,
+		blkNum:          ethMonitor.GetCurrentBlockNumber(),
 		dposContract:    dposContract,
 		sgnContract:     sgnContract,
 		ledgerContract:  ledgerContract,
@@ -98,13 +98,13 @@ func NewEthMonitor(ethClient *mainchain.EthClient, operator *transactor.Transact
 	go m.monitorSlash()
 }
 
-func (m *EthMonitor) monitorBlockHead() {
+func (m *Monitor) monitorBlockHead() {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		<-ticker.C
-		blkNum := m.monitorService.GetCurrentBlockNumber()
+		blkNum := m.ethMonitor.GetCurrentBlockNumber()
 		if blkNum.Cmp(m.blkNum) == 0 {
 			continue
 		}
@@ -116,8 +116,8 @@ func (m *EthMonitor) monitorBlockHead() {
 	}
 }
 
-func (m *EthMonitor) monitorUpdateSidechainAddr() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorUpdateSidechainAddr() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(UpdateSidechainAddr),
 			Contract:   m.sgnContract,
@@ -137,8 +137,8 @@ func (m *EthMonitor) monitorUpdateSidechainAddr() {
 	}
 }
 
-func (m *EthMonitor) monitorConfirmParamProposal() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorConfirmParamProposal() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(ConfirmParamProposal),
 			Contract:   m.dposContract,
@@ -157,8 +157,8 @@ func (m *EthMonitor) monitorConfirmParamProposal() {
 	}
 }
 
-func (m *EthMonitor) monitorDelegate() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorDelegate() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(Delegate),
 			Contract:   m.dposContract,
@@ -177,8 +177,8 @@ func (m *EthMonitor) monitorDelegate() {
 	}
 }
 
-func (m *EthMonitor) monitorCandidateUnbonded() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorCandidateUnbonded() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(CandidateUnbonded),
 			Contract:   m.dposContract,
@@ -197,8 +197,8 @@ func (m *EthMonitor) monitorCandidateUnbonded() {
 	}
 }
 
-func (m *EthMonitor) monitorValidatorChange() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorValidatorChange() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(ValidatorChange),
 			Contract:   m.dposContract,
@@ -217,8 +217,8 @@ func (m *EthMonitor) monitorValidatorChange() {
 	}
 }
 
-func (m *EthMonitor) monitorIntendWithdrawSgn() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorIntendWithdrawSgn() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(IntendWithdraw),
 			Contract:   m.dposContract,
@@ -237,8 +237,8 @@ func (m *EthMonitor) monitorIntendWithdrawSgn() {
 	}
 }
 
-func (m *EthMonitor) monitorIntendWithdrawChannel() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorIntendWithdrawChannel() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(IntendWithdraw),
 			Contract:   m.ledgerContract,
@@ -257,8 +257,8 @@ func (m *EthMonitor) monitorIntendWithdrawChannel() {
 	}
 }
 
-func (m *EthMonitor) monitorIntendSettle() {
-	_, err := m.monitorService.Monitor(
+func (m *Monitor) monitorIntendSettle() {
+	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(IntendSettle),
 			Contract:   m.ledgerContract,
@@ -281,7 +281,7 @@ func (m *EthMonitor) monitorIntendSettle() {
 	}
 }
 
-func (m *EthMonitor) monitorWithdrawReward() {
+func (m *Monitor) monitorWithdrawReward() {
 	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
 		if !m.isValidator {
 			return
@@ -294,7 +294,7 @@ func (m *EthMonitor) monitorWithdrawReward() {
 	})
 }
 
-func (m *EthMonitor) monitorSlash() {
+func (m *Monitor) monitorSlash() {
 	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
 		if !m.isValidator {
 			return
@@ -319,7 +319,7 @@ func (m *EthMonitor) monitorSlash() {
 	})
 }
 
-func (m *EthMonitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
+func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
 	client, err := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
 	if err != nil {
 		log.Errorln("Fail to start create http client", err)
