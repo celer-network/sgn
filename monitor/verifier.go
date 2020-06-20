@@ -150,7 +150,6 @@ func (m *EthMonitor) verifySyncDelegator(change sync.Change) bool {
 func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 	var vt staking.Validator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
-	log.Infoln("Verify sync validator", vt)
 
 	candidateEthAddr := vt.Description.Identity
 	candidate, err := validator.CLIQueryCandidate(
@@ -162,6 +161,11 @@ func (m *EthMonitor) verifySyncValidator(change sync.Change) bool {
 		log.Errorln("Failed to query candidate:", err)
 		return false
 	}
+
+	log.Infof("verify sync validator %s ethaddr %x status %s token %s commission %s",
+		candidate.Operator.String(),
+		mainchain.Hex2Addr(candidateEthAddr),
+		vt.Status, vt.Tokens, vt.Commission)
 
 	v, err := validator.CLIQueryValidator(
 		m.operator.CliCtx,
