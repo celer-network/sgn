@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/celer-network/goutils/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -30,6 +31,7 @@ func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	if puller.ValidatorIdx != vIdx || puller.ValidatorAddr.Empty() {
 		puller = NewPuller(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
 		keeper.SetPuller(ctx, puller)
+		log.Infof("set puller to %s", puller.ValidatorAddr)
 	}
 }
 
@@ -43,6 +45,7 @@ func setPusher(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	if pusher.ValidatorIdx != vIdx || pusher.ValidatorAddr.Empty() {
 		pusher = NewPusher(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
 		keeper.SetPusher(ctx, pusher)
+		log.Infof("set pusher to %s", pusher.ValidatorAddr)
 	}
 }
 

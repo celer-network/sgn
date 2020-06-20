@@ -10,9 +10,7 @@
     "chainID": 883
   },
   "log": {
-    "color": true,
-    "level": "debug",
-    "longfile": true
+    "level": "debug"
   },
   "sgn": {
     "chainid": "sgnchain",

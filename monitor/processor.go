@@ -116,21 +116,14 @@ func (m *EthMonitor) processPenaltyQueue() {
 }
 
 func (m *EthMonitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
-	log.Infof("Confirm paramProposal, Record %v, NewValue %v", confirmParamProposal.Record, confirmParamProposal.NewValue)
 	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
 	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: confirm param proposal Record %v, NewValue %v", confirmParamProposal.Record, confirmParamProposal.NewValue)
 	m.operator.AddTxMsg(msg)
 }
 
 func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
-	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
-	if err == nil {
-		log.Infof("The sidechain address of candidate %x has been updated", updateSidechainAddr.Candidate)
-		return
-	}
-
-	log.Infof("Add UpdateSidechainAddr of %x to transactor msgQueue", updateSidechainAddr.Candidate)
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, updateSidechainAddr.Candidate)
@@ -139,9 +132,16 @@ func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNU
 		return
 	}
 
+	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
+	if err == nil && sdk.AccAddress(sidechainAddr).Equals(c.Operator) {
+		log.Infof("The sidechain address of candidate %x has been updated", updateSidechainAddr.Candidate)
+		return
+	}
+
 	candidate := validator.NewCandidate(updateSidechainAddr.Candidate.Hex(), sdk.AccAddress(sidechainAddr))
 	candidateData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(candidate)
 	msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: update sidechain addr for candidate %s %s", candidate.EthAddress, candidate.Operator.String())
 	m.operator.AddTxMsg(msg)
 }
 
@@ -180,6 +180,7 @@ func (m *EthMonitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log
 	request.TriggerTxBlkNum = rawLog.BlockNumber
 	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
 	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, requestData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: trigger guard request %s", request)
 	m.operator.AddTxMsg(msg)
 }
 
@@ -263,6 +264,7 @@ func (m *EthMonitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log
 	request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
 	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
 	msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: guard proof request %s", request)
 	m.operator.AddTxMsg(msg)
 }
 

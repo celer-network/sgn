@@ -92,7 +92,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	CheckCandidate(t, transactor, ethAddr, sgnop, amt)
 
 	if isValidator {
-		log.Info("Query sgn about the validators to check if it has correct stakes...")
+		log.Infof("Query sgn about the validator %s to check if it has correct stakes...", sgnop)
 		CheckValidator(t, transactor, sgnop, amt, sdk.Bonded)
 	}
 }
@@ -120,6 +120,9 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %s`, sgnop, expAmt) // defined in Candidate.String()
 	for retry := 0; retry < RetryLimit; retry++ {
 		candidate, err = sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
+		if err != nil {
+			log.Debugln("retry due to err:", err)
+		}
 		if err == nil && expectedRes == candidate.String() {
 			break
 		}

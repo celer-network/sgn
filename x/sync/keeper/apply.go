@@ -94,17 +94,21 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	var v staking.Validator
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &v)
 
-	log.Infoln("Apply sync validator", v)
 	candidate, found := keeper.validatorKeeper.GetCandidate(ctx, v.Description.Identity)
 	if !found {
 		return fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
 	}
-
 	valAddress := sdk.ValAddress(candidate.Operator)
+
+	log.Infof("apply sync validator %s ethaddr %x status %s token %s commission %s",
+		candidate.Operator.String(),
+		mainchain.Hex2Addr(v.Description.Identity),
+		v.Status, v.Tokens, v.Commission)
+
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-			return fmt.Errorf("Invalid change iniator %x for validator %x", change.Initiator, valAddress)
+			return fmt.Errorf("Invalid change initiator %x for validator %x", change.Initiator, valAddress)
 		}
 
 		validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)

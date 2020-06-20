@@ -104,9 +104,7 @@ func (msg MsgApprove) ValidateBasic() error {
 
 // String implements the Stringer interface
 func (msg MsgApprove) String() string {
-	return fmt.Sprintf(`Vote Message:
-  Change ID: %d
-`, msg.ChangeID)
+	return fmt.Sprintf("Vote Message: Change ID: %d", msg.ChangeID)
 }
 
 // GetSignBytes implements Msg
