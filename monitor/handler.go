@@ -5,7 +5,6 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -100,43 +99,6 @@ func (m *Monitor) handleIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithd
 	if m.isPullerOrOwner(intendWithdraw.Candidate) {
 		m.syncValidator(intendWithdraw.Candidate)
 	}
-}
-
-func (m *Monitor) handleInitiateWithdrawReward(ethAddr string) {
-	log.Infoln("New initiate withdraw", ethAddr)
-
-	reward, err := validator.CLIQueryReward(m.operator.CliCtx, validator.StoreKey, ethAddr)
-	if err != nil {
-		log.Errorln("Query reward err", err)
-		return
-	}
-
-	sig, err := m.ethClient.SignEthMessage(reward.RewardProtoBytes)
-	if err != nil {
-		log.Errorln("SignEthMessage err", err)
-		return
-	}
-
-	msg := validator.NewMsgSignReward(ethAddr, sig, m.operator.Key.GetAddress())
-	m.operator.AddTxMsg(msg)
-}
-
-func (m *Monitor) handlePenalty(penaltyEvent PenaltyEvent) {
-	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
-	if err != nil {
-		log.Errorf("Query penalty %d err %s", penaltyEvent.Nonce, err)
-		return
-	}
-	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, penaltyEvent.Nonce)
-
-	sig, err := m.ethClient.SignEthMessage(penalty.PenaltyProtoBytes)
-	if err != nil {
-		log.Errorln("SignEthMessage err", err)
-		return
-	}
-
-	msg := slash.NewMsgSignPenalty(penaltyEvent.Nonce, sig, m.operator.Key.GetAddress())
-	m.operator.AddTxMsg(msg)
 }
 
 func (m *Monitor) claimValidatorOnMainchain() {

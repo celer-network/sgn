@@ -1,9 +1,7 @@
 package monitor
 
 import (
-	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/allegro/bigcache"
@@ -19,9 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/rpc/client"
-	tTypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -91,6 +86,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	go m.monitorValidatorChange()
 	go m.monitorIntendWithdrawSgn()
 	go m.monitorIntendSettle()
+	go m.monitorIntendWithdrawChannel()
 	go m.monitorWithdrawReward()
 	go m.monitorSlash()
 }
@@ -113,6 +109,13 @@ func (m *Monitor) monitorBlockHead() {
 		m.processQueue()
 		m.verifyActiveChanges()
 	}
+}
+
+func (m *Monitor) processQueue() {
+	m.processEventQueue()
+	m.processPullerQueue()
+	m.processGuardQueue()
+	m.processPenaltyQueue()
 }
 
 func (m *Monitor) monitorUpdateSidechainAddr() {
@@ -270,87 +273,12 @@ func (m *Monitor) monitorIntendSettle() {
 			if err2 != nil {
 				log.Errorln("db Set err", err2)
 			}
-			err2 = m.db.Set(GetPusherKey(eLog), event.MustMarshal())
+			err2 = m.db.Set(GetGuardKey(eLog), event.MustMarshal())
 			if err2 != nil {
 				log.Errorln("db Set err", err2)
 			}
 		})
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func (m *Monitor) monitorWithdrawReward() {
-	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
-		if !m.isValidator {
-			return
-		}
-
-		event := sdk.StringifyEvent(e)
-		if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
-			m.handleInitiateWithdrawReward(event.Attributes[1].Value)
-		}
-	})
-}
-
-func (m *Monitor) monitorSlash() {
-	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
-		if !m.isValidator {
-			return
-		}
-
-		event := sdk.StringifyEvent(e)
-
-		if event.Attributes[0].Value == slash.ActionPenalty {
-			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
-			if err != nil {
-				log.Errorln("Parse penalty nonce error", err)
-				return
-			}
-
-			penaltyEvent := NewPenaltyEvent(nonce)
-			m.handlePenalty(penaltyEvent)
-			err = m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
-			if err != nil {
-				log.Errorln("db Set err", err)
-			}
-		}
-	})
-}
-
-func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client, err := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
-	if err != nil {
-		log.Errorln("Fail to start create http client", err)
-		return
-	}
-
-	err = client.Start()
-	if err != nil {
-		log.Errorln("Fail to start ws client", err)
-		return
-	}
-	defer client.Stop()
-
-	txs, err := client.Subscribe(context.Background(), "monitor", eventTag)
-	if err != nil {
-		log.Errorln("ws client subscribe error", err)
-		return
-	}
-
-	for e := range txs {
-		switch data := e.Data.(type) {
-		case tTypes.EventDataNewBlock:
-			for _, event := range data.ResultBeginBlock.Events {
-				handleEvent(event)
-			}
-			for _, event := range data.ResultEndBlock.Events {
-				handleEvent(event)
-			}
-		case tTypes.EventDataTx:
-			for _, event := range data.TxResult.Result.Events {
-				handleEvent(event)
-			}
-		}
 	}
 }

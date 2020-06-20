@@ -10,7 +10,7 @@ var (
 
 	PullerKeyPrefix = []byte{0x02} // Key prefix for puller
 
-	PusherKeyPrefix = []byte{0x03} // Key prefix for pusher
+	GuardKeyPrefix = []byte{0x03} // Key prefix for guard
 
 	PenaltyKeyPrefix = []byte{0x04} // Key prefix for penalty
 )
@@ -27,8 +27,8 @@ func GetPullerKey(log types.Log) []byte {
 }
 
 // get pusher key from log
-func GetPusherKey(log types.Log) []byte {
-	return append(PusherKeyPrefix, log.TxHash.Bytes()...)
+func GetGuardKey(log types.Log) []byte {
+	return append(GuardKeyPrefix, log.TxHash.Bytes()...)
 }
 
 // get penalty key from nonce
