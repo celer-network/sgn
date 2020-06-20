@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/celer-network/goutils/eth"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"

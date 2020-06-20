@@ -124,18 +124,17 @@ func (m *EthMonitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DP
 }
 
 func (m *EthMonitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
-	_, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
-	if err == nil {
-		log.Infof("The sidechain address of candidate %x has been updated", updateSidechainAddr.Candidate)
-		return
-	}
-
-	log.Infof("Add UpdateSidechainAddr of %x to transactor msgQueue", updateSidechainAddr.Candidate)
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
 		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
 	}, updateSidechainAddr.Candidate)
 	if err != nil {
 		log.Errorln("Query sidechain address error:", err)
+		return
+	}
+
+	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, mainchain.Addr2Hex(updateSidechainAddr.Candidate))
+	if err == nil && sdk.AccAddress(sidechainAddr).Equals(c.Operator) {
+		log.Infof("The sidechain address of candidate %x has been updated", updateSidechainAddr.Candidate)
 		return
 	}
 
