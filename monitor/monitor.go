@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/allegro/bigcache"
@@ -11,9 +10,6 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/validator"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
@@ -22,11 +18,6 @@ import (
 
 const (
 	prefixMonitor = "mon"
-)
-
-var (
-	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
-	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
 type Monitor struct {
@@ -128,9 +119,9 @@ func (m *Monitor) monitorUpdateSidechainAddr() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
 			event := NewEvent(UpdateSidechainAddr, eLog)
-			err2 := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		},
 	)
@@ -149,9 +140,9 @@ func (m *Monitor) monitorConfirmParamProposal() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
 			event := NewEvent(ConfirmParamProposal, eLog)
-			err2 := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {
@@ -169,9 +160,9 @@ func (m *Monitor) monitorDelegate() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
 			event := NewEvent(Delegate, eLog)
-			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {
@@ -189,9 +180,9 @@ func (m *Monitor) monitorCandidateUnbonded() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
-			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {
@@ -209,9 +200,9 @@ func (m *Monitor) monitorValidatorChange() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
 			event := NewEvent(ValidatorChange, eLog)
-			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {
@@ -229,9 +220,9 @@ func (m *Monitor) monitorIntendWithdrawSgn() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawSgn, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendWithdrawSgn, eLog)
-			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {
@@ -249,9 +240,13 @@ func (m *Monitor) monitorIntendWithdrawChannel() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendWithdrawChannel, eLog)
-			err2 := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
+			}
+			dberr = m.db.Set(GetGuardKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {
@@ -269,13 +264,13 @@ func (m *Monitor) monitorIntendSettle() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendSettle, eLog)
-			err2 := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
-			err2 = m.db.Set(GetGuardKey(eLog), event.MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			dberr = m.db.Set(GetGuardKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		})
 	if err != nil {

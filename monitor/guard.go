@@ -33,6 +33,8 @@ func (m *Monitor) processGuardQueue() {
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.CelerLedgerIntendSettle:
 			m.guardIntendSettle(e)
+		case *mainchain.CelerLedgerIntendWithdraw:
+			m.guardIntendWithdrawChannel(e)
 		}
 	}
 }

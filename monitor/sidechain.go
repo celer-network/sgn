@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/celer-network/goutils/log"
@@ -10,7 +11,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
-	tTypes "github.com/tendermint/tendermint/types"
+	tm "github.com/tendermint/tendermint/types"
+)
+
+var (
+	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
+	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
 func (m *Monitor) monitorWithdrawReward() {
@@ -73,14 +79,14 @@ func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event
 
 	for e := range txs {
 		switch data := e.Data.(type) {
-		case tTypes.EventDataNewBlock:
+		case tm.EventDataNewBlock:
 			for _, event := range data.ResultBeginBlock.Events {
 				handleEvent(event)
 			}
 			for _, event := range data.ResultEndBlock.Events {
 				handleEvent(event)
 			}
-		case tTypes.EventDataTx:
+		case tm.EventDataTx:
 			for _, event := range data.TxResult.Result.Events {
 				handleEvent(event)
 			}
