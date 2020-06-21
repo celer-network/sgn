@@ -38,18 +38,18 @@ func (m *Monitor) processEventQueue() {
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
 		case *mainchain.DPoSDelegate:
-			m.handleDelegate(e)
+			m.handleDPoSDelegate(e)
 		case *mainchain.DPoSCandidateUnbonded:
-			m.handleCandidateUnbonded(e)
+			m.handleDPoSCandidateUnbonded(e)
 		case *mainchain.DPoSValidatorChange:
-			m.handleValidatorChange(e)
+			m.handleDPoSValidatorChange(e)
 		case *mainchain.DPoSIntendWithdraw:
-			m.handleIntendWithdraw(e)
+			m.handleDPoSIntendWithdraw(e)
 		}
 	}
 }
 
-func (m *Monitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
+func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
 	if delegate.Candidate != m.ethClient.Address {
 		log.Debugf("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
 		return
@@ -66,7 +66,7 @@ func (m *Monitor) handleDelegate(delegate *mainchain.DPoSDelegate) {
 	}
 }
 
-func (m *Monitor) handleCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
+func (m *Monitor) handleDPoSCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
 	log.Infof("New candidate unbonded %x", candidateUnbonded.Candidate)
 
 	if m.isPullerOrOwner(candidateUnbonded.Candidate) {
@@ -74,7 +74,7 @@ func (m *Monitor) handleCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandi
 	}
 }
 
-func (m *Monitor) handleValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
+func (m *Monitor) handleDPoSValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
 	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
 	isAddValidator := validatorChange.ChangeType == mainchain.AddValidator
 	doSync := m.isPuller() && !isAddValidator
@@ -93,7 +93,7 @@ func (m *Monitor) handleValidatorChange(validatorChange *mainchain.DPoSValidator
 	}
 }
 
-func (m *Monitor) handleIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
+func (m *Monitor) handleDPoSIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
 	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 
 	if m.isPullerOrOwner(intendWithdraw.Candidate) {

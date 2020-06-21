@@ -70,20 +70,27 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		isValidator:     mainchain.IsBonded(dposCandidateInfo),
 	}
 
-	go m.monitorBlockHead()
-	go m.monitorUpdateSidechainAddr()
-	go m.monitorDelegate()
-	go m.monitorCandidateUnbonded()
-	go m.monitorValidatorChange()
-	go m.monitorIntendWithdrawSgn()
-	go m.monitorIntendSettle()
-	go m.monitorIntendWithdrawChannel()
-	go m.monitorWithdrawReward()
-	go m.monitorSlash()
+	go m.checkBlockHead()
+
+	go m.monitorDPoSDelegate()
+	go m.monitorDPoSCandidateUnbonded()
+	go m.monitorDPoSValidatorChange()
+	go m.monitorDPoSIntendWithdraw()
+
+	// puller and guard
+	go m.monitorSGNUpdateSidechainAddr()
+	go m.monitorCelerLedgerIntendSettle()
+	go m.monitorCelerLedgerIntendWithdraw()
+
+	// sidechain
+	go m.monitorSidechainWithdrawReward()
+	go m.monitorSidechainSlash()
 }
 
-func (m *Monitor) monitorBlockHead() {
-	// TODO: configure check interval
+func (m *Monitor) checkBlockHead() {
+	// TODO: configure check interval,
+	// different queues could be checked at different times
+	// e.g., guard queue does not need to be checked so frequently
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -109,7 +116,7 @@ func (m *Monitor) processQueue() {
 	m.processPenaltyQueue()
 }
 
-func (m *Monitor) monitorUpdateSidechainAddr() {
+func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(UpdateSidechainAddr),
@@ -150,7 +157,7 @@ func (m *Monitor) monitorConfirmParamProposal() {
 	}
 }
 
-func (m *Monitor) monitorDelegate() {
+func (m *Monitor) monitorDPoSDelegate() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(Delegate),
@@ -170,7 +177,7 @@ func (m *Monitor) monitorDelegate() {
 	}
 }
 
-func (m *Monitor) monitorCandidateUnbonded() {
+func (m *Monitor) monitorDPoSCandidateUnbonded() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(CandidateUnbonded),
@@ -190,7 +197,7 @@ func (m *Monitor) monitorCandidateUnbonded() {
 	}
 }
 
-func (m *Monitor) monitorValidatorChange() {
+func (m *Monitor) monitorDPoSValidatorChange() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(ValidatorChange),
@@ -210,7 +217,7 @@ func (m *Monitor) monitorValidatorChange() {
 	}
 }
 
-func (m *Monitor) monitorIntendWithdrawSgn() {
+func (m *Monitor) monitorDPoSIntendWithdraw() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(IntendWithdraw),
@@ -218,8 +225,8 @@ func (m *Monitor) monitorIntendWithdrawSgn() {
 			StartBlock: m.ethMonitor.GetCurrentBlockNumber(),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawSgn, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendWithdrawSgn, eLog)
+			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x", eLog.TxHash)
+			event := NewEvent(IntendWithdrawDpos, eLog)
 			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
@@ -230,7 +237,7 @@ func (m *Monitor) monitorIntendWithdrawSgn() {
 	}
 }
 
-func (m *Monitor) monitorIntendWithdrawChannel() {
+func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(IntendWithdraw),
@@ -254,7 +261,7 @@ func (m *Monitor) monitorIntendWithdrawChannel() {
 	}
 }
 
-func (m *Monitor) monitorIntendSettle() {
+func (m *Monitor) monitorCelerLedgerIntendSettle() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:  string(IntendSettle),

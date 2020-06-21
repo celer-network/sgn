@@ -19,7 +19,7 @@ var (
 	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
-func (m *Monitor) monitorWithdrawReward() {
+func (m *Monitor) monitorSidechainWithdrawReward() {
 	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
 		if !m.isValidator {
 			return
@@ -32,7 +32,7 @@ func (m *Monitor) monitorWithdrawReward() {
 	})
 }
 
-func (m *Monitor) monitorSlash() {
+func (m *Monitor) monitorSidechainSlash() {
 	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
 		if !m.isValidator {
 			return
