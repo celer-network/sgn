@@ -41,7 +41,8 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		log.Fatalln("Cannot create watch service")
 	}
 
-	ethMonitor := monitor.NewService(watchService, 0 /* blockDelay */, true /* enabled */)
+	blkDelay := viper.GetUint64(common.FlagEthConfirmCount)
+	ethMonitor := monitor.NewService(watchService, blkDelay, true /* enabled */)
 	ethMonitor.Init()
 
 	dposCandidateInfo, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
@@ -73,16 +74,13 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	go m.checkBlockHead()
 
 	go m.monitorDPoSDelegate()
-	go m.monitorDPoSCandidateUnbonded()
 	go m.monitorDPoSValidatorChange()
 	go m.monitorDPoSIntendWithdraw()
-
-	// puller and guard
+	go m.monitorDPoSCandidateUnbonded()
 	go m.monitorSGNUpdateSidechainAddr()
 	go m.monitorCelerLedgerIntendSettle()
 	go m.monitorCelerLedgerIntendWithdraw()
 
-	// sidechain
 	go m.monitorSidechainWithdrawReward()
 	go m.monitorSidechainSlash()
 }
@@ -95,6 +93,7 @@ func (m *Monitor) checkBlockHead() {
 	defer ticker.Stop()
 
 	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+	blkDelay := viper.GetUint64(common.FlagEthConfirmCount)
 	for {
 		<-ticker.C
 		newblk := m.ethMonitor.GetCurrentBlockNumber().Uint64()
@@ -103,14 +102,13 @@ func (m *Monitor) checkBlockHead() {
 		}
 
 		blkNum = newblk
-		m.secureBlkNum = blkNum - viper.GetUint64(common.FlagEthConfirmCount)
+		m.secureBlkNum = blkNum - blkDelay
 		m.processQueue()
 		m.verifyActiveChanges()
 	}
 }
 
 func (m *Monitor) processQueue() {
-	m.processEventQueue()
 	m.processPullerQueue()
 	m.processGuardQueue()
 	m.processPenaltyQueue()
@@ -166,11 +164,12 @@ func (m *Monitor) monitorDPoSDelegate() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
-			event := NewEvent(Delegate, eLog)
-			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			delegate, perr := m.ethClient.DPoS.ParseDelegate(eLog)
+			if perr != nil {
+				log.Errorln("parse event err", perr)
+				return
 			}
+			m.handleDPoSDelegate(delegate)
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -187,7 +186,7 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
-			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -206,10 +205,25 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
-			event := NewEvent(ValidatorChange, eLog)
-			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			validatorChange, perr := m.ethClient.DPoS.ParseValidatorChange(eLog)
+			if perr != nil {
+				log.Errorln("parse event err", perr)
+				return
+			}
+			// self init sync if add validator
+			if validatorChange.EthAddr == m.ethClient.Address && validatorChange.ChangeType == mainchain.AddValidator {
+				m.isValidator = true
+				m.syncValidator(validatorChange.EthAddr)
+				m.setTransactors()
+			} else {
+				if validatorChange.EthAddr == m.ethClient.Address {
+					m.isValidator = false
+				}
+				event := NewEvent(ValidatorChange, eLog)
+				dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+				if dberr != nil {
+					log.Errorln("db Set err", dberr)
+				}
 			}
 		})
 	if err != nil {
@@ -227,7 +241,7 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendWithdrawDpos, eLog)
-			dberr := m.db.Set(GetEventKey(eLog), event.MustMarshal())
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}

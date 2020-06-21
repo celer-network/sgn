@@ -140,7 +140,7 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) bool {
 	}
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
-		log.Errorln("DelegatedStake does not match maichain value")
+		log.Errorf("DelegatedStake %s does not match maichain value %s", delegator.DelegatedStake, di.DelegatedStake)
 		return false
 	}
 

@@ -4,13 +4,16 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/spf13/viper"
 )
 
 func (m *Monitor) processPullerQueue() {
@@ -27,10 +30,6 @@ func (m *Monitor) processPullerQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		if m.secureBlkNum < event.Log.BlockNumber {
-			continue
-		}
-
 		log.Infoln("Process puller event", event.Name, "at mainchain block", event.Log.BlockNumber)
 		err = m.db.Delete(iterator.Key())
 		if err != nil {
@@ -39,6 +38,12 @@ func (m *Monitor) processPullerQueue() {
 		}
 
 		switch e := event.ParseEvent(m.ethClient).(type) {
+		case *mainchain.DPoSValidatorChange:
+			m.syncDPoSValidatorChange(e)
+		case *mainchain.DPoSIntendWithdraw:
+			m.syncDPoSIntendWithdraw(e)
+		case *mainchain.DPoSCandidateUnbonded:
+			m.syncDPoSCandidateUnbonded(e)
 		case *mainchain.DPoSConfirmParamProposal:
 			m.syncConfirmParamProposal(e)
 		case *mainchain.SGNUpdateSidechainAddr:
@@ -51,6 +56,21 @@ func (m *Monitor) processPullerQueue() {
 	}
 }
 
+func (m *Monitor) syncDPoSValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
+	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
+	m.syncValidator(validatorChange.EthAddr)
+}
+
+func (m *Monitor) syncDPoSIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
+	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
+	m.syncValidator(intendWithdraw.Candidate)
+}
+
+func (m *Monitor) syncDPoSCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
+	log.Infof("New candidate unbonded %x", candidateUnbonded.Candidate)
+	m.syncValidator(candidateUnbonded.Candidate)
+}
+
 func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
 	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
@@ -60,9 +80,9 @@ func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSC
 }
 
 func (m *Monitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpdateSidechainAddr) {
-	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{
-		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
-	}, updateSidechainAddr.Candidate)
+	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		updateSidechainAddr.Candidate)
 	if err != nil {
 		log.Errorln("Query sidechain address error:", err)
 		return
@@ -103,9 +123,9 @@ func (m *Monitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log) {
 		return
 	}
 
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{
-		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
-	}, mainchain.Bytes2Cid(request.ChannelId))
+	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorln("GetDisputeTimeout err:", err)
 		return
@@ -117,5 +137,131 @@ func (m *Monitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log) {
 	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
 	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, requestData, m.operator.Key.GetAddress())
 	log.Infof("submit change tx: trigger guard request %s", request)
+	m.operator.AddTxMsg(msg)
+}
+
+func (m *Monitor) syncValidator(address mainchain.Addr) {
+	ci, err := m.ethClient.DPoS.GetCandidateInfo(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		address)
+	if err != nil {
+		log.Errorln("Failed to query candidate info:", err)
+		return
+	}
+
+	commission, err := common.NewCommission(m.ethClient, ci.CommissionRate)
+	if err != nil {
+		log.Errorln("Failed to create new commission:", err)
+		return
+	}
+
+	validator := staking.Validator{
+		Description: staking.Description{
+			Identity: address.Hex(),
+		},
+		Tokens:     sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
+		Status:     mainchain.ParseStatus(ci),
+		Commission: commission,
+	}
+
+	if m.ethClient.Address == address {
+		pk, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, viper.GetString(common.FlagSgnPubKey))
+		if err != nil {
+			log.Errorln("GetConsPubKeyBech32 err:", err)
+			return
+		}
+
+		validator.ConsPubKey = pk
+	}
+
+	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(validator)
+	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: sync validator %x", address)
+	m.operator.AddTxMsg(msg)
+}
+
+func (m *Monitor) setTransactors() {
+	transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
+	if err != nil {
+		log.Errorln("parse transactors err", err)
+		return
+	}
+	setTransactorsMsg := validator.NewMsgSetTransactors(
+		mainchain.Addr2Hex(m.ethClient.Address),
+		transactors,
+		m.operator.Key.GetAddress(),
+	)
+	log.Infoln("set transactors", transactors)
+	m.operator.AddTxMsg(setTransactorsMsg)
+}
+
+func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
+	if delegate.Candidate != m.ethClient.Address {
+		log.Debugf("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
+		return
+	}
+
+	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
+		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
+	m.syncDelegator(delegate.Candidate, delegate.Delegator)
+
+	if m.isValidator {
+		m.syncValidator(delegate.Candidate)
+	} else {
+		m.claimValidatorOnMainchain()
+	}
+}
+
+func (m *Monitor) claimValidatorOnMainchain() {
+	candidate, err := m.ethClient.DPoS.GetCandidateInfo(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		m.ethClient.Address)
+	if err != nil {
+		log.Errorln("GetCandidateInfo err", err)
+		return
+	}
+	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
+		log.Debug("Not enough stake to become validator")
+		return
+	}
+
+	minStake, err := m.ethClient.DPoS.GetMinStakingPool(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()})
+	if err != nil {
+		log.Errorln("GetMinStakingPool err", err)
+		return
+	}
+	if candidate.StakingPool.Cmp(minStake) == -1 {
+		log.Debug("Not enough stake to become validator")
+		return
+	}
+
+	_, err = m.ethClient.Transactor.Transact(
+		nil,
+		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+			return m.ethClient.DPoS.ClaimValidator(opts)
+		},
+	)
+	if err != nil {
+		log.Errorln("ClaimValidator tx err", err)
+		return
+	}
+	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
+}
+
+func (m *Monitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+	di, err := m.ethClient.DPoS.GetDelegatorInfo(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		candidatorAddr, delegatorAddr)
+	if err != nil {
+		log.Errorf("Failed to query delegator info: %s", err)
+		return
+	}
+
+	delegator := validator.NewDelegator(mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
+	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
+	delegatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(delegator)
+	msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: sync delegator %x candidate %x stake %s", delegatorAddr, candidatorAddr, delegator.DelegatedStake)
 	m.operator.AddTxMsg(msg)
 }

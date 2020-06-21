@@ -125,9 +125,9 @@ func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, e
 
 func (m *Monitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
 	channelId := cid[:]
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{
-		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
-	}, cid)
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
 		return

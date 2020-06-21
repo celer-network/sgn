@@ -42,9 +42,9 @@ func (m *Monitor) processPenaltyQueue() {
 func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{
-		BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt(),
-	}, big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.ethClient.DPoS.UsedPenaltyNonce(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
