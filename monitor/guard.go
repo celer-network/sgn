@@ -115,7 +115,7 @@ func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, e
 		return
 	}
 
-	// TODO: should not waitmined
+	// TODO: should not waitmined, use transactor callback instead
 	var receipt *ethtypes.Receipt
 	switch eventName {
 	case IntendWithdrawChannel:
