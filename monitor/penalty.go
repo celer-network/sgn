@@ -7,7 +7,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/slash"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
@@ -42,9 +41,7 @@ func (m *Monitor) processPenaltyQueue() {
 func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.DPoS.UsedPenaltyNonce(
-		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
-		big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return

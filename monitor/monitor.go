@@ -30,7 +30,6 @@ type Monitor struct {
 	sgnContract     monitor.Contract
 	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
-	secureBlkNum    uint64
 	isValidator     bool
 }
 
@@ -95,7 +94,6 @@ func (m *Monitor) checkBlockHead() {
 	defer ticker.Stop()
 
 	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
-	blkDelay := viper.GetUint64(common.FlagEthConfirmCount)
 	for {
 		<-ticker.C
 		newblk := m.ethMonitor.GetCurrentBlockNumber().Uint64()
@@ -104,7 +102,6 @@ func (m *Monitor) checkBlockHead() {
 		}
 
 		blkNum = newblk
-		m.secureBlkNum = blkNum - blkDelay
 		m.processQueue()
 		m.verifyActiveChanges()
 	}
