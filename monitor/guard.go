@@ -1,13 +1,15 @@
 package monitor
 
 import (
+	"fmt"
+
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/golang/protobuf/proto"
@@ -23,129 +25,143 @@ func (m *Monitor) processGuardQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		log.Infoln("Process guard event", event.Name)
-		err = m.db.Delete(iterator.Key())
-		if err != nil {
-			log.Errorln("db Delete err", err)
-			continue
-		}
-
-		switch e := event.ParseEvent(m.ethClient).(type) {
-		case *mainchain.CelerLedgerIntendSettle:
-			m.guardIntendSettle(e)
-		case *mainchain.CelerLedgerIntendWithdraw:
-			m.guardIntendWithdrawChannel(e)
+		if !event.Processing {
+			log.Infoln("Process guard event", event.Name)
+			var submitted bool
+			switch e := event.ParseEvent(m.ethClient).(type) {
+			case *mainchain.CelerLedgerIntendSettle:
+				e.Raw = event.Log
+				submitted, err = m.guardIntendSettle(e)
+			case *mainchain.CelerLedgerIntendWithdraw:
+				e.Raw = event.Log
+				submitted, err = m.guardIntendWithdrawChannel(e)
+			}
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			if submitted {
+				event.Processing = true
+				err = m.db.Set(iterator.Key(), event.MustMarshal())
+				if err != nil {
+					log.Errorln("db Set err", err)
+				}
+			}
 		}
 	}
 }
 
-func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
+func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (bool, error) {
 	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getRequests(intendSettle.ChannelId)
-	for _, request := range requests {
-		m.guardRequest(request, intendSettle.Raw, IntendSettle)
+	if len(requests) > 0 {
+		return m.guardRequest(requests, intendSettle.Raw, IntendSettle)
+	} else {
+		err := m.db.Delete(GetGuardKey(intendSettle.Raw))
+		return false, err
 	}
 }
 
-func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
+func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) (bool, error) {
 	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getRequests(intendWithdrawChannel.ChannelId)
+	if len(requests) > 0 {
+		return m.guardRequest(requests, intendWithdrawChannel.Raw, IntendWithdrawChannel)
+	} else {
+		err := m.db.Delete(GetGuardKey(intendWithdrawChannel.Raw))
+		return false, err
+	}
+}
+
+func (m *Monitor) guardRequest(requests []*subscribe.Request, rawLog ethtypes.Log, eventName EventName) (bool, error) {
+	if len(requests) != 1 && len(requests) != 2 {
+		return false, fmt.Errorf("invalid requests length")
+	}
+
+	isGuard := false
 	for _, request := range requests {
-		m.guardRequest(request, intendWithdrawChannel.Raw, IntendWithdrawChannel)
+		log.Infoln("guard request", request)
+		if m.isRequestGuard(request, rawLog.BlockNumber) {
+			isGuard = true
+			break
+		}
 	}
-}
-
-func (m *Monitor) getRequests(cid mainchain.CidType) (requests []subscribe.Request) {
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(
-		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
-		cid)
-	if err != nil {
-		log.Errorln("Query StateSeqNumMap err", err)
-		return
+	if !isGuard {
+		log.Debug("not my turn to guard the requests")
+		return false, nil
 	}
 
-	for _, addr := range addresses {
-		peerFrom := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(cid.Bytes(), peerFrom)
+	var stateArray chain.SignedSimplexStateArray
+	for _, request := range requests {
+		var signedSimplexState chain.SignedSimplexState
+		err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 		if err != nil {
+			log.Errorln("Unmarshal SignedSimplexState error:", err)
 			continue
 		}
-
-		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
-			continue
-		}
-
-		requests = append(requests, request)
+		stateArray.SignedSimplexStates = append(stateArray.SignedSimplexStates, &signedSimplexState)
+	}
+	if len(stateArray.SignedSimplexStates) == 0 {
+		return false, fmt.Errorf("invalid simplex states")
 	}
 
-	return requests
-}
-
-func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, eventName EventName) {
-	log.Infoln("Guard request", request)
-	if request.GuardTxHash != "" {
-		log.Errorln("Request has been fulfilled")
-		return
-	}
-
-	if !m.isRequestGuard(request, rawLog.BlockNumber) {
-		log.Infof("Not valid guard at current mainchain block")
-		event := NewEvent(IntendSettle, rawLog)
-		err := m.db.Set(GetGuardKey(rawLog), event.MustMarshal())
-		if err != nil {
-			log.Errorln("db Set err", err)
-		}
-		return
-	}
-
-	var signedSimplexState chain.SignedSimplexState
-	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
-	if err != nil {
-		log.Errorln("Unmarshal SignedSimplexState error:", err)
-		return
-	}
-
-	signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
-		SignedSimplexStates: []*chain.SignedSimplexState{&signedSimplexState},
-	})
+	signedSimplexStateArrayBytes, err := proto.Marshal(&stateArray)
 	if err != nil {
 		log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
-		return
+		return false, fmt.Errorf("marshal stateArray err %w", err)
 	}
 
-	// TODO: should not waitmined, use transactor callback instead
-	var receipt *ethtypes.Receipt
+	var tx *ethtypes.Transaction
 	switch eventName {
 	case IntendWithdrawChannel:
-		receipt, err = m.ethClient.Transactor.TransactWaitMined(
-			"SnapshotStates",
+		tx, err = m.ethClient.Transactor.Transact(
+			m.guardTxHandler("SnapshotStates", requests, rawLog),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
 	case IntendSettle:
-		receipt, err = m.ethClient.Transactor.TransactWaitMined(
-			"IntendSettle",
+		tx, err = m.ethClient.Transactor.Transact(
+			m.guardTxHandler("IntendSettle", requests, rawLog),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
 	default:
-		log.Errorln("Invalid eventName", eventName)
-		return
+		return false, fmt.Errorf("Invalid eventName %s", eventName)
 	}
-
 	if err != nil {
-		log.Errorln("intendSettle/snapshotStates err", err)
-		return
+		return false, fmt.Errorf("tx err %w", err)
+	} else {
+		log.Infof("submitted guard tx %x", tx.Hash())
 	}
 
-	txHash := receipt.TxHash
-	log.Infof("Add MsgGuardProof %x to transactor msgQueue", txHash)
-	request.GuardTxHash = txHash.Hex()
-	request.GuardTxBlkNum = receipt.BlockNumber.Uint64()
-	request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
-	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
-	msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
-	log.Infof("submit change tx: guard proof request %s", request)
-	m.operator.AddTxMsg(msg)
+	return true, nil
+}
+
+func (m *Monitor) guardTxHandler(
+	description string, requests []*subscribe.Request, rawLog ethtypes.Log) *eth.TransactionStateHandler {
+	return &eth.TransactionStateHandler{
+		OnMined: func(receipt *ethtypes.Receipt) {
+			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
+				log.Infof("%s transaction %x succeeded", description, receipt.TxHash)
+				for _, request := range requests {
+					request.GuardTxHash = receipt.TxHash.Hex()
+					request.GuardTxBlkNum = receipt.BlockNumber.Uint64()
+					request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
+					requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
+					msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
+					log.Infof("submit change tx: guard proof request %s", request)
+					m.operator.AddTxMsg(msg)
+				}
+				err := m.db.Delete(GetGuardKey(rawLog))
+				if err != nil {
+					log.Errorln("db Delete err", err)
+				}
+			} else {
+				log.Errorf("%s transaction %x failed", description, receipt.TxHash)
+			}
+		},
+		OnError: func(tx *ethtypes.Transaction, err error) {
+			log.Errorf("%s transaction %x err: %s", description, tx.Hash(), err)
+		},
+	}
 }

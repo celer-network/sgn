@@ -49,8 +49,10 @@ func (m *Monitor) processPullerQueue() {
 		case *mainchain.SGNUpdateSidechainAddr:
 			m.syncUpdateSidechainAddr(e)
 		case *mainchain.CelerLedgerIntendSettle:
+			e.Raw = event.Log
 			m.syncIntendSettle(e)
 		case *mainchain.CelerLedgerIntendWithdraw:
+			e.Raw = event.Log
 			m.syncIntendWithdrawChannel(e)
 		}
 	}
@@ -116,7 +118,7 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	}
 }
 
-func (m *Monitor) triggerGuard(request subscribe.Request, rawLog ethtypes.Log) {
+func (m *Monitor) triggerGuard(request *subscribe.Request, rawLog ethtypes.Log) {
 	if request.TriggerTxHash != "" {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return

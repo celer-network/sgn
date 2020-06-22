@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -56,9 +57,10 @@ func (m *Monitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 }
 
 // Is the current node the guard to submit state proof
-func (m *Monitor) isRequestGuard(request subscribe.Request, eventBlockNumber uint64) bool {
+func (m *Monitor) isRequestGuard(request *subscribe.Request, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
 	if len(requestGuards) == 0 {
+		log.Debug("no request guards")
 		return false
 	}
 
@@ -77,6 +79,32 @@ func (m *Monitor) isRequestGuard(request subscribe.Request, eventBlockNumber uin
 
 func (m *Monitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
 	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, peerFrom)
+}
+
+// get guard requests for the channel, return an array with at most two elements
+func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*subscribe.Request) {
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	if err != nil {
+		log.Errorln("Query StateSeqNumMap err", err)
+		return
+	}
+
+	for _, addr := range addresses {
+		peerFrom := mainchain.Addr2Hex(addr)
+		request, err := m.getRequest(cid.Bytes(), peerFrom)
+		if err != nil {
+			continue
+		}
+
+		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
+			continue
+		}
+
+		requests = append(requests, &request)
+	}
+
+	return requests
 }
 
 func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {

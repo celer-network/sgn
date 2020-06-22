@@ -73,10 +73,9 @@ func DefaultParams() Params {
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-	RequestGuardCount:    %d,
-  EpochLength:    %d
-  RequestCost:    %s`,
-		p.RequestGuardCount, p.EpochLength, p.RequestCost)
+  RequestGuardCount: %d,
+  EpochLength:       %d
+  RequestCost:       %s`, p.RequestGuardCount, p.EpochLength, p.RequestCost)
 }
 
 // unmarshal the current subscribe params value from store key or panic
