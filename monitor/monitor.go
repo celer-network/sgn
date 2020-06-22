@@ -78,6 +78,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	go m.monitorDPoSValidatorChange()
 	go m.monitorDPoSIntendWithdraw()
 	go m.monitorDPoSCandidateUnbonded()
+	go m.monitorDPoSConfirmParamProposal()
 	go m.monitorSGNUpdateSidechainAddr()
 	go m.monitorCelerLedgerIntendSettle()
 	go m.monitorCelerLedgerIntendWithdraw()
@@ -187,6 +188,26 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
+			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
+			}
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorDPoSConfirmParamProposal() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:  string(ConfirmParamProposal),
+			Contract:   m.dposContract,
+			StartBlock: m.ethMonitor.GetCurrentBlockNumber(),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
+			event := NewEvent(ConfirmParamProposal, eLog)
 			dberr := m.db.Set(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
