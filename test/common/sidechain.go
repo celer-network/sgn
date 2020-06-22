@@ -117,7 +117,7 @@ func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, sgnop string, expAmt *big.Int) {
 	var candidate vtypes.Candidate
 	var err error
-	expectedRes := fmt.Sprintf(`Operator: %s, StakingPool: %s`, sgnop, expAmt) // defined in Candidate.String()
+	expectedRes := fmt.Sprintf(`Operator: %s, EthAddress: %x, StakingPool: %s`, sgnop, ethAddr, expAmt) // defined in Candidate.String()
 	for retry := 0; retry < RetryLimit; retry++ {
 		candidate, err = sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
 		if err != nil {

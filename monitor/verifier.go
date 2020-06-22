@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -22,7 +23,7 @@ import (
 func (m *Monitor) verifyActiveChanges() {
 	v, _ := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, m.operator.Key.GetAddress().String())
 	if v.GetStatus() != sdk.Bonded {
-		log.Debugln("skip verifying changes as I am not a bonded validator")
+		log.Traceln("skip verifying changes as I am not a bonded validator")
 		return
 	}
 	activeChanges, err := sync.CLIQueryActiveChanges(m.operator.CliCtx, sync.RouterKey)
@@ -75,75 +76,77 @@ func (m *Monitor) verifyChange(change sync.Change) bool {
 func (m *Monitor) verifyConfirmParamProposal(change sync.Change) bool {
 	var paramChange common.ParamChange
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &paramChange)
-	log.Infoln("Verify paramChange", paramChange)
+	logmsg := fmt.Sprintf("verify change id %d, pramameter: %s", change.ID, paramChange)
 
 	paramValue, err := m.ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, paramChange.Record.BigInt())
 	if err != nil {
-		log.Errorln("Query param value error:", err)
+		log.Errorf("%s. err: %s", logmsg, err)
 		return false
 	}
 
 	if !paramChange.NewValue.Equal(sdk.NewIntFromBigInt(paramValue)) {
-		log.Errorln("Param newValue does not match maichain value")
+		log.Errorf("%s. new value does not match mainchain value %s", logmsg, paramValue)
 		return false
 	}
 
+	log.Infof("%s, success", logmsg)
 	return true
 }
 
 func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	var candidate validator.Candidate
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &candidate)
-	log.Infoln("Verify candidate", candidate)
+	logmsg := fmt.Sprintf("verify change id %d, sidechain addr for candidate: %s", change.ID, candidate)
 
 	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, candidate.EthAddress)
 	if err == nil {
 		if candidate.Operator.Equals(c.Operator) {
-			log.Errorf("Invalid change for the same Candidate %s Operator %s", candidate.EthAddress, c.Operator.String())
+			log.Warnf("%s. sidechain addr not changed", logmsg)
 			return false
 		}
 	}
 
 	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(candidate.EthAddress))
 	if err != nil {
-		log.Errorln("Query sidechain address error:", err)
+		log.Errorf("%s. query sidechain address err: %s", logmsg, err)
 		return false
 	}
 
 	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
-		log.Errorln("Operator does not match maichain value")
+		log.Errorf("%s. operator does not match mainchain value %s", logmsg, sdk.AccAddress(sidechainAddr))
 		return false
 	}
 
+	log.Infof("%s, success", logmsg)
 	return true
 }
 
 func (m *Monitor) verifySyncDelegator(change sync.Change) bool {
 	var delegator validator.Delegator
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
-	log.Infoln("Verify sync delegator", delegator)
+	logmsg := fmt.Sprintf("verify change id %d, sync delegator: %s", change.ID, delegator)
 
 	d, err := validator.CLIQueryDelegator(m.operator.CliCtx, validator.RouterKey, delegator.CandidateAddr, delegator.DelegatorAddr)
 	if err == nil {
 		if delegator.DelegatedStake.Equal(d.DelegatedStake) {
-			log.Errorf("Invalid change for the same Delegator %s Candidate %s Stake %s",
-				delegator.DelegatorAddr, delegator.CandidateAddr, delegator.DelegatedStake)
+			log.Warnf("%s. delegator stake not changed", logmsg)
 			return false
 		}
 	}
 
-	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{},
-		mainchain.Hex2Addr(delegator.CandidateAddr), mainchain.Hex2Addr(delegator.DelegatorAddr))
+	di, err := m.ethClient.DPoS.GetDelegatorInfo(
+		&bind.CallOpts{}, mainchain.Hex2Addr(delegator.CandidateAddr), mainchain.Hex2Addr(delegator.DelegatorAddr))
 	if err != nil {
-		log.Errorln("Failed to query delegator info:", err)
+		log.Errorf("%s. query delegator info err: %s", logmsg, err)
 		return false
 	}
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
-		log.Errorf("DelegatedStake %s does not match maichain value %s", delegator.DelegatedStake, di.DelegatedStake)
+		log.Errorf("%s. stake does not match mainchain value %s", logmsg, di.DelegatedStake)
 		return false
 	}
 
+	log.Infof("%s. success", logmsg)
 	return true
 }
 
@@ -153,223 +156,219 @@ func (m *Monitor) verifySyncValidator(change sync.Change) bool {
 
 	candidateEthAddr := vt.Description.Identity
 	candidate, err := validator.CLIQueryCandidate(
-		m.operator.CliCtx,
-		validator.RouterKey,
-		candidateEthAddr,
-	)
+		m.operator.CliCtx, validator.RouterKey, candidateEthAddr)
 	if err != nil {
-		log.Errorln("Failed to query candidate:", err)
+		log.Errorf("verify change id %d, sync validator err: %s", change.ID, err)
 		return false
 	}
 
-	log.Infof("verify sync validator %s ethaddr %x status %s token %s commission %s",
-		candidate.Operator.String(),
-		mainchain.Hex2Addr(candidateEthAddr),
-		vt.Status, vt.Tokens, vt.Commission)
+	logmsg := fmt.Sprintf("verify change id %d, sync validator: Operator: %s, EthAddress %x, Status %s, Token %s, Commission %s",
+		change.ID, candidate.Operator.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission)
 
 	v, err := validator.CLIQueryValidator(
-		m.operator.CliCtx,
-		staking.RouterKey,
-		candidate.Operator.String(),
-	)
+		m.operator.CliCtx, staking.RouterKey, candidate.Operator.String())
 	if err == nil {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
-			log.Errorf("Invalid change for the same Candidate %s Status %s Tokens %s Commission %s",
-				candidate.Operator.String(), vt.Status, vt.Tokens, vt.Commission)
+			log.Warnf("%s. validator not changed", logmsg)
 			return false
 		}
 	}
 
 	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(vt.Description.Identity))
 	if err != nil {
-		log.Errorln("Failed to query candidate info:", err)
+		log.Errorf("%s. query candidate info err: %s", logmsg, err)
 		return false
 	}
 
 	if !vt.Status.Equal(mainchain.ParseStatus(ci)) {
-		log.Errorln("Status does not match maichain value")
+		log.Errorf("%s. status does not match mainchain value %s", logmsg, mainchain.ParseStatus(ci))
 		return false
 	}
 
-	if !vt.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)) {
-		log.Errorln("Tokens does not match maichain value")
+	mtk := sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)
+	if !vt.Tokens.Equal(mtk) {
+		log.Errorf("%s. tokens does not match mainchain value %s", logmsg, mtk)
 		return false
 	}
 
 	commission, err := common.NewCommission(m.ethClient, ci.CommissionRate)
 	if err != nil {
-		log.Errorln("Failed to create new commission:", err)
+		log.Errorf("%s. create new commission err: %s", logmsg, err)
 		return false
 	}
 
 	if !vt.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
-		log.Errorln("Commission does not match maichain value")
+		log.Errorf("%s. commission does not match mainchain value %s", logmsg, commission.CommissionRates.Rate)
 		return false
 	}
 
+	log.Infof("%s. success", logmsg)
 	return true
 }
 
 func (m *Monitor) verifySubscribe(change sync.Change) bool {
 	var subscription subscribe.Subscription
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &subscription)
-	log.Infoln("Verify subscription", subscription)
+	logmsg := fmt.Sprintf("verify change id %d, subscription: %s", change.ID, subscription)
 
 	deposit, err := m.ethClient.SGN.SubscriptionDeposits(
-		&bind.CallOpts{},
-		mainchain.Hex2Addr(subscription.EthAddress))
+		&bind.CallOpts{}, mainchain.Hex2Addr(subscription.EthAddress))
 	if err != nil {
-		log.Errorln("Failed to query subscription desposit:", err)
+		log.Errorf("%s. query subscription desposit err: %s", logmsg, err)
 		return false
 	}
 
 	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
-		log.Errorln("Deposit does not match maichain value")
+		log.Errorf("%s. deposit does not match mainchain value %s", logmsg, deposit)
 		return false
 	}
 
+	log.Infof("%s. success", logmsg)
 	return true
 }
 
 func (m *Monitor) verifyRequest(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	log.Infoln("Verify request", request)
+	logmsg := fmt.Sprintf("verify change id %d, request: %s", change.ID, request)
 
 	var signedSimplexState chain.SignedSimplexState
 	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
-		log.Errorln("Failed to unmarshal signedSimplexStateBytes:", err)
+		log.Errorf("%s. unmarshal signedSimplexStateBytes err: %s", logmsg, err)
 		return false
 	}
 
 	r, err := subscribe.GetRequest(m.operator.CliCtx, m.ethClient.Ledger, &signedSimplexState)
 	if err != nil {
-		log.Errorln("Failed to get request through SignedSimplexStateBytes:", err)
+		log.Errorf("%s. get request err: %s", logmsg, err)
 		return false
 	}
 
 	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
-		log.Errorln("Failed to verify sigs:", err)
+		log.Errorf("%s. verify sigs err: %s", logmsg, err)
 		return false
 	}
 
 	ownerAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
 	if err != nil {
-		log.Errorln("Failed to recover signer:", err)
+		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return false
 	}
 
 	if request.SeqNum <= r.SeqNum {
-		log.Errorln("SeqNum is smaller than expected")
+		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, r.SeqNum)
 		return false
 	}
 
 	if request.PeerFromIndex != r.PeerFromIndex {
-		log.Errorln("PeerFromIndex does not match maichain value")
+		log.Errorf("%s. PeerFromIndex does not match mainchain value %d", logmsg, r.PeerFromIndex)
 		return false
 	}
 
 	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		log.Errorln("Owner sig does not match maichain value")
+		log.Errorf("%s. Owner sig does not match mainchain value %x", logmsg, ownerAddr)
 		return false
 	}
 
 	if !bytes.Equal(request.ChannelId, r.ChannelId) {
-		log.Errorln("ChannelId does not match maichain value")
+		log.Errorf("%s. ChannelId does not match mainchain value %x", logmsg, r.ChannelId)
 		return false
 	}
 
 	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
-		log.Errorln("PeerAddresses does not match maichain value")
+		log.Errorf("%s. PeerAddresses does not match mainchain value %s", logmsg, r.PeerAddresses)
 		return false
 	}
 
+	log.Infof("%s. success", logmsg)
 	return true
 }
 
 func (m *Monitor) verifyTriggerGuard(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	log.Infoln("Verify TriggerGuard", request)
+	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
 
 	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetOwnerAddress())
 	if err != nil {
-		log.Errorln("Query request error:", err)
+		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false
 	}
 
 	if request.TriggerTxBlkNum == r.TriggerTxBlkNum && request.DisputeTimeout == r.DisputeTimeout {
-		log.Errorln("Invalid change for the same TriggerTxBlkNum/DisputeTimeout value")
+		log.Errorf("%s. TriggerTxBlkNum and DisputeTimeout not changed", logmsg)
 		return false
 	}
 
 	triggerLog, err := subscribe.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("%s. ValidateTriggerTx err: %s", logmsg, err)
 		return false
 	}
 
 	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
-		log.Errorln("GetDisputeTimeout err:", err)
+		log.Errorf("%s. GetDisputeTimeout err: %s", logmsg, err)
 		return false
 	}
 
 	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
-		log.Errorln("TriggerTxBlkNum does not match maichain value")
+		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value %d", logmsg, triggerLog.BlockNumber)
 		return false
 	}
 	if request.DisputeTimeout != disputeTimeout.Uint64() {
-		log.Errorln("DisputeTimeout does not match maichain value")
+		log.Errorf("%s. DisputeTimeout does not match mainchain value %s", logmsg, disputeTimeout)
 		return false
 	}
 
+	log.Infof("%s. success", logmsg)
 	return true
 }
 
 func (m *Monitor) verifyGuardProof(change sync.Change) bool {
 	var request subscribe.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	log.Infoln("Verify GuardProof", request)
+	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, request)
 
 	if request.TriggerTxHash == "" {
-		log.Errorln("Request Trigger event has not been submitted")
+		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
 		return false
 	}
 
 	guardLog, err := subscribe.ValidateGuardTx(m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("%s. ValidateGuardTx err: %s", logmsg, err)
 		return false
 	}
 
 	if guardLog.BlockNumber <= request.TriggerTxBlkNum {
-		log.Errorf("Invalid block number for GuardTx %d TriggerTx %d", guardLog.BlockNumber, request.TriggerTxBlkNum)
+		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
 		return false
 	}
 
 	err = subscribe.ValidateSnapshotSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("%s. ValidateSnapshotSeqNum err: %s", logmsg, err)
 		return false
 	}
 
 	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, request.GuardTxHash)
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("%s. GetTxSender err: %s", logmsg, err)
 		return false
 	}
 
 	if request.GuardTxBlkNum != guardLog.BlockNumber {
-		log.Errorln("GuardTxBlkNum does not match maichain value")
+		log.Errorf("%s. GuardTxBlkNum does not match mainchain value %d", logmsg, guardLog.BlockNumber)
 		return false
 	}
 	if request.GuardSender != guardSender {
-		log.Errorln("GuardSender does not match maichain value")
+		log.Errorf("%s. GuardSender does not match mainchain value %s", logmsg, guardSender)
 		return false
 	}
 
+	log.Infof("%s. success", logmsg)
 	return true
 }

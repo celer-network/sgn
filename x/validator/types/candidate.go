@@ -47,5 +47,5 @@ func NewCandidate(ethAddress string, operator sdk.AccAddress) Candidate {
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, StakingPool: %v`, c.Operator, c.StakingPool))
+	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, EthAddress: %s, StakingPool: %v`, c.Operator, c.EthAddress, c.StakingPool))
 }
