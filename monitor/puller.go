@@ -64,6 +64,7 @@ func (m *Monitor) syncDPoSValidatorChange(validatorChange *mainchain.DPoSValidat
 func (m *Monitor) syncDPoSIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
 	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
 	m.syncValidator(intendWithdraw.Candidate)
+	m.syncDelegator(intendWithdraw.Candidate, intendWithdraw.Delegator)
 }
 
 func (m *Monitor) syncDPoSCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
@@ -195,7 +196,7 @@ func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
 		return
 	}
 
-	log.Infof("Handle new delegate from delegator %x to candidate %x, stake %s pool %s",
+	log.Infof("Handle new delegate from delegator %x to candidate %x, new stake %s, pool %s",
 		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 	m.syncDelegator(delegate.Candidate, delegate.Delegator)
 
