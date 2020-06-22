@@ -167,7 +167,8 @@ func (m *Monitor) syncValidator(address mainchain.Addr) {
 	v, err := validator.CLIQueryValidator(
 		m.operator.CliCtx, staking.RouterKey, candidate.Operator.String())
 	if err == nil {
-		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
+		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
+			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
 			log.Infof("no need to sync updated validator %x", address)
 			return
 		}

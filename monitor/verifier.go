@@ -168,7 +168,8 @@ func (m *Monitor) verifySyncValidator(change sync.Change) bool {
 	v, err := validator.CLIQueryValidator(
 		m.operator.CliCtx, staking.RouterKey, candidate.Operator.String())
 	if err == nil {
-		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
+		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
+			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
 			log.Warnf("%s. validator not changed", logmsg)
 			return false
 		}

@@ -44,10 +44,11 @@ func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (sta
 	}
 
 	prec := int64(len(commissionBase.String()) - 1)
-
 	return staking.Commission{
 		CommissionRates: staking.CommissionRates{
-			Rate: sdk.NewDecFromBigIntWithPrec(commissionRate, prec),
+			Rate:          sdk.NewDecFromBigIntWithPrec(commissionRate, prec),
+			MaxRate:       sdk.NewDec(1),
+			MaxChangeRate: sdk.NewDec(1),
 		},
 	}, nil
 }
