@@ -55,6 +55,34 @@ func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.Ce
 	}
 }
 
+func (m *Monitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
+	channelId := cid[:]
+	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(
+		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
+		cid)
+	if err != nil {
+		log.Errorln("Query StateSeqNumMap err", err)
+		return
+	}
+
+	for _, addr := range addresses {
+		peerFrom := mainchain.Addr2Hex(addr)
+		request, err := m.getRequest(channelId, peerFrom)
+		if err != nil {
+			continue
+		}
+
+		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
+			continue
+		}
+
+		requests = append(requests, request)
+	}
+
+	return requests
+}
+
 func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, eventName EventName) {
 	log.Infoln("Guard request", request)
 	if request.GuardTxHash != "" {
@@ -87,7 +115,7 @@ func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, e
 		return
 	}
 
-	// TODO: use snapshotStates instead of intendSettle here? (need to update cChannel contract first)
+	// TODO: should not waitmined
 	var receipt *ethtypes.Receipt
 	switch eventName {
 	case IntendWithdrawChannel:
@@ -121,32 +149,4 @@ func (m *Monitor) guardRequest(request subscribe.Request, rawLog ethtypes.Log, e
 	msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
 	log.Infof("submit change tx: guard proof request %s", request)
 	m.operator.AddTxMsg(msg)
-}
-
-func (m *Monitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
-	channelId := cid[:]
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(
-		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
-		cid)
-	if err != nil {
-		log.Errorln("Query StateSeqNumMap err", err)
-		return
-	}
-
-	for _, addr := range addresses {
-		peerFrom := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(channelId, peerFrom)
-		if err != nil {
-			continue
-		}
-
-		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
-			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
-			continue
-		}
-
-		requests = append(requests, request)
-	}
-
-	return requests
 }

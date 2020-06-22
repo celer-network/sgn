@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/allegro/bigcache"
@@ -204,18 +205,23 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 			StartBlock: m.ethMonitor.GetCurrentBlockNumber(),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
+			logmsg := fmt.Sprintf("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
 			validatorChange, perr := m.ethClient.DPoS.ParseValidatorChange(eLog)
 			if perr != nil {
-				log.Errorln("parse event err", perr)
+				log.Errorf("%s. parse event err: %s", logmsg, perr)
 				return
 			}
-			// self init sync if add validator
-			if validatorChange.EthAddr == m.ethClient.Address && validatorChange.ChangeType == mainchain.AddValidator {
-				m.isValidator = true
-				m.syncValidator(validatorChange.EthAddr)
-				m.setTransactors()
+			if validatorChange.ChangeType == mainchain.AddValidator {
+				// self init sync if add validator
+				if validatorChange.EthAddr == m.ethClient.Address {
+					log.Infof("%s. Init my own validator.", logmsg)
+					m.isValidator = true
+					m.syncValidator(validatorChange.EthAddr)
+					m.setTransactors()
+				}
 			} else {
+				// self only put removal event to puller queue
+				log.Infof("%s, eth addr: %x", logmsg, validatorChange.EthAddr)
 				if validatorChange.EthAddr == m.ethClient.Address {
 					m.isValidator = false
 				}

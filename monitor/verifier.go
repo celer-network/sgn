@@ -85,7 +85,7 @@ func (m *Monitor) verifyConfirmParamProposal(change sync.Change) bool {
 	}
 
 	if !paramChange.NewValue.Equal(sdk.NewIntFromBigInt(paramValue)) {
-		log.Errorf("%s. new value does not match mainchain value %s", logmsg, paramValue)
+		log.Errorf("%s. new value does not match mainchain value: %s", logmsg, paramValue)
 		return false
 	}
 
@@ -113,7 +113,7 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) bool {
 	}
 
 	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
-		log.Errorf("%s. operator does not match mainchain value %s", logmsg, sdk.AccAddress(sidechainAddr))
+		log.Errorf("%s. operator does not match mainchain value: %s", logmsg, sdk.AccAddress(sidechainAddr))
 		return false
 	}
 
@@ -142,7 +142,7 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) bool {
 	}
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
-		log.Errorf("%s. stake does not match mainchain value %s", logmsg, di.DelegatedStake)
+		log.Errorf("%s. stake does not match mainchain value: %s", logmsg, di.DelegatedStake)
 		return false
 	}
 
@@ -181,13 +181,13 @@ func (m *Monitor) verifySyncValidator(change sync.Change) bool {
 	}
 
 	if !vt.Status.Equal(mainchain.ParseStatus(ci)) {
-		log.Errorf("%s. status does not match mainchain value %s", logmsg, mainchain.ParseStatus(ci))
+		log.Errorf("%s. status does not match mainchain value: %s", logmsg, mainchain.ParseStatus(ci))
 		return false
 	}
 
 	mtk := sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)
 	if !vt.Tokens.Equal(mtk) {
-		log.Errorf("%s. tokens does not match mainchain value %s", logmsg, mtk)
+		log.Errorf("%s. tokens does not match mainchain value: %s", logmsg, mtk)
 		return false
 	}
 
@@ -198,7 +198,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) bool {
 	}
 
 	if !vt.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
-		log.Errorf("%s. commission does not match mainchain value %s", logmsg, commission.CommissionRates.Rate)
+		log.Errorf("%s. commission does not match mainchain value: %s", logmsg, commission.CommissionRates.Rate)
 		return false
 	}
 
@@ -219,7 +219,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) bool {
 	}
 
 	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
-		log.Errorf("%s. deposit does not match mainchain value %s", logmsg, deposit)
+		log.Errorf("%s. deposit does not match mainchain value: %s", logmsg, deposit)
 		return false
 	}
 
@@ -263,22 +263,22 @@ func (m *Monitor) verifyRequest(change sync.Change) bool {
 	}
 
 	if request.PeerFromIndex != r.PeerFromIndex {
-		log.Errorf("%s. PeerFromIndex does not match mainchain value %d", logmsg, r.PeerFromIndex)
+		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, r.PeerFromIndex)
 		return false
 	}
 
 	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		log.Errorf("%s. Owner sig does not match mainchain value %x", logmsg, ownerAddr)
+		log.Errorf("%s. Owner sig does not match mainchain value: %x", logmsg, ownerAddr)
 		return false
 	}
 
 	if !bytes.Equal(request.ChannelId, r.ChannelId) {
-		log.Errorf("%s. ChannelId does not match mainchain value %x", logmsg, r.ChannelId)
+		log.Errorf("%s. ChannelId does not match mainchain value: %x", logmsg, r.ChannelId)
 		return false
 	}
 
 	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
-		log.Errorf("%s. PeerAddresses does not match mainchain value %s", logmsg, r.PeerAddresses)
+		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, r.PeerAddresses)
 		return false
 	}
 
@@ -315,11 +315,11 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) bool {
 	}
 
 	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
-		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value %d", logmsg, triggerLog.BlockNumber)
+		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
 		return false
 	}
 	if request.DisputeTimeout != disputeTimeout.Uint64() {
-		log.Errorf("%s. DisputeTimeout does not match mainchain value %s", logmsg, disputeTimeout)
+		log.Errorf("%s. DisputeTimeout does not match mainchain value: %s", logmsg, disputeTimeout)
 		return false
 	}
 
@@ -361,11 +361,11 @@ func (m *Monitor) verifyGuardProof(change sync.Change) bool {
 	}
 
 	if request.GuardTxBlkNum != guardLog.BlockNumber {
-		log.Errorf("%s. GuardTxBlkNum does not match mainchain value %d", logmsg, guardLog.BlockNumber)
+		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return false
 	}
 	if request.GuardSender != guardSender {
-		log.Errorf("%s. GuardSender does not match mainchain value %s", logmsg, guardSender)
+		log.Errorf("%s. GuardSender does not match mainchain value: %s", logmsg, guardSender)
 		return false
 	}
 
