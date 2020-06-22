@@ -57,18 +57,18 @@ func (m *Monitor) processPullerQueue() {
 }
 
 func (m *Monitor) syncDPoSValidatorChange(validatorChange *mainchain.DPoSValidatorChange) {
-	log.Infof("New validator change %x type %d", validatorChange.EthAddr, validatorChange.ChangeType)
+	log.Infof("puller queue process validator change %x", validatorChange.EthAddr)
 	m.syncValidator(validatorChange.EthAddr)
 }
 
 func (m *Monitor) syncDPoSIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw) {
-	log.Infof("New intend withdraw %x", intendWithdraw.Candidate)
+	log.Infof("puller queue process intend withdraw %x", intendWithdraw.Candidate)
 	m.syncValidator(intendWithdraw.Candidate)
 	m.syncDelegator(intendWithdraw.Candidate, intendWithdraw.Delegator)
 }
 
 func (m *Monitor) syncDPoSCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
-	log.Infof("New candidate unbonded %x", candidateUnbonded.Candidate)
+	log.Infof("puller queue process candidate unbonded %x", candidateUnbonded.Candidate)
 	m.syncValidator(candidateUnbonded.Candidate)
 }
 
@@ -150,13 +150,27 @@ func (m *Monitor) syncValidator(address mainchain.Addr) {
 		return
 	}
 
-	validator := staking.Validator{
+	vt := staking.Validator{
 		Description: staking.Description{
 			Identity: address.Hex(),
 		},
 		Tokens:     sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
 		Status:     mainchain.ParseStatus(ci),
 		Commission: commission,
+	}
+
+	candidate, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, address.Hex())
+	if err != nil {
+		log.Errorln("sidechain query candidate err:", err)
+		return
+	}
+	v, err := validator.CLIQueryValidator(
+		m.operator.CliCtx, staking.RouterKey, candidate.Operator.String())
+	if err == nil {
+		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) && vt.Commission.Equal(v.Commission) {
+			log.Infof("no need to sync updated validator %x", address)
+			return
+		}
 	}
 
 	if m.ethClient.Address == address {
@@ -166,10 +180,10 @@ func (m *Monitor) syncValidator(address mainchain.Addr) {
 			return
 		}
 
-		validator.ConsPubKey = pk
+		vt.ConsPubKey = pk
 	}
 
-	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(validator)
+	validatorData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(vt)
 	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, m.operator.Key.GetAddress())
 	log.Infof("submit change tx: sync validator %x", address)
 	m.operator.AddTxMsg(msg)
