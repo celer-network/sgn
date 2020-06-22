@@ -31,7 +31,7 @@ func NewMonitorContractInfo(address common.Address, abi string) *MonitorContract
 	}
 }
 
-func (m *EthMonitor) isPuller() bool {
+func (m *Monitor) isPuller() bool {
 	puller, err := validator.CLIQueryPuller(m.operator.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Errorln("Get puller err", err)
@@ -41,7 +41,7 @@ func (m *EthMonitor) isPuller() bool {
 	return puller.ValidatorAddr.Equals(m.operator.Key.GetAddress())
 }
 
-func (m *EthMonitor) isPusher() bool {
+func (m *Monitor) isPusher() bool {
 	pusher, err := validator.CLIQueryPusher(m.operator.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Errorln("Get pusher err", err)
@@ -51,21 +51,22 @@ func (m *EthMonitor) isPusher() bool {
 	return pusher.ValidatorAddr.Equals(m.operator.Key.GetAddress())
 }
 
-func (m *EthMonitor) isPullerOrOwner(candidate mainchain.Addr) bool {
+func (m *Monitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 	return m.isPuller() || candidate == m.ethClient.Address
 }
 
 // Is the current node the guard to submit state proof
-func (m *EthMonitor) isRequestGuard(request subscribe.Request, eventBlockNumber uint64) bool {
+func (m *Monitor) isRequestGuard(request subscribe.Request, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
 	if len(requestGuards) == 0 {
 		return false
 	}
 
-	blockNumberDiff := m.blkNum.Uint64() - eventBlockNumber
+	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+	blockNumberDiff := blkNum - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
-	log.Infoln("IsRequestGuard", m.blkNum.Uint64(), eventBlockNumber, guardIndex, requestGuards)
+	log.Infoln("IsRequestGuard", blkNum, eventBlockNumber, guardIndex, requestGuards)
 	// All other validators need to guard
 	if guardIndex >= uint64(len(requestGuards)) {
 		return true
@@ -74,11 +75,11 @@ func (m *EthMonitor) isRequestGuard(request subscribe.Request, eventBlockNumber 
 	return requestGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
-func (m *EthMonitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
+func (m *Monitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
 	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, peerFrom)
 }
 
-func (m *EthMonitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
+func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 	accGetter := types.NewAccountRetriever(m.operator.CliCtx)
 	return accGetter.GetAccount(addr)
 }
