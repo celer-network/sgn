@@ -23,7 +23,7 @@ func (m *Monitor) processGuardQueue() {
 
 	for ; iterator.Valid(); iterator.Next() {
 		event := NewEventFromBytes(iterator.Value())
-		log.Infoln("Process pusher event", event.Name)
+		log.Infoln("Process guard event", event.Name)
 		err = m.db.Delete(iterator.Key())
 		if err != nil {
 			log.Errorln("db Delete err", err)
