@@ -23,8 +23,9 @@ const (
 
 // Wrapper for ethereum Event
 type EventWrapper struct {
-	Name EventName `json:"name"`
-	Log  types.Log `json:"log"`
+	Name       EventName `json:"name"`
+	Log        types.Log `json:"log"`
+	Processing bool      `json:"processing"`
 }
 
 func NewEvent(name EventName, l types.Log) EventWrapper {
@@ -68,6 +69,8 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 		res, err = ethClient.DPoS.ParseConfirmParamProposal(e.Log)
 	case Delegate:
 		res, err = ethClient.DPoS.ParseDelegate(e.Log)
+	case CandidateUnbonded:
+		res, err = ethClient.DPoS.ParseCandidateUnbonded(e.Log)
 	case ValidatorChange:
 		res, err = ethClient.DPoS.ParseValidatorChange(e.Log)
 	case IntendWithdrawDpos:
@@ -82,15 +85,6 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 
 	if err != nil {
 		panic(err)
-	}
-
-	switch tmp := res.(type) {
-	case *mainchain.SGNUpdateSidechainAddr:
-		tmp.Raw = e.Log
-		res = tmp
-	case *mainchain.CelerLedgerIntendSettle:
-		tmp.Raw = e.Log
-		res = tmp
 	}
 
 	return res
