@@ -55,8 +55,7 @@ func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.Ce
 	}
 }
 
-func (m *Monitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
-	channelId := cid[:]
+func (m *Monitor) getRequests(cid mainchain.CidType) (requests []subscribe.Request) {
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(
 		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
 		cid)
@@ -67,7 +66,7 @@ func (m *Monitor) getRequests(cid [32]byte) (requests []subscribe.Request) {
 
 	for _, addr := range addresses {
 		peerFrom := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(channelId, peerFrom)
+		request, err := m.getRequest(cid.Bytes(), peerFrom)
 		if err != nil {
 			continue
 		}

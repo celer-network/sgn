@@ -205,57 +205,6 @@ func (m *Monitor) setTransactors() {
 	m.operator.AddTxMsg(setTransactorsMsg)
 }
 
-func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
-	if delegate.Candidate != m.ethClient.Address {
-		log.Tracef("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
-		return
-	}
-
-	log.Infof("Handle new delegate from delegator %x to candidate %x, new stake %s, pool %s",
-		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
-	m.syncDelegator(delegate.Candidate, delegate.Delegator)
-
-	if m.isValidator {
-		m.syncValidator(delegate.Candidate)
-	} else {
-		m.claimValidatorOnMainchain()
-	}
-}
-
-func (m *Monitor) claimValidatorOnMainchain() {
-	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
-	if err != nil {
-		log.Errorln("GetCandidateInfo err", err)
-		return
-	}
-	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
-		log.Debug("Not enough stake to become validator")
-		return
-	}
-
-	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
-	if err != nil {
-		log.Errorln("GetMinStakingPool err", err)
-		return
-	}
-	if candidate.StakingPool.Cmp(minStake) == -1 {
-		log.Debug("Not enough stake to become validator")
-		return
-	}
-
-	_, err = m.ethClient.Transactor.Transact(
-		nil,
-		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return m.ethClient.DPoS.ClaimValidator(opts)
-		},
-	)
-	if err != nil {
-		log.Errorln("ClaimValidator tx err", err)
-		return
-	}
-	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
-}
-
 func (m *Monitor) syncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	di, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, candidatorAddr, delegatorAddr)
 	if err != nil {

@@ -157,27 +157,6 @@ func (m *Monitor) monitorConfirmParamProposal() {
 	}
 }
 
-func (m *Monitor) monitorDPoSDelegate() {
-	_, err := m.ethMonitor.Monitor(
-		&monitor.Config{
-			EventName:  string(Delegate),
-			Contract:   m.dposContract,
-			StartBlock: m.ethMonitor.GetCurrentBlockNumber(),
-		},
-		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
-			delegate, perr := m.ethClient.DPoS.ParseDelegate(eLog)
-			if perr != nil {
-				log.Errorln("parse event err", perr)
-				return
-			}
-			m.handleDPoSDelegate(delegate)
-		})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func (m *Monitor) monitorDPoSCandidateUnbonded() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
@@ -324,4 +303,76 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (m *Monitor) monitorDPoSDelegate() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:  string(Delegate),
+			Contract:   m.dposContract,
+			StartBlock: m.ethMonitor.GetCurrentBlockNumber(),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
+			delegate, perr := m.ethClient.DPoS.ParseDelegate(eLog)
+			if perr != nil {
+				log.Errorln("parse event err", perr)
+				return
+			}
+			m.handleDPoSDelegate(delegate)
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
+	if delegate.Candidate != m.ethClient.Address {
+		log.Tracef("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
+		return
+	}
+
+	log.Infof("Handle new delegate from delegator %x to candidate %x, new stake %s, pool %s",
+		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
+	m.syncDelegator(delegate.Candidate, delegate.Delegator)
+
+	if m.isValidator {
+		m.syncValidator(delegate.Candidate)
+	} else {
+		m.claimValidatorOnMainchain()
+	}
+}
+
+func (m *Monitor) claimValidatorOnMainchain() {
+	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
+	if err != nil {
+		log.Errorln("GetCandidateInfo err", err)
+		return
+	}
+	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
+		log.Debug("Not enough stake to become validator")
+		return
+	}
+
+	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
+	if err != nil {
+		log.Errorln("GetMinStakingPool err", err)
+		return
+	}
+	if candidate.StakingPool.Cmp(minStake) == -1 {
+		log.Debug("Not enough stake to become validator")
+		return
+	}
+
+	_, err = m.ethClient.Transactor.Transact(
+		nil,
+		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+			return m.ethClient.DPoS.ClaimValidator(opts)
+		},
+	)
+	if err != nil {
+		log.Errorln("ClaimValidator tx err", err)
+		return
+	}
+	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
 }
