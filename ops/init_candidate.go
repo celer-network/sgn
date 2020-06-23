@@ -3,14 +3,14 @@ package ops
 import (
 	"math/big"
 
-	"github.com/celer-network/sgn/mainchain"
-
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
-
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,6 +36,7 @@ func initCandidate() error {
 		viper.GetString(common.FlagEthLedgerAddress),
 	)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	minSelfStake := new(big.Int)
@@ -45,6 +46,12 @@ func initCandidate() error {
 	rateLockEndTime := new(big.Int)
 	rateLockEndTime.SetString(viper.GetString(rateLockEndTimeFlag), 10)
 
+	log.Infof(
+		"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s, rateLockEndTime: %s",
+		minSelfStake,
+		commissionRate,
+		rateLockEndTime,
+	)
 	tx, err := ethClient.Transactor.Transact(
 		&eth.TransactionStateHandler{
 			OnMined: func(receipt *ethtypes.Receipt) {
@@ -74,12 +81,34 @@ func InitCandidateCommand() *cobra.Command {
 		Use:   "initcandidate",
 		Short: "Initialize a validator candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			viper.SetConfigFile(viper.GetString(common.FlagConfig))
-			err := viper.ReadInConfig()
+			return initCandidate()
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := cmd.MarkFlagRequired(minSelfStakeFlag)
 			if err != nil {
 				return err
 			}
-			return initCandidate()
+			err = cmd.MarkFlagRequired(commissionRateFlag)
+			if err != nil {
+				return err
+			}
+			err = cmd.MarkFlagRequired(rateLockEndTimeFlag)
+			if err != nil {
+				return err
+			}
+			err = viper.BindPFlag(minSelfStakeFlag, cmd.Flags().Lookup(minSelfStakeFlag))
+			if err != nil {
+				return err
+			}
+			err = viper.BindPFlag(commissionRateFlag, cmd.Flags().Lookup(commissionRateFlag))
+			if err != nil {
+				return err
+			}
+			err = viper.BindPFlag(rateLockEndTimeFlag, cmd.Flags().Lookup(rateLockEndTimeFlag))
+			if err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self stake")

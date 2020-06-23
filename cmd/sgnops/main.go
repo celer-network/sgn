@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/sgn/test/channel"
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
@@ -16,6 +17,10 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "sgnops",
 		Short: "sgn ops utility",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			viper.SetConfigFile(viper.GetString(common.FlagConfig))
+			return viper.ReadInConfig()
+		},
 	}
 
 	// Construct Root Command
