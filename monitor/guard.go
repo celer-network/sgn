@@ -49,8 +49,8 @@ func (m *Monitor) processGuardQueue() {
 			}
 			if submitted {
 				m.dbLock.Lock()
-				v, err2 := m.db.Get(key)
-				if err2 != nil {
+				v, err := m.db.Get(key)
+				if err != nil {
 					log.Errorln("db Get err:", err)
 					m.dbLock.Unlock()
 					continue
