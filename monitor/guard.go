@@ -56,7 +56,7 @@ func (m *Monitor) processGuardQueue() {
 					continue
 				}
 				e := NewEventFromBytes(v)
-				if e.Processing == false {
+				if !e.Processing {
 					e.Processing = true
 					err = m.db.Set(key, e.MustMarshal())
 					if err != nil {
