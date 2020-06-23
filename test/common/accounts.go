@@ -44,7 +44,7 @@ func AccountsCommand() *cobra.Command {
 			genesisCoin := viper.GetString(genesisCoinFlag)
 			if genesisCoin != "" {
 				for _, address := range addresses {
-					cmd := exec.Command("sgn", "add-genesis-account", address, genesisCoin)
+					cmd := exec.Command("sgnd", "add-genesis-account", address, genesisCoin)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
 					cmd.Dir, _ = filepath.Abs(".")

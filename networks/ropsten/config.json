@@ -1,0 +1,28 @@
+{
+  "eth": {
+    "chainId": 3,
+    "confirmCount": 1,
+    "dposAddress": "0xfcb6f4cfa84dbaf162aa99e5f2a0a14f0d6849cb",
+    "instance": "[ETHEREUM_INSTANCE_URL]",
+    "keystore": "[KEYSTORE_PATH]",
+    "ledgerAddress": "0x4ee1dc9868c295e145334709ce857534e9b962f8",
+    "passphrase": "[KEYSTORE_PASSPHRASE]",
+    "pollInterval": 1,
+    "sgnAddress": "0x33589ab7cdba85672366eeae5a9a5c5a7334556a"
+  },
+  "log": {
+    "color": false,
+    "level": "debug"
+  },
+  "sgn": {
+    "chainId": "sgnchain",
+    "baseGasPrice": 0,
+    "nodeUri": "tcp://localhost:26657",
+    "operator": "[OPERATOR_ADDRESS]",
+    "passphrase": "[TRANSACTOR_PASSPHRASE]",
+    "pubkey": "[VALIDATOR_PUBKEY]",
+    "transactors": ["TRANSACTOR_ADDRESS"],
+    "timeoutCommit": 5,
+    "keyringBackend": "file"
+  }
+}
