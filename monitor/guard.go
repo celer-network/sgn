@@ -17,7 +17,7 @@ import (
 
 func (m *Monitor) processGuardQueue() {
 	var keys, vals [][]byte
-	m.dbLock.Lock()
+	m.dbLock.RLock()
 	iterator, err := m.db.Iterator(GuardKeyPrefix, storetypes.PrefixEndBytes(GuardKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -28,7 +28,7 @@ func (m *Monitor) processGuardQueue() {
 		vals = append(vals, iterator.Value())
 	}
 	iterator.Close()
-	m.dbLock.Unlock()
+	m.dbLock.RUnlock()
 
 	for i, key := range keys {
 		event := NewEventFromBytes(vals[i])

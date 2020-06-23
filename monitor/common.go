@@ -113,8 +113,8 @@ func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 }
 
 func (m *Monitor) dbGet(key []byte) ([]byte, error) {
-	m.dbLock.Lock()
-	defer m.dbLock.Unlock()
+	m.dbLock.RLock()
+	defer m.dbLock.RUnlock()
 	return m.db.Get(key)
 }
 

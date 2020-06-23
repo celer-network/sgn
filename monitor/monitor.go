@@ -32,7 +32,7 @@ type Monitor struct {
 	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
 	isValidator     bool
-	dbLock          sync.Mutex
+	dbLock          sync.RWMutex
 }
 
 func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, db dbm.DB) {
