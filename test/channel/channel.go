@@ -189,12 +189,6 @@ func ServeCommand() *cobra.Command {
 		Use:   "channel",
 		Short: "Start a local REST server talking to channel and sgn",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			viper.SetConfigFile(viper.GetString(common.FlagConfig))
-			err = viper.ReadInConfig()
-			if err != nil {
-				return err
-			}
-
 			rs, err := NewRestServer()
 			if err != nil {
 				return err
