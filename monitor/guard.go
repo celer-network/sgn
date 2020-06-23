@@ -16,15 +16,22 @@ import (
 )
 
 func (m *Monitor) processGuardQueue() {
+	var keys, vals [][]byte
+	m.dbLock.Lock()
 	iterator, err := m.db.Iterator(GuardKeyPrefix, storetypes.PrefixEndBytes(GuardKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
 		return
 	}
-	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
-		event := NewEventFromBytes(iterator.Value())
+		keys = append(keys, iterator.Key())
+		vals = append(vals, iterator.Value())
+	}
+	iterator.Close()
+	m.dbLock.Unlock()
+
+	for i, key := range keys {
+		event := NewEventFromBytes(vals[i])
 		if !event.Processing {
 			log.Infoln("Process guard event", event.Name)
 			var submitted bool
@@ -41,11 +48,22 @@ func (m *Monitor) processGuardQueue() {
 				continue
 			}
 			if submitted {
-				event.Processing = true
-				err = m.db.Set(iterator.Key(), event.MustMarshal())
-				if err != nil {
-					log.Errorln("db Set err", err)
+				m.dbLock.Lock()
+				v, err2 := m.db.Get(key)
+				if err2 != nil {
+					log.Errorln("db Get err:", err)
+					m.dbLock.Unlock()
+					continue
 				}
+				e := NewEventFromBytes(v)
+				if e.Processing == false {
+					e.Processing = true
+					err = m.db.Set(key, e.MustMarshal())
+					if err != nil {
+						log.Errorln("db Set err", err)
+					}
+				}
+				m.dbLock.Unlock()
 			}
 		}
 	}
@@ -57,7 +75,7 @@ func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSet
 	if len(requests) > 0 {
 		return m.guardRequest(requests, intendSettle.Raw, IntendSettle)
 	} else {
-		err := m.db.Delete(GetGuardKey(intendSettle.Raw))
+		err := m.dbDelete(GetGuardKey(intendSettle.Raw))
 		return false, err
 	}
 }
@@ -68,7 +86,7 @@ func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.Ce
 	if len(requests) > 0 {
 		return m.guardRequest(requests, intendWithdrawChannel.Raw, IntendWithdrawChannel)
 	} else {
-		err := m.db.Delete(GetGuardKey(intendWithdrawChannel.Raw))
+		err := m.dbDelete(GetGuardKey(intendWithdrawChannel.Raw))
 		return false, err
 	}
 }
@@ -152,7 +170,7 @@ func (m *Monitor) guardTxHandler(
 					log.Infof("submit change tx: guard proof request %s", request)
 					m.operator.AddTxMsg(msg)
 				}
-				err := m.db.Delete(GetGuardKey(rawLog))
+				err := m.dbDelete(GetGuardKey(rawLog))
 				if err != nil {
 					log.Errorln("db Delete err", err)
 				}

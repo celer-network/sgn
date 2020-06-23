@@ -19,17 +19,23 @@ func (m *Monitor) processPenaltyQueue() {
 	if !m.isPusher() {
 		return
 	}
-
+	var keys, vals [][]byte
+	m.dbLock.Lock()
 	iterator, err := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
 		return
 	}
-	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
-		event := NewPenaltyEventFromBytes(iterator.Value())
-		err = m.db.Delete(iterator.Key())
+		keys = append(keys, iterator.Key())
+		vals = append(vals, iterator.Value())
+	}
+	iterator.Close()
+	m.dbLock.Unlock()
+
+	for i, key := range keys {
+		event := NewPenaltyEventFromBytes(vals[i])
+		err = m.dbDelete(key)
 		if err != nil {
 			log.Errorln("db Delete err", err)
 			continue
@@ -78,7 +84,7 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	if err != nil {
 		if penaltyEvent.RetryCount < maxPunishRetry {
 			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
-			err = m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}

@@ -111,3 +111,21 @@ func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 	accGetter := types.NewAccountRetriever(m.operator.CliCtx)
 	return accGetter.GetAccount(addr)
 }
+
+func (m *Monitor) dbGet(key []byte) ([]byte, error) {
+	m.dbLock.Lock()
+	defer m.dbLock.Unlock()
+	return m.db.Get(key)
+}
+
+func (m *Monitor) dbSet(key, val []byte) error {
+	m.dbLock.Lock()
+	defer m.dbLock.Unlock()
+	return m.db.Set(key, val)
+}
+
+func (m *Monitor) dbDelete(key []byte) error {
+	m.dbLock.Lock()
+	defer m.dbLock.Unlock()
+	return m.db.Delete(key)
+}

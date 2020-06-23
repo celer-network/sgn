@@ -20,18 +20,24 @@ func (m *Monitor) processPullerQueue() {
 	if !m.isPuller() {
 		return
 	}
-
+	var keys, vals [][]byte
+	m.dbLock.Lock()
 	iterator, err := m.db.Iterator(PullerKeyPrefix, storetypes.PrefixEndBytes(PullerKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
 		return
 	}
-	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
-		event := NewEventFromBytes(iterator.Value())
+		keys = append(keys, iterator.Key())
+		vals = append(vals, iterator.Value())
+	}
+	iterator.Close()
+	m.dbLock.Unlock()
+
+	for i, key := range keys {
+		event := NewEventFromBytes(vals[i])
 		log.Infoln("Process puller event", event.Name, "at mainchain block", event.Log.BlockNumber)
-		err = m.db.Delete(iterator.Key())
+		err = m.dbDelete(key)
 		if err != nil {
 			log.Errorln("db Delete err", err)
 			continue
