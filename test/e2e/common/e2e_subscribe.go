@@ -47,7 +47,6 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tx, err = tc.SgnContract.Subscribe(tc.Client0.Auth, amt)
 	tc.ChkTestErr(t, err, "failed to call subscribe of SGN contract")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
-	tc.SleepWithLog(20, "passing subscribe event block delay")
 
 	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
 	subscription := stypes.NewSubscription(tc.Client0.Address.Hex())
@@ -94,7 +93,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, Disputetimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -118,7 +117,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{3}, GuardSender: [a-f0-9]{40}`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0, 100)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: [a-f0-9]{40}`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0, 100)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {

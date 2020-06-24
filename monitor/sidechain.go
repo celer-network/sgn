@@ -49,7 +49,7 @@ func (m *Monitor) monitorSidechainSlash() {
 
 			penaltyEvent := NewPenaltyEvent(nonce)
 			m.handlePenalty(penaltyEvent)
-			err = m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}

@@ -7,7 +7,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/slash"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
@@ -20,17 +19,23 @@ func (m *Monitor) processPenaltyQueue() {
 	if !m.isPusher() {
 		return
 	}
-
+	var keys, vals [][]byte
+	m.dbLock.RLock()
 	iterator, err := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
 		return
 	}
-	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
-		event := NewPenaltyEventFromBytes(iterator.Value())
-		err = m.db.Delete(iterator.Key())
+		keys = append(keys, iterator.Key())
+		vals = append(vals, iterator.Value())
+	}
+	iterator.Close()
+	m.dbLock.RUnlock()
+
+	for i, key := range keys {
+		event := NewPenaltyEventFromBytes(vals[i])
+		err = m.dbDelete(key)
 		if err != nil {
 			log.Errorln("db Delete err", err)
 			continue
@@ -42,9 +47,7 @@ func (m *Monitor) processPenaltyQueue() {
 func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.DPoS.UsedPenaltyNonce(
-		&bind.CallOpts{BlockNumber: sdk.NewIntFromUint64(m.secureBlkNum).BigInt()},
-		big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
@@ -81,7 +84,7 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	if err != nil {
 		if penaltyEvent.RetryCount < maxPunishRetry {
 			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
-			err = m.db.Set(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}
