@@ -1,13 +1,14 @@
 {
   "eth": {
-    "guardaddress": "0xd8E82043FD4E7d0dE29c34BE3C15f93c71581737",
-    "keystore": "./test/keys/ethks0.json",
-    "ledgeraddress": "0x960eb3B6Dd75652B0C6A359E3E976c6e20478A03",
-    "passphrase": "",
-    "instance": "http://127.0.0.1:8545",
-    "pollInterval": 1,
+    "chainId": 883,
     "blockDelay": 0,
-    "chainID": 883
+    "dposAddress": "",
+    "instance": "http://127.0.0.1:8545",
+    "keystore": "./test/keys/ethks0.json",
+    "ledgerAddress": "",
+    "passphrase": "",
+    "pollInterval": 1,
+    "sgnAddress": ""
   },
   "log": {
     "color": true,
