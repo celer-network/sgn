@@ -2,13 +2,15 @@
   "eth": {
     "chainId": 3,
     "blockDelay": 5,
-    "dposAddress": "0xfcb6f4cfa84dbaf162aa99e5f2a0a14f0d6849cb",
+    "contracts": {
+      "dposAddress": "0xfcb6f4cfa84dbaf162aa99e5f2a0a14f0d6849cb",
+      "ledgerAddress": "0x4ee1dc9868c295e145334709ce857534e9b962f8",
+      "sgnAddress": "0x33589ab7cdba85672366eeae5a9a5c5a7334556a"
+    },
     "gateway": "[ETHEREUM_GATEWAY_URL]",
     "keystore": "[KEYSTORE_PATH]",
-    "ledgerAddress": "0x4ee1dc9868c295e145334709ce857534e9b962f8",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
-    "pollInterval": 15,
-    "sgnAddress": "0x33589ab7cdba85672366eeae5a9a5c5a7334556a"
+    "pollInterval": 15
   },
   "log": {
     "color": false,

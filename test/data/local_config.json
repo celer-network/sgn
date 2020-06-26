@@ -2,13 +2,15 @@
   "eth": {
     "chainId": 883,
     "blockDelay": 0,
-    "dposAddress": "",
+    "contracts": {
+      "dposAddress": "",
+      "ledgerAddress": "",
+      "sgnAddress": ""
+    },
     "gateway": "http://127.0.0.1:8545",
     "keystore": "./test/keys/ethks0.json",
-    "ledgerAddress": "",
     "passphrase": "",
-    "pollInterval": 1,
-    "sgnAddress": ""
+    "pollInterval": 1
   },
   "log": {
     "color": true,
