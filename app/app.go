@@ -123,8 +123,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		tmos.Exit(err.Error())
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
-	viper.SetDefault(common.FlagEthPollInterval, 5)
-	viper.SetDefault(common.FlagEthConfirmCount, 7)
+	viper.SetDefault(common.FlagEthPollInterval, 15)
+	viper.SetDefault(common.FlagEthConfirmCount, 5)
 
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
