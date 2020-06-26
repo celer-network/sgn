@@ -6,7 +6,7 @@
     "passphrase": "",
     "instance": "http://127.0.0.1:8545",
     "pollInterval": 1,
-    "confirmCount": 0,
+    "blockDelay": 0,
     "chainID": 883
   },
   "log": {

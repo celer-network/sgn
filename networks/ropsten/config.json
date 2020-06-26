@@ -1,7 +1,7 @@
 {
   "eth": {
     "chainId": 3,
-    "confirmCount": 5,
+    "blockDelay": 5,
     "dposAddress": "0xfcb6f4cfa84dbaf162aa99e5f2a0a14f0d6849cb",
     "instance": "[ETHEREUM_INSTANCE_URL]",
     "keystore": "[KEYSTORE_PATH]",

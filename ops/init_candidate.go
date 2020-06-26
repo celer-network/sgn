@@ -27,7 +27,7 @@ func initCandidate() error {
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
 		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
+			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
 		},

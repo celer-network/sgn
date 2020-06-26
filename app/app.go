@@ -124,7 +124,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
 	viper.SetDefault(common.FlagEthPollInterval, 15)
-	viper.SetDefault(common.FlagEthConfirmCount, 5)
+	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
@@ -399,7 +399,7 @@ func (app *sgnApp) startMonitor(db dbm.DB) {
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
 		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
+			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
 		},

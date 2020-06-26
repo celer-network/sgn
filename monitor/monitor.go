@@ -43,7 +43,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		log.Fatalln("Cannot create watch service")
 	}
 
-	blkDelay := viper.GetUint64(common.FlagEthConfirmCount)
+	blkDelay := viper.GetUint64(common.FlagEthBlockDelay)
 	ethMonitor := monitor.NewService(watchService, blkDelay, true /* enabled */)
 	ethMonitor.Init()
 

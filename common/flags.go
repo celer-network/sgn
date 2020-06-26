@@ -13,7 +13,7 @@ const (
 	FlagEthKeystore      = "eth.keystore"
 	FlagEthPassphrase    = "eth.passphrase"
 	FlagEthPollInterval  = "eth.pollInterval"
-	FlagEthConfirmCount  = "eth.confirmCount"
+	FlagEthBlockDelay    = "eth.blockDelay"
 	FlagEthChainID       = "eth.chainID"
 
 	FlagSgnOperator       = "sgn.operator"
