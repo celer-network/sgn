@@ -2,9 +2,12 @@ package monitor
 
 import (
 	"encoding/json"
+	"strings"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/spf13/viper"
 )
 
 type EventName string
@@ -88,6 +91,16 @@ func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 	}
 
 	return res
+}
+
+func eventCheckInterval(name EventName) uint64 {
+	m := viper.GetStringMap(common.FlagEthCheckInterval)
+	if m[string(name)] != nil {
+		return uint64(m[string(name)].(float64))
+	} else if m[strings.ToLower(string(name))] != nil {
+		return uint64(m[strings.ToLower(string(name))].(float64))
+	}
+	return 0
 }
 
 type PenaltyEvent struct {

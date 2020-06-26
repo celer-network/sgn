@@ -15,6 +15,7 @@ const (
 	FlagEthPollInterval  = "eth.pollInterval"
 	FlagEthBlockDelay    = "eth.blockDelay"
 	FlagEthChainID       = "eth.chainID"
+	FlagEthCheckInterval = "eth.checkInterval"
 
 	FlagSgnOperator       = "sgn.operator"
 	FlagSgnTransactors    = "sgn.transactors"

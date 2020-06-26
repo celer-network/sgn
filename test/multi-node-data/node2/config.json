@@ -2,6 +2,11 @@
   "eth": {
     "chainId": 883,
     "blockDelay": 1,
+    "checkInterval": {
+      "IntendSettle": 1,
+      "IntendWithdraw": 1,
+      "ConfirmParamProposal": 2
+    },
     "contracts": {
       "dposAddress": "",
       "ledgerAddress": "",

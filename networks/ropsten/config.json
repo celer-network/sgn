@@ -2,6 +2,11 @@
   "eth": {
     "chainId": 3,
     "blockDelay": 5,
+    "checkInterval": {
+      "IntendSettle": 2,
+      "IntendWithdraw": 2,
+      "ConfirmParamProposal": 10
+    },
     "contracts": {
       "dposAddress": "0xfcb6f4cfa84dbaf162aa99e5f2a0a14f0d6849cb",
       "ledgerAddress": "0x4ee1dc9868c295e145334709ce857534e9b962f8",
