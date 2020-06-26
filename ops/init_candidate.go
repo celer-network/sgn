@@ -23,7 +23,7 @@ const (
 
 func initCandidate() error {
 	ethClient, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
+		viper.GetString(common.FlagEthGateway),
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
 		&mainchain.TransactorConfig{

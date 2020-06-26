@@ -3,7 +3,7 @@
     "chainId": 883,
     "blockDelay": 1,
     "dposAddress": "",
-    "instance": "http://192.168.10.1:8545",
+    "gateway": "http://192.168.10.1:8545",
     "keystore": "./keys/ethks0.json",
     "ledgerAddress": "",
     "passphrase": "",

@@ -82,7 +82,7 @@ func DeployCommand() *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploy contracts",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			ethurl := viper.GetString(common.FlagEthInstance)
+			ethurl := viper.GetString(common.FlagEthGateway)
 			var rpcClient *rpc.Client
 			rpcClient, err = rpc.Dial(ethurl)
 			if err != nil {

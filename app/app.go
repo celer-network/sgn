@@ -395,7 +395,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 
 func (app *sgnApp) startMonitor(db dbm.DB) {
 	ethClient, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
+		viper.GetString(common.FlagEthGateway),
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
 		&mainchain.TransactorConfig{
