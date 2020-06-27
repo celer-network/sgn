@@ -36,7 +36,7 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
-	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthInstance))
+	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthGateway))
 	if err != nil {
 		return nil, err
 	}

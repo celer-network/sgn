@@ -6,15 +6,16 @@ const (
 
 	FlagStartMonitor = "startMonitor"
 
-	FlagEthInstance      = "eth.instance"
-	FlagEthDPoSAddress   = "eth.dposAddress"
-	FlagEthSGNAddress    = "eth.sgnAddress"
-	FlagEthLedgerAddress = "eth.ledgerAddress"
+	FlagEthGateway       = "eth.gateway"
+	FlagEthDPoSAddress   = "eth.contracts.dposAddress"
+	FlagEthSGNAddress    = "eth.contracts.sgnAddress"
+	FlagEthLedgerAddress = "eth.contracts.ledgerAddress"
 	FlagEthKeystore      = "eth.keystore"
 	FlagEthPassphrase    = "eth.passphrase"
 	FlagEthPollInterval  = "eth.pollInterval"
-	FlagEthConfirmCount  = "eth.confirmCount"
+	FlagEthBlockDelay    = "eth.blockDelay"
 	FlagEthChainID       = "eth.chainID"
+	FlagEthCheckInterval = "eth.checkInterval"
 
 	FlagSgnOperator       = "sgn.operator"
 	FlagSgnTransactors    = "sgn.transactors"

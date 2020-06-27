@@ -1,13 +1,21 @@
 {
   "eth": {
-    "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
+    "chainId": 883,
+    "blockDelay": 1,
+    "checkInterval": {
+      "IntendSettle": 1,
+      "IntendWithdraw": 1,
+      "ConfirmParamProposal": 2
+    },
+    "contracts": {
+      "dposAddress": "",
+      "ledgerAddress": "",
+      "sgnAddress": ""
+    },
+    "gateway": "http://192.168.10.1:8545",
     "keystore": "./keys/ethks2.json",
-    "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
     "passphrase": "",
-    "instance": "http://192.168.10.1:8545",
-    "pollInterval": 1,
-    "confirmCount": 1,
-    "chainID": 883
+    "pollInterval": 1
   },
   "log": {
     "level": "debug"

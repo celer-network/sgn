@@ -123,8 +123,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		tmos.Exit(err.Error())
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
-	viper.SetDefault(common.FlagEthPollInterval, 5)
-	viper.SetDefault(common.FlagEthConfirmCount, 7)
+	viper.SetDefault(common.FlagEthPollInterval, 15)
+	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
@@ -395,11 +395,11 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 
 func (app *sgnApp) startMonitor(db dbm.DB) {
 	ethClient, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
+		viper.GetString(common.FlagEthGateway),
 		viper.GetString(common.FlagEthKeystore),
 		viper.GetString(common.FlagEthPassphrase),
 		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthConfirmCount),
+			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
 		},
