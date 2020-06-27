@@ -4,7 +4,7 @@
     "blockDelay": 1,
     "checkInterval": {
       "IntendSettle": 1,
-      "IntendWithdraw": 1,
+      "IntendWithdrawChannel": 1,
       "ConfirmParamProposal": 2
     },
     "contracts": {
