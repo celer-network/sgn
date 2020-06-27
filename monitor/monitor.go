@@ -226,7 +226,7 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 			EventName:     string(IntendWithdraw),
 			Contract:      m.dposContract,
 			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdraw),
+			CheckInterval: eventCheckInterval(IntendWithdrawDpos),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x", eLog.TxHash)
@@ -247,7 +247,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 			EventName:     string(IntendWithdraw),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdraw),
+			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)

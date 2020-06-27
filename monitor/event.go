@@ -18,10 +18,10 @@ const (
 	Delegate              EventName = "Delegate"
 	CandidateUnbonded     EventName = "CandidateUnbonded"
 	ValidatorChange       EventName = "ValidatorChange"
+	IntendSettle          EventName = "IntendSettle"
 	IntendWithdraw        EventName = "IntendWithdraw"
 	IntendWithdrawDpos    EventName = "IntendWithdrawDpos"
 	IntendWithdrawChannel EventName = "IntendWithdrawChannel"
-	IntendSettle          EventName = "IntendSettle"
 )
 
 // Wrapper for ethereum Event
