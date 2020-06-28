@@ -26,8 +26,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.SyncValidator(ctx, change)
 	case types.Subscribe:
 		return keeper.Subscribe(ctx, change)
-	case types.Request:
-		return keeper.Request(ctx, change)
+	case types.InitGuardRequest:
+		return keeper.InitGuardRequest(ctx, change)
 	case types.TriggerGuard:
 		return keeper.TriggerGuard(ctx, change)
 	case types.GuardProof:
@@ -152,11 +152,11 @@ func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
 	return nil
 }
 
-func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) error {
 	var r subscribe.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
-	log.Infoln("Apply new request", r)
+	log.Infoln("Apply init request", r)
 	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetOwnerAddress())
 	if err != nil {
 		return fmt.Errorf("Fail to charge request fee: %s", err)

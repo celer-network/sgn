@@ -20,7 +20,7 @@ import (
 func (rs *RestServer) registerRoutes() {
 	rs.Mux.HandleFunc(
 		"/requestGuard",
-		postRequestGuardHandlerFn(rs),
+		postInitGuardRequestHandlerFn(rs),
 	).Methods(http.MethodPost)
 
 	rs.Mux.HandleFunc(
@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
+func postInitGuardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestGuardRequest
 		if !rest.ReadRESTReq(w, r, rs.cdc, &req) {
@@ -83,7 +83,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 				signedSimplexStateBytes,
 				ownerSig)
 			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-			msg := sync.NewMsgSubmitChange(sync.Request, requestData, rs.transactor.Key.GetAddress())
+			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
@@ -93,7 +93,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			if err != nil {
 				return
 			}
-			_, err = http.Post(rs.gateway+"/subscribe/request",
+			_, err = http.Post(rs.gateway+"/subscribe/initGuardRequest",
 				"application/json", bytes.NewBuffer(reqBody))
 			if err != nil {
 				return

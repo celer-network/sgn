@@ -64,7 +64,7 @@ func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 		return m.verifySyncValidator(change)
 	case sync.Subscribe:
 		return m.verifySubscribe(change)
-	case sync.Request:
+	case sync.InitGuardRequest:
 		return m.verifyRequest(change)
 	case sync.TriggerGuard:
 		return m.verifyTriggerGuard(change)
@@ -243,14 +243,12 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
 	if err == nil {
-		log.Errorf("%s. request for channel %x already initiated", logmsg, simplexChannel.ChannelId)
+		log.Errorf("%s. request for channel %x owner %x already initiated", logmsg, simplexChannel.ChannelId, simplexChannel.PeerFrom)
 		return false, false
 	}
 
-	seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
-		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
-	if err != nil {
-		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
+	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
+		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
 		return false, false
 	}
 
@@ -266,6 +264,23 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
+	if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
+		log.Errorf("%s. Owner sig does not match: %s", logmsg, ownerAddr)
+		return false, false
+	}
+
+	if mainchain.Bytes2Addr(simplexChannel.PeerFrom) != ownerAddr {
+		log.Errorf("%s. Owner signer %x does not match peerFrom: %x", logmsg, ownerAddr, simplexChannel.PeerFrom)
+		return false, false
+	}
+
+	seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
+	if err != nil {
+		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
+		return false, false
+	}
+
 	if request.SeqNum <= seqNum {
 		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
 		return false, false
@@ -273,16 +288,6 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 
 	if request.PeerFromIndex != peerFromIndex {
 		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, peerFromIndex)
-		return false, false
-	}
-
-	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		log.Errorf("%s. Owner sig does not match mainchain value: %x", logmsg, ownerAddr)
-		return false, false
-	}
-
-	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
-		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
 		return false, false
 	}
 

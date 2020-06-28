@@ -93,7 +93,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 		signedSimplexStateBytes,
 		requestSig)
 	requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-	msgSubmitChange = sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
+	msgSubmitChange = sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")

@@ -3,6 +3,7 @@ package gateway
 import (
 	"net/http"
 
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -22,8 +23,8 @@ func (rs *RestServer) registerTxRoutes() {
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/request",
-		postRequestGuardHandlerFn(rs),
+		"/subscribe/initGuardRequest",
+		postInitGuardRequestHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
@@ -89,19 +90,40 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
-func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
+func postInitGuardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestGuardRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
 			return
 		}
-
+		ownerSig := mainchain.Hex2Bytes(req.OwnerSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
 			log.Errorln("Failed UnmarshalSignedSimplexStateBytes:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail UnmarshalSignedSimplexStateBytes")
+			return
+		}
+
+		_, err = subscribe.CLIQueryRequest(
+			transactor.CliCtx, subscribe.RouterKey, simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
+		if err == nil {
+			log.Errorf("Request for channel %x owner %x already initiated", simplexChannel.ChannelId, simplexChannel.PeerFrom)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "request for channel and owner already initiated")
+			return
+		}
+
+		ownerAddr, err := eth.RecoverSigner(signedSimplexStateBytes, ownerSig)
+		if err != nil {
+			log.Errorln("recover signer err:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
+			return
+		}
+
+		if mainchain.Bytes2Addr(simplexChannel.PeerFrom) != ownerAddr {
+			log.Errorf("Owner signer %x does not match peerFrom: %x", ownerAddr, simplexChannel.PeerFrom)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "owner signer not match")
 			return
 		}
 
@@ -120,9 +142,9 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			peerAddrs,
 			peerFromIndex,
 			signedSimplexStateBytes,
-			mainchain.Hex2Bytes(req.OwnerSig))
+			ownerSig)
 		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-		msg := sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
+		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
