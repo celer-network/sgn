@@ -36,9 +36,15 @@ func NewHandler(keeper Keeper) sdk.Handler {
 func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
 
-	err := keeper.ChargeRequestFee(ctx, msg.EthAddress)
+	ownerAddr, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.OwnerSig)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to recover owner signer: %s", err)
+	}
+
+	logEntry.EthAddress = mainchain.Addr2Hex(ownerAddr)
+
+	err = keeper.ChargeRequestFee(ctx, mainchain.Addr2Hex(ownerAddr))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
 	}
@@ -58,22 +64,17 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 		return nil, fmt.Errorf("Failed to get request: %s", err)
 	}
 
+	if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
+		return nil, fmt.Errorf("Owner not match stored request: %s", request.GetOwnerAddress())
+	}
+
 	err = VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to verify sigs: %s", err)
 	}
 
 	if simplexChannel.SeqNum < request.SeqNum {
-		return nil, fmt.Errorf("Seq num smaller than previous request %d", request.SeqNum)
-	}
-
-	ownerAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to recover signer: %s", err)
-	}
-
-	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		return nil, fmt.Errorf("Owner sig not match: %x", ownerAddr)
+		return nil, fmt.Errorf("Seq num smaller than stored request %d", request.SeqNum)
 	}
 
 	request.SeqNum = simplexChannel.SeqNum

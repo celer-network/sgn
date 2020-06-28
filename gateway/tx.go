@@ -23,8 +23,13 @@ func (rs *RestServer) registerTxRoutes() {
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/initGuardRequest",
-		postInitGuardRequestHandlerFn(rs),
+		"/subscribe/initGuard",
+		postInitGuardHandlerFn(rs),
+	).Methods(http.MethodPost, http.MethodOptions)
+
+	rs.Mux.HandleFunc(
+		"/subscribe/requestGuard",
+		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
@@ -90,7 +95,7 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
-func postInitGuardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
+func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestGuardRequest
 		transactor := rs.transactorPool.GetTransactor()
@@ -145,6 +150,21 @@ func postInitGuardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 			ownerSig)
 		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
+		writeGenerateStdTxResponse(w, transactor, msg)
+	}
+}
+
+func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req RequestGuardRequest
+		transactor := rs.transactorPool.GetTransactor()
+		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
+			return
+		}
+
+		ownerSig := mainchain.Hex2Bytes(req.OwnerSig)
+		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
+		msg := subscribe.NewMsgGuardRequest(signedSimplexStateBytes, ownerSig, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }

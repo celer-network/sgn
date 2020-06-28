@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -9,16 +8,16 @@ import (
 const RouterKey = ModuleName // this was defined in your key.go file
 
 type MsgGuardRequest struct {
-	EthAddress              string         `json:"ethAddress"`
 	SignedSimplexStateBytes []byte         `json:"signedSimplexStateBytes"`
+	OwnerSig                []byte         `json:"ownerSig"`
 	Sender                  sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgGuardRequest is a constructor function for MsgGuardRequest
-func NewMsgGuardRequest(ethAddress string, signedSimplexStateBytes []byte, sender sdk.AccAddress) MsgGuardRequest {
+func NewMsgGuardRequest(signedSimplexStateBytes, owerSig []byte, sender sdk.AccAddress) MsgGuardRequest {
 	return MsgGuardRequest{
-		EthAddress:              mainchain.FormatAddrHex(ethAddress),
 		SignedSimplexStateBytes: signedSimplexStateBytes,
+		OwnerSig:                owerSig,
 		Sender:                  sender,
 	}
 }
@@ -35,8 +34,8 @@ func (msg MsgGuardRequest) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "SignedSimplexStateBytes cannot be empty")
 	}
 
-	if msg.EthAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "EthAddress cannot be empty")
+	if len(msg.OwnerSig) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "OwnerSig cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
