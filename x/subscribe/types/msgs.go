@@ -7,15 +7,15 @@ import (
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
-type MsgGuardRequest struct {
+type MsgRequestGuard struct {
 	SignedSimplexStateBytes []byte         `json:"signedSimplexStateBytes"`
 	PeerToSig               []byte         `json:"peerToSig"`
 	Sender                  sdk.AccAddress `json:"sender"`
 }
 
-// NewMsgGuardRequest is a constructor function for MsgGuardRequest
-func NewMsgGuardRequest(signedSimplexStateBytes, peerToSig []byte, sender sdk.AccAddress) MsgGuardRequest {
-	return MsgGuardRequest{
+// NewMsgRequestGuard is a constructor function for MsgRequestGuard
+func NewMsgRequestGuard(signedSimplexStateBytes, peerToSig []byte, sender sdk.AccAddress) MsgRequestGuard {
+	return MsgRequestGuard{
 		SignedSimplexStateBytes: signedSimplexStateBytes,
 		PeerToSig:               peerToSig,
 		Sender:                  sender,
@@ -23,13 +23,13 @@ func NewMsgGuardRequest(signedSimplexStateBytes, peerToSig []byte, sender sdk.Ac
 }
 
 // Route should return the name of the module
-func (msg MsgGuardRequest) Route() string { return RouterKey }
+func (msg MsgRequestGuard) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgGuardRequest) Type() string { return "request_guard" }
+func (msg MsgRequestGuard) Type() string { return "request_guard" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgGuardRequest) ValidateBasic() error {
+func (msg MsgRequestGuard) ValidateBasic() error {
 	if len(msg.SignedSimplexStateBytes) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "SignedSimplexStateBytes cannot be empty")
 	}
@@ -46,11 +46,11 @@ func (msg MsgGuardRequest) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgGuardRequest) GetSignBytes() []byte {
+func (msg MsgRequestGuard) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgGuardRequest) GetSigners() []sdk.AccAddress {
+func (msg MsgRequestGuard) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

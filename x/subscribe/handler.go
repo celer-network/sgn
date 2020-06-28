@@ -18,8 +18,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		var res *sdk.Result
 		var err error
 		switch msg := msg.(type) {
-		case MsgGuardRequest:
-			res, err = handleMsgGuardRequest(ctx, keeper, msg, logEntry)
+		case MsgRequestGuard:
+			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
@@ -33,7 +33,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 // Handle a message to request guard
-func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, logEntry *seal.MsgLog) (*sdk.Result, error) {
+func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 

@@ -54,7 +54,7 @@ type (
 		Amount  string `json:"amount" yaml:"amount"`
 	}
 
-	RequestGuardRequest struct {
+	GuardRequest struct {
 		PeerToSig               string `json:"peerToSig" yaml:"peerToSig"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
 	}
@@ -97,7 +97,7 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 
 func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RequestGuardRequest
+		var req GuardRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
 			return
@@ -156,7 +156,7 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 
 func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RequestGuardRequest
+		var req GuardRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
 			return
@@ -164,7 +164,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		peerToSig := mainchain.Hex2Bytes(req.PeerToSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		msg := subscribe.NewMsgGuardRequest(signedSimplexStateBytes, peerToSig, transactor.Key.GetAddress())
+		msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, peerToSig, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }

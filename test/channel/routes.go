@@ -35,7 +35,7 @@ func (rs *RestServer) registerRoutes() {
 }
 
 type (
-	RequestGuardRequest struct {
+	GuardRequest struct {
 		SeqNum uint64 `json:"seqNum"`
 	}
 
@@ -46,7 +46,7 @@ type (
 
 func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RequestGuardRequest
+		var req GuardRequest
 		if !rest.ReadRESTReq(w, r, rs.cdc, &req) {
 			return
 		}
