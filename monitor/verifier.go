@@ -36,8 +36,8 @@ func (m *Monitor) verifyActiveChanges() {
 			continue
 		}
 
-		verified, approve := m.verifyChange(change)
-		if verified {
+		done, approve := m.verifyChange(change)
+		if done {
 			err = m.verifiedChanges.Set(strconv.Itoa(int(change.ID)), []byte{})
 			if err != nil {
 				log.Errorln("verifiedChanges Set err", err)
@@ -51,7 +51,7 @@ func (m *Monitor) verifyActiveChanges() {
 	}
 }
 
-// return (verified, approve)
+// return (done, approve)
 func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 	switch change.Type {
 	case sync.ConfirmParamProposal:
@@ -238,40 +238,35 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
 	if err != nil {
 		log.Errorf("%s. unmarshal signedSimplexStateBytes err: %s", logmsg, err)
-		return false, false
+		return true, false
 	}
 
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
 	if err == nil {
 		log.Errorf("%s. request for channel %x owner %x already initiated", logmsg, simplexChannel.ChannelId, simplexChannel.PeerFrom)
-		return false, false
+		return true, false
 	}
 
 	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
 		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
-		return false, false
+		return true, false
 	}
 
 	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
-		return false, false
+		return true, false
 	}
 
 	ownerAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
 	if err != nil {
 		log.Errorf("%s. recover signer err: %s", logmsg, err)
-		return false, false
+		return true, false
 	}
 
 	if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
 		log.Errorf("%s. Owner sig does not match: %s", logmsg, ownerAddr)
-		return false, false
-	}
-
-	if mainchain.Bytes2Addr(simplexChannel.PeerFrom) != ownerAddr {
-		log.Errorf("%s. Owner signer %x does not match peerFrom: %x", logmsg, ownerAddr, simplexChannel.PeerFrom)
-		return false, false
+		return true, false
 	}
 
 	seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
@@ -305,7 +300,7 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
 
-	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetOwnerAddress())
+	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetPeerFromAddress())
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false

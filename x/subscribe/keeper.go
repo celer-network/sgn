@@ -1,7 +1,7 @@
 package subscribe
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -67,12 +67,13 @@ func (k Keeper) IterateSubscriptions(ctx sdk.Context,
 func (k Keeper) ChargeRequestFee(ctx sdk.Context, ethAddr string) error {
 	subscription, found := k.GetSubscription(ctx, ethAddr)
 	if !found {
-		return errors.New("Cannot find subscription")
+		return fmt.Errorf("cannot find subscription")
 	}
 
 	requestCost := k.RequestCost(ctx)
 	if subscription.Spend.Add(requestCost).GT(subscription.Deposit) {
-		return errors.New("Do not have enough balance to pay fee")
+		return fmt.Errorf("not enough balance, total deposit %s spend %s, fee %s",
+			subscription.Deposit, subscription.Spend, requestCost)
 	}
 
 	subscription.Spend = subscription.Spend.Add(k.RequestCost(ctx))
@@ -102,7 +103,7 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, peerFrom string) (
 // Sets the entire Request metadata for a channelId
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRequestKey(request.ChannelId, request.GetOwnerAddress()), k.cdc.MustMarshalBinaryBare(request))
+	store.Set(GetRequestKey(request.ChannelId, request.GetPeerFromAddress()), k.cdc.MustMarshalBinaryBare(request))
 }
 
 // Gets the entire Epoch metadata for a epochId

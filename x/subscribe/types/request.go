@@ -40,6 +40,14 @@ func NewRequest(
 	}
 }
 
+func (r Request) GetPeerFromAddress() string {
+	if r.PeerFromIndex == 0 {
+		return r.PeerAddresses[0]
+	}
+
+	return r.PeerAddresses[1]
+}
+
 func (r Request) GetOwnerAddress() string {
 	if r.PeerFromIndex == 0 {
 		return r.PeerAddresses[1]

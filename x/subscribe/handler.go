@@ -44,11 +44,6 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 
 	logEntry.EthAddress = mainchain.Addr2Hex(ownerAddr)
 
-	err = keeper.ChargeRequestFee(ctx, mainchain.Addr2Hex(ownerAddr))
-	if err != nil {
-		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
-	}
-
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(msg.SignedSimplexStateBytes)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to unmarshal signedSimplexStateBytes: %s", err)
@@ -61,7 +56,7 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 	request, found := keeper.GetRequest(
 		ctx, simplexChannel.ChannelId, mainchain.Bytes2AddrHex(simplexChannel.PeerFrom))
 	if !found {
-		return nil, fmt.Errorf("Failed to get request: %s", err)
+		return nil, fmt.Errorf("Failed to get request")
 	}
 
 	if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
@@ -75,6 +70,11 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 
 	if simplexChannel.SeqNum < request.SeqNum {
 		return nil, fmt.Errorf("Seq num smaller than stored request %d", request.SeqNum)
+	}
+
+	err = keeper.ChargeRequestFee(ctx, request.GetOwnerAddress())
+	if err != nil {
+		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
 	}
 
 	request.SeqNum = simplexChannel.SeqNum

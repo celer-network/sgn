@@ -126,12 +126,6 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		if mainchain.Bytes2Addr(simplexChannel.PeerFrom) != ownerAddr {
-			log.Errorf("Owner signer %x does not match peerFrom: %x", ownerAddr, simplexChannel.PeerFrom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "owner signer not match")
-			return
-		}
-
 		_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
 			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 		if err != nil {
@@ -140,7 +134,6 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		// TODO: verify request before send
 		request := subscribe.NewRequest(
 			simplexChannel.ChannelId,
 			simplexChannel.SeqNum,
@@ -148,6 +141,13 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			peerFromIndex,
 			signedSimplexStateBytes,
 			ownerSig)
+
+		if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
+			log.Errorf("Owner signer does not match: %x", ownerAddr)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "owner signer not match")
+			return
+		}
+
 		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
