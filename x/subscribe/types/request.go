@@ -12,9 +12,9 @@ type Request struct {
 	SeqNum                  uint64           `json:"seqNum"`
 	PeerAddresses           []string         `json:"peerAddresses"`
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
-	DisputeTimeout          uint64           `json:"disputeTimeout"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	PeerToSig               []byte           `json:"peerToSig"`
+	DisputeTimeout          uint64           `json:"disputeTimeout"`
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
