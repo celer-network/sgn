@@ -37,12 +37,12 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 
-	ownerAddr, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.OwnerSig)
+	peerToAddr, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.PeerToSig)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to recover owner signer: %s", err)
+		return nil, fmt.Errorf("Failed to recover peerTo signer: %s", err)
 	}
 
-	logEntry.EthAddress = mainchain.Addr2Hex(ownerAddr)
+	logEntry.EthAddress = mainchain.Addr2Hex(peerToAddr)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(msg.SignedSimplexStateBytes)
 	if err != nil {
@@ -59,8 +59,8 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
-	if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
-		return nil, fmt.Errorf("Owner not match stored request: %s", request.GetOwnerAddress())
+	if mainchain.Hex2Addr(request.GetPeerToAddress()) != peerToAddr {
+		return nil, fmt.Errorf("PeerTo not match stored request: %s", request.GetPeerToAddress())
 	}
 
 	err = VerifySignedSimplexStateSigs(request, signedSimplexState)
@@ -72,7 +72,7 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 		return nil, fmt.Errorf("Seq num smaller than stored request %d", request.SeqNum)
 	}
 
-	err = keeper.ChargeRequestFee(ctx, request.GetOwnerAddress())
+	err = keeper.ChargeRequestFee(ctx, request.GetPeerToAddress())
 	if err != nil {
 		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
 	}

@@ -63,7 +63,7 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		ownerSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
+		peerToSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
 		if err != nil {
 			return
 		}
@@ -81,13 +81,13 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 				peerAddrs,
 				peerFromIndex,
 				signedSimplexStateBytes,
-				ownerSig)
+				peerToSig)
 			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
-				"ownerSig":                mainchain.Bytes2Hex(ownerSig),
+				"peerToSig":                mainchain.Bytes2Hex(peerToSig),
 				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
 			})
 			if err != nil {

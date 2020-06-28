@@ -157,21 +157,17 @@ func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) erro
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply init request", r)
-	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetOwnerAddress())
+	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetPeerToAddress())
 	if err != nil {
 		return fmt.Errorf("Fail to charge request fee: %s", err)
 	}
 
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerFromAddress())
+	_, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerFromAddress())
 	if found {
-		request.SeqNum = r.SeqNum
-		request.SignedSimplexStateBytes = r.SignedSimplexStateBytes
-		request.OwnerSig = r.OwnerSig
-	} else {
-		request = r
+		return fmt.Errorf("guard request already initiated")
 	}
 
-	keeper.subscribeKeeper.SetRequest(ctx, request)
+	keeper.subscribeKeeper.SetRequest(ctx, r)
 
 	return nil
 }

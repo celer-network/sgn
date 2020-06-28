@@ -243,7 +243,7 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
 	if err == nil {
-		log.Errorf("%s. request for channel %x owner %x already initiated", logmsg, simplexChannel.ChannelId, simplexChannel.PeerFrom)
+		log.Errorf("%s. request for channel %x from %x already initiated", logmsg, simplexChannel.ChannelId, simplexChannel.PeerFrom)
 		return true, false
 	}
 
@@ -258,14 +258,14 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	ownerAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
+	peerToAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.PeerToSig)
 	if err != nil {
 		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return true, false
 	}
 
-	if mainchain.Hex2Addr(request.GetOwnerAddress()) != ownerAddr {
-		log.Errorf("%s. Owner sig does not match: %s", logmsg, ownerAddr)
+	if mainchain.Hex2Addr(request.GetPeerToAddress()) != peerToAddr {
+		log.Errorf("%s. PeerTo sig does not match: %s", logmsg, peerToAddr)
 		return true, false
 	}
 

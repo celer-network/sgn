@@ -14,7 +14,7 @@ type Request struct {
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
 	DisputeTimeout          uint64           `json:"disputeTimeout"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
-	OwnerSig                []byte           `json:"ownerSig"`
+	PeerToSig               []byte           `json:"peerToSig"`
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
@@ -29,35 +29,23 @@ func NewRequest(
 	peerAddresses []string,
 	peerFromIndex uint8,
 	signedSimplex []byte,
-	owerSig []byte) Request {
+	peerToSig []byte) Request {
 	return Request{
 		ChannelId:               channelId,
 		SeqNum:                  seqNum,
 		PeerAddresses:           peerAddresses,
 		PeerFromIndex:           peerFromIndex,
 		SignedSimplexStateBytes: signedSimplex,
-		OwnerSig:                owerSig,
+		PeerToSig:               peerToSig,
 	}
 }
 
 func (r Request) GetPeerFromAddress() string {
-	if r.PeerFromIndex == 0 {
-		return r.PeerAddresses[0]
-	}
-
-	return r.PeerAddresses[1]
-}
-
-func (r Request) GetOwnerAddress() string {
-	if r.PeerFromIndex == 0 {
-		return r.PeerAddresses[1]
-	}
-
-	return r.PeerAddresses[0]
-}
-
-func (r Request) GetPeerAddress() string {
 	return r.PeerAddresses[r.PeerFromIndex]
+}
+
+func (r Request) GetPeerToAddress() string {
+	return r.PeerAddresses[1-r.PeerFromIndex]
 }
 
 // implement fmt.Stringer
