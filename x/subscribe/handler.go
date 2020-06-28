@@ -4,13 +4,11 @@ import (
 	"fmt"
 
 	"github.com/celer-network/goutils/eth"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/proto/entity"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/golang/protobuf/proto"
 )
 
 // NewHandler returns a handler for "subscribe" type messages.
@@ -45,16 +43,9 @@ func handleMsgGuardRequest(ctx sdk.Context, keeper Keeper, msg MsgGuardRequest, 
 		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
 	}
 
-	var signedSimplexState chain.SignedSimplexState
-	err = proto.Unmarshal(msg.SignedSimplexStateBytes, &signedSimplexState)
+	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(msg.SignedSimplexStateBytes)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to unmarshal signedSimplexStateBytes: %s", err)
-	}
-
-	var simplexChannel entity.SimplexPaymentChannel
-	err = proto.Unmarshal(signedSimplexState.SimplexState, &simplexChannel)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
 	}
 
 	cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)

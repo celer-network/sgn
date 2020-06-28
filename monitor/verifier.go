@@ -10,14 +10,12 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/golang/protobuf/proto"
 )
 
 func (m *Monitor) verifyActiveChanges() {
@@ -237,16 +235,22 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, request: %s", change.ID, request)
 
-	var signedSimplexState chain.SignedSimplexState
-	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
 	if err != nil {
 		log.Errorf("%s. unmarshal signedSimplexStateBytes err: %s", logmsg, err)
 		return false, false
 	}
 
-	r, err := subscribe.GetRequest(m.operator.CliCtx, m.ethClient.Ledger, &signedSimplexState)
+	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
+	if err == nil {
+		log.Errorf("%s. request for channel %x already initiated", logmsg, simplexChannel.ChannelId)
+		return false, false
+	}
+
+	seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 	if err != nil {
-		log.Errorf("%s. get request err: %s", logmsg, err)
+		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
 		return false, false
 	}
 
@@ -262,13 +266,13 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if request.SeqNum <= r.SeqNum {
-		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, r.SeqNum)
+	if request.SeqNum <= seqNum {
+		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
 		return false, false
 	}
 
-	if request.PeerFromIndex != r.PeerFromIndex {
-		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, r.PeerFromIndex)
+	if request.PeerFromIndex != peerFromIndex {
+		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, peerFromIndex)
 		return false, false
 	}
 
@@ -277,13 +281,13 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if !bytes.Equal(request.ChannelId, r.ChannelId) {
-		log.Errorf("%s. ChannelId does not match mainchain value: %x", logmsg, r.ChannelId)
+	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
+		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
 		return false, false
 	}
 
-	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
-		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, r.PeerAddresses)
+	if !reflect.DeepEqual(request.PeerAddresses, peerAddrs) {
+		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, peerAddrs)
 		return false, false
 	}
 

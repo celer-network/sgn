@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/golang/protobuf/proto"
 )
 
 func (rs *RestServer) registerTxRoutes() {
@@ -99,22 +98,29 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		var signedSimplexState chain.SignedSimplexState
-		err := proto.Unmarshal(signedSimplexStateBytes, &signedSimplexState)
+		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
-			log.Errorln("Failed to unmarshal signedSimplexStateBytes:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to unmarshal signedSimplexStateBytes")
+			log.Errorln("Failed UnmarshalSignedSimplexStateBytes:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail UnmarshalSignedSimplexStateBytes")
 			return
 		}
 
-		request, err := subscribe.GetRequest(transactor.CliCtx, rs.ledgerContract, &signedSimplexState)
+		_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
+			log.Errorln("Failed to get onchain channel info:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "get onchain channel info")
 			return
 		}
 
-		request.SignedSimplexStateBytes = signedSimplexStateBytes
-		request.OwnerSig = mainchain.Hex2Bytes(req.OwnerSig)
+		// TODO: verify request before send
+		request := subscribe.NewRequest(
+			simplexChannel.ChannelId,
+			simplexChannel.SeqNum,
+			peerAddrs,
+			peerFromIndex,
+			signedSimplexStateBytes,
+			mainchain.Hex2Bytes(req.OwnerSig))
 		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 		msg := sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)

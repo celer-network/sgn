@@ -69,14 +69,19 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			request, err := subscribe.GetRequest(rs.transactor.CliCtx, tc.LedgerContract, signedSimplexStateProto)
+			_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+				tc.LedgerContract, rs.channelID, rs.peer2.Address)
 			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
+				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request onchain channel info")
 				return
 			}
-
-			request.SignedSimplexStateBytes = signedSimplexStateBytes
-			request.OwnerSig = ownerSig
+			request := subscribe.NewRequest(
+				rs.channelID.Bytes(),
+				req.SeqNum,
+				peerAddrs,
+				peerFromIndex,
+				signedSimplexStateBytes,
+				ownerSig)
 			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 			msg := sync.NewMsgSubmitChange(sync.Request, requestData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)

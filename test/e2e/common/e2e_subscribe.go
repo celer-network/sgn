@@ -82,11 +82,16 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
-	request, err := subscribe.GetRequest(transactor.CliCtx, tc.LedgerContract, signedSimplexStateProto)
-	tc.ChkTestErr(t, err, "failed to get request")
-	request.SeqNum = seqNum
-	request.SignedSimplexStateBytes = signedSimplexStateBytes
-	request.OwnerSig = requestSig
+	_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		tc.LedgerContract, channelId, tc.Client1.Address)
+	tc.ChkTestErr(t, err, "failed to get onchain channel info")
+	request := subscribe.NewRequest(
+		channelId[:],
+		seqNum,
+		peerAddrs,
+		peerFromIndex,
+		signedSimplexStateBytes,
+		requestSig)
 	requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 	msgSubmitChange = sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubmitChange)

@@ -23,12 +23,20 @@ type Request struct {
 	GuardSender             string           `json:"guardSender"`
 }
 
-func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8) Request {
+func NewRequest(
+	channelId []byte,
+	seqNum uint64,
+	peerAddresses []string,
+	peerFromIndex uint8,
+	signedSimplex []byte,
+	owerSig []byte) Request {
 	return Request{
-		ChannelId:     channelId,
-		SeqNum:        seqNum,
-		PeerAddresses: peerAddresses,
-		PeerFromIndex: peerFromIndex,
+		ChannelId:               channelId,
+		SeqNum:                  seqNum,
+		PeerAddresses:           peerAddresses,
+		PeerFromIndex:           peerFromIndex,
+		SignedSimplexStateBytes: signedSimplex,
+		OwnerSig:                owerSig,
 	}
 }
 
