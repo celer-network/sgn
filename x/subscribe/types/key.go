@@ -15,11 +15,9 @@ const (
 
 var (
 	SubscriptionKeyPrefix = []byte{0x01} // Key prefix for subscription
-
-	RequestKeyPrefix = []byte{0x21} // Key prefix for request
-
-	EpochKeyPrefix = []byte{0x31} // Key prefix for epoch
-	LatestEpochKey = []byte{0x32} // Key for latest epoch
+	RequestKeyPrefix      = []byte{0x21} // Key prefix for request
+	EpochKeyPrefix        = []byte{0x31} // Key prefix for epoch
+	LatestEpochKey        = []byte{0x32} // Key for latest epoch
 )
 
 // get guardian key from eth address

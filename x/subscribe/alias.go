@@ -18,6 +18,7 @@ const (
 var (
 	ModuleCdc                  = types.ModuleCdc
 	RegisterCodec              = types.RegisterCodec
+	NewMsgGuardRequest         = types.NewMsgGuardRequest
 	NewSubscription            = types.NewSubscription
 	NewRequest                 = types.NewRequest
 	NewEpoch                   = types.NewEpoch
@@ -36,6 +37,7 @@ var (
 )
 
 type (
+	MsgGuardRequest         = types.MsgGuardRequest
 	Subscription            = types.Subscription
 	Request                 = types.Request
 	Epoch                   = types.Epoch
