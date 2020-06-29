@@ -20,7 +20,7 @@ import (
 func (rs *RestServer) registerRoutes() {
 	rs.Mux.HandleFunc(
 		"/requestGuard",
-		postInitGuardHandlerFn(rs),
+		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost)
 
 	rs.Mux.HandleFunc(
@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
+func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req GuardRequest
 		if !rest.ReadRESTReq(w, r, rs.cdc, &req) {
@@ -87,13 +87,13 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
-				"receiverSig":                mainchain.Bytes2Hex(receiverSig),
 				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
+				"receiverSig":             mainchain.Bytes2Hex(receiverSig),
 			})
 			if err != nil {
 				return
 			}
-			_, err = http.Post(rs.gateway+"/subscribe/initGuard",
+			_, err = http.Post(rs.gateway+"/subscribe/requestGuard",
 				"application/json", bytes.NewBuffer(reqBody))
 			if err != nil {
 				return

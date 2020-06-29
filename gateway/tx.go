@@ -23,11 +23,6 @@ func (rs *RestServer) registerTxRoutes() {
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/initGuard",
-		postInitGuardHandlerFn(rs),
-	).Methods(http.MethodPost, http.MethodOptions)
-
-	rs.Mux.HandleFunc(
 		"/subscribe/requestGuard",
 		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
@@ -95,13 +90,14 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
-func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
+func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req GuardRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
 			return
 		}
+
 		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
@@ -118,22 +114,34 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		_, err = subscribe.CLIQueryRequest(
+		lastReq, err := subscribe.CLIQueryRequest(
 			transactor.CliCtx, subscribe.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
 		if err == nil {
-			log.Errorf("Request for channel %x to %x already initiated", simplexChannel.ChannelId, receiverAddr)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "request for channel and receiver already initiated")
+			if simplexChannel.SeqNum <= lastReq.SeqNum {
+				log.Errorln("Invalid sequence number", simplexChannel.SeqNum, lastReq.SeqNum)
+				rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid sequence number")
+				return
+			}
+			// TODO: more precheck
+			msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
+			writeGenerateStdTxResponse(w, transactor, msg)
 			return
 		}
 
-		_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		// TODO: parse err to make sure key not exist
+		seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
 			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 		if err != nil {
 			log.Errorln("Failed to get onchain channel info:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "get onchain channel info")
 			return
 		}
-
+		if simplexChannel.SeqNum <= seqNum {
+			log.Errorln("Invalid sequence number", simplexChannel.SeqNum, seqNum)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid sequence number")
+			return
+		}
+		// TODO: more precheck
 		request := subscribe.NewRequest(
 			simplexChannel.ChannelId,
 			simplexChannel.SeqNum,
@@ -151,21 +159,7 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
-	}
-}
 
-func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req GuardRequest
-		transactor := rs.transactorPool.GetTransactor()
-		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
-			return
-		}
-
-		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
-		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
-		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
 
