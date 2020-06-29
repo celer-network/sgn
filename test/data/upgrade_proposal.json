@@ -1,0 +1,12 @@
+{
+  "title": "Upgrade",
+  "description": "Upgrade at 10 height",
+  "changes": [
+    {
+      "subspace": "subscribe",
+      "key": "EpochLength",
+      "value": "3"
+    }
+  ],
+  "deposit": "10"
+}

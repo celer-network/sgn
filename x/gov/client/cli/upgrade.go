@@ -63,7 +63,7 @@ func parseArgsToContent(cmd *cobra.Command, name string) (govtypes.Content, erro
 	}
 
 	plan := upgrade.Plan{Name: name, Time: upgradeTime, Height: height, Info: info}
-	content := upgrade.NewSoftwareUpgradeProposal(title, description, plan)
+	content := govtypes.NewUpgradeProposal(title, description, plan)
 	return content, nil
 }
 

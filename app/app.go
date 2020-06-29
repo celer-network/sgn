@@ -245,7 +245,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
 		AddRoute(params.RouterKey, gov.NewParamChangeProposalHandler(app.paramsKeeper)).
-		AddRoute(upgrade.RouterKey, gov.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper))
+		AddRoute(upgrade.RouterKey, gov.NewUpgradeProposalHandler(app.upgradeKeeper))
 	app.govKeeper = gov.NewKeeper(
 		app.cdc,
 		app.keyGov,
