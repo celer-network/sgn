@@ -7,16 +7,12 @@ import (
 	"strings"
 
 	"github.com/celer-network/goutils/eth"
-
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/proto/entity"
-	coscontext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -25,41 +21,27 @@ var (
 	snapshotStatesEventSig = mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])")
 )
 
-func GetRequest(cliCtx coscontext.CLIContext, ledger *mainchain.CelerLedger, signedSimplexState *chain.SignedSimplexState) (Request, error) {
-	var simplexPaymentChannel entity.SimplexPaymentChannel
-	err := proto.Unmarshal(signedSimplexState.SimplexState, &simplexPaymentChannel)
+func GetOnChainChannelSeqAndPeerIndex(
+	ledger *mainchain.CelerLedger, cid mainchain.CidType, peerFrom mainchain.Addr) (uint64, []string, uint8, error) {
+	addrs, seqNums, err := ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
-		return Request{}, fmt.Errorf("Failed to unmarshal simplexState: %s", err)
+		return 0, nil, 0, err
 	}
-
-	peerFromAddr := mainchain.Bytes2AddrHex(simplexPaymentChannel.PeerFrom)
-	request, err := CLIQueryRequest(cliCtx, RouterKey, simplexPaymentChannel.ChannelId, peerFromAddr)
-	if err != nil {
-		channelId := mainchain.Bytes2Cid(simplexPaymentChannel.ChannelId)
-		addresses, seqNums, err := ledger.GetStateSeqNumMap(&bind.CallOpts{}, channelId)
-		if err != nil {
-			return Request{}, fmt.Errorf("GetStateSeqNumMap err: %s", err)
-		}
-
-		peerAddrs := []string{mainchain.Addr2Hex(addresses[0]), mainchain.Addr2Hex(addresses[1])}
-		var peerFromIndex uint8
-		if peerAddrs[0] == peerFromAddr {
-			peerFromIndex = uint8(0)
-		} else if peerAddrs[1] == peerFromAddr {
-			peerFromIndex = uint8(1)
-		} else {
-			return Request{}, fmt.Errorf("Invalid peerFromAddr %s %s %s", peerFromAddr, peerAddrs[0], peerAddrs[1])
-		}
-
-		seqNum := seqNums[peerFromIndex].Uint64()
-		request = NewRequest(simplexPaymentChannel.ChannelId, seqNum, peerAddrs, peerFromIndex)
+	var peerFromIndex uint8
+	if addrs[0] == peerFrom {
+		peerFromIndex = 0
+	} else if addrs[1] == peerFrom {
+		peerFromIndex = 1
+	} else {
+		return 0, nil, 0, fmt.Errorf("Invalid peerFromAddr %x %x %x", peerFrom, addrs[0], addrs[1])
 	}
-
-	return request, nil
+	seqNum := seqNums[peerFromIndex].Uint64()
+	peerAddrs := []string{mainchain.Addr2Hex(addrs[0]), mainchain.Addr2Hex(addrs[1])}
+	return seqNum, peerAddrs, peerFromIndex, nil
 }
 
 // Make sure signature match peer addresses for the channel
-func VerifySignedSimplexStateSigs(request Request, signedSimplexState chain.SignedSimplexState) error {
+func VerifySignedSimplexStateSigs(request Request, signedSimplexState *chain.SignedSimplexState) error {
 	if len(signedSimplexState.Sigs) != 2 {
 		return fmt.Errorf("incorrect sigs count %d", len(signedSimplexState.Sigs))
 	}

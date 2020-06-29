@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/celer-network/goutils/eth"
-
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

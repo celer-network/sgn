@@ -74,7 +74,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	// Query sgn about validator reward
 	// TODO: add this test after merging the change of pay per use
 
-	log.Infoln("Request guard...")
+	log.Infoln("Request to init guard ...")
 	seqNum := uint64(10)
 	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
 	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
@@ -82,18 +82,48 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
-	request, err := subscribe.GetRequest(transactor.CliCtx, tc.LedgerContract, signedSimplexStateProto)
-	tc.ChkTestErr(t, err, "failed to get request")
-	request.SeqNum = seqNum
-	request.SignedSimplexStateBytes = signedSimplexStateBytes
-	request.OwnerSig = requestSig
+	_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		tc.LedgerContract, channelId, tc.Client1.Address)
+	tc.ChkTestErr(t, err, "failed to get onchain channel info")
+	request := subscribe.NewRequest(
+		channelId[:],
+		seqNum,
+		peerAddrs,
+		peerFromIndex,
+		signedSimplexStateBytes,
+		requestSig)
 	requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-	msgSubmitChange = sync.NewMsgSubmitChange(sync.Request, requestData, transactor.Key.GetAddress())
+	msgSubmitChange = sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	// TxHash now should be empty
-	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
+	for retry := 0; retry < tc.RetryLimit; retry++ {
+		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		if err == nil && expectedRes == request.String() {
+			break
+		}
+		log.Error(err)
+		time.Sleep(tc.RetryPeriod)
+	}
+	tc.ChkTestErr(t, err, "failed to query request on sgn")
+	log.Infoln("Query sgn about the request info:", request.String())
+	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+
+	log.Infoln("Request guard (2nd request)...")
+	seqNum = uint64(12)
+	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
+	tc.ChkTestErr(t, err, "failed to prepare SignedSimplexState")
+	signedSimplexStateBytes, err = proto.Marshal(signedSimplexStateProto)
+	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
+	requestSig, err = tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
+	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
+	msgRequestGuard := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, requestSig, transactor.Key.GetAddress())
+	transactor.AddTxMsg(msgRequestGuard)
+
+	log.Infoln("Query sgn to check if request has correct state proof data...")
+	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -117,7 +147,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: [a-f0-9]{40}`, 10, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0, 100)
+	rstr := fmt.Sprintf(`SeqNum: %d, PeerAddresses: \[%s %s\], PeerFromIndex: %d, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: [a-f0-9]{40}`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0, 100)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {
@@ -140,7 +170,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Query sgn about the reward info:", reward.String())
 	assert.True(t, reward.MiningReward.IsPositive(), "Minging reward should be larger than 0")
 	if srvReward == "" {
-		srvReward = params.RequestCost.String()
+		srvReward = params.RequestCost.Add(params.RequestCost).String()
 	}
 	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`, tc.ValEthAddrs[0], reward.MiningReward.String(), srvReward)
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))

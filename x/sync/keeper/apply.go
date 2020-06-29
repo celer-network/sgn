@@ -26,8 +26,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.SyncValidator(ctx, change)
 	case types.Subscribe:
 		return keeper.Subscribe(ctx, change)
-	case types.Request:
-		return keeper.Request(ctx, change)
+	case types.InitGuardRequest:
+		return keeper.InitGuardRequest(ctx, change)
 	case types.TriggerGuard:
 		return keeper.TriggerGuard(ctx, change)
 	case types.GuardProof:
@@ -152,26 +152,22 @@ func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
 	return nil
 }
 
-func (keeper Keeper) Request(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) error {
 	var r subscribe.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
-	log.Infoln("Apply new request", r)
-	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetOwnerAddress())
+	log.Infoln("Apply init request", r)
+	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetReceiverAddress())
 	if err != nil {
 		return fmt.Errorf("Fail to charge request fee: %s", err)
 	}
 
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
+	_, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if found {
-		request.SeqNum = r.SeqNum
-		request.SignedSimplexStateBytes = r.SignedSimplexStateBytes
-		request.OwnerSig = r.OwnerSig
-	} else {
-		request = r
+		return fmt.Errorf("guard request already initiated")
 	}
 
-	keeper.subscribeKeeper.SetRequest(ctx, request)
+	keeper.subscribeKeeper.SetRequest(ctx, r)
 
 	return nil
 }
@@ -181,9 +177,9 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply intend settle", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x and owner %s", r.ChannelId, r.GetOwnerAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
 	}
 
 	request.TriggerTxHash = r.TriggerTxHash
@@ -200,9 +196,9 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply guard proof", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetOwnerAddress())
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x and owner %s", r.ChannelId, r.GetOwnerAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
 	}
 
 	request.GuardTxHash = r.GuardTxHash

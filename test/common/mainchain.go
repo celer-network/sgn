@@ -260,7 +260,7 @@ func OpenChannel(peer0, peer1 *TestEthClient) (channelId [32]byte, err error) {
 		return
 	}
 	channelId = receipt.Logs[0].Topics[1]
-	log.Info("channel ID: ", mainchain.Bytes2Hex(channelId[:]))
+	log.Info("opened channel channel ID: ", mainchain.Bytes2Hex(channelId[:]))
 
 	return
 }

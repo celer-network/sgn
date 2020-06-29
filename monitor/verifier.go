@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/golang/protobuf/proto"
 )
 
 func (m *Monitor) verifyActiveChanges() {
@@ -38,8 +37,8 @@ func (m *Monitor) verifyActiveChanges() {
 			continue
 		}
 
-		verified, approve := m.verifyChange(change)
-		if verified {
+		done, approve := m.verifyChange(change)
+		if done {
 			err = m.verifiedChanges.Set(strconv.Itoa(int(change.ID)), []byte{})
 			if err != nil {
 				log.Errorln("verifiedChanges Set err", err)
@@ -53,7 +52,7 @@ func (m *Monitor) verifyActiveChanges() {
 	}
 }
 
-// return (verified, approve)
+// return (done, approve)
 func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 	switch change.Type {
 	case sync.ConfirmParamProposal:
@@ -66,7 +65,7 @@ func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 		return m.verifySyncValidator(change)
 	case sync.Subscribe:
 		return m.verifySubscribe(change)
-	case sync.Request:
+	case sync.InitGuardRequest:
 		return m.verifyRequest(change)
 	case sync.TriggerGuard:
 		return m.verifyTriggerGuard(change)
@@ -237,53 +236,62 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, request: %s", change.ID, request)
 
-	var signedSimplexState chain.SignedSimplexState
-	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
 	if err != nil {
 		log.Errorf("%s. unmarshal signedSimplexStateBytes err: %s", logmsg, err)
+		return true, false
+	}
+
+	receiverAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.ReceiverSig)
+	if err != nil {
+		log.Errorf("%s. recover signer err: %s", logmsg, err)
+		return true, false
+	}
+
+	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+	if err == nil {
+		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, receiverAddr)
+		return true, false
+	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+		log.Errorf("%s. getRequest err: %s", logmsg, err)
 		return false, false
 	}
 
-	r, err := subscribe.GetRequest(m.operator.CliCtx, m.ethClient.Ledger, &signedSimplexState)
-	if err != nil {
-		log.Errorf("%s. get request err: %s", logmsg, err)
-		return false, false
+	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
+		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
+		return true, false
 	}
 
 	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
-		return false, false
+		return true, false
 	}
 
-	ownerAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.OwnerSig)
+	if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
+		log.Errorf("%s. Receiver sig does not match: %s", logmsg, receiverAddr)
+		return true, false
+	}
+
+	seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 	if err != nil {
-		log.Errorf("%s. recover signer err: %s", logmsg, err)
+		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
 		return false, false
 	}
 
-	if request.SeqNum <= r.SeqNum {
-		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, r.SeqNum)
+	if request.SeqNum <= seqNum {
+		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
 		return false, false
 	}
 
-	if request.PeerFromIndex != r.PeerFromIndex {
-		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, r.PeerFromIndex)
+	if request.PeerFromIndex != peerFromIndex {
+		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, peerFromIndex)
 		return false, false
 	}
 
-	if request.GetOwnerAddress() != mainchain.Addr2Hex(ownerAddr) {
-		log.Errorf("%s. Owner sig does not match mainchain value: %x", logmsg, ownerAddr)
-		return false, false
-	}
-
-	if !bytes.Equal(request.ChannelId, r.ChannelId) {
-		log.Errorf("%s. ChannelId does not match mainchain value: %x", logmsg, r.ChannelId)
-		return false, false
-	}
-
-	if !reflect.DeepEqual(request.PeerAddresses, r.PeerAddresses) {
-		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, r.PeerAddresses)
+	if !reflect.DeepEqual(request.PeerAddresses, peerAddrs) {
+		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, peerAddrs)
 		return false, false
 	}
 
@@ -296,7 +304,7 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
 
-	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetOwnerAddress())
+	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetReceiverAddress())
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
