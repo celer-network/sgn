@@ -9,15 +9,15 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 type MsgRequestGuard struct {
 	SignedSimplexStateBytes []byte         `json:"signedSimplexStateBytes"`
-	PeerToSig               []byte         `json:"peerToSig"`
+	ReceiverSig               []byte         `json:"receiverSig"`
 	Sender                  sdk.AccAddress `json:"sender"`
 }
 
 // NewMsgRequestGuard is a constructor function for MsgRequestGuard
-func NewMsgRequestGuard(signedSimplexStateBytes, peerToSig []byte, sender sdk.AccAddress) MsgRequestGuard {
+func NewMsgRequestGuard(signedSimplexStateBytes, receiverSig []byte, sender sdk.AccAddress) MsgRequestGuard {
 	return MsgRequestGuard{
 		SignedSimplexStateBytes: signedSimplexStateBytes,
-		PeerToSig:               peerToSig,
+		ReceiverSig:               receiverSig,
 		Sender:                  sender,
 	}
 }
@@ -34,8 +34,8 @@ func (msg MsgRequestGuard) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "SignedSimplexStateBytes cannot be empty")
 	}
 
-	if len(msg.PeerToSig) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "PeerToSig cannot be empty")
+	if len(msg.ReceiverSig) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ReceiverSig cannot be empty")
 	}
 
 	if msg.Sender.Empty() {

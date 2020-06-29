@@ -55,7 +55,7 @@ type (
 	}
 
 	GuardRequest struct {
-		PeerToSig               string `json:"peerToSig" yaml:"peerToSig"`
+		ReceiverSig             string `json:"receiverSig" yaml:"receiverSig"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
 	}
 
@@ -102,7 +102,7 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
 			return
 		}
-		peerToSig := mainchain.Hex2Bytes(req.PeerToSig)
+		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
@@ -119,7 +119,7 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		peerToAddr, err := eth.RecoverSigner(signedSimplexStateBytes, peerToSig)
+		receiverAddr, err := eth.RecoverSigner(signedSimplexStateBytes, receiverSig)
 		if err != nil {
 			log.Errorln("recover signer err:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
@@ -140,11 +140,11 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			peerAddrs,
 			peerFromIndex,
 			signedSimplexStateBytes,
-			peerToSig)
+			receiverSig)
 
-		if mainchain.Hex2Addr(request.GetPeerToAddress()) != peerToAddr {
-			log.Errorf("PeerTo signer does not match: %x", peerToAddr)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "peerTo signer not match")
+		if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
+			log.Errorf("Receiver signer does not match: %x", receiverAddr)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "receiver signer not match")
 			return
 		}
 
@@ -162,9 +162,9 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		peerToSig := mainchain.Hex2Bytes(req.PeerToSig)
+		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, peerToSig, transactor.Key.GetAddress())
+		msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }

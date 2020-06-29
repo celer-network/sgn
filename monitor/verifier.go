@@ -258,14 +258,14 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	peerToAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.PeerToSig)
+	receiverAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.ReceiverSig)
 	if err != nil {
 		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return true, false
 	}
 
-	if mainchain.Hex2Addr(request.GetPeerToAddress()) != peerToAddr {
-		log.Errorf("%s. PeerTo sig does not match: %s", logmsg, peerToAddr)
+	if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
+		log.Errorf("%s. Receiver sig does not match: %s", logmsg, receiverAddr)
 		return true, false
 	}
 

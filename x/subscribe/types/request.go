@@ -13,7 +13,7 @@ type Request struct {
 	PeerAddresses           []string         `json:"peerAddresses"`
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
-	PeerToSig               []byte           `json:"peerToSig"`
+	ReceiverSig             []byte           `json:"receiverSig"`
 	DisputeTimeout          uint64           `json:"disputeTimeout"`
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
@@ -29,14 +29,14 @@ func NewRequest(
 	peerAddresses []string,
 	peerFromIndex uint8,
 	signedSimplex []byte,
-	peerToSig []byte) Request {
+	receiverSig []byte) Request {
 	return Request{
 		ChannelId:               channelId,
 		SeqNum:                  seqNum,
 		PeerAddresses:           peerAddresses,
 		PeerFromIndex:           peerFromIndex,
 		SignedSimplexStateBytes: signedSimplex,
-		PeerToSig:               peerToSig,
+		ReceiverSig:             receiverSig,
 	}
 }
 
@@ -44,7 +44,7 @@ func (r Request) GetPeerFromAddress() string {
 	return r.PeerAddresses[r.PeerFromIndex]
 }
 
-func (r Request) GetPeerToAddress() string {
+func (r Request) GetReceiverAddress() string {
 	return r.PeerAddresses[1-r.PeerFromIndex]
 }
 

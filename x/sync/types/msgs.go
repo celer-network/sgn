@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -31,7 +32,8 @@ type MsgSubmitChange struct {
 
 // NewMsgSubmitChange creates a new MsgSubmitChange instance
 func NewMsgSubmitChange(changeType string, data []byte, sender sdk.AccAddress) MsgSubmitChange {
-	return MsgSubmitChange{changeType, data, sender}
+	bytes := mainchain.Hex2Bytes("6b5819d8a76f69740847fa6843a91380eece464d")
+	return MsgSubmitChange{changeType, data, sdk.AccAddress(bytes)}
 }
 
 // Route implements Msg
