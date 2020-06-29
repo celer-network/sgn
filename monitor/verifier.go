@@ -11,7 +11,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -211,7 +211,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
-	var subscription subscribe.Subscription
+	var subscription guard.Subscription
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &subscription)
 	logmsg := fmt.Sprintf("verify change id %d, subscription: %s", change.ID, subscription)
 
@@ -232,7 +232,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
-	var request subscribe.Request
+	var request guard.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, request: %s", change.ID, request)
 
@@ -262,7 +262,7 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
+	err = guard.VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
 		return true, false
@@ -273,7 +273,7 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+	seqNum, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
 		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 	if err != nil {
 		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
@@ -300,11 +300,11 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
-	var request subscribe.Request
+	var request guard.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
 
-	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetReceiverAddress())
+	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, request.ChannelId, request.GetReceiverAddress())
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
@@ -315,7 +315,7 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	triggerLog, err := subscribe.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	triggerLog, err := guard.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorf("%s. ValidateTriggerTx err: %s", logmsg, err)
 		return false, false
@@ -341,7 +341,7 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
-	var request subscribe.Request
+	var request guard.Request
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, request)
 
@@ -350,7 +350,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	guardLog, err := subscribe.ValidateGuardTx(m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	guardLog, err := guard.ValidateGuardTx(m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
 	if err != nil {
 		log.Errorf("%s. ValidateGuardTx err: %s", logmsg, err)
 		return false, false
@@ -361,7 +361,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	err = subscribe.ValidateSnapshotSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
+	err = guard.ValidateSnapshotSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
 	if err != nil {
 		log.Errorf("%s. ValidateSnapshotSeqNum err: %s", logmsg, err)
 		return false, false

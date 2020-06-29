@@ -14,8 +14,8 @@ import (
 	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/gov"
 	govclient "github.com/celer-network/sgn/x/gov/client"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -58,7 +58,7 @@ var (
 		cron.AppModule{},
 		gov.NewAppModuleBasic(govclient.ParamProposalHandler),
 		slash.AppModule{},
-		subscribe.AppModule{},
+		guard.AppModule{},
 		sync.AppModule{},
 		validator.AppModuleBasic{},
 	)
@@ -94,7 +94,7 @@ type sgnApp struct {
 	keyCron      *sdk.KVStoreKey
 	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
-	keySubscribe *sdk.KVStoreKey
+	keyGuard     *sdk.KVStoreKey
 	keySync      *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
 
@@ -107,7 +107,7 @@ type sgnApp struct {
 	cronKeeper      cron.Keeper
 	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
-	subscribeKeeper subscribe.Keeper
+	guardKeeper     guard.Keeper
 	syncKeeper      sync.Keeper
 	validatorKeeper validator.Keeper
 
@@ -152,7 +152,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
 		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
-		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
+		keyGuard:     sdk.NewKVStoreKey(guard.StoreKey),
 		keySync:      sdk.NewKVStoreKey(sync.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
@@ -166,7 +166,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
-	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
+	guardSubspace := app.paramsKeeper.Subspace(guard.DefaultParamspace)
 	syncSubspace := app.paramsKeeper.Subspace(sync.DefaultParamspace).WithKeyTable(sync.ParamKeyTable())
 
 	// The AccountKeeper handles address -> account lookups
@@ -221,11 +221,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		slashSubspace,
 	)
 
-	app.subscribeKeeper = subscribe.NewKeeper(
-		app.keySubscribe,
+	app.guardKeeper = guard.NewKeeper(
+		app.keyGuard,
 		app.cdc,
 		app.validatorKeeper,
-		subscribeSubspace,
+		guardSubspace,
 	)
 
 	app.cronKeeper = cron.NewKeeper(
@@ -254,7 +254,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.paramsKeeper,
 		app.slashKeeper,
 		app.stakingKeeper,
-		app.subscribeKeeper,
+		app.guardKeeper,
 		app.validatorKeeper,
 	)
 
@@ -266,14 +266,14 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		cron.NewAppModule(app.cronKeeper),
 		slash.NewAppModule(app.slashKeeper),
-		subscribe.NewAppModule(app.subscribeKeeper),
+		guard.NewAppModule(app.guardKeeper),
 		validator.NewAppModule(app.validatorKeeper),
 		gov.NewAppModule(app.govKeeper, app.accountKeeper),
 		sync.NewAppModule(app.syncKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(slash.ModuleName)
-	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName, sync.ModuleName)
+	app.mm.SetOrderEndBlockers(guard.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName, sync.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
@@ -283,7 +283,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		genutil.ModuleName,
 		cron.ModuleName,
 		slash.ModuleName,
-		subscribe.ModuleName,
+		guard.ModuleName,
 		validator.ModuleName,
 		gov.ModuleName,
 		sync.ModuleName,
@@ -316,7 +316,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keyParams,
 		app.keyCron,
 		app.keySlash,
-		app.keySubscribe,
+		app.keyGuard,
 		app.keyValidator,
 		app.keyGov,
 		app.keySync,

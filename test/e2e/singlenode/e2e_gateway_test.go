@@ -13,13 +13,13 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpGateway() []tc.Killable {
+func setupGateway() []tc.Killable {
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
@@ -39,7 +39,7 @@ func setUpGateway() []tc.Killable {
 }
 
 func TestE2EGateway(t *testing.T) {
-	toKill := setUpGateway()
+	toKill := setupGateway()
 	defer tc.TearDown(toKill)
 
 	t.Run("e2e-gateway", func(t *testing.T) {
@@ -84,16 +84,16 @@ func gatewayTest(t *testing.T) {
 		"amount":  "100000000000000000000",
 	}
 	body, _ := json.Marshal(msg)
-	_, err = http.Post("http://127.0.0.1:1317/subscribe/subscribe", "application/json", bytes.NewBuffer(body))
+	_, err = http.Post("http://127.0.0.1:1317/guard/subscribe", "application/json", bytes.NewBuffer(body))
 	tc.ChkTestErr(t, err, "failed to post subscribe msg to gateway")
 	tc.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
 
-	resp, err := http.Get("http://127.0.0.1:1317/subscribe/subscription/" + tc.Client0.Address.Hex())
+	resp, err := http.Get("http://127.0.0.1:1317/guard/subscription/" + tc.Client0.Address.Hex())
 	tc.ChkTestErr(t, err, "failed to query subscription from gateway")
 
 	result, err := tc.ParseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
 	tc.ChkTestErr(t, err, "failed to parse GatewayQueryResponse")
-	var subscription subscribe.Subscription
+	var subscription guard.Subscription
 	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)
 	tc.ChkTestErr(t, err, "failed to unmarshal subscription JSON from gateway")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())

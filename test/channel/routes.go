@@ -10,7 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -69,13 +69,13 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+			_, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
 				tc.LedgerContract, rs.channelID, rs.peer2.Address)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request onchain channel info")
 				return
 			}
-			request := subscribe.NewRequest(
+			request := guard.NewRequest(
 				rs.channelID.Bytes(),
 				req.SeqNum,
 				peerAddrs,
@@ -93,7 +93,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			if err != nil {
 				return
 			}
-			_, err = http.Post(rs.gateway+"/subscribe/requestGuard",
+			_, err = http.Post(rs.gateway+"/guard/requestGuard",
 				"application/json", bytes.NewBuffer(reqBody))
 			if err != nil {
 				return

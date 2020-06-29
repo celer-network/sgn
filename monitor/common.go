@@ -3,7 +3,7 @@ package monitor
 import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
@@ -57,7 +57,7 @@ func (m *Monitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 }
 
 // Is the current node the guard to submit state proof
-func (m *Monitor) isRequestGuard(request *subscribe.Request, eventBlockNumber uint64) bool {
+func (m *Monitor) isRequestGuard(request *guard.Request, eventBlockNumber uint64) bool {
 	requestGuards := request.RequestGuards
 	if len(requestGuards) == 0 {
 		log.Debug("no request guards")
@@ -77,12 +77,12 @@ func (m *Monitor) isRequestGuard(request *subscribe.Request, eventBlockNumber ui
 	return requestGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
-func (m *Monitor) getRequest(channelId []byte, receiver string) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, receiver)
+func (m *Monitor) getRequest(channelId []byte, receiver string) (guard.Request, error) {
+	return guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, channelId, receiver)
 }
 
 // get guard requests for the channel, return an array with at most two elements
-func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*subscribe.Request) {
+func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*guard.Request) {
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)

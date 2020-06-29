@@ -5,7 +5,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -124,7 +124,7 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	}
 }
 
-func (m *Monitor) triggerGuard(request *subscribe.Request, rawLog ethtypes.Log) {
+func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
 	if request.TriggerTxHash != "" {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return
