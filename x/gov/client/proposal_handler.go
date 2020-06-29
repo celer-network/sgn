@@ -30,3 +30,4 @@ func NewProposalHandler(cliHandler CLIHandlerFn, restHandler RESTHandlerFn) Prop
 }
 
 var ParamProposalHandler = NewProposalHandler(cli.GetCmdSubmitParamChangeProposal, rest.ParamProposalRESTHandler)
+var UpgradeProposalHandler = NewProposalHandler(cli.GetCmdSubmitUpgradeProposal, rest.UpgradeProposalRESTHandler)

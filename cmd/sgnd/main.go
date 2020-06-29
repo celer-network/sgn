@@ -62,7 +62,12 @@ func main() {
 }
 
 func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewSgnApp(logger, db, baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)))
+	skipUpgradeHeights := make(map[int64]bool)
+	for _, h := range viper.GetIntSlice(server.FlagUnsafeSkipUpgrades) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+
+	return app.NewSgnApp(logger, db, skipUpgradeHeights, baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)))
 }
 
 func exportAppStateAndTMValidators(
@@ -70,7 +75,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		nsApp := app.NewSgnApp(logger, db)
+		nsApp := app.NewSgnApp(logger, db, map[int64]bool{})
 		err := nsApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
@@ -78,7 +83,7 @@ func exportAppStateAndTMValidators(
 		return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	nsApp := app.NewSgnApp(logger, db)
+	nsApp := app.NewSgnApp(logger, db, map[int64]bool{})
 
 	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

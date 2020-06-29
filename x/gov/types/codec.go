@@ -18,6 +18,7 @@ func RegisterCodec(cdc *codec.Codec) {
 
 	cdc.RegisterConcrete(TextProposal{}, "cosmos-sdk/TextProposal", nil)
 	cdc.RegisterConcrete(ParameterProposal{}, "cosmos-sdk/ParameterProposal", nil)
+	RegisterProposalTypeCodec(SoftwareUpgradeProposal{}, "cosmos-sdk/SoftwareUpgradeProposal")
 }
 
 // RegisterProposalTypeCodec registers an external proposal content type defined
