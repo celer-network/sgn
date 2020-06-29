@@ -87,14 +87,14 @@ func (k Keeper) ChargeRequestFee(ctx sdk.Context, ethAddr string) error {
 }
 
 // Gets the entire Request metadata for a channelId
-func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, peerFrom string) (Request, bool) {
+func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, receiver string) (Request, bool) {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has(GetRequestKey(channelId, peerFrom)) {
+	if !store.Has(GetRequestKey(channelId, receiver)) {
 		return Request{}, false
 	}
 
-	value := store.Get(GetRequestKey(channelId, peerFrom))
+	value := store.Get(GetRequestKey(channelId, receiver))
 	var request Request
 	k.cdc.MustUnmarshalBinaryBare(value, &request)
 	return request, true
@@ -103,7 +103,7 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, peerFrom string) (
 // Sets the entire Request metadata for a channelId
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRequestKey(request.ChannelId, request.GetPeerFromAddress()), k.cdc.MustMarshalBinaryBare(request))
+	store.Set(GetRequestKey(request.ChannelId, request.GetReceiverAddress()), k.cdc.MustMarshalBinaryBare(request))
 }
 
 // Gets the entire Epoch metadata for a epochId

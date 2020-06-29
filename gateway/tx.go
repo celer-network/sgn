@@ -111,18 +111,18 @@ func postInitGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		_, err = subscribe.CLIQueryRequest(
-			transactor.CliCtx, subscribe.RouterKey, simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
-		if err == nil {
-			log.Errorf("Request for channel %x from %x already initiated", simplexChannel.ChannelId, simplexChannel.PeerFrom)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "request for channel and peerFrom already initiated")
-			return
-		}
-
 		receiverAddr, err := eth.RecoverSigner(signedSimplexStateBytes, receiverSig)
 		if err != nil {
 			log.Errorln("recover signer err:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
+			return
+		}
+
+		_, err = subscribe.CLIQueryRequest(
+			transactor.CliCtx, subscribe.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+		if err == nil {
+			log.Errorf("Request for channel %x to %x already initiated", simplexChannel.ChannelId, receiverAddr)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "request for channel and receiver already initiated")
 			return
 		}
 

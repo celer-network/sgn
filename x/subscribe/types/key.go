@@ -26,8 +26,8 @@ func GetSubscriptionKey(ethAddress string) []byte {
 }
 
 // get request key from channelID
-func GetRequestKey(channelId []byte, peerFrom string) []byte {
-	return append(append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...), []byte(peerFrom)...)
+func GetRequestKey(channelId []byte, receiver string) []byte {
+	return append(append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...), []byte(mainchain.FormatAddrHex(receiver))...)
 }
 
 // get epoch key from epochId

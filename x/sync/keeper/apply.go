@@ -162,7 +162,7 @@ func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) erro
 		return fmt.Errorf("Fail to charge request fee: %s", err)
 	}
 
-	_, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerFromAddress())
+	_, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if found {
 		return fmt.Errorf("guard request already initiated")
 	}
@@ -177,9 +177,9 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply intend settle", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerFromAddress())
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetPeerFromAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
 	}
 
 	request.TriggerTxHash = r.TriggerTxHash
@@ -196,9 +196,9 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply guard proof", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetPeerFromAddress())
+	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetPeerFromAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
 	}
 
 	request.GuardTxHash = r.GuardTxHash

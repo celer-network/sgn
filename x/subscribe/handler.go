@@ -53,8 +53,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	logEntry.ChanInfo.ChanId = mainchain.Cid2Hex(cid)
 	logEntry.ChanInfo.SeqNum = simplexChannel.SeqNum
 
-	request, found := keeper.GetRequest(
-		ctx, simplexChannel.ChannelId, mainchain.Bytes2AddrHex(simplexChannel.PeerFrom))
+	request, found := keeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
 	if !found {
 		return nil, fmt.Errorf("Failed to get request")
 	}

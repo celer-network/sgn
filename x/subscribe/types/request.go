@@ -40,10 +40,6 @@ func NewRequest(
 	}
 }
 
-func (r Request) GetPeerFromAddress() string {
-	return r.PeerAddresses[r.PeerFromIndex]
-}
-
 func (r Request) GetReceiverAddress() string {
 	return r.PeerAddresses[1-r.PeerFromIndex]
 }

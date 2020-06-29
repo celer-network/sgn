@@ -241,9 +241,15 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Bytes2Hex(simplexChannel.PeerFrom))
+	receiverAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.ReceiverSig)
+	if err != nil {
+		log.Errorf("%s. recover signer err: %s", logmsg, err)
+		return true, false
+	}
+
+	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
 	if err == nil {
-		log.Errorf("%s. request for channel %x from %x already initiated", logmsg, simplexChannel.ChannelId, simplexChannel.PeerFrom)
+		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, receiverAddr)
 		return true, false
 	}
 
@@ -255,12 +261,6 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	err = subscribe.VerifySignedSimplexStateSigs(request, signedSimplexState)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
-		return true, false
-	}
-
-	receiverAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.ReceiverSig)
-	if err != nil {
-		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return true, false
 	}
 
@@ -300,7 +300,7 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
 
-	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetPeerFromAddress())
+	r, err := subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, request.ChannelId, request.GetReceiverAddress())
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
