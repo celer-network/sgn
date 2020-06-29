@@ -104,7 +104,6 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 		if err == nil && expectedRes == request.String() {
 			break
 		}
-		log.Error(err)
 		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query request on sgn")
