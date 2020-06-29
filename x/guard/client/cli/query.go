@@ -75,7 +75,7 @@ func QuerySubscription(cliCtx context.CLIContext, queryRoute, ethAddress string)
 // GetCmdRequest queries request info
 func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "request [channelId] [receiver]",
+		Use:   "request [channelId] [simplexReceiver]",
 		Short: "query request info associated with the channelId",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -92,8 +92,8 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // Query request info
-func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte, receiver string) (request types.Request, err error) {
-	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryRequestParams(channelId, receiver))
+func QueryRequest(cliCtx context.CLIContext, queryRoute string, channelId []byte, simplexReceiver string) (request types.Request, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryRequestParams(channelId, simplexReceiver))
 	if err != nil {
 		return
 	}

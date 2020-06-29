@@ -242,15 +242,15 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	receiverAddr, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.ReceiverSig)
+	simplexReceiver, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.SimplexReceiverSig)
 	if err != nil {
 		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return true, false
 	}
 
-	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
-		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, receiverAddr)
+		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, simplexReceiver)
 		return true, false
 	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
 		log.Errorf("%s. getRequest err: %s", logmsg, err)
@@ -268,8 +268,8 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
-		log.Errorf("%s. Receiver sig does not match: %s", logmsg, receiverAddr)
+	if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
+		log.Errorf("%s. Receiver sig does not match: %s", logmsg, simplexReceiver)
 		return true, false
 	}
 

@@ -23,7 +23,7 @@ func (rs *RestServer) registerQueryRoutes() {
 	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/guard/request/{channelId}/{receiver}",
+		"/guard/request/{channelId}/{simplexReceiver}",
 		guardRequestHandlerFn(rs),
 	).Methods(http.MethodGet, http.MethodOptions)
 
@@ -69,9 +69,9 @@ func guardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		channelId := mainchain.Hex2Bytes(vars["channelId"])
-		receiver := vars["receiver"]
+		simplexReceiver := vars["simplexReceiver"]
 		transactor := rs.transactorPool.GetTransactor()
-		request, err := guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId, receiver)
+		request, err := guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId, simplexReceiver)
 		postProcessResponse(w, transactor.CliCtx, request, err)
 	}
 }

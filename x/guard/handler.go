@@ -37,12 +37,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 
-	receiverAddr, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.ReceiverSig)
+	simplexReceiver, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.SimplexReceiverSig)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to recover receiver signer: %s", err)
+		return nil, fmt.Errorf("Failed to recover simplexReceiver signer: %s", err)
 	}
 
-	logEntry.EthAddress = mainchain.Addr2Hex(receiverAddr)
+	logEntry.EthAddress = mainchain.Addr2Hex(simplexReceiver)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(msg.SignedSimplexStateBytes)
 	if err != nil {
@@ -53,12 +53,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	logEntry.ChanInfo.ChanId = mainchain.Cid2Hex(cid)
 	logEntry.ChanInfo.SeqNum = simplexChannel.SeqNum
 
-	request, found := keeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+	request, found := keeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if !found {
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
-	if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
+	if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
 		return nil, fmt.Errorf("Receiver not match stored request: %s", request.GetReceiverAddress())
 	}
 

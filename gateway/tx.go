@@ -51,8 +51,8 @@ type (
 	}
 
 	GuardRequest struct {
-		ReceiverSig             string `json:"receiverSig" yaml:"receiverSig"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
+		SimplexReceiverSig      string `json:"simplexReceiverSig" yaml:"simplexReceiverSig"`
 	}
 
 	UpdateSidechainAddrRequest struct {
@@ -99,7 +99,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
+		simplexReceiverSig := mainchain.Hex2Bytes(req.SimplexReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
@@ -108,7 +108,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		receiverAddr, err := eth.RecoverSigner(signedSimplexStateBytes, receiverSig)
+		simplexReceiver, err := eth.RecoverSigner(signedSimplexStateBytes, simplexReceiverSig)
 		if err != nil {
 			log.Errorln("recover signer err:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
@@ -116,7 +116,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		lastReq, err := guard.CLIQueryRequest(
-			transactor.CliCtx, guard.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+			transactor.CliCtx, guard.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 		if err == nil {
 			if simplexChannel.SeqNum <= lastReq.SeqNum {
 				log.Errorln("Invalid sequence number", simplexChannel.SeqNum, lastReq.SeqNum)
@@ -124,7 +124,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 				return
 			}
 			// TODO: more precheck
-			msg := guard.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
+			msg := guard.NewMsgRequestGuard(signedSimplexStateBytes, simplexReceiverSig, transactor.Key.GetAddress())
 			writeGenerateStdTxResponse(w, transactor, msg)
 			return
 		} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
@@ -152,11 +152,11 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			peerAddrs,
 			peerFromIndex,
 			signedSimplexStateBytes,
-			receiverSig)
+			simplexReceiverSig)
 
-		if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
-			log.Errorf("Receiver signer does not match: %x", receiverAddr)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "receiver signer not match")
+		if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
+			log.Errorf("Receiver signer does not match: %x", simplexReceiver)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "simplexReceiver signer not match")
 			return
 		}
 

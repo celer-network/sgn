@@ -58,9 +58,9 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	request, found := keeper.GetRequest(ctx, params.ChannelId, params.Receiver)
+	request, found := keeper.GetRequest(ctx, params.ChannelId, params.SimplexReceiver)
 	if !found {
-		return nil, fmt.Errorf("%w: request for channel %x to %s", common.ErrRecordNotFound, params.ChannelId, params.Receiver)
+		return nil, fmt.Errorf("%w: request for channel %x to %s", common.ErrRecordNotFound, params.ChannelId, params.SimplexReceiver)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, request)
