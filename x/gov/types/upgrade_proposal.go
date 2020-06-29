@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ProposalTypeSoftwareUpgrade string = "SoftwareUpgrade"
+	ProposalTypeUpgrade string = "Upgrade"
 )
 
 // Software Upgrade Proposals
@@ -25,16 +25,16 @@ func NewUpgradeProposal(title, description string, plan upgrade.Plan) Content {
 var _ Content = UpgradeProposal{}
 
 func init() {
-	RegisterProposalType(ProposalTypeSoftwareUpgrade)
+	RegisterProposalType(ProposalTypeUpgrade)
 }
 
 func (sup UpgradeProposal) GetTitle() string { return sup.Title }
 
 func (sup UpgradeProposal) GetDescription() string { return sup.Description }
 
-func (sup UpgradeProposal) ProposalRoute() string { return RouterKey }
+func (sup UpgradeProposal) ProposalRoute() string { return upgrade.RouterKey }
 
-func (sup UpgradeProposal) ProposalType() string { return ProposalTypeSoftwareUpgrade }
+func (sup UpgradeProposal) ProposalType() string { return ProposalTypeUpgrade }
 
 func (sup UpgradeProposal) ValidateBasic() error {
 	if err := sup.Plan.ValidateBasic(); err != nil {
