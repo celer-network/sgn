@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
@@ -126,9 +127,12 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
 			writeGenerateStdTxResponse(w, transactor, msg)
 			return
+		} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+			log.Errorln("Failed to get request:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Failed to get request")
+			return
 		}
 
-		// TODO: parse err to make sure key not exist
 		seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
 			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 		if err != nil {

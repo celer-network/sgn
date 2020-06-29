@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/subscribe/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,12 +34,12 @@ func querySubscription(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	var params QuerySubscriptionParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to parse params: %s", err))
+		return nil, fmt.Errorf("failed to parse params: %s", err)
 	}
 
 	subscription, found := keeper.GetSubscription(ctx, params.EthAddress)
 	if !found {
-		return nil, errors.New(fmt.Sprintf("cannot find subscription for %s", params.EthAddress))
+		return nil, fmt.Errorf("%w: subscription for %s", common.ErrRecordNotFound, params.EthAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, subscription)
@@ -59,7 +60,7 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 
 	request, found := keeper.GetRequest(ctx, params.ChannelId, params.Receiver)
 	if !found {
-		return nil, errors.New("Could not find corresponding request")
+		return nil, fmt.Errorf("%w: request for channel %x to %s", common.ErrRecordNotFound, params.ChannelId, params.Receiver)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, request)

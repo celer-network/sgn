@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
@@ -251,6 +252,9 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	if err == nil {
 		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, receiverAddr)
 		return true, false
+	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+		log.Errorf("%s. getRequest err: %s", logmsg, err)
+		return false, false
 	}
 
 	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {

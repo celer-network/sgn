@@ -100,10 +100,11 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	// TxHash now should be empty
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client1.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
+		log.Error(err)
 		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query request on sgn")
