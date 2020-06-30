@@ -9,7 +9,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,12 +19,12 @@ import (
 
 func (rs *RestServer) registerTxRoutes() {
 	rs.Mux.HandleFunc(
-		"/subscribe/subscribe",
+		"/guard/subscribe",
 		postSubscribeHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/requestGuard",
+		"/guard/requestGuard",
 		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
@@ -51,8 +51,8 @@ type (
 	}
 
 	GuardRequest struct {
-		ReceiverSig             string `json:"receiverSig" yaml:"receiverSig"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
+		SimplexReceiverSig      string `json:"simplexReceiverSig" yaml:"simplexReceiverSig"`
 	}
 
 	UpdateSidechainAddrRequest struct {
@@ -77,7 +77,7 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		subscription := subscribe.NewSubscription(req.EthAddr)
+		subscription := guard.NewSubscription(req.EthAddr)
 		deposit, ok := sdk.NewIntFromString(req.Amount)
 		if !ok {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid deposit amount")
@@ -99,7 +99,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
+		simplexReceiverSig := mainchain.Hex2Bytes(req.SimplexReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
@@ -108,15 +108,15 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		receiverAddr, err := eth.RecoverSigner(signedSimplexStateBytes, receiverSig)
+		simplexReceiver, err := eth.RecoverSigner(signedSimplexStateBytes, simplexReceiverSig)
 		if err != nil {
 			log.Errorln("recover signer err:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
 			return
 		}
 
-		lastReq, err := subscribe.CLIQueryRequest(
-			transactor.CliCtx, subscribe.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+		lastReq, err := guard.CLIQueryRequest(
+			transactor.CliCtx, guard.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 		if err == nil {
 			if simplexChannel.SeqNum <= lastReq.SeqNum {
 				log.Errorln("Invalid sequence number", simplexChannel.SeqNum, lastReq.SeqNum)
@@ -124,7 +124,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 				return
 			}
 			// TODO: more precheck
-			msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
+			msg := guard.NewMsgRequestGuard(signedSimplexStateBytes, simplexReceiverSig, transactor.Key.GetAddress())
 			writeGenerateStdTxResponse(w, transactor, msg)
 			return
 		} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
@@ -133,7 +133,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+		seqNum, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
 			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
 		if err != nil {
 			log.Errorln("Failed to get onchain channel info:", err)
@@ -146,17 +146,17 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 		// TODO: more precheck
-		request := subscribe.NewRequest(
+		request := guard.NewRequest(
 			simplexChannel.ChannelId,
 			simplexChannel.SeqNum,
 			peerAddrs,
 			peerFromIndex,
 			signedSimplexStateBytes,
-			receiverSig)
+			simplexReceiverSig)
 
-		if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
-			log.Errorf("Receiver signer does not match: %x", receiverAddr)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "receiver signer not match")
+		if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
+			log.Errorf("Receiver signer does not match: %x", simplexReceiver)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "simplexReceiver signer not match")
 			return
 		}
 

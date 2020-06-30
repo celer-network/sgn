@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func setUpValidator(maxValidatorNum *big.Int) {
+func setupValidator(maxValidatorNum *big.Int) {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
@@ -36,7 +36,7 @@ func TestE2EValidator(t *testing.T) {
 func validatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
-	setUpValidator(big.NewInt(11))
+	setupValidator(big.NewInt(11))
 
 	transactor := tc.NewTransactor(
 		t,
@@ -92,7 +92,7 @@ func validatorTest(t *testing.T) {
 func replaceValidatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("========================  Test replacing validator ===========================")
-	setUpValidator(big.NewInt(2))
+	setupValidator(big.NewInt(2))
 
 	transactor := tc.NewTransactor(
 		t,

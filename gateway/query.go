@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -13,17 +13,17 @@ import (
 
 func (rs *RestServer) registerQueryRoutes() {
 	rs.Mux.HandleFunc(
-		"/subscribe/params",
-		subscribeParamsHandlerFn(rs),
+		"/guard/params",
+		guardParamsHandlerFn(rs),
 	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/subscription/{ethAddr}",
+		"/guard/subscription/{ethAddr}",
 		subscriptionHandlerFn(rs),
 	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/request/{channelId}/{receiver}",
+		"/guard/request/{channelId}/{simplexReceiver}",
 		guardRequestHandlerFn(rs),
 	).Methods(http.MethodGet, http.MethodOptions)
 
@@ -43,11 +43,11 @@ func (rs *RestServer) registerQueryRoutes() {
 	).Methods(http.MethodGet, http.MethodOptions)
 }
 
-// http request handler to query subscribe params
-func subscribeParamsHandlerFn(rs *RestServer) http.HandlerFunc {
+// http request handler to query guard params
+func guardParamsHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		transactor := rs.transactorPool.GetTransactor()
-		params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+		params, err := guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
 
 		postProcessResponse(w, transactor.CliCtx, params, err)
 	}
@@ -59,7 +59,7 @@ func subscriptionHandlerFn(rs *RestServer) http.HandlerFunc {
 		vars := mux.Vars(r)
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
-		subscription, err := subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, ethAddr)
+		subscription, err := guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, ethAddr)
 		postProcessResponse(w, transactor.CliCtx, subscription, err)
 	}
 }
@@ -69,9 +69,9 @@ func guardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		channelId := mainchain.Hex2Bytes(vars["channelId"])
-		receiver := vars["receiver"]
+		simplexReceiver := vars["simplexReceiver"]
 		transactor := rs.transactorPool.GetTransactor()
-		request, err := subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId, receiver)
+		request, err := guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId, simplexReceiver)
 		postProcessResponse(w, transactor.CliCtx, request, err)
 	}
 }

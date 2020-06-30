@@ -1,4 +1,4 @@
-package subscribe
+package guard
 
 import (
 	"context"

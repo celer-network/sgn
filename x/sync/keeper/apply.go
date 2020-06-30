@@ -7,7 +7,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -138,46 +138,46 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 }
 
 func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
-	var s subscribe.Subscription
+	var s guard.Subscription
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &s)
 
 	log.Infoln("Apply new subscription", s)
-	subscription, found := keeper.subscribeKeeper.GetSubscription(ctx, s.EthAddress)
+	subscription, found := keeper.guardKeeper.GetSubscription(ctx, s.EthAddress)
 	if !found {
-		subscription = subscribe.NewSubscription(s.EthAddress)
+		subscription = guard.NewSubscription(s.EthAddress)
 	}
 	subscription.Deposit = s.Deposit
-	keeper.subscribeKeeper.SetSubscription(ctx, subscription)
+	keeper.guardKeeper.SetSubscription(ctx, subscription)
 
 	return nil
 }
 
 func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) error {
-	var r subscribe.Request
+	var r guard.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply init request", r)
-	err := keeper.subscribeKeeper.ChargeRequestFee(ctx, r.GetReceiverAddress())
+	err := keeper.guardKeeper.ChargeRequestFee(ctx, r.GetReceiverAddress())
 	if err != nil {
 		return fmt.Errorf("Fail to charge request fee: %s", err)
 	}
 
-	_, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	_, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if found {
 		return fmt.Errorf("guard request already initiated")
 	}
 
-	keeper.subscribeKeeper.SetRequest(ctx, r)
+	keeper.guardKeeper.SetRequest(ctx, r)
 
 	return nil
 }
 
 func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
-	var r subscribe.Request
+	var r guard.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply intend settle", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if !found {
 		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
 	}
@@ -185,18 +185,18 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 	request.TriggerTxHash = r.TriggerTxHash
 	request.TriggerTxBlkNum = r.TriggerTxBlkNum
 	request.DisputeTimeout = r.DisputeTimeout
-	request.RequestGuards = subscribe.GetRequestGuards(ctx, keeper.subscribeKeeper)
-	keeper.subscribeKeeper.SetRequest(ctx, request)
+	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
+	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
 }
 
 func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
-	var r subscribe.Request
+	var r guard.Request
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply guard proof", r)
-	request, found := keeper.subscribeKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
 	if !found {
 		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
 	}
@@ -204,7 +204,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	request.GuardTxHash = r.GuardTxHash
 	request.GuardTxBlkNum = r.GuardTxBlkNum
 	request.GuardSender = r.GuardSender
-	keeper.subscribeKeeper.SetRequest(ctx, request)
+	keeper.guardKeeper.SetRequest(ctx, request)
 
 	requestGuards := request.RequestGuards
 	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum

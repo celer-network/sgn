@@ -1,8 +1,8 @@
-package subscribe
+package guard
 
 import (
-	"github.com/celer-network/sgn/x/subscribe/client/cli"
-	"github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/guard/client/cli"
+	"github.com/celer-network/sgn/x/guard/types"
 )
 
 const (

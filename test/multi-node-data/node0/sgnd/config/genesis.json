@@ -17,7 +17,7 @@
   },
   "app_hash": "",
   "app_state": {
-    "subscribe": {
+    "guard": {
       "params": {
         "requestGuardCount": "3",
         "epochLength": "1",

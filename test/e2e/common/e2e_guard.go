@@ -14,8 +14,8 @@ import (
 	"github.com/celer-network/sgn/proto/chain"
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/subscribe"
-	stypes "github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/guard"
+	stypes "github.com/celer-network/sgn/x/guard/types"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,7 +58,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Query sgn about the subscription info...")
 	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		subscription, err = subscribe.CLIQuerySubscription(transactor.CliCtx, subscribe.RouterKey, tc.Client0.Address.Hex())
+		subscription, err = guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, tc.Client0.Address.Hex())
 		if err == nil && expectedRes == subscription.String() {
 			break
 		}
@@ -82,10 +82,10 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
-	_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+	_, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
 		tc.LedgerContract, channelId, tc.Client1.Address)
 	tc.ChkTestErr(t, err, "failed to get onchain channel info")
-	request := subscribe.NewRequest(
+	request := guard.NewRequest(
 		channelId[:],
 		seqNum,
 		peerAddrs,
@@ -100,11 +100,10 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	// TxHash now should be empty
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
-		log.Error(err)
 		time.Sleep(tc.RetryPeriod)
 	}
 	tc.ChkTestErr(t, err, "failed to query request on sgn")
@@ -119,13 +118,13 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	requestSig, err = tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
-	msgRequestGuard := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, requestSig, transactor.Key.GetAddress())
+	msgRequestGuard := guard.NewMsgRequestGuard(signedSimplexStateBytes, requestSig, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgRequestGuard)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	expectedRes = fmt.Sprintf(`SeqNum: %d, PeerAddresses: [%s %s], PeerFromIndex: %d, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 0)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
@@ -151,7 +150,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = subscribe.CLIQueryRequest(transactor.CliCtx, subscribe.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && r.MatchString(strings.ToLower(request.String())) {
 			break
 		}
@@ -162,7 +161,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
 
 	log.Infoln("Query sgn to check if it gets the correct reward info (without sigs)...")
-	params, err := subscribe.CLIQueryParams(transactor.CliCtx, subscribe.RouterKey)
+	params, err := guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query params on sgn")
 	log.Infoln("Query sgn about the params info:", params.String())
 	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])

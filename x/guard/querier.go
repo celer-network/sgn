@@ -1,11 +1,11 @@
-package subscribe
+package guard
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/guard/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -25,7 +25,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Unknown subscribe query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Unknown guard query endpoint")
 		}
 	}
 }
@@ -58,9 +58,9 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	request, found := keeper.GetRequest(ctx, params.ChannelId, params.Receiver)
+	request, found := keeper.GetRequest(ctx, params.ChannelId, params.SimplexReceiver)
 	if !found {
-		return nil, fmt.Errorf("%w: request for channel %x to %s", common.ErrRecordNotFound, params.ChannelId, params.Receiver)
+		return nil, fmt.Errorf("%w: request for channel %x to %s", common.ErrRecordNotFound, params.ChannelId, params.SimplexReceiver)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, request)

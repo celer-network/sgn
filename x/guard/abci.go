@@ -1,4 +1,4 @@
-package subscribe
+package guard
 
 import (
 	"github.com/celer-network/sgn/x/validator"

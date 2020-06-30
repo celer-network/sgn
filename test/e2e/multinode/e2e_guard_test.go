@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpSubscribe() {
+func setupGuard() {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
@@ -33,17 +33,17 @@ func setUpSubscribe() {
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
-func TestE2ESubscribe(t *testing.T) {
-	setUpSubscribe()
+func TestE2EGuard(t *testing.T) {
+	setupGuard()
 
-	t.Run("e2e-subscribe", func(t *testing.T) {
-		t.Run("subscribeTest", subscribeTest)
+	t.Run("e2e-guard", func(t *testing.T) {
+		t.Run("guardTest", guardTest)
 	})
 }
 
-func subscribeTest(t *testing.T) {
+func guardTest(t *testing.T) {
 	log.Infoln("===================================================================")
-	log.Infoln("======================== Test subscribe ===========================")
+	log.Infoln("======================== Test guard ===========================")
 
 	transactor := tc.NewTransactor(
 		t,

@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
-// subscribe params default values
+// guard params default values
 const (
 	// Default number of guards for guarding request
 	DefaultRequestGuardCount uint64 = 3
@@ -32,7 +32,7 @@ var (
 
 var _ params.ParamSet = (*Params)(nil)
 
-// Params defines the high level settings for subscribe
+// Params defines the high level settings for guard
 type Params struct {
 	RequestGuardCount uint64  `json:"requestGuardCount" yaml:"requestGuardCount"` // request guard count
 	EpochLength       uint64  `json:"epochLength" yaml:"epochLength"`             // epoch length based on seconds
@@ -78,7 +78,7 @@ func (p Params) String() string {
   RequestCost:       %s`, p.RequestGuardCount, p.EpochLength, p.RequestCost)
 }
 
-// unmarshal the current subscribe params value from store key or panic
+// unmarshal the current guard params value from store key or panic
 func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
 	params, err := UnmarshalParams(cdc, value)
 	if err != nil {
@@ -87,7 +87,7 @@ func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
 	return params
 }
 
-// unmarshal the current subscribe params value from store key
+// unmarshal the current guard params value from store key
 func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) {
 	err = cdc.UnmarshalBinaryLengthPrefixed(value, &params)
 	if err != nil {
@@ -120,7 +120,7 @@ func validateRequestGuardCount(i interface{}) error {
 	}
 
 	if v == 0 {
-		return fmt.Errorf("subscribe parameter RequestGuardCount must be positive: %d", v)
+		return fmt.Errorf("guard parameter RequestGuardCount must be positive: %d", v)
 	}
 
 	return nil
@@ -133,7 +133,7 @@ func validateEpochLength(i interface{}) error {
 	}
 
 	if v <= 0 {
-		return fmt.Errorf("subscribe parameter EpochLength must be positive: %d", v)
+		return fmt.Errorf("guard parameter EpochLength must be positive: %d", v)
 	}
 
 	return nil
@@ -146,7 +146,7 @@ func validateRequestCost(i interface{}) error {
 	}
 
 	if v.IsNegative() {
-		return fmt.Errorf("subscribe parameter RequestCost cannot be negative: %s", v)
+		return fmt.Errorf("guard parameter RequestCost cannot be negative: %s", v)
 	}
 
 	return nil
