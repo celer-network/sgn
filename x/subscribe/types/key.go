@@ -15,11 +15,9 @@ const (
 
 var (
 	SubscriptionKeyPrefix = []byte{0x01} // Key prefix for subscription
-
-	RequestKeyPrefix = []byte{0x21} // Key prefix for request
-
-	EpochKeyPrefix = []byte{0x31} // Key prefix for epoch
-	LatestEpochKey = []byte{0x32} // Key for latest epoch
+	RequestKeyPrefix      = []byte{0x21} // Key prefix for request
+	EpochKeyPrefix        = []byte{0x31} // Key prefix for epoch
+	LatestEpochKey        = []byte{0x32} // Key for latest epoch
 )
 
 // get guardian key from eth address
@@ -28,8 +26,8 @@ func GetSubscriptionKey(ethAddress string) []byte {
 }
 
 // get request key from channelID
-func GetRequestKey(channelId []byte, peerFrom string) []byte {
-	return append(append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...), []byte(peerFrom)...)
+func GetRequestKey(channelId []byte, receiver string) []byte {
+	return append(append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...), []byte(mainchain.FormatAddrHex(receiver))...)
 }
 
 // get epoch key from epochId

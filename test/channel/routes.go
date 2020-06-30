@@ -35,7 +35,7 @@ func (rs *RestServer) registerRoutes() {
 }
 
 type (
-	RequestGuardRequest struct {
+	GuardRequest struct {
 		SeqNum uint64 `json:"seqNum"`
 	}
 
@@ -46,7 +46,7 @@ type (
 
 func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RequestGuardRequest
+		var req GuardRequest
 		if !rest.ReadRESTReq(w, r, rs.cdc, &req) {
 			return
 		}
@@ -63,32 +63,37 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		ownerSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
+		receiverSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
 		if err != nil {
 			return
 		}
 
 		if rs.gateway == "" {
-			request, err := subscribe.GetRequest(rs.transactor.CliCtx, tc.LedgerContract, signedSimplexStateProto)
+			_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
+				tc.LedgerContract, rs.channelID, rs.peer2.Address)
 			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request from SignedSimplexStateBytes")
+				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request onchain channel info")
 				return
 			}
-
-			request.SignedSimplexStateBytes = signedSimplexStateBytes
-			request.OwnerSig = ownerSig
+			request := subscribe.NewRequest(
+				rs.channelID.Bytes(),
+				req.SeqNum,
+				peerAddrs,
+				peerFromIndex,
+				signedSimplexStateBytes,
+				receiverSig)
 			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-			msg := sync.NewMsgSubmitChange(sync.Request, requestData, rs.transactor.Key.GetAddress())
+			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
-				"ownerSig":                mainchain.Bytes2Hex(ownerSig),
 				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
+				"receiverSig":             mainchain.Bytes2Hex(receiverSig),
 			})
 			if err != nil {
 				return
 			}
-			_, err = http.Post(rs.gateway+"/subscribe/request",
+			_, err = http.Post(rs.gateway+"/subscribe/requestGuard",
 				"application/json", bytes.NewBuffer(reqBody))
 			if err != nil {
 				return

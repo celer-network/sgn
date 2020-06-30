@@ -12,9 +12,9 @@ type Request struct {
 	SeqNum                  uint64           `json:"seqNum"`
 	PeerAddresses           []string         `json:"peerAddresses"`
 	PeerFromIndex           uint8            `json:"peerFromIndex"`
-	DisputeTimeout          uint64           `json:"disputeTimeout"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
-	OwnerSig                []byte           `json:"ownerSig"`
+	ReceiverSig             []byte           `json:"receiverSig"`
+	DisputeTimeout          uint64           `json:"disputeTimeout"`
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
@@ -23,25 +23,25 @@ type Request struct {
 	GuardSender             string           `json:"guardSender"`
 }
 
-func NewRequest(channelId []byte, seqNum uint64, peerAddresses []string, peerFromIndex uint8) Request {
+func NewRequest(
+	channelId []byte,
+	seqNum uint64,
+	peerAddresses []string,
+	peerFromIndex uint8,
+	signedSimplex []byte,
+	receiverSig []byte) Request {
 	return Request{
-		ChannelId:     channelId,
-		SeqNum:        seqNum,
-		PeerAddresses: peerAddresses,
-		PeerFromIndex: peerFromIndex,
+		ChannelId:               channelId,
+		SeqNum:                  seqNum,
+		PeerAddresses:           peerAddresses,
+		PeerFromIndex:           peerFromIndex,
+		SignedSimplexStateBytes: signedSimplex,
+		ReceiverSig:             receiverSig,
 	}
 }
 
-func (r Request) GetOwnerAddress() string {
-	if r.PeerFromIndex == 0 {
-		return r.PeerAddresses[1]
-	}
-
-	return r.PeerAddresses[0]
-}
-
-func (r Request) GetPeerAddress() string {
-	return r.PeerAddresses[r.PeerFromIndex]
+func (r Request) GetReceiverAddress() string {
+	return r.PeerAddresses[1-r.PeerFromIndex]
 }
 
 // implement fmt.Stringer

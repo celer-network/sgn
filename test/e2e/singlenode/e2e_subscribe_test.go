@@ -2,6 +2,7 @@ package singlenode
 
 import (
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -51,7 +52,8 @@ func subscribeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 
-	amt := big.NewInt(1000000000000000000)
+	amt := new(big.Int)
+	amt.SetString("1"+strings.Repeat("0", 20), 10)
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
 	tc.ChkTestErr(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)

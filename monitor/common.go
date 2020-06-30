@@ -77,8 +77,8 @@ func (m *Monitor) isRequestGuard(request *subscribe.Request, eventBlockNumber ui
 	return requestGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
-func (m *Monitor) getRequest(channelId []byte, peerFrom string) (subscribe.Request, error) {
-	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, peerFrom)
+func (m *Monitor) getRequest(channelId []byte, receiver string) (subscribe.Request, error) {
+	return subscribe.CLIQueryRequest(m.operator.CliCtx, subscribe.RouterKey, channelId, receiver)
 }
 
 // get guard requests for the channel, return an array with at most two elements
@@ -90,8 +90,8 @@ func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*subscribe.Requ
 	}
 
 	for _, addr := range addresses {
-		peerFrom := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(cid.Bytes(), peerFrom)
+		receiver := mainchain.Addr2Hex(addr)
+		request, err := m.getRequest(cid.Bytes(), receiver)
 		if err != nil {
 			continue
 		}

@@ -17,7 +17,7 @@ const (
 	SyncDelegator        = "sync_delegator"
 	SyncValidator        = "sync_validator"
 	Subscribe            = "subscribe"
-	Request              = "request"
+	InitGuardRequest     = "init_guard_request"
 	TriggerGuard         = "trigger_guard"
 	GuardProof           = "guard_proof"
 )
