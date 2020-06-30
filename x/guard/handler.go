@@ -58,11 +58,18 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
-	if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
-		return nil, fmt.Errorf("Receiver not match stored request: %s", request.GetReceiverAddress())
+	if mainchain.Hex2Addr(request.SimplexSender) != mainchain.Bytes2Addr(simplexChannel.PeerFrom) {
+		return nil, fmt.Errorf("Sender not match stored request: %s", request.SimplexSender)
 	}
 
-	err = VerifySignedSimplexStateSigs(request, signedSimplexState)
+	if mainchain.Hex2Addr(request.SimplexReceiver) != simplexReceiver {
+		return nil, fmt.Errorf("Receiver not match stored request: %s", request.SimplexReceiver)
+	}
+
+	err = VerifySimplexStateSigs(
+		signedSimplexState,
+		mainchain.Hex2Addr(request.SimplexSender),
+		mainchain.Hex2Addr(request.SimplexReceiver))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to verify sigs: %s", err)
 	}
@@ -71,7 +78,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 		return nil, fmt.Errorf("Seq num smaller than stored request %d", request.SeqNum)
 	}
 
-	err = keeper.ChargeRequestFee(ctx, request.GetReceiverAddress())
+	err = keeper.ChargeRequestFee(ctx, request.SimplexReceiver)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
 	}

@@ -21,6 +21,7 @@ var (
 	NewMsgRequestGuard         = types.NewMsgRequestGuard
 	NewSubscription            = types.NewSubscription
 	NewRequest                 = types.NewRequest
+	NewInitRequest             = types.NewInitRequest
 	NewEpoch                   = types.NewEpoch
 	NewQuerySubscriptionParams = types.NewQuerySubscriptionParams
 	NewQueryRequestParams      = types.NewQueryRequestParams
@@ -39,6 +40,7 @@ var (
 type (
 	MsgRequestGuard         = types.MsgRequestGuard
 	Subscription            = types.Subscription
+	InitRequest             = types.InitRequest
 	Request                 = types.Request
 	Epoch                   = types.Epoch
 	Params                  = types.Params

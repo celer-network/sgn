@@ -3,7 +3,6 @@ package monitor
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -232,9 +231,9 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
-	var request guard.Request
+	var request guard.InitRequest
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, request: %s", change.ID, request)
+	logmsg := fmt.Sprintf("verify change id %d, Init request", change.ID)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
 	if err != nil {
@@ -242,57 +241,55 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
 	simplexReceiver, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.SimplexReceiverSig)
 	if err != nil {
 		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return true, false
 	}
 
+	logmsg = logmsg + ". " + guard.PrintSimplexChannel(simplexChannel) + " " + fmt.Sprintf("to: %x", simplexReceiver)
+
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
-		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, simplexReceiver)
+		log.Errorf("%s. request already initiated", logmsg)
 		return true, false
 	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
 		log.Errorf("%s. getRequest err: %s", logmsg, err)
 		return false, false
 	}
 
-	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
-		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
-		return true, false
-	}
-
-	err = guard.VerifySignedSimplexStateSigs(request, signedSimplexState)
+	// verify signature
+	simplexSender := mainchain.Bytes2Addr(simplexChannel.PeerFrom)
+	err = guard.VerifySimplexStateSigs(signedSimplexState, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
 		return true, false
 	}
 
-	if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
-		log.Errorf("%s. Receiver sig does not match: %s", logmsg, simplexReceiver)
+	// verify addr
+	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	if err != nil {
+		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
+		return false, false
+	}
+	seqIndex := 0
+	var match bool
+	if simplexSender == addrs[0] {
+		match = (simplexReceiver == addrs[1])
+	} else if simplexSender == addrs[1] {
+		match = (simplexReceiver == addrs[0])
+		seqIndex = 1
+	}
+	if !match {
+		log.Errorf("%s. simplex addrs not match mainchain value %x %x", logmsg, addrs[0], addrs[1])
 		return true, false
 	}
 
-	seqNum, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
-		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
-	if err != nil {
-		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
-		return false, false
-	}
-
-	if request.SeqNum <= seqNum {
-		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
-		return false, false
-	}
-
-	if request.PeerFromIndex != peerFromIndex {
-		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, peerFromIndex)
-		return false, false
-	}
-
-	if !reflect.DeepEqual(request.PeerAddresses, peerAddrs) {
-		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, peerAddrs)
-		return false, false
+	// verify seq
+	if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
+		log.Errorf("%s. SeqNum not larger than mainchain value %s", logmsg, seqNums[seqIndex])
+		return true, false
 	}
 
 	log.Infof("%s. success", logmsg)
@@ -304,7 +301,7 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
 
-	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, request.ChannelId, request.GetReceiverAddress())
+	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, request.ChannelId, request.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
@@ -360,10 +357,15 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
+	// TOTO: more check on request
 
-	err = guard.ValidateSnapshotSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
+	seqIndex := 0
+	if bytes.Compare(mainchain.Hex2Addr(request.SimplexSender).Bytes(), mainchain.Hex2Addr(request.SimplexReceiver).Bytes()) > 0 {
+		seqIndex = 1
+	}
+	err = guard.ValidateGuardProofSeqNum(guardLog.Data, uint8(seqIndex), request.SeqNum)
 	if err != nil {
-		log.Errorf("%s. ValidateSnapshotSeqNum err: %s", logmsg, err)
+		log.Errorf("%s. ValidateGuardProofSeqNum err: %s", logmsg, err)
 		return false, false
 	}
 

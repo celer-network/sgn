@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -153,21 +154,37 @@ func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
 }
 
 func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) error {
-	var r guard.Request
+	var r guard.InitRequest
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
-	log.Infoln("Apply init request", r)
-	err := keeper.guardKeeper.ChargeRequestFee(ctx, r.GetReceiverAddress())
+	_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(r.SignedSimplexStateBytes)
 	if err != nil {
-		return fmt.Errorf("Fail to charge request fee: %s", err)
+		return fmt.Errorf("unmarshal signedSimplexStateBytes err: %w", err)
+	}
+	simplexReceiver, err := eth.RecoverSigner(r.SignedSimplexStateBytes, r.SimplexReceiverSig)
+	if err != nil {
+		return fmt.Errorf("recover signer err: %w", err)
 	}
 
-	_, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	log.Infof("Apply init request %s, to %x", guard.PrintSimplexChannel(simplexChannel), simplexReceiver)
+
+	_, found := keeper.guardKeeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if found {
 		return fmt.Errorf("guard request already initiated")
 	}
 
-	keeper.guardKeeper.SetRequest(ctx, r)
+	err = keeper.guardKeeper.ChargeRequestFee(ctx, mainchain.Addr2Hex(simplexReceiver))
+	if err != nil {
+		return fmt.Errorf("Fail to charge request fee: %s", err)
+	}
+
+	request := guard.NewRequest(
+		simplexChannel.ChannelId,
+		simplexChannel.SeqNum,
+		mainchain.Bytes2Addr(simplexChannel.PeerFrom),
+		simplexReceiver,
+		r.SignedSimplexStateBytes)
+	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
 }
@@ -177,9 +194,9 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply intend settle", r)
-	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.SimplexReceiver)
 	}
 
 	request.TriggerTxHash = r.TriggerTxHash
@@ -196,9 +213,9 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	log.Infoln("Apply guard proof", r)
-	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.SimplexReceiver)
 	}
 
 	request.GuardTxHash = r.GuardTxHash

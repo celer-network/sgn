@@ -69,19 +69,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			_, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
-				tc.LedgerContract, rs.channelID, rs.peer2.Address)
-			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request onchain channel info")
-				return
-			}
-			request := guard.NewRequest(
-				rs.channelID.Bytes(),
-				req.SeqNum,
-				peerAddrs,
-				peerFromIndex,
-				signedSimplexStateBytes,
-				simplexReceiverSig)
+			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig)
 			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
