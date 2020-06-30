@@ -233,7 +233,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	var request guard.InitRequest
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, Init request", change.ID)
+	logmsg := fmt.Sprintf("verify change id %d, init request", change.ID)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
 	if err != nil {
@@ -292,6 +292,17 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	// verify dispute timeout
+	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, cid)
+	if err != nil {
+		log.Errorf("%s. get dispute timeout err: %s", logmsg, err)
+		return false, false
+	}
+	if disputeTimeout.Uint64() != request.DisputeTimeout {
+		log.Errorf("%s. ispute timeout not match mainchain value %s", logmsg, disputeTimeout)
+		return true, false
+	}
+
 	log.Infof("%s. success", logmsg)
 	return true, true
 }
@@ -307,8 +318,8 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if request.TriggerTxBlkNum == r.TriggerTxBlkNum && request.DisputeTimeout == r.DisputeTimeout {
-		log.Errorf("%s. TriggerTxBlkNum and DisputeTimeout not changed", logmsg)
+	if request.TriggerTxBlkNum == r.TriggerTxBlkNum {
+		log.Errorf("%s. TriggerTxBlkNum not changed", logmsg)
 		return true, false
 	}
 
@@ -318,18 +329,8 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
-	if err != nil {
-		log.Errorf("%s. GetDisputeTimeout err: %s", logmsg, err)
-		return false, false
-	}
-
 	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
 		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
-		return false, false
-	}
-	if request.DisputeTimeout != disputeTimeout.Uint64() {
-		log.Errorf("%s. DisputeTimeout does not match mainchain value: %s", logmsg, disputeTimeout)
 		return false, false
 	}
 

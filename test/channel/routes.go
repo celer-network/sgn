@@ -69,7 +69,12 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig)
+			disputeTimeout, err := tc.LedgerContract.GetDisputeTimeout(&bind.CallOpts{}, rs.channelID)
+			if err != nil {
+				log.Errorln("Failed to get dispute timeout:", err)
+				return
+			}
+			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
 			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)

@@ -82,7 +82,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.ChkTestErr(t, err, "failed to get signedSimplexStateBytes")
 	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
 	tc.ChkTestErr(t, err, "failed to sign signedSimplexStateBytes")
-	initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig)
+	initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig, tc.DisputeTimeout)
 	requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(initRequest)
 	msgSubmitChange = sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubmitChange)
@@ -90,7 +90,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	// TxHash now should be empty
 	var request guard.Request
-	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0])
+	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -114,7 +114,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	transactor.AddTxMsg(msgRequestGuard)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: 0, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0])
+	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -138,7 +138,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: [a-f0-9]{40}`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], 100)
+	rstr := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: [a-f0-9]{40}`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	tc.ChkTestErr(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {

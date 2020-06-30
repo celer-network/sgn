@@ -129,14 +129,6 @@ func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return
 	}
-
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
-	if err != nil {
-		log.Errorln("GetDisputeTimeout err:", err)
-		return
-	}
-
-	request.DisputeTimeout = disputeTimeout.Uint64()
 	request.TriggerTxHash = rawLog.TxHash.Hex()
 	request.TriggerTxBlkNum = rawLog.BlockNumber
 	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)

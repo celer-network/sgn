@@ -183,7 +183,8 @@ func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) erro
 		simplexChannel.SeqNum,
 		mainchain.Bytes2Addr(simplexChannel.PeerFrom),
 		simplexReceiver,
-		r.SignedSimplexStateBytes)
+		r.SignedSimplexStateBytes,
+		r.DisputeTimeout)
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
@@ -201,7 +202,6 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 
 	request.TriggerTxHash = r.TriggerTxHash
 	request.TriggerTxBlkNum = r.TriggerTxBlkNum
-	request.DisputeTimeout = r.DisputeTimeout
 	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
 	keeper.guardKeeper.SetRequest(ctx, request)
 

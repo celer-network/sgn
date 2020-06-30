@@ -106,8 +106,6 @@ func SetupE2eProfile() {
 	WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "DeployERC20")
 
 	E2eProfile = &TestProfile{
-		// hardcoded values
-		DisputeTimeout: 10,
 		// deployed addresses
 		LedgerAddr:   ledgerAddr,
 		CelrAddr:     erc20Addr,

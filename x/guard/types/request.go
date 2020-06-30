@@ -26,13 +26,15 @@ type Request struct {
 func NewRequest(
 	channelId []byte, seqNum uint64,
 	senderAddr, receiverAddr mainchain.Addr,
-	signedSimplexStateBytes []byte) Request {
+	signedSimplexStateBytes []byte,
+	disputeTimeout uint64) Request {
 	return Request{
 		ChannelId:               channelId,
 		SeqNum:                  seqNum,
 		SimplexSender:           mainchain.Addr2Hex(senderAddr),
 		SimplexReceiver:         mainchain.Addr2Hex(receiverAddr),
 		SignedSimplexStateBytes: signedSimplexStateBytes,
+		DisputeTimeout:          disputeTimeout,
 	}
 }
 
@@ -46,11 +48,13 @@ func (r Request) String() string {
 type InitRequest struct {
 	SignedSimplexStateBytes []byte `json:"signedSimplexStateBytes"`
 	SimplexReceiverSig      []byte `json:"simplexReceiverSig"`
+	DisputeTimeout          uint64 `json:"disputeTimeout"`
 }
 
-func NewInitRequest(signedSimplexStateBytes, simplexReceiverSig []byte) *InitRequest {
+func NewInitRequest(signedSimplexStateBytes, simplexReceiverSig []byte, disputeTimeout uint64) *InitRequest {
 	return &InitRequest{
 		SignedSimplexStateBytes: signedSimplexStateBytes,
 		SimplexReceiverSig:      simplexReceiverSig,
+		DisputeTimeout:          disputeTimeout,
 	}
 }
