@@ -191,17 +191,17 @@ func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) erro
 }
 
 func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
-	var r guard.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+	var trigger guard.GuardTrigger
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &trigger)
 
-	log.Infoln("Apply intend settle", r)
-	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.SimplexReceiver)
+	log.Infoln("Apply guard trigger", trigger)
+	request, found := keeper.guardKeeper.GetRequest(ctx, trigger.ChannelId, trigger.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.SimplexReceiver)
+		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
 
-	request.TriggerTxHash = r.TriggerTxHash
-	request.TriggerTxBlkNum = r.TriggerTxBlkNum
+	request.TriggerTxHash = trigger.TriggerTxHash
+	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
 	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
 	keeper.guardKeeper.SetRequest(ctx, request)
 
@@ -209,18 +209,18 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 }
 
 func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
-	var r guard.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+	var proof guard.GuardProof
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &proof)
 
-	log.Infoln("Apply guard proof", r)
-	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.SimplexReceiver)
+	log.Infoln("Apply guard proof", proof)
+	request, found := keeper.guardKeeper.GetRequest(ctx, proof.ChannelId, proof.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.SimplexReceiver)
+		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
-	request.GuardTxHash = r.GuardTxHash
-	request.GuardTxBlkNum = r.GuardTxBlkNum
-	request.GuardSender = r.GuardSender
+	request.GuardTxHash = proof.GuardTxHash
+	request.GuardTxBlkNum = proof.GuardTxBlkNum
+	request.GuardSender = proof.GuardSender
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	requestGuards := request.RequestGuards

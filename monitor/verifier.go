@@ -308,28 +308,29 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
-	var request guard.Request
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
+	var trigger guard.GuardTrigger
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
+	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
 
-	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, request.ChannelId, request.SimplexReceiver)
+	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, trigger.ChannelId, trigger.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
 
-	if request.TriggerTxBlkNum == r.TriggerTxBlkNum {
+	if trigger.TriggerTxBlkNum == r.TriggerTxBlkNum {
 		log.Errorf("%s. TriggerTxBlkNum not changed", logmsg)
 		return true, false
 	}
 
-	triggerLog, err := guard.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	triggerLog, err := guard.ValidateTriggerTx(
+		m.ethClient, mainchain.Hex2Hash(trigger.TriggerTxHash), mainchain.Bytes2Cid(trigger.ChannelId))
 	if err != nil {
 		log.Errorf("%s. ValidateTriggerTx err: %s", logmsg, err)
 		return false, false
 	}
 
-	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
+	if trigger.TriggerTxBlkNum != triggerLog.BlockNumber {
 		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
 		return false, false
 	}
@@ -339,48 +340,55 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
-	var request guard.Request
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, request)
+	var proof guard.GuardProof
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
+	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, proof)
 
-	if request.TriggerTxHash == "" {
-		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
+	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, proof.ChannelId, proof.SimplexReceiver)
+	if err != nil {
+		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
 
-	guardLog, err := guard.ValidateGuardTx(m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	if r.TriggerTxHash == "" {
+		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
+		return true, false
+	}
+
+	guardLog, err := guard.ValidateGuardTx(
+		m.ethClient, mainchain.Hex2Hash(proof.GuardTxHash), mainchain.Bytes2Cid(proof.ChannelId))
 	if err != nil {
 		log.Errorf("%s. ValidateGuardTx err: %s", logmsg, err)
 		return false, false
 	}
 
-	if guardLog.BlockNumber <= request.TriggerTxBlkNum {
+	if guardLog.BlockNumber <= r.TriggerTxBlkNum {
 		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
 	// TOTO: more check on request
 
 	seqIndex := 0
-	if bytes.Compare(mainchain.Hex2Addr(request.SimplexSender).Bytes(), mainchain.Hex2Addr(request.SimplexReceiver).Bytes()) > 0 {
+	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
 		seqIndex = 1
 	}
-	err = guard.ValidateGuardProofSeqNum(guardLog.Data, uint8(seqIndex), request.SeqNum)
+	err = guard.ValidateGuardProofSeqNum(guardLog.Data, uint8(seqIndex), r.SeqNum)
 	if err != nil {
 		log.Errorf("%s. ValidateGuardProofSeqNum err: %s", logmsg, err)
 		return false, false
 	}
 
-	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, request.GuardTxHash)
+	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, proof.GuardTxHash)
 	if err != nil {
 		log.Errorf("%s. GetTxSender err: %s", logmsg, err)
 		return false, false
 	}
 
-	if request.GuardTxBlkNum != guardLog.BlockNumber {
+	if proof.GuardTxBlkNum != guardLog.BlockNumber {
 		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
-	if request.GuardSender != guardSender {
+	if proof.GuardSender != guardSender {
 		log.Errorf("%s. GuardSender does not match mainchain value: %s", logmsg, guardSender)
 		return false, false
 	}

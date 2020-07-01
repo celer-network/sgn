@@ -180,8 +180,8 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
-		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
+		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 
 	}

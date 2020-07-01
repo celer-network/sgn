@@ -58,3 +58,56 @@ func NewInitRequest(signedSimplexStateBytes, simplexReceiverSig []byte, disputeT
 		DisputeTimeout:          disputeTimeout,
 	}
 }
+
+type GuardTrigger struct {
+	ChannelId       []byte `json:"channelId"`
+	SimplexReceiver string `json:"simplexReceiver"`
+	TriggerTxHash   string `json:"triggerTxHash"`
+	TriggerTxBlkNum uint64 `json:"triggerTxBlkNum"`
+}
+
+func (gt GuardTrigger) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, TriggerTxHash: %s, TriggerTxBlkNum: %d`,
+		gt.ChannelId, gt.SimplexReceiver, gt.TriggerTxHash, gt.TriggerTxBlkNum))
+}
+
+func NewGuardTrigger(
+	channelId mainchain.CidType,
+	simplexReceiver mainchain.Addr,
+	triggerTxHash mainchain.HashType,
+	triggerTxBlkNum uint64) *GuardTrigger {
+	return &GuardTrigger{
+		ChannelId:       channelId.Bytes(),
+		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
+		TriggerTxHash:   triggerTxHash.Hex(),
+		TriggerTxBlkNum: triggerTxBlkNum,
+	}
+}
+
+type GuardProof struct {
+	ChannelId       []byte `json:"channelId"`
+	SimplexReceiver string `json:"simplexReceiver"`
+	GuardTxHash     string `json:"guardTxHash"`
+	GuardTxBlkNum   uint64 `json:"guardTxBlkNum"`
+	GuardSender     string `json:"guardSender"`
+}
+
+func (gp GuardProof) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s`,
+		gp.ChannelId, gp.SimplexReceiver, gp.GuardTxHash, gp.GuardTxBlkNum, gp.GuardSender))
+}
+
+func NewGuardProof(
+	channelId mainchain.CidType,
+	simplexReceiver mainchain.Addr,
+	guardTxHash mainchain.HashType,
+	guardTxBlkNum uint64,
+	guardSender mainchain.Addr) *GuardProof {
+	return &GuardProof{
+		ChannelId:       channelId.Bytes(),
+		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
+		GuardTxHash:     guardTxHash.Hex(),
+		GuardTxBlkNum:   guardTxBlkNum,
+		GuardSender:     mainchain.Addr2Hex(guardSender),
+	}
+}
