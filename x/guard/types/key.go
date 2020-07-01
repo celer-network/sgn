@@ -22,7 +22,7 @@ var (
 
 // get guardian key from eth address
 func GetSubscriptionKey(ethAddress string) []byte {
-	return append(SubscriptionKeyPrefix, []byte(ethAddress)...)
+	return append(SubscriptionKeyPrefix, []byte(mainchain.FormatAddrHex(ethAddress))...)
 }
 
 // get request key from channelID

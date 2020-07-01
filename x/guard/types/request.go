@@ -40,9 +40,15 @@ func NewRequest(
 
 // implement fmt.Stringer
 func (r Request) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: %s, TriggerTxBlkNum: %d, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s`,
-		r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout,
-		r.TriggerTxHash, r.TriggerTxBlkNum, r.GuardTxHash, r.GuardTxBlkNum, r.GuardSender))
+	out := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`,
+		r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout)
+	if r.TriggerTxHash != "" {
+		out += fmt.Sprintf(`, TriggerTxHash: %s, TriggerTxBlkNum: %d`, r.TriggerTxHash, r.TriggerTxBlkNum)
+	}
+	if r.GuardTxHash != "" {
+		out += fmt.Sprintf(`, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s`, r.GuardTxHash, r.GuardTxBlkNum, r.GuardSender)
+	}
+	return strings.TrimSpace(out)
 }
 
 type InitRequest struct {

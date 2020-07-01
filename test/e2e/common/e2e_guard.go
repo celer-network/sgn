@@ -90,7 +90,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	// TxHash now should be empty
 	var request guard.Request
-	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -114,7 +114,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	transactor.AddTxMsg(msgRequestGuard)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, TriggerTxHash: , TriggerTxBlkNum: 0, GuardTxHash: , GuardTxBlkNum: 0, GuardSender:`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
+	expectedRes = fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
