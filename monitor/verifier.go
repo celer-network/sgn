@@ -248,7 +248,8 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	logmsg = logmsg + ". " + guard.PrintSimplexChannel(simplexChannel) + " " + fmt.Sprintf("to: %x", simplexReceiver)
+	logmsg += fmt.Sprintf(". %s, to %x, disputeTimeout: %d",
+		guard.PrintSimplexChannel(simplexChannel), simplexReceiver, request.DisputeTimeout)
 
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
