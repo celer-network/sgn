@@ -328,8 +328,8 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if trigger.TriggerTxBlkNum == r.TriggerTxBlkNum {
-		log.Errorf("%s. TriggerTxBlkNum not changed", logmsg)
+	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
+		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
 	}
 
