@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -153,38 +154,54 @@ func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
 }
 
 func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) error {
-	var r guard.Request
+	var r guard.InitRequest
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
-	log.Infoln("Apply init request", r)
-	err := keeper.guardKeeper.ChargeRequestFee(ctx, r.GetReceiverAddress())
+	_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(r.SignedSimplexStateBytes)
 	if err != nil {
-		return fmt.Errorf("Fail to charge request fee: %s", err)
+		return fmt.Errorf("unmarshal signedSimplexStateBytes err: %w", err)
+	}
+	simplexReceiver, err := eth.RecoverSigner(r.SignedSimplexStateBytes, r.SimplexReceiverSig)
+	if err != nil {
+		return fmt.Errorf("recover signer err: %w", err)
 	}
 
-	_, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	log.Infof("Apply init request %s, to %x", guard.PrintSimplexChannel(simplexChannel), simplexReceiver)
+
+	_, found := keeper.guardKeeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if found {
 		return fmt.Errorf("guard request already initiated")
 	}
 
-	keeper.guardKeeper.SetRequest(ctx, r)
+	err = keeper.guardKeeper.ChargeRequestFee(ctx, mainchain.Addr2Hex(simplexReceiver))
+	if err != nil {
+		return fmt.Errorf("Fail to charge request fee: %s", err)
+	}
+
+	request := guard.NewRequest(
+		simplexChannel.ChannelId,
+		simplexChannel.SeqNum,
+		mainchain.Bytes2Addr(simplexChannel.PeerFrom),
+		simplexReceiver,
+		r.SignedSimplexStateBytes,
+		r.DisputeTimeout)
+	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
 }
 
 func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
-	var r guard.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+	var trigger guard.GuardTrigger
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &trigger)
 
-	log.Infoln("Apply intend settle", r)
-	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	log.Infoln("Apply guard trigger", trigger)
+	request, found := keeper.guardKeeper.GetRequest(ctx, trigger.ChannelId, trigger.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
 
-	request.TriggerTxHash = r.TriggerTxHash
-	request.TriggerTxBlkNum = r.TriggerTxBlkNum
-	request.DisputeTimeout = r.DisputeTimeout
+	request.TriggerTxHash = trigger.TriggerTxHash
+	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
 	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
 	keeper.guardKeeper.SetRequest(ctx, request)
 
@@ -192,18 +209,18 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 }
 
 func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
-	var r guard.Request
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
+	var proof guard.GuardProof
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &proof)
 
-	log.Infoln("Apply guard proof", r)
-	request, found := keeper.guardKeeper.GetRequest(ctx, r.ChannelId, r.GetReceiverAddress())
+	log.Infoln("Apply guard proof", proof)
+	request, found := keeper.guardKeeper.GetRequest(ctx, proof.ChannelId, proof.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", r.ChannelId, r.GetReceiverAddress())
+		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
-	request.GuardTxHash = r.GuardTxHash
-	request.GuardTxBlkNum = r.GuardTxBlkNum
-	request.GuardSender = r.GuardSender
+	request.GuardTxHash = proof.GuardTxHash
+	request.GuardTxBlkNum = proof.GuardTxBlkNum
+	request.GuardSender = proof.GuardSender
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	requestGuards := request.RequestGuards

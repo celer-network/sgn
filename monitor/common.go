@@ -1,6 +1,8 @@
 package monitor
 
 import (
+	"bytes"
+
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/guard"
@@ -90,13 +92,17 @@ func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*guard.Request)
 	}
 
 	for _, addr := range addresses {
-		simplexReceiver := mainchain.Addr2Hex(addr)
-		request, err := m.getRequest(cid.Bytes(), simplexReceiver)
+		simplexReceiver := addr
+		request, err := m.getRequest(cid.Bytes(), mainchain.Addr2Hex(simplexReceiver))
 		if err != nil {
 			continue
 		}
-
-		if seqNums[request.PeerFromIndex].Uint64() >= request.SeqNum {
+		simplexSender := mainchain.Hex2Addr(request.SimplexSender)
+		seqIndex := 0
+		if bytes.Compare(simplexSender.Bytes(), simplexReceiver.Bytes()) > 0 {
+			seqIndex = 1
+		}
+		if seqNums[seqIndex].Uint64() >= request.SeqNum {
 			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
 			continue
 		}

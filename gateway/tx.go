@@ -101,7 +101,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		simplexReceiverSig := mainchain.Hex2Bytes(req.SimplexReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
+		signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
 			log.Errorln("Failed UnmarshalSignedSimplexStateBytes:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail UnmarshalSignedSimplexStateBytes")
@@ -112,6 +112,14 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		if err != nil {
 			log.Errorln("recover signer err:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
+			return
+		}
+		// verify signature
+		simplexSender := mainchain.Bytes2Addr(simplexChannel.PeerFrom)
+		err = guard.VerifySimplexStateSigs(signedSimplexState, simplexSender, simplexReceiver)
+		if err != nil {
+			log.Errorln("Invalid signature:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid signature")
 			return
 		}
 
@@ -133,35 +141,47 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		seqNum, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
-			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
+		// initiate first guard request
+		// TODO: merge the verification log with verifier.go
+		// verify addr
+		cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
+		addrs, seqNums, err := rs.ledgerContract.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 		if err != nil {
 			log.Errorln("Failed to get onchain channel info:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "get onchain channel info")
 			return
 		}
-		if simplexChannel.SeqNum <= seqNum {
-			log.Errorln("Invalid sequence number", simplexChannel.SeqNum, seqNum)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid sequence number")
-			return
+		seqIndex := 0
+		var match bool
+		if simplexSender == addrs[0] {
+			match = (simplexReceiver == addrs[1])
+		} else if simplexSender == addrs[1] {
+			match = (simplexReceiver == addrs[0])
+			seqIndex = 1
 		}
-		// TODO: more precheck
-		request := guard.NewRequest(
-			simplexChannel.ChannelId,
-			simplexChannel.SeqNum,
-			peerAddrs,
-			peerFromIndex,
-			signedSimplexStateBytes,
-			simplexReceiverSig)
-
-		if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
-			log.Errorf("Receiver signer does not match: %x", simplexReceiver)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "simplexReceiver signer not match")
+		if !match {
+			log.Errorln("Addresses not match", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "addrs not match")
 			return
 		}
 
-		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
+		// verify seq
+		if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
+			log.Errorln("invalid sequence number")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid sequence number")
+			return
+		}
+
+		disputeTimeout, err := rs.ledgerContract.GetDisputeTimeout(&bind.CallOpts{}, cid)
+		if err != nil {
+			log.Errorln("Failed to get dispute timeout:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "get dispute timeout")
+			return
+		}
+
+		request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
+		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 
 	}

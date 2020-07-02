@@ -69,21 +69,14 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		if rs.gateway == "" {
-			_, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
-				tc.LedgerContract, rs.channelID, rs.peer2.Address)
+			disputeTimeout, err := tc.LedgerContract.GetDisputeTimeout(&bind.CallOpts{}, rs.channelID)
 			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request onchain channel info")
+				log.Errorln("Failed to get dispute timeout:", err)
 				return
 			}
-			request := guard.NewRequest(
-				rs.channelID.Bytes(),
-				req.SeqNum,
-				peerAddrs,
-				peerFromIndex,
-				signedSimplexStateBytes,
-				simplexReceiverSig)
-			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
+			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
+			syncData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{

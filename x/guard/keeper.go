@@ -103,7 +103,7 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, simplexReceiver st
 // Sets the entire Request metadata for a channelId
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRequestKey(request.ChannelId, request.GetReceiverAddress()), k.cdc.MustMarshalBinaryBare(request))
+	store.Set(GetRequestKey(request.ChannelId, request.SimplexReceiver), k.cdc.MustMarshalBinaryBare(request))
 }
 
 // Gets the entire Epoch metadata for a epochId

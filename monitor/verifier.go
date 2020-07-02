@@ -3,7 +3,6 @@ package monitor
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -232,9 +231,9 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
-	var request guard.Request
+	var request guard.InitRequest
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, request: %s", change.ID, request)
+	logmsg := fmt.Sprintf("verify change id %d, init request", change.ID)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
 	if err != nil {
@@ -242,57 +241,66 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
 	simplexReceiver, err := eth.RecoverSigner(request.SignedSimplexStateBytes, request.SimplexReceiverSig)
 	if err != nil {
 		log.Errorf("%s. recover signer err: %s", logmsg, err)
 		return true, false
 	}
 
+	logmsg = logmsg + ". " + guard.PrintSimplexChannel(simplexChannel) + " " + fmt.Sprintf("to: %x", simplexReceiver)
+
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
-		log.Errorf("%s. request for channel %x to %x already initiated", logmsg, simplexChannel.ChannelId, simplexReceiver)
+		log.Errorf("%s. request already initiated", logmsg)
 		return true, false
 	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
 		log.Errorf("%s. getRequest err: %s", logmsg, err)
 		return false, false
 	}
 
-	if !bytes.Equal(request.ChannelId, simplexChannel.ChannelId) {
-		log.Errorf("%s. ChannelId does not match signed value: %x", logmsg, simplexChannel.ChannelId)
-		return true, false
-	}
-
-	err = guard.VerifySignedSimplexStateSigs(request, signedSimplexState)
+	// verify signature
+	simplexSender := mainchain.Bytes2Addr(simplexChannel.PeerFrom)
+	err = guard.VerifySimplexStateSigs(signedSimplexState, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
 		return true, false
 	}
 
-	if mainchain.Hex2Addr(request.GetReceiverAddress()) != simplexReceiver {
-		log.Errorf("%s. Receiver sig does not match: %s", logmsg, simplexReceiver)
+	// verify addr
+	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	if err != nil {
+		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
+		return false, false
+	}
+	seqIndex := 0
+	var match bool
+	if simplexSender == addrs[0] {
+		match = (simplexReceiver == addrs[1])
+	} else if simplexSender == addrs[1] {
+		match = (simplexReceiver == addrs[0])
+		seqIndex = 1
+	}
+	if !match {
+		log.Errorf("%s. simplex addrs not match mainchain value %x %x", logmsg, addrs[0], addrs[1])
 		return true, false
 	}
 
-	seqNum, peerAddrs, peerFromIndex, err := guard.GetOnChainChannelSeqAndPeerIndex(
-		m.ethClient.Ledger, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
+	// verify seq
+	if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
+		log.Errorf("%s. SeqNum not larger than mainchain value %s", logmsg, seqNums[seqIndex])
+		return true, false
+	}
+
+	// verify dispute timeout
+	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, cid)
 	if err != nil {
-		log.Errorf("%s. GetOnChainChannelSeqAndPeerIndex err: %s", logmsg, err)
+		log.Errorf("%s. get dispute timeout err: %s", logmsg, err)
 		return false, false
 	}
-
-	if request.SeqNum <= seqNum {
-		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
-		return false, false
-	}
-
-	if request.PeerFromIndex != peerFromIndex {
-		log.Errorf("%s. PeerFromIndex does not match mainchain value: %d", logmsg, peerFromIndex)
-		return false, false
-	}
-
-	if !reflect.DeepEqual(request.PeerAddresses, peerAddrs) {
-		log.Errorf("%s. PeerAddresses does not match mainchain value: %s", logmsg, peerAddrs)
-		return false, false
+	if disputeTimeout.Uint64() != request.DisputeTimeout {
+		log.Errorf("%s. ispute timeout not match mainchain value %s", logmsg, disputeTimeout)
+		return true, false
 	}
 
 	log.Infof("%s. success", logmsg)
@@ -300,39 +308,30 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
-	var request guard.Request
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, request)
+	var trigger guard.GuardTrigger
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
+	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
 
-	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, request.ChannelId, request.GetReceiverAddress())
+	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, trigger.ChannelId, trigger.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
 
-	if request.TriggerTxBlkNum == r.TriggerTxBlkNum && request.DisputeTimeout == r.DisputeTimeout {
-		log.Errorf("%s. TriggerTxBlkNum and DisputeTimeout not changed", logmsg)
+	if trigger.TriggerTxBlkNum == r.TriggerTxBlkNum {
+		log.Errorf("%s. TriggerTxBlkNum not changed", logmsg)
 		return true, false
 	}
 
-	triggerLog, err := guard.ValidateTriggerTx(m.ethClient, mainchain.Hex2Hash(request.TriggerTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	triggerLog, err := guard.ValidateTriggerTx(
+		m.ethClient, mainchain.Hex2Hash(trigger.TriggerTxHash), mainchain.Bytes2Cid(trigger.ChannelId))
 	if err != nil {
 		log.Errorf("%s. ValidateTriggerTx err: %s", logmsg, err)
 		return false, false
 	}
 
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
-	if err != nil {
-		log.Errorf("%s. GetDisputeTimeout err: %s", logmsg, err)
-		return false, false
-	}
-
-	if request.TriggerTxBlkNum != triggerLog.BlockNumber {
+	if trigger.TriggerTxBlkNum != triggerLog.BlockNumber {
 		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
-		return false, false
-	}
-	if request.DisputeTimeout != disputeTimeout.Uint64() {
-		log.Errorf("%s. DisputeTimeout does not match mainchain value: %s", logmsg, disputeTimeout)
 		return false, false
 	}
 
@@ -341,43 +340,55 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
-	var request guard.Request
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
-	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, request)
+	var proof guard.GuardProof
+	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
+	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, proof)
 
-	if request.TriggerTxHash == "" {
-		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
+	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, proof.ChannelId, proof.SimplexReceiver)
+	if err != nil {
+		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
 
-	guardLog, err := guard.ValidateGuardTx(m.ethClient, mainchain.Hex2Hash(request.GuardTxHash), mainchain.Bytes2Cid(request.ChannelId))
+	if r.TriggerTxHash == "" {
+		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
+		return true, false
+	}
+
+	guardLog, err := guard.ValidateGuardTx(
+		m.ethClient, mainchain.Hex2Hash(proof.GuardTxHash), mainchain.Bytes2Cid(proof.ChannelId))
 	if err != nil {
 		log.Errorf("%s. ValidateGuardTx err: %s", logmsg, err)
 		return false, false
 	}
 
-	if guardLog.BlockNumber <= request.TriggerTxBlkNum {
+	if guardLog.BlockNumber <= r.TriggerTxBlkNum {
 		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
+	// TOTO: more check on request
 
-	err = guard.ValidateSnapshotSeqNum(guardLog.Data, request.PeerFromIndex, request.SeqNum)
+	seqIndex := 0
+	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
+		seqIndex = 1
+	}
+	err = guard.ValidateGuardProofSeqNum(guardLog.Data, uint8(seqIndex), r.SeqNum)
 	if err != nil {
-		log.Errorf("%s. ValidateSnapshotSeqNum err: %s", logmsg, err)
+		log.Errorf("%s. ValidateGuardProofSeqNum err: %s", logmsg, err)
 		return false, false
 	}
 
-	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, request.GuardTxHash)
+	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, proof.GuardTxHash)
 	if err != nil {
 		log.Errorf("%s. GetTxSender err: %s", logmsg, err)
 		return false, false
 	}
 
-	if request.GuardTxBlkNum != guardLog.BlockNumber {
+	if proof.GuardTxBlkNum != guardLog.BlockNumber {
 		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
-	if request.GuardSender != guardSender {
+	if proof.GuardSender != guardSender {
 		log.Errorf("%s. GuardSender does not match mainchain value: %s", logmsg, guardSender)
 		return false, false
 	}

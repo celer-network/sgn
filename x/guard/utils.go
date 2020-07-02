@@ -1,6 +1,7 @@
 package guard
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -9,9 +10,9 @@ import (
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -21,29 +22,16 @@ var (
 	snapshotStatesEventSig = mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])")
 )
 
-func GetOnChainChannelSeqAndPeerIndex(
-	ledger *mainchain.CelerLedger, cid mainchain.CidType, peerFrom mainchain.Addr) (uint64, []string, uint8, error) {
-	addrs, seqNums, err := ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
-	if err != nil {
-		return 0, nil, 0, err
-	}
-	var peerFromIndex uint8
-	if addrs[0] == peerFrom {
-		peerFromIndex = 0
-	} else if addrs[1] == peerFrom {
-		peerFromIndex = 1
-	} else {
-		return 0, nil, 0, fmt.Errorf("Invalid peerFromAddr %x %x %x", peerFrom, addrs[0], addrs[1])
-	}
-	seqNum := seqNums[peerFromIndex].Uint64()
-	peerAddrs := []string{mainchain.Addr2Hex(addrs[0]), mainchain.Addr2Hex(addrs[1])}
-	return seqNum, peerAddrs, peerFromIndex, nil
-}
-
-// Make sure signature match peer addresses for the channel
-func VerifySignedSimplexStateSigs(request Request, signedSimplexState *chain.SignedSimplexState) error {
+func VerifySimplexStateSigs(signedSimplexState *chain.SignedSimplexState, simplexSender, simplexReceiver mainchain.Addr) error {
 	if len(signedSimplexState.Sigs) != 2 {
 		return fmt.Errorf("incorrect sigs count %d", len(signedSimplexState.Sigs))
+	}
+
+	var addrs []mainchain.Addr
+	if bytes.Compare(simplexSender.Bytes(), simplexReceiver.Bytes()) < 0 {
+		addrs = []mainchain.Addr{simplexSender, simplexReceiver}
+	} else {
+		addrs = []mainchain.Addr{simplexReceiver, simplexSender}
 	}
 
 	for i := 0; i < 2; i++ {
@@ -52,8 +40,8 @@ func VerifySignedSimplexStateSigs(request Request, signedSimplexState *chain.Sig
 			return fmt.Errorf("RecoverSigner err: %s", err)
 		}
 
-		if request.PeerAddresses[i] != mainchain.Addr2Hex(addr) {
-			return fmt.Errorf("invalid eth signer %d %s %s", i, request.PeerAddresses[i], mainchain.Addr2Hex(addr))
+		if addrs[i] != addr {
+			return fmt.Errorf("invalid eth signer %d %s %x", i, addrs[i], addr)
 		}
 	}
 
@@ -149,12 +137,14 @@ func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	return requestGuards
 }
 
-func ValidateSnapshotSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
+func ValidateGuardProofSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {
 	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
 		return fmt.Errorf("Failed to parse CelerLedgerABI: %w", err)
 	}
 
+	// TODO: currently relying on the fact the SnapshotStates and IntendSettle events have the same struct
+	// should use different event parser.
 	var snapshotStates mainchain.CelerLedgerSnapshotStates
 	err = ledgerABI.Unpack(&snapshotStates, "SnapshotStates", logDate)
 	if err != nil {
@@ -166,4 +156,8 @@ func ValidateSnapshotSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint6
 	}
 
 	return nil
+}
+
+func PrintSimplexChannel(simplex *entity.SimplexPaymentChannel) string {
+	return fmt.Sprintf("cid: %x, from: %x, seq: %d", simplex.GetChannelId(), simplex.GetPeerFrom(), simplex.GetSeqNum())
 }

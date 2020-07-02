@@ -162,11 +162,14 @@ func (m *Monitor) guardTxHandler(
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
 				log.Infof("%s transaction %x succeeded", description, receipt.TxHash)
 				for _, request := range requests {
-					request.GuardTxHash = receipt.TxHash.Hex()
-					request.GuardTxBlkNum = receipt.BlockNumber.Uint64()
-					request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
-					requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
-					msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
+					guardProof := guard.NewGuardProof(
+						mainchain.Bytes2Cid(request.ChannelId),
+						mainchain.Hex2Addr(request.SimplexReceiver),
+						receipt.TxHash,
+						receipt.BlockNumber.Uint64(),
+						m.ethClient.Address)
+					syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
+					msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
 					log.Infof("submit change tx: guard proof request %s", request)
 					m.operator.AddTxMsg(msg)
 				}
