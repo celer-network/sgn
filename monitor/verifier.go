@@ -65,9 +65,9 @@ func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 	case sync.Subscribe:
 		return m.verifySubscribe(change)
 	case sync.InitGuardRequest:
-		return m.verifyRequest(change)
-	case sync.TriggerGuard:
-		return m.verifyTriggerGuard(change)
+		return m.verifyInitGuardRequest(change)
+	case sync.GuardTrigger:
+		return m.verifyGuardTrigger(change)
 	case sync.GuardProof:
 		return m.verifyGuardProof(change)
 	default:
@@ -230,7 +230,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	var request guard.InitRequest
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, init request", change.ID)
@@ -307,7 +307,7 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	var trigger guard.GuardTrigger
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)

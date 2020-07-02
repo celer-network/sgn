@@ -112,7 +112,7 @@ func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSett
 	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getRequests(intendSettle.ChannelId)
 	for _, request := range requests {
-		m.triggerGuard(request, intendSettle.Raw)
+		m.GuardTrigger(request, intendSettle.Raw)
 	}
 }
 
@@ -120,23 +120,23 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getRequests(intendWithdrawChannel.ChannelId)
 	for _, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw)
+		m.GuardTrigger(request, intendWithdrawChannel.Raw)
 	}
 }
 
-func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
+func (m *Monitor) GuardTrigger(request *guard.Request, rawLog ethtypes.Log) {
 	if request.TriggerTxHash != "" {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return
 	}
-	guardTrigger := guard.NewGuardTrigger(
+	GuardTrigger := guard.NewGuardTrigger(
 		mainchain.Bytes2Cid(request.ChannelId),
 		mainchain.Hex2Addr(request.SimplexReceiver),
 		rawLog.TxHash,
 		rawLog.BlockNumber)
-	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardTrigger)
-	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, syncData, m.operator.Key.GetAddress())
-	log.Infof("submit change tx: trigger guard request %s", guardTrigger)
+	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(GuardTrigger)
+	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: trigger guard request %s", GuardTrigger)
 	m.operator.AddTxMsg(msg)
 }
 

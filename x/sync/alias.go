@@ -32,7 +32,7 @@ const (
 	SyncValidator        = types.SyncValidator
 	Subscribe            = types.Subscribe
 	InitGuardRequest     = types.InitGuardRequest
-	TriggerGuard         = types.TriggerGuard
+	GuardTrigger         = types.GuardTrigger
 	GuardProof           = types.GuardProof
 	EventTypeSync        = types.EventTypeSync
 	ActionSubmitChange   = types.ActionSubmitChange
