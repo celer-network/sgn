@@ -299,7 +299,16 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 		return false, false
 	}
 	if disputeTimeout.Uint64() != request.DisputeTimeout {
-		log.Errorf("%s. ispute timeout not match mainchain value %s", logmsg, disputeTimeout)
+		log.Errorf("%s. dispute timeout not match mainchain value %s", logmsg, disputeTimeout)
+		return true, false
+	}
+	params, err := guard.CLIQueryParams(m.operator.CliCtx, guard.RouterKey)
+	if err != nil {
+		log.Errorf("%s. query guard params err: %s", logmsg, err)
+		return false, false
+	}
+	if request.DisputeTimeout < params.MinDisputeTimeout {
+		log.Errorf("%s. dispute timeout smaller than min value %d", logmsg, params.MinDisputeTimeout)
 		return true, false
 	}
 

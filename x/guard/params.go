@@ -28,9 +28,15 @@ func (k Keeper) RequestCost(ctx sdk.Context) (res sdk.Int) {
 	return
 }
 
-// EpochLength - Epoch length based on seconds
+// EpochLength - epoch length based on seconds
 func (k Keeper) EpochLength(ctx sdk.Context) (res uint64) {
 	k.paramstore.Get(ctx, types.KeyEpochLength, &res)
+	return
+}
+
+// MinDisputeTimeout - minimal channel dispute timeout in mainchain blocks
+func (k Keeper) MinDisputeTimeout(ctx sdk.Context) (res uint64) {
+	k.paramstore.Get(ctx, types.KeyMinDisputeTimeout, &res)
 	return
 }
 
@@ -40,6 +46,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.RequestGuardCount(ctx),
 		k.EpochLength(ctx),
 		k.RequestCost(ctx),
+		k.MinDisputeTimeout(ctx),
 	)
 }
 
