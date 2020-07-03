@@ -65,9 +65,9 @@ func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 	case sync.Subscribe:
 		return m.verifySubscribe(change)
 	case sync.InitGuardRequest:
-		return m.verifyRequest(change)
-	case sync.TriggerGuard:
-		return m.verifyTriggerGuard(change)
+		return m.verifyInitGuardRequest(change)
+	case sync.GuardTrigger:
+		return m.verifyGuardTrigger(change)
 	case sync.GuardProof:
 		return m.verifyGuardProof(change)
 	default:
@@ -230,7 +230,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	var request guard.InitRequest
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, init request", change.ID)
@@ -248,7 +248,8 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	logmsg = logmsg + ". " + guard.PrintSimplexChannel(simplexChannel) + " " + fmt.Sprintf("to: %x", simplexReceiver)
+	logmsg += fmt.Sprintf(". %s, to %x, disputeTimeout: %d",
+		guard.PrintSimplexChannel(simplexChannel), simplexReceiver, request.DisputeTimeout)
 
 	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
@@ -264,6 +265,17 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	err = guard.VerifySimplexStateSigs(signedSimplexState, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. verify sigs err: %s", logmsg, err)
+		return true, false
+	}
+
+	// verify channel state
+	chanState, err := m.ethClient.Ledger.GetChannelStatus(&bind.CallOpts{}, cid)
+	if err != nil {
+		log.Errorf("%s. GetChannelStatus err: %s", logmsg, err)
+		return false, false
+	}
+	if chanState != mainchain.ChannelStatus_OPERABLE {
+		log.Errorf("%s. channel not in operable state: %d", logmsg, chanState)
 		return true, false
 	}
 
@@ -299,7 +311,16 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 		return false, false
 	}
 	if disputeTimeout.Uint64() != request.DisputeTimeout {
-		log.Errorf("%s. ispute timeout not match mainchain value %s", logmsg, disputeTimeout)
+		log.Errorf("%s. dispute timeout not match mainchain value %s", logmsg, disputeTimeout)
+		return true, false
+	}
+	params, err := guard.CLIQueryParams(m.operator.CliCtx, guard.RouterKey)
+	if err != nil {
+		log.Errorf("%s. query guard params err: %s", logmsg, err)
+		return false, false
+	}
+	if request.DisputeTimeout < params.MinDisputeTimeout {
+		log.Errorf("%s. dispute timeout smaller than min value %d", logmsg, params.MinDisputeTimeout)
 		return true, false
 	}
 
@@ -307,7 +328,7 @@ func (m *Monitor) verifyRequest(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	var trigger guard.GuardTrigger
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
@@ -318,8 +339,8 @@ func (m *Monitor) verifyTriggerGuard(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if trigger.TriggerTxBlkNum == r.TriggerTxBlkNum {
-		log.Errorf("%s. TriggerTxBlkNum not changed", logmsg)
+	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
+		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
 	}
 

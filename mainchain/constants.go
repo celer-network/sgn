@@ -23,9 +23,9 @@ const (
 	TxSuccess = 1
 
 	// channel status of CelerChannel
-	UninitializedChannel = uint8(0)
-	OperableChannel      = uint8(1)
-	SettlingChannel      = uint8(2)
-	ClosedChannel        = uint8(3)
-	MigratedChannel      = uint8(4)
+	ChannelStatus_UNINITIALIZED uint8 = 0
+	ChannelStatus_OPERABLE      uint8 = 1
+	ChannelStatus_SETTLING      uint8 = 2
+	ChannelStatus_CLOSED        uint8 = 3
+	ChannelStatus_MIGRATED      uint8 = 4
 )

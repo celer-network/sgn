@@ -18,6 +18,7 @@ type Request struct {
 	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
+	GuardPending            bool             `json:"guardPending"`
 	GuardTxHash             string           `json:"guardTxHash"`
 	GuardTxBlkNum           uint64           `json:"guardTxBlkNum"`
 	GuardSender             string           `json:"guardSender"`

@@ -151,7 +151,8 @@
       "params": {
         "requestGuardCount": "3",
         "epochLength": "60",
-        "requestCost": "1000000000000000000"
+        "requestCost": "1000000000000000000",
+        "minDisputeTimeout": "2000"
       }
     },
     "slash": {

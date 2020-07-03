@@ -58,6 +58,10 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
+	if request.GuardPending {
+		return nil, fmt.Errorf("Guard pending")
+	}
+
 	if mainchain.Hex2Addr(request.SimplexSender) != mainchain.Bytes2Addr(simplexChannel.PeerFrom) {
 		return nil, fmt.Errorf("Sender not match stored request: %s", request.SimplexSender)
 	}

@@ -29,8 +29,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
 		return keeper.Subscribe(ctx, change)
 	case types.InitGuardRequest:
 		return keeper.InitGuardRequest(ctx, change)
-	case types.TriggerGuard:
-		return keeper.TriggerGuard(ctx, change)
+	case types.GuardTrigger:
+		return keeper.GuardTrigger(ctx, change)
 	case types.GuardProof:
 		return keeper.GuardProof(ctx, change)
 	default:
@@ -190,7 +190,7 @@ func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) erro
 	return nil
 }
 
-func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 	var trigger guard.GuardTrigger
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &trigger)
 
@@ -203,6 +203,7 @@ func (keeper Keeper) TriggerGuard(ctx sdk.Context, change types.Change) error {
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
 	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
+	request.GuardPending = true
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
@@ -221,6 +222,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	request.GuardTxHash = proof.GuardTxHash
 	request.GuardTxBlkNum = proof.GuardTxBlkNum
 	request.GuardSender = proof.GuardSender
+	request.GuardPending = false
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	requestGuards := request.RequestGuards
