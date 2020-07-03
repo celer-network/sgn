@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,7 +16,14 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+)
+
+var (
+	intendSettleEventSig   = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+	intendWithdrawEventSig = mainchain.GetEventSignature("IntendWithdraw(bytes32,address,uint256)")
+	snapshotStatesEventSig = mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])")
 )
 
 func (m *Monitor) verifyActiveChanges() {
@@ -348,21 +356,59 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
+	if r.GuardState != common.GuardState_Idle {
+		log.Errorf("%s. GuardState not idle, current state: %d", logmsg, r.GuardState)
+		return false, false
+	}
+
 	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
 		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
 	}
 
-	triggerLog, err := guard.ValidateTriggerTx(
-		m.ethClient, mainchain.Hex2Hash(trigger.TriggerTxHash), mainchain.Bytes2Cid(trigger.ChannelId))
+	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
 	if err != nil {
-		log.Errorf("%s. ValidateTriggerTx err: %s", logmsg, err)
+		log.Errorf("%s. Get trigger tx receipt err: %s", logmsg, err)
 		return false, false
+	}
+
+	if receipt.Status != mainchain.TxSuccess {
+		log.Errorf("%s. Trigger tx failed: %d", logmsg, receipt.Status)
+		return true, false
+	}
+
+	triggerLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
+	// check ledger contract
+	if triggerLog.Address != m.ethClient.LedgerAddress {
+		log.Errorf("%s. Trigger tx contract address not match: %x", logmsg, triggerLog.Address)
+		return true, false
+	}
+
+	// check event type
+	if triggerLog.Topics[0] == intendSettleEventSig {
+		if trigger.GuardState != common.GuardState_Settling {
+			log.Errorf("%s. Trigger guard state should be settling", logmsg)
+			return true, false
+		}
+	} else if triggerLog.Topics[0] == intendWithdrawEventSig {
+		if trigger.GuardState != common.GuardState_Withdraw {
+			log.Errorf("%s. Trigger guard state should be withdraw", logmsg)
+			return true, false
+		}
+	} else {
+		log.Errorf("%s. Trigger Tx is not for IntendSettle/IntendWithdraw event", logmsg)
+		return true, false
+	}
+
+	// check channel ID
+	if triggerLog.Topics[1] != mainchain.Bytes2Cid(trigger.ChannelId) {
+		log.Errorf("%s. Trigger Tx channel ID not match, %x", logmsg, triggerLog.Topics[1])
+		return true, false
 	}
 
 	if trigger.TriggerTxBlkNum != triggerLog.BlockNumber {
 		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
-		return false, false
+		return true, false
 	}
 
 	log.Infof("%s. success", logmsg)
@@ -385,37 +431,89 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	guardLog, err := guard.ValidateGuardTx(
-		m.ethClient, mainchain.Hex2Hash(proof.GuardTxHash), mainchain.Bytes2Cid(proof.ChannelId))
+	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(proof.GuardTxHash))
 	if err != nil {
-		log.Errorf("%s. ValidateGuardTx err: %s", logmsg, err)
+		log.Errorf("%s. Get trigger transaction receipt err: %s", logmsg, err)
 		return false, false
+	}
+
+	if receipt.Status != mainchain.TxSuccess {
+		log.Errorf("%s. Trigger transaction failed: %d", logmsg, receipt.Status)
+		return true, false
+	}
+
+	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
+
+	// check ledger contract
+	if guardLog.Address != m.ethClient.LedgerAddress {
+		log.Errorf("%s. Guard tx contract address not match: %x", logmsg, guardLog.Address)
+		return true, false
+	}
+
+	// check event type
+	if guardLog.Topics[0] != intendSettleEventSig && guardLog.Topics[0] != snapshotStatesEventSig {
+		log.Errorf("%s. Guard Tx is not for IntendSettle/SnapshotStates event", logmsg)
+		return true, false
+	}
+
+	// check channel ID
+	if guardLog.Topics[1] != mainchain.Bytes2Cid(proof.ChannelId) {
+		log.Errorf("%s. Guard Tx channel ID not match, %x", logmsg, guardLog.Topics[1])
+		return true, false
 	}
 
 	if guardLog.BlockNumber <= r.TriggerTxBlkNum {
 		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
-		return false, false
+		return true, false
 	}
-	// TOTO: more check on request
 
+	if guardLog.BlockNumber != proof.GuardTxBlkNum {
+		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
+		return true, false
+	}
+
+	// verify sequence number
 	seqIndex := 0
 	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
 		seqIndex = 1
 	}
-	err = guard.ValidateGuardProofSeqNum(guardLog.Data, uint8(seqIndex), r.SeqNum)
+	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
-		log.Errorf("%s. ValidateGuardProofSeqNum err: %s", logmsg, err)
-		return false, false
+		log.Errorf("%s. Failed to parse CelerLedgerABI: %s", logmsg, err)
+		return true, false
 	}
 
+	var seqNum uint64
+	if r.GuardState == common.GuardState_Settling {
+		var intendSettleEvent mainchain.CelerLedgerIntendSettle
+		err = ledgerABI.Unpack(&intendSettleEvent, "IntendSettle", guardLog.Data)
+		if err != nil {
+			log.Errorf("%s. Failed to unpack IntendSettle event: %s", logmsg, err)
+			return true, false
+		}
+		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
+	} else if r.GuardState == common.GuardState_Withdraw {
+		var snapshotStatesEvent mainchain.CelerLedgerSnapshotStates
+		err = ledgerABI.Unpack(&snapshotStatesEvent, "SnapshotStates", guardLog.Data)
+		if err != nil {
+			log.Errorf("%s. Failed to unpack SnapshotStates event: %s", logmsg, err)
+			return true, false
+		}
+		seqNum = snapshotStatesEvent.SeqNums[seqIndex].Uint64()
+	} else {
+		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.GuardState)
+		return true, false
+	}
+
+	if seqNum != r.SeqNum {
+		log.Errorf("SeqNum not match, expected: %d, actual: %d", r.SeqNum, seqNum)
+		return true, false
+	}
+
+	// verify guard sender
 	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, proof.GuardTxHash)
 	if err != nil {
 		log.Errorf("%s. GetTxSender err: %s", logmsg, err)
-		return false, false
-	}
-
-	if proof.GuardTxBlkNum != guardLog.BlockNumber {
-		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
 	if proof.GuardSender != guardSender {
@@ -423,6 +521,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
+	// TOTO: more check on request
 	log.Infof("%s. success", logmsg)
 	return true, true
 }

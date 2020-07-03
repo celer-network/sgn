@@ -112,7 +112,7 @@ func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSett
 	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getRequests(intendSettle.ChannelId)
 	for _, request := range requests {
-		m.triggerGuard(request, intendSettle.Raw)
+		m.triggerGuard(request, intendSettle.Raw, common.GuardState_Settling)
 	}
 }
 
@@ -120,20 +120,21 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getRequests(intendWithdrawChannel.ChannelId)
 	for _, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw)
+		m.triggerGuard(request, intendWithdrawChannel.Raw, common.GuardState_Withdraw)
 	}
 }
 
-func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
-	if request.TriggerTxHash != "" {
-		log.Infoln("The intendSettle event has been synced on sgn")
+func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, guardState uint8) {
+	if request.GuardState != common.GuardState_Idle {
+		log.Infoln("The guard state is not idle, current state", request.GuardState)
 		return
 	}
 	trigger := guard.NewGuardTrigger(
 		mainchain.Bytes2Cid(request.ChannelId),
 		mainchain.Hex2Addr(request.SimplexReceiver),
 		rawLog.TxHash,
-		rawLog.BlockNumber)
+		rawLog.BlockNumber,
+		guardState)
 	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(trigger)
 	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.operator.Key.GetAddress())
 	log.Infof("submit change tx: trigger guard request %s", trigger)

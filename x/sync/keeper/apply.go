@@ -203,7 +203,7 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
 	request.AssignedGuards = guard.GetAssignedGuards(ctx, keeper.guardKeeper)
-	request.GuardPending = true
+	request.GuardState = trigger.GuardState
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
@@ -222,7 +222,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	request.GuardTxHash = proof.GuardTxHash
 	request.GuardTxBlkNum = proof.GuardTxBlkNum
 	request.GuardSender = proof.GuardSender
-	request.GuardPending = false
+	request.GuardState = common.GuardState_Idle
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	assignedGuards := request.AssignedGuards
