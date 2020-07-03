@@ -48,13 +48,31 @@ In case that your local state is corrupted, you can try to reset state by runnin
 
 ### Manual Tests
 
-#### Steps
+### Setup
 
 1. `cp ./test/config/local_config.json ./config.json`
 1. start docker geth container `docker-compose up geth`
-1. `make install-all`
+1. `WITH_CLEVELDB=yes make install-all`
 1. `sgntest deploy`
 1. `sgntest osp`
 1. `sgnd start`
+
+#### Test Guard
+
 1. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
 1. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'`
+
+#### Test Upgrade
+
+1. `sgncli tx govern submit-proposal software-upgrade test --title "upgrade test" --description "upgrade test" --deposit 10 --upgrade-height 100 --from jack --keyring-backend file`
+1. `sgncli tx govern vote 1 yes --from jack --keyring-backend file`
+1. Add upgrade handler to app.go, after the chain halts
+
+   ```
+   app.upgradeKeeper.SetUpgradeHandler("tesy", func(ctx sdk.Context, plan upgrade.Plan) {
+      // upgrade changes here
+      log.Infof("upgrade to tesy")
+   })
+   ```
+
+1. Restart the chain `sgnd start`

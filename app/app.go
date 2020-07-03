@@ -29,6 +29,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tlog "github.com/tendermint/tendermint/libs/log"
@@ -54,9 +55,10 @@ var (
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
 
 		cron.AppModule{},
-		gov.NewAppModuleBasic(govclient.ParamProposalHandler),
+		gov.NewAppModuleBasic(govclient.ParamProposalHandler, govclient.UpgradeProposalHandler),
 		slash.AppModule{},
 		guard.AppModule{},
 		sync.AppModule{},
@@ -91,6 +93,7 @@ type sgnApp struct {
 	keySupply    *sdk.KVStoreKey
 	keyStaking   *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
+	keyUpgrade   *sdk.KVStoreKey
 	keyCron      *sdk.KVStoreKey
 	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
@@ -104,6 +107,7 @@ type sgnApp struct {
 	stakingKeeper   staking.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
+	upgradeKeeper   upgrade.Keeper
 	cronKeeper      cron.Keeper
 	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
@@ -116,7 +120,7 @@ type sgnApp struct {
 }
 
 // NewSgnApp is a constructor function for sgnApp
-func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
+func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
 	viper.SetConfigFile("config.json")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -149,6 +153,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
+		keyUpgrade:   sdk.NewKVStoreKey(upgrade.StoreKey),
 		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
 		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
@@ -214,6 +219,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		validatorSubspace,
 	)
 
+	app.upgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, app.keyUpgrade, app.cdc)
+
 	app.slashKeeper = slash.NewKeeper(
 		app.keySlash,
 		app.cdc,
@@ -237,7 +244,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
-		AddRoute(params.RouterKey, gov.NewParamChangeProposalHandler(app.paramsKeeper))
+		AddRoute(params.RouterKey, gov.NewParamChangeProposalHandler(app.paramsKeeper)).
+		AddRoute(upgrade.RouterKey, gov.NewUpgradeProposalHandler(app.upgradeKeeper))
 	app.govKeeper = gov.NewKeeper(
 		app.cdc,
 		app.keyGov,
@@ -264,6 +272,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
+		upgrade.NewAppModule(app.upgradeKeeper),
 		cron.NewAppModule(app.cronKeeper),
 		slash.NewAppModule(app.slashKeeper),
 		guard.NewAppModule(app.guardKeeper),
@@ -272,7 +281,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		sync.NewAppModule(app.syncKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers(slash.ModuleName)
+	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, slash.ModuleName)
 	app.mm.SetOrderEndBlockers(guard.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName, sync.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
@@ -314,6 +323,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keySupply,
 		app.keyStaking,
 		app.keyParams,
+		app.keyUpgrade,
 		app.keyCron,
 		app.keySlash,
 		app.keyGuard,
