@@ -18,7 +18,7 @@ const (
 	SyncValidator        = "sync_validator"
 	Subscribe            = "subscribe"
 	InitGuardRequest     = "init_guard_request"
-	TriggerGuard         = "trigger_guard"
+	GuardTrigger         = "guard_trigger"
 	GuardProof           = "guard_proof"
 )
 

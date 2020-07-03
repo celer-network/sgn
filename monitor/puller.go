@@ -129,14 +129,14 @@ func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return
 	}
-	guardTrigger := guard.NewGuardTrigger(
+	trigger := guard.NewGuardTrigger(
 		mainchain.Bytes2Cid(request.ChannelId),
 		mainchain.Hex2Addr(request.SimplexReceiver),
 		rawLog.TxHash,
 		rawLog.BlockNumber)
-	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardTrigger)
-	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, syncData, m.operator.Key.GetAddress())
-	log.Infof("submit change tx: trigger guard request %s", guardTrigger)
+	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(trigger)
+	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: trigger guard request %s", trigger)
 	m.operator.AddTxMsg(msg)
 }
 

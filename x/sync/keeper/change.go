@@ -45,7 +45,7 @@ func (keeper Keeper) checkRewardable(ctx sdk.Context, change types.Change) bool 
 
 	changeType := change.Type
 
-	return changeType == types.UpdateSidechainAddr || changeType == types.TriggerGuard ||
+	return changeType == types.UpdateSidechainAddr || changeType == types.GuardTrigger ||
 		changeType == types.SyncDelegator || changeType == types.SyncValidator
 }
 
