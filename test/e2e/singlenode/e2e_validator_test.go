@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setUpValidator() []tc.Killable {
+func setupValidator() []tc.Killable {
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
@@ -29,7 +29,7 @@ func setUpValidator() []tc.Killable {
 }
 
 func TestE2EValidator(t *testing.T) {
-	toKill := setUpValidator()
+	toKill := setupValidator()
 	defer tc.TearDown(toKill)
 
 	t.Run("e2e-validator", func(t *testing.T) {

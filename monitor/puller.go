@@ -5,7 +5,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -124,24 +124,19 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	}
 }
 
-func (m *Monitor) triggerGuard(request *subscribe.Request, rawLog ethtypes.Log) {
+func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
 	if request.TriggerTxHash != "" {
 		log.Infoln("The intendSettle event has been synced on sgn")
 		return
 	}
-
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
-	if err != nil {
-		log.Errorln("GetDisputeTimeout err:", err)
-		return
-	}
-
-	request.DisputeTimeout = disputeTimeout.Uint64()
-	request.TriggerTxHash = rawLog.TxHash.Hex()
-	request.TriggerTxBlkNum = rawLog.BlockNumber
-	requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
-	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, requestData, m.operator.Key.GetAddress())
-	log.Infof("submit change tx: trigger guard request %s", request)
+	guardTrigger := guard.NewGuardTrigger(
+		mainchain.Bytes2Cid(request.ChannelId),
+		mainchain.Hex2Addr(request.SimplexReceiver),
+		rawLog.TxHash,
+		rawLog.BlockNumber)
+	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardTrigger)
+	msg := sync.NewMsgSubmitChange(sync.TriggerGuard, syncData, m.operator.Key.GetAddress())
+	log.Infof("submit change tx: trigger guard request %s", guardTrigger)
 	m.operator.AddTxMsg(msg)
 }
 

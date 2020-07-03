@@ -1,4 +1,4 @@
-package subscribe
+package guard
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewHandler returns a handler for "subscribe" type messages.
+// NewHandler returns a handler for "guard" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		logEntry := seal.NewMsgLog()
@@ -37,12 +37,12 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 
-	receiverAddr, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.ReceiverSig)
+	simplexReceiver, err := eth.RecoverSigner(msg.SignedSimplexStateBytes, msg.SimplexReceiverSig)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to recover receiver signer: %s", err)
+		return nil, fmt.Errorf("Failed to recover simplexReceiver signer: %s", err)
 	}
 
-	logEntry.EthAddress = mainchain.Addr2Hex(receiverAddr)
+	logEntry.EthAddress = mainchain.Addr2Hex(simplexReceiver)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(msg.SignedSimplexStateBytes)
 	if err != nil {
@@ -53,16 +53,23 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 	logEntry.ChanInfo.ChanId = mainchain.Cid2Hex(cid)
 	logEntry.ChanInfo.SeqNum = simplexChannel.SeqNum
 
-	request, found := keeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+	request, found := keeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if !found {
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
-	if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
-		return nil, fmt.Errorf("Receiver not match stored request: %s", request.GetReceiverAddress())
+	if mainchain.Hex2Addr(request.SimplexSender) != mainchain.Bytes2Addr(simplexChannel.PeerFrom) {
+		return nil, fmt.Errorf("Sender not match stored request: %s", request.SimplexSender)
 	}
 
-	err = VerifySignedSimplexStateSigs(request, signedSimplexState)
+	if mainchain.Hex2Addr(request.SimplexReceiver) != simplexReceiver {
+		return nil, fmt.Errorf("Receiver not match stored request: %s", request.SimplexReceiver)
+	}
+
+	err = VerifySimplexStateSigs(
+		signedSimplexState,
+		mainchain.Hex2Addr(request.SimplexSender),
+		mainchain.Hex2Addr(request.SimplexReceiver))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to verify sigs: %s", err)
 	}
@@ -71,7 +78,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 		return nil, fmt.Errorf("Seq num smaller than stored request %d", request.SeqNum)
 	}
 
-	err = keeper.ChargeRequestFee(ctx, request.GetReceiverAddress())
+	err = keeper.ChargeRequestFee(ctx, request.SimplexReceiver)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to charge request fee: %s", err)
 	}

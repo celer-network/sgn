@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/subscribe"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,7 +22,7 @@ type Keeper struct {
 
 	stakingKeeper staking.Keeper
 
-	subscribeKeeper subscribe.Keeper
+	guardKeeper guard.Keeper
 
 	validatorKeeper validator.Keeper
 
@@ -43,7 +43,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
 	paramsKeeper params.Keeper, slashKeeper slash.Keeper, stakingKeeper staking.Keeper,
-	subscribeKeeper subscribe.Keeper, validatorKeeper validator.Keeper,
+	guardKeeper guard.Keeper, validatorKeeper validator.Keeper,
 ) Keeper {
 	return Keeper{
 		storeKey:        key,
@@ -51,7 +51,7 @@ func NewKeeper(
 		paramsKeeper:    paramsKeeper,
 		slashKeeper:     slashKeeper,
 		stakingKeeper:   stakingKeeper,
-		subscribeKeeper: subscribeKeeper,
+		guardKeeper:     guardKeeper,
 		validatorKeeper: validatorKeeper,
 		cdc:             cdc,
 	}

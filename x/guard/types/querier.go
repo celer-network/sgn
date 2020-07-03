@@ -22,14 +22,14 @@ func NewQuerySubscriptionParams(addr string) QuerySubscriptionParams {
 }
 
 type QueryRequestParams struct {
-	ChannelId []byte
-	Receiver  string
+	ChannelId       []byte
+	SimplexReceiver string
 }
 
-func NewQueryRequestParams(channelId []byte, receiver string) QueryRequestParams {
+func NewQueryRequestParams(channelId []byte, simplexReceiver string) QueryRequestParams {
 	return QueryRequestParams{
-		ChannelId: channelId,
-		Receiver:  mainchain.FormatAddrHex(receiver),
+		ChannelId:       channelId,
+		SimplexReceiver: mainchain.FormatAddrHex(simplexReceiver),
 	}
 }
 

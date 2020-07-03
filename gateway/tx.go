@@ -9,7 +9,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,12 +19,12 @@ import (
 
 func (rs *RestServer) registerTxRoutes() {
 	rs.Mux.HandleFunc(
-		"/subscribe/subscribe",
+		"/guard/subscribe",
 		postSubscribeHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
-		"/subscribe/requestGuard",
+		"/guard/requestGuard",
 		postRequestGuardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
@@ -51,8 +51,8 @@ type (
 	}
 
 	GuardRequest struct {
-		ReceiverSig             string `json:"receiverSig" yaml:"receiverSig"`
 		SignedSimplexStateBytes string `json:"signedSimplexStateBytes" yaml:"signedSimplexStateBytes"`
+		SimplexReceiverSig      string `json:"simplexReceiverSig" yaml:"simplexReceiverSig"`
 	}
 
 	UpdateSidechainAddrRequest struct {
@@ -77,7 +77,7 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		subscription := subscribe.NewSubscription(req.EthAddr)
+		subscription := guard.NewSubscription(req.EthAddr)
 		deposit, ok := sdk.NewIntFromString(req.Amount)
 		if !ok {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid deposit amount")
@@ -99,24 +99,32 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		receiverSig := mainchain.Hex2Bytes(req.ReceiverSig)
+		simplexReceiverSig := mainchain.Hex2Bytes(req.SimplexReceiverSig)
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
-		_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
+		signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
 			log.Errorln("Failed UnmarshalSignedSimplexStateBytes:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail UnmarshalSignedSimplexStateBytes")
 			return
 		}
 
-		receiverAddr, err := eth.RecoverSigner(signedSimplexStateBytes, receiverSig)
+		simplexReceiver, err := eth.RecoverSigner(signedSimplexStateBytes, simplexReceiverSig)
 		if err != nil {
 			log.Errorln("recover signer err:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
 			return
 		}
+		// verify signature
+		simplexSender := mainchain.Bytes2Addr(simplexChannel.PeerFrom)
+		err = guard.VerifySimplexStateSigs(signedSimplexState, simplexSender, simplexReceiver)
+		if err != nil {
+			log.Errorln("Invalid signature:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid signature")
+			return
+		}
 
-		lastReq, err := subscribe.CLIQueryRequest(
-			transactor.CliCtx, subscribe.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(receiverAddr))
+		lastReq, err := guard.CLIQueryRequest(
+			transactor.CliCtx, guard.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 		if err == nil {
 			if simplexChannel.SeqNum <= lastReq.SeqNum {
 				log.Errorln("Invalid sequence number", simplexChannel.SeqNum, lastReq.SeqNum)
@@ -124,7 +132,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 				return
 			}
 			// TODO: more precheck
-			msg := subscribe.NewMsgRequestGuard(signedSimplexStateBytes, receiverSig, transactor.Key.GetAddress())
+			msg := guard.NewMsgRequestGuard(signedSimplexStateBytes, simplexReceiverSig, transactor.Key.GetAddress())
 			writeGenerateStdTxResponse(w, transactor, msg)
 			return
 		} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
@@ -133,35 +141,47 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		seqNum, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
-			rs.ledgerContract, mainchain.Bytes2Cid(simplexChannel.ChannelId), mainchain.Bytes2Addr(simplexChannel.PeerFrom))
+		// initiate first guard request
+		// TODO: merge the verification log with verifier.go
+		// verify addr
+		cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
+		addrs, seqNums, err := rs.ledgerContract.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 		if err != nil {
 			log.Errorln("Failed to get onchain channel info:", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "get onchain channel info")
 			return
 		}
-		if simplexChannel.SeqNum <= seqNum {
-			log.Errorln("Invalid sequence number", simplexChannel.SeqNum, seqNum)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid sequence number")
-			return
+		seqIndex := 0
+		var match bool
+		if simplexSender == addrs[0] {
+			match = (simplexReceiver == addrs[1])
+		} else if simplexSender == addrs[1] {
+			match = (simplexReceiver == addrs[0])
+			seqIndex = 1
 		}
-		// TODO: more precheck
-		request := subscribe.NewRequest(
-			simplexChannel.ChannelId,
-			simplexChannel.SeqNum,
-			peerAddrs,
-			peerFromIndex,
-			signedSimplexStateBytes,
-			receiverSig)
-
-		if mainchain.Hex2Addr(request.GetReceiverAddress()) != receiverAddr {
-			log.Errorf("Receiver signer does not match: %x", receiverAddr)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "receiver signer not match")
+		if !match {
+			log.Errorln("Addresses not match", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "addrs not match")
 			return
 		}
 
-		requestData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, transactor.Key.GetAddress())
+		// verify seq
+		if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
+			log.Errorln("invalid sequence number")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid sequence number")
+			return
+		}
+
+		disputeTimeout, err := rs.ledgerContract.GetDisputeTimeout(&bind.CallOpts{}, cid)
+		if err != nil {
+			log.Errorln("Failed to get dispute timeout:", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "get dispute timeout")
+			return
+		}
+
+		request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
+		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 
 	}

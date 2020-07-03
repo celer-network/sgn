@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setUpSubscribe() []tc.Killable {
+func setupGuard() []tc.Killable {
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
@@ -24,24 +24,24 @@ func setUpSubscribe() []tc.Killable {
 		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	res := setupNewSGNEnv(p, "subscribe")
+	res := setupNewSGNEnv(p, "guard")
 	tc.SleepWithLog(10, "sgn being ready")
 
 	return res
 }
 
-func TestE2ESubscribe(t *testing.T) {
-	toKill := setUpSubscribe()
+func TestE2EGuard(t *testing.T) {
+	toKill := setupGuard()
 	defer tc.TearDown(toKill)
 
-	t.Run("e2e-subscribe", func(t *testing.T) {
-		t.Run("subscribeTest", subscribeTest)
+	t.Run("e2e-guard", func(t *testing.T) {
+		t.Run("guardTest", guardTest)
 	})
 }
 
-func subscribeTest(t *testing.T) {
+func guardTest(t *testing.T) {
 	log.Infoln("===================================================================")
-	log.Infoln("======================== Test subscribe ===========================")
+	log.Infoln("======================== Test guard ===========================")
 
 	transactor := tc.NewTransactor(
 		t,

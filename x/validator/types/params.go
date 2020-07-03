@@ -152,7 +152,7 @@ func validateMiningReward(i interface{}) error {
 	}
 
 	if v.IsNegative() {
-		return fmt.Errorf("subscribe parameter MiningReward cannot be negative: %s", v)
+		return fmt.Errorf("guard parameter MiningReward cannot be negative: %s", v)
 	}
 
 	return nil
@@ -165,7 +165,7 @@ func validatePullerReward(i interface{}) error {
 	}
 
 	if v.IsNegative() {
-		return fmt.Errorf("subscribe parameter PullerReward cannot be negative: %s", v)
+		return fmt.Errorf("guard parameter PullerReward cannot be negative: %s", v)
 	}
 
 	return nil

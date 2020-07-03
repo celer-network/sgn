@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpSlash() {
+func setupSlash() {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
@@ -31,7 +31,7 @@ func setUpSlash() {
 }
 
 func TestE2ESlash(t *testing.T) {
-	setUpSlash()
+	setupSlash()
 
 	t.Run("e2e-slash", func(t *testing.T) {
 		t.Run("slashTest", slashTest)

@@ -7,7 +7,7 @@ import (
 
 const (
 	// module name
-	ModuleName = "subscribe"
+	ModuleName = "guard"
 
 	// StoreKey to be used when creating the KVStore
 	StoreKey = ModuleName
@@ -22,12 +22,12 @@ var (
 
 // get guardian key from eth address
 func GetSubscriptionKey(ethAddress string) []byte {
-	return append(SubscriptionKeyPrefix, []byte(ethAddress)...)
+	return append(SubscriptionKeyPrefix, []byte(mainchain.FormatAddrHex(ethAddress))...)
 }
 
 // get request key from channelID
-func GetRequestKey(channelId []byte, receiver string) []byte {
-	return append(append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...), []byte(mainchain.FormatAddrHex(receiver))...)
+func GetRequestKey(channelId []byte, simplexReceiver string) []byte {
+	return append(append(RequestKeyPrefix, mainchain.Bytes2Cid(channelId).Bytes()...), []byte(mainchain.FormatAddrHex(simplexReceiver))...)
 }
 
 // get epoch key from epochId

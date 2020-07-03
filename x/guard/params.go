@@ -1,7 +1,7 @@
-package subscribe
+package guard
 
 import (
-	"github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/guard/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
@@ -11,7 +11,7 @@ const (
 	DefaultParamspace = types.ModuleName
 )
 
-// ParamTable for subscribe module
+// ParamTable for guard module
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }

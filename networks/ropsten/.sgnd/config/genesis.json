@@ -147,7 +147,7 @@
         }
       ]
     },
-    "subscribe": {
+    "guard": {
       "params": {
         "requestGuardCount": "3",
         "epochLength": "60",

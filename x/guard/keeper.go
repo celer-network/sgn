@@ -1,4 +1,4 @@
-package subscribe
+package guard
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type Keeper struct {
 	paramstore      params.Subspace
 }
 
-// NewKeeper creates new instances of the subscribe Keeper
+// NewKeeper creates new instances of the guard Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec,
 	validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
@@ -87,14 +87,14 @@ func (k Keeper) ChargeRequestFee(ctx sdk.Context, ethAddr string) error {
 }
 
 // Gets the entire Request metadata for a channelId
-func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, receiver string) (Request, bool) {
+func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, simplexReceiver string) (Request, bool) {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has(GetRequestKey(channelId, receiver)) {
+	if !store.Has(GetRequestKey(channelId, simplexReceiver)) {
 		return Request{}, false
 	}
 
-	value := store.Get(GetRequestKey(channelId, receiver))
+	value := store.Get(GetRequestKey(channelId, simplexReceiver))
 	var request Request
 	k.cdc.MustUnmarshalBinaryBare(value, &request)
 	return request, true
@@ -103,7 +103,7 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, receiver string) (
 // Sets the entire Request metadata for a channelId
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetRequestKey(request.ChannelId, request.GetReceiverAddress()), k.cdc.MustMarshalBinaryBare(request))
+	store.Set(GetRequestKey(request.ChannelId, request.SimplexReceiver), k.cdc.MustMarshalBinaryBare(request))
 }
 
 // Gets the entire Epoch metadata for a epochId

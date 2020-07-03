@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/guard/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -9,15 +9,15 @@ import (
 )
 
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	subscribeTxCmd := &cobra.Command{
+	guardTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "subscribe transaction subcommands",
+		Short:                      "guard transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	subscribeTxCmd.AddCommand(flags.PostCommands()...)
+	guardTxCmd.AddCommand(flags.PostCommands()...)
 
-	return subscribeTxCmd
+	return guardTxCmd
 }

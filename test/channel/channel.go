@@ -17,7 +17,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/test/common"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -123,7 +123,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, viper.GetUint64(blockDelayFlag)+3, tc.PollingInterval, "Subscribe on SGN contract")
 
 	if gateway == "" {
-		subscription := subscribe.NewSubscription(peer1.Address.Hex())
+		subscription := guard.NewSubscription(peer1.Address.Hex())
 		subscription.Deposit = sdk.NewIntFromBigInt(amt)
 		subscriptionData := ts.CliCtx.Codec.MustMarshalBinaryBare(subscription)
 		msgSubmitChange := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, ts.Key.GetAddress())
@@ -135,7 +135,7 @@ func NewRestServer() (rs *RestServer, err error) {
 		if err2 != nil {
 			return nil, err2
 		}
-		_, err2 = http.Post(gateway+"/subscribe/subscribe",
+		_, err2 = http.Post(gateway+"/guard/subscribe",
 			"application/json", bytes.NewBuffer(reqBody))
 		if err2 != nil {
 			return nil, err2

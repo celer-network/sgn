@@ -1,9 +1,9 @@
 {
-  "title": "Subscribe Param Change",
+  "title": "Guard Param Change",
   "description": "Update EpochLength",
   "changes": [
     {
-      "subspace": "subscribe",
+      "subspace": "guard",
       "key": "EpochLength",
       "value": "3"
     }

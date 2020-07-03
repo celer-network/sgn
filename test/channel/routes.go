@@ -10,7 +10,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -63,37 +63,30 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		receiverSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
+		simplexReceiverSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
 		if err != nil {
 			return
 		}
 
 		if rs.gateway == "" {
-			_, peerAddrs, peerFromIndex, err := subscribe.GetOnChainChannelSeqAndPeerIndex(
-				tc.LedgerContract, rs.channelID, rs.peer2.Address)
+			disputeTimeout, err := tc.LedgerContract.GetDisputeTimeout(&bind.CallOpts{}, rs.channelID)
 			if err != nil {
-				rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail to get request onchain channel info")
+				log.Errorln("Failed to get dispute timeout:", err)
 				return
 			}
-			request := subscribe.NewRequest(
-				rs.channelID.Bytes(),
-				req.SeqNum,
-				peerAddrs,
-				peerFromIndex,
-				signedSimplexStateBytes,
-				receiverSig)
-			requestData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, requestData, rs.transactor.Key.GetAddress())
+			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
+			syncData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
+			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
 				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
-				"receiverSig":             mainchain.Bytes2Hex(receiverSig),
+				"simplexReceiverSig":      mainchain.Bytes2Hex(simplexReceiverSig),
 			})
 			if err != nil {
 				return
 			}
-			_, err = http.Post(rs.gateway+"/subscribe/requestGuard",
+			_, err = http.Post(rs.gateway+"/guard/requestGuard",
 				"application/json", bytes.NewBuffer(reqBody))
 			if err != nil {
 				return

@@ -1,8 +1,8 @@
-package subscribe
+package guard
 
 import (
-	"github.com/celer-network/sgn/x/subscribe/client/cli"
-	"github.com/celer-network/sgn/x/subscribe/types"
+	"github.com/celer-network/sgn/x/guard/client/cli"
+	"github.com/celer-network/sgn/x/guard/types"
 )
 
 const (
@@ -21,6 +21,9 @@ var (
 	NewMsgRequestGuard         = types.NewMsgRequestGuard
 	NewSubscription            = types.NewSubscription
 	NewRequest                 = types.NewRequest
+	NewInitRequest             = types.NewInitRequest
+	NewGuardTrigger            = types.NewGuardTrigger
+	NewGuardProof              = types.NewGuardProof
 	NewEpoch                   = types.NewEpoch
 	NewQuerySubscriptionParams = types.NewQuerySubscriptionParams
 	NewQueryRequestParams      = types.NewQueryRequestParams
@@ -39,6 +42,9 @@ var (
 type (
 	MsgRequestGuard         = types.MsgRequestGuard
 	Subscription            = types.Subscription
+	InitRequest             = types.InitRequest
+	GuardTrigger            = types.GuardTrigger
+	GuardProof              = types.GuardProof
 	Request                 = types.Request
 	Epoch                   = types.Epoch
 	Params                  = types.Params

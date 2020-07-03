@@ -7,7 +7,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -91,7 +91,7 @@ func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.Ce
 	}
 }
 
-func (m *Monitor) guardRequest(requests []*subscribe.Request, rawLog ethtypes.Log, eventName EventName) (bool, error) {
+func (m *Monitor) guardRequest(requests []*guard.Request, rawLog ethtypes.Log, eventName EventName) (bool, error) {
 	if len(requests) != 1 && len(requests) != 2 {
 		return false, fmt.Errorf("invalid requests length")
 	}
@@ -156,17 +156,20 @@ func (m *Monitor) guardRequest(requests []*subscribe.Request, rawLog ethtypes.Lo
 }
 
 func (m *Monitor) guardTxHandler(
-	description string, requests []*subscribe.Request, rawLog ethtypes.Log) *eth.TransactionStateHandler {
+	description string, requests []*guard.Request, rawLog ethtypes.Log) *eth.TransactionStateHandler {
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
 				log.Infof("%s transaction %x succeeded", description, receipt.TxHash)
 				for _, request := range requests {
-					request.GuardTxHash = receipt.TxHash.Hex()
-					request.GuardTxBlkNum = receipt.BlockNumber.Uint64()
-					request.GuardSender = mainchain.Addr2Hex(m.ethClient.Address)
-					requestData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(request)
-					msg := sync.NewMsgSubmitChange(sync.GuardProof, requestData, m.operator.Key.GetAddress())
+					guardProof := guard.NewGuardProof(
+						mainchain.Bytes2Cid(request.ChannelId),
+						mainchain.Hex2Addr(request.SimplexReceiver),
+						receipt.TxHash,
+						receipt.BlockNumber.Uint64(),
+						m.ethClient.Address)
+					syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
+					msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
 					log.Infof("submit change tx: guard proof request %s", request)
 					m.operator.AddTxMsg(msg)
 				}
