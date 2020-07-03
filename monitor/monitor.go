@@ -95,10 +95,10 @@ func (m *Monitor) checkBlockHead() {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+	blkNum := m.getCurrentBlockNumber().Uint64()
 	for {
 		<-ticker.C
-		newblk := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+		newblk := m.getCurrentBlockNumber().Uint64()
 		if blkNum == newblk {
 			continue
 		}
@@ -120,7 +120,7 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 		&monitor.Config{
 			EventName:     string(UpdateSidechainAddr),
 			Contract:      m.sgnContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(UpdateSidechainAddr),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -142,7 +142,7 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 		&monitor.Config{
 			EventName:     string(CandidateUnbonded),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(CandidateUnbonded),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -163,7 +163,7 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 		&monitor.Config{
 			EventName:     string(ConfirmParamProposal),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(ConfirmParamProposal),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -184,7 +184,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 		&monitor.Config{
 			EventName:     string(ValidatorChange),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(ValidatorChange),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -225,7 +225,7 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 		&monitor.Config{
 			EventName:     string(IntendWithdraw),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(IntendWithdrawDpos),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -246,7 +246,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 		&monitor.Config{
 			EventName:     string(IntendWithdraw),
 			Contract:      m.ledgerContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -271,7 +271,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 		&monitor.Config{
 			EventName:     string(IntendSettle),
 			Contract:      m.ledgerContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -296,7 +296,7 @@ func (m *Monitor) monitorDPoSDelegate() {
 		&monitor.Config{
 			EventName:     string(Delegate),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(Delegate),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {

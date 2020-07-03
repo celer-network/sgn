@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"bytes"
+	"math/big"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -66,7 +67,7 @@ func (m *Monitor) isRequestGuard(request *guard.Request, eventBlockNumber uint64
 		return false
 	}
 
-	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+	blkNum := m.getCurrentBlockNumber().Uint64()
 	blockNumberDiff := blkNum - eventBlockNumber
 	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
@@ -111,6 +112,10 @@ func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*guard.Request)
 	}
 
 	return requests
+}
+
+func (m *Monitor) getCurrentBlockNumber() *big.Int {
+	return m.ethMonitor.GetCurrentBlockNumber()
 }
 
 func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {

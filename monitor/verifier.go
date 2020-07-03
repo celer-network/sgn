@@ -324,6 +324,15 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	// verify not in active unilateral withdraw state
+	wrecv, _, wblk, _, err := m.ethClient.Ledger.GetWithdrawIntent(&bind.CallOpts{}, cid)
+	if wrecv != mainchain.ZeroAddr {
+		if m.getCurrentBlockNumber().Uint64() <= wblk.Uint64()+request.DisputeTimeout {
+			log.Errorf("%s. channel has pending unilateral withdrawal request", logmsg)
+			return true, false
+		}
+	}
+
 	log.Infof("%s. success", logmsg)
 	return true, true
 }
