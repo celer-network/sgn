@@ -108,7 +108,7 @@ func ValidateGuardTx(ethClient *mainchain.EthClient, txHash mainchain.HashType, 
 	return log, nil
 }
 
-func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+func GetAssignedGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	validatorCandidates := keeper.validatorKeeper.GetValidatorCandidates(ctx)
 	sort.Slice(validatorCandidates, func(i, j int) bool {
 		validatorCandidate0 := validatorCandidates[i]
@@ -124,17 +124,17 @@ func GetRequestGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	})
 
 	requestGuardCount := int(keeper.RequestGuardCount(ctx))
-	requestGuards := []sdk.AccAddress{}
+	assignedGuards := []sdk.AccAddress{}
 
-	for len(requestGuards) < requestGuardCount && len(requestGuards) < len(validatorCandidates) {
-		candidate := validatorCandidates[len(requestGuards)]
+	for len(assignedGuards) < requestGuardCount && len(assignedGuards) < len(validatorCandidates) {
+		candidate := validatorCandidates[len(assignedGuards)]
 		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
 		keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
-		requestGuards = append(requestGuards, candidate.Operator)
+		assignedGuards = append(assignedGuards, candidate.Operator)
 	}
 
-	return requestGuards
+	return assignedGuards
 }
 
 func ValidateGuardProofSeqNum(logDate []byte, seqNumIndex uint8, expectedNum uint64) error {

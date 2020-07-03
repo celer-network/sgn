@@ -202,7 +202,7 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
-	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
+	request.AssignedGuards = guard.GetAssignedGuards(ctx, keeper.guardKeeper)
 	request.GuardPending = true
 	keeper.guardKeeper.SetRequest(ctx, request)
 
@@ -225,25 +225,25 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	request.GuardPending = false
 	keeper.guardKeeper.SetRequest(ctx, request)
 
-	requestGuards := request.RequestGuards
+	assignedGuards := request.AssignedGuards
 	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum
-	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+	guardIndex := (len(assignedGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
 
 	var rewardValidator sdk.AccAddress
-	if guardIndex < len(requestGuards) {
-		rewardValidator = request.RequestGuards[guardIndex]
+	if guardIndex < len(assignedGuards) {
+		rewardValidator = request.AssignedGuards[guardIndex]
 	} else {
 		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, request.GuardSender)
 		if found {
 			rewardValidator = rewardCandidate.Operator
 		}
 
-		guardIndex = len(requestGuards)
+		guardIndex = len(assignedGuards)
 	}
 
 	// punish corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {
-		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
+		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.AssignedGuards[i])
 	}
 
 	return nil

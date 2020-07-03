@@ -61,23 +61,23 @@ func (m *Monitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 
 // Is the current node the guard to submit state proof
 func (m *Monitor) isRequestGuard(request *guard.Request, eventBlockNumber uint64) bool {
-	requestGuards := request.RequestGuards
-	if len(requestGuards) == 0 {
+	assignedGuards := request.AssignedGuards
+	if len(assignedGuards) == 0 {
 		log.Debug("no request guards")
 		return false
 	}
 
 	blkNum := m.getCurrentBlockNumber().Uint64()
 	blockNumberDiff := blkNum - eventBlockNumber
-	guardIndex := uint64(len(requestGuards)+1) * blockNumberDiff / request.DisputeTimeout
+	guardIndex := uint64(len(assignedGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
-	log.Infoln("IsRequestGuard", blkNum, eventBlockNumber, guardIndex, requestGuards)
+	log.Infoln("IsRequestGuard", blkNum, eventBlockNumber, guardIndex, assignedGuards)
 	// All other validators need to guard
-	if guardIndex >= uint64(len(requestGuards)) {
+	if guardIndex >= uint64(len(assignedGuards)) {
 		return true
 	}
 
-	return requestGuards[guardIndex].Equals(m.operator.Key.GetAddress())
+	return assignedGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
 func (m *Monitor) getRequest(channelId []byte, simplexReceiver string) (guard.Request, error) {

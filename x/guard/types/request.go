@@ -15,7 +15,7 @@ type Request struct {
 	SimplexReceiver         string           `json:"simplexReceiver"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	DisputeTimeout          uint64           `json:"disputeTimeout"`
-	RequestGuards           []sdk.AccAddress `json:"requestGuards"`
+	AssignedGuards          []sdk.AccAddress `json:"assignedGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
 	GuardPending            bool             `json:"guardPending"`
