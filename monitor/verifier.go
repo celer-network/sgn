@@ -268,6 +268,17 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	// verify channel state
+	chanState, err := m.ethClient.Ledger.GetChannelStatus(&bind.CallOpts{}, cid)
+	if err != nil {
+		log.Errorf("%s. GetChannelStatus err: %s", logmsg, err)
+		return false, false
+	}
+	if chanState != mainchain.ChannelStatus_OPERABLE {
+		log.Errorf("%s. channel not in operable state: %d", logmsg, chanState)
+		return true, false
+	}
+
 	// verify addr
 	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
