@@ -60,10 +60,10 @@ func (m *Monitor) isPullerOrOwner(candidate mainchain.Addr) bool {
 }
 
 // Is the current node the guard to submit state proof
-func (m *Monitor) isRequestGuard(request *guard.Request, eventBlockNumber uint64) bool {
+func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) bool {
 	assignedGuards := request.AssignedGuards
 	if len(assignedGuards) == 0 {
-		log.Debug("no request guards")
+		log.Debug("no assigned guards")
 		return false
 	}
 
@@ -71,21 +71,22 @@ func (m *Monitor) isRequestGuard(request *guard.Request, eventBlockNumber uint64
 	blockNumberDiff := blkNum - eventBlockNumber
 	guardIndex := uint64(len(assignedGuards)+1) * blockNumberDiff / request.DisputeTimeout
 
-	log.Infoln("IsRequestGuard", blkNum, eventBlockNumber, guardIndex, assignedGuards)
 	// All other validators need to guard
 	if guardIndex >= uint64(len(assignedGuards)) {
+		log.Debugln("Assigned guard:", blkNum, eventBlockNumber, guardIndex)
 		return true
 	}
+	log.Debugln("Assigned guard:", blkNum, eventBlockNumber, guardIndex, assignedGuards[guardIndex].String())
 
 	return assignedGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
-func (m *Monitor) getRequest(channelId []byte, simplexReceiver string) (guard.Request, error) {
+func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (guard.Request, error) {
 	return guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, channelId, simplexReceiver)
 }
 
 // get guard requests for the channel, return an array with at most two elements
-func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*guard.Request) {
+func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Request) {
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
@@ -94,7 +95,7 @@ func (m *Monitor) getRequests(cid mainchain.CidType) (requests []*guard.Request)
 
 	for _, addr := range addresses {
 		simplexReceiver := addr
-		request, err := m.getRequest(cid.Bytes(), mainchain.Addr2Hex(simplexReceiver))
+		request, err := m.getGuardRequest(cid.Bytes(), mainchain.Addr2Hex(simplexReceiver))
 		if err != nil {
 			continue
 		}

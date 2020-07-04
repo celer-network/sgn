@@ -110,7 +110,7 @@ func (m *Monitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpda
 
 func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
-	requests := m.getRequests(intendSettle.ChannelId)
+	requests := m.getGuardRequests(intendSettle.ChannelId)
 	for _, request := range requests {
 		m.triggerGuard(request, intendSettle.Raw, common.GuardState_Settling)
 	}
@@ -118,7 +118,7 @@ func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSett
 
 func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
-	requests := m.getRequests(intendWithdrawChannel.ChannelId)
+	requests := m.getGuardRequests(intendWithdrawChannel.ChannelId)
 	for _, request := range requests {
 		m.triggerGuard(request, intendWithdrawChannel.Raw, common.GuardState_Withdraw)
 	}

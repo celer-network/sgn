@@ -202,7 +202,7 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
-	request.AssignedGuards = guard.GetAssignedGuards(ctx, keeper.guardKeeper)
+	request.AssignedGuards = guard.AssignGuards(ctx, keeper.guardKeeper)
 	request.GuardState = trigger.GuardState
 	keeper.guardKeeper.SetRequest(ctx, request)
 

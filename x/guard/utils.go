@@ -31,14 +31,14 @@ func VerifySimplexStateSigs(signedSimplexState *chain.SignedSimplexState, simple
 		}
 
 		if addrs[i] != addr {
-			return fmt.Errorf("invalid eth signer %d %s %x", i, addrs[i], addr)
+			return fmt.Errorf("invalid eth signer %d %x %x", i, addrs[i], addr)
 		}
 	}
 
 	return nil
 }
 
-func GetAssignedGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
+func AssignGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	validatorCandidates := keeper.validatorKeeper.GetValidatorCandidates(ctx)
 	sort.Slice(validatorCandidates, func(i, j int) bool {
 		validatorCandidate0 := validatorCandidates[i]

@@ -259,12 +259,12 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	logmsg += fmt.Sprintf(". %s, to %x, disputeTimeout: %d",
 		guard.PrintSimplexChannel(simplexChannel), simplexReceiver, request.DisputeTimeout)
 
-	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
+	_, err = m.getGuardRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
 		log.Errorf("%s. request already initiated", logmsg)
 		return true, false
 	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-		log.Errorf("%s. getRequest err: %s", logmsg, err)
+		log.Errorf("%s. getGuardRequest err: %s", logmsg, err)
 		return false, false
 	}
 
@@ -350,36 +350,38 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
 
+	// verify request exists
 	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, trigger.ChannelId, trigger.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
 
+	// verify trigger block number
 	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
 		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
 	}
 
+	// verify onchain trasaction receipt and status
 	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
 	if err != nil {
 		log.Errorf("%s. Get trigger tx receipt err: %s", logmsg, err)
 		return false, false
 	}
-
 	if receipt.Status != mainchain.TxSuccess {
 		log.Errorf("%s. Trigger tx failed: %d", logmsg, receipt.Status)
 		return true, false
 	}
-
 	triggerLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
-	// check ledger contract
+
+	// verify transaction contract address
 	if triggerLog.Address != m.ethClient.LedgerAddress {
 		log.Errorf("%s. Trigger tx contract address not match: %x", logmsg, triggerLog.Address)
 		return true, false
 	}
 
-	// check event type
+	// verify transaction event type and current request status
 	if triggerLog.Topics[0] == intendSettleEventSig {
 		if trigger.GuardState != common.GuardState_Settling {
 			log.Errorf("%s. Trigger guard state should be settling", logmsg)
@@ -403,12 +405,13 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
-	// check channel ID
+	// verify transaction channel ID
 	if triggerLog.Topics[1] != mainchain.Bytes2Cid(trigger.ChannelId) {
 		log.Errorf("%s. Trigger Tx channel ID not match, %x", logmsg, triggerLog.Topics[1])
 		return true, false
 	}
 
+	// verify transaction block number
 	if trigger.TriggerTxBlkNum != triggerLog.BlockNumber {
 		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
 		return true, false
@@ -423,59 +426,58 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
 	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, proof)
 
+	// verify request exists
 	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, proof.ChannelId, proof.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
-
 	if r.TriggerTxHash == "" {
 		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
 		return true, false
 	}
 
+	// verify onchain trasaction receipt and status
 	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(proof.GuardTxHash))
 	if err != nil {
 		log.Errorf("%s. Get trigger transaction receipt err: %s", logmsg, err)
 		return false, false
 	}
-
 	if receipt.Status != mainchain.TxSuccess {
 		log.Errorf("%s. Trigger transaction failed: %d", logmsg, receipt.Status)
 		return true, false
 	}
-
 	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
 
-	// check ledger contract
+	// verify transaction contract address
 	if guardLog.Address != m.ethClient.LedgerAddress {
 		log.Errorf("%s. Guard tx contract address not match: %x", logmsg, guardLog.Address)
 		return true, false
 	}
 
-	// check event type
+	// verify transaction event type
 	if guardLog.Topics[0] != intendSettleEventSig && guardLog.Topics[0] != snapshotStatesEventSig {
 		log.Errorf("%s. Guard Tx is not for IntendSettle/SnapshotStates event", logmsg)
 		return true, false
 	}
 
-	// check channel ID
+	// verify transaction channel ID
 	if guardLog.Topics[1] != mainchain.Bytes2Cid(proof.ChannelId) {
 		log.Errorf("%s. Guard Tx channel ID not match, %x", logmsg, guardLog.Topics[1])
 		return true, false
 	}
 
+	// verify transaction block number
 	if guardLog.BlockNumber <= r.TriggerTxBlkNum {
 		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
 		return true, false
 	}
-
 	if guardLog.BlockNumber != proof.GuardTxBlkNum {
 		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return true, false
 	}
 
-	// verify sequence number
+	// verify channel sequence number and current request status
 	seqIndex := 0
 	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
 		seqIndex = 1
@@ -485,7 +487,6 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		log.Errorf("%s. Failed to parse CelerLedgerABI: %s", logmsg, err)
 		return true, false
 	}
-
 	var seqNum uint64
 	if r.GuardState == common.GuardState_Settling {
 		var intendSettleEvent mainchain.CelerLedgerIntendSettle
@@ -507,7 +508,6 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.GuardState)
 		return true, false
 	}
-
 	if seqNum != r.SeqNum {
 		log.Errorf("SeqNum not match, expected: %d, actual: %d", r.SeqNum, seqNum)
 		return true, false

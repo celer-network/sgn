@@ -71,7 +71,7 @@ func (m *Monitor) processGuardQueue() {
 
 func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (bool, error) {
 	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
-	requests := m.getRequests(intendSettle.ChannelId)
+	requests := m.getGuardRequests(intendSettle.ChannelId)
 	if len(requests) > 0 {
 		return m.guardRequest(requests, intendSettle.Raw, IntendSettle)
 	} else {
@@ -82,7 +82,7 @@ func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSet
 
 func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) (bool, error) {
 	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
-	requests := m.getRequests(intendWithdrawChannel.ChannelId)
+	requests := m.getGuardRequests(intendWithdrawChannel.ChannelId)
 	if len(requests) > 0 {
 		return m.guardRequest(requests, intendWithdrawChannel.Raw, IntendWithdrawChannel)
 	} else {
@@ -99,7 +99,7 @@ func (m *Monitor) guardRequest(requests []*guard.Request, rawLog ethtypes.Log, e
 	isGuard := false
 	for _, request := range requests {
 		log.Infoln("guard request", request)
-		if m.isRequestGuard(request, rawLog.BlockNumber) {
+		if m.isCurrentGuard(request, rawLog.BlockNumber) {
 			isGuard = true
 			break
 		}
