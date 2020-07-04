@@ -73,7 +73,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		isValidator:     mainchain.IsBonded(dposCandidateInfo),
 	}
 
-	go m.checkBlockHead()
+	go m.processQueues()
 
 	go m.monitorDPoSDelegate()
 	go m.monitorDPoSValidatorChange()
@@ -88,11 +88,8 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	go m.monitorSidechainSlash()
 }
 
-func (m *Monitor) checkBlockHead() {
-	// TODO: configure check interval,
-	// different queues could be checked at different times
-	// e.g., guard queue does not need to be checked so frequently
-	ticker := time.NewTicker(500 * time.Millisecond)
+func (m *Monitor) processQueues() {
+	ticker := time.NewTicker(time.Duration(viper.GetUint64(common.FlagEthPollInterval)) * time.Second)
 	defer ticker.Stop()
 
 	blkNum := m.getCurrentBlockNumber().Uint64()
@@ -104,15 +101,12 @@ func (m *Monitor) checkBlockHead() {
 		}
 
 		blkNum = newblk
-		m.processQueue()
+
+		m.processPullerQueue()
+		m.processGuardQueue()
+		m.processPenaltyQueue()
 		m.verifyActiveChanges()
 	}
-}
-
-func (m *Monitor) processQueue() {
-	m.processPullerQueue()
-	m.processGuardQueue()
-	m.processPenaltyQueue()
 }
 
 func (m *Monitor) monitorSGNUpdateSidechainAddr() {

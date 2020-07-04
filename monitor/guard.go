@@ -73,7 +73,7 @@ func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSet
 	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests := m.getGuardRequests(intendSettle.ChannelId)
 	if len(requests) > 0 {
-		return m.guardRequest(requests, intendSettle.Raw, IntendSettle)
+		return m.guardChannel(requests, intendSettle.Raw, IntendSettle)
 	} else {
 		err := m.dbDelete(GetGuardKey(intendSettle.Raw))
 		return false, err
@@ -84,14 +84,14 @@ func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.Ce
 	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests := m.getGuardRequests(intendWithdrawChannel.ChannelId)
 	if len(requests) > 0 {
-		return m.guardRequest(requests, intendWithdrawChannel.Raw, IntendWithdrawChannel)
+		return m.guardChannel(requests, intendWithdrawChannel.Raw, IntendWithdrawChannel)
 	} else {
 		err := m.dbDelete(GetGuardKey(intendWithdrawChannel.Raw))
 		return false, err
 	}
 }
 
-func (m *Monitor) guardRequest(requests []*guard.Request, rawLog ethtypes.Log, eventName EventName) (bool, error) {
+func (m *Monitor) guardChannel(requests []*guard.Request, rawLog ethtypes.Log, eventName EventName) (bool, error) {
 	if len(requests) != 1 && len(requests) != 2 {
 		return false, fmt.Errorf("invalid requests length")
 	}

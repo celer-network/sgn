@@ -39,7 +39,6 @@ func NewRequest(
 	}
 }
 
-// implement fmt.Stringer
 func (r Request) String() string {
 	out := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`,
 		r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout)
