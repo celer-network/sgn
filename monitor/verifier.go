@@ -356,11 +356,6 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if r.GuardState != common.GuardState_Idle {
-		log.Errorf("%s. GuardState not idle, current state: %d", logmsg, r.GuardState)
-		return false, false
-	}
-
 	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
 		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
@@ -390,9 +385,17 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 			log.Errorf("%s. Trigger guard state should be settling", logmsg)
 			return true, false
 		}
+		if r.GuardState == common.GuardState_Settling || r.GuardState == common.GuardState_Closed {
+			log.Errorf("%s. Invalid GuardState current state: %d", logmsg, r.GuardState)
+			return true, false
+		}
 	} else if triggerLog.Topics[0] == intendWithdrawEventSig {
 		if trigger.GuardState != common.GuardState_Withdraw {
 			log.Errorf("%s. Trigger guard state should be withdraw", logmsg)
+			return true, false
+		}
+		if r.GuardState != common.GuardState_Idle {
+			log.Errorf("%s. Invalid GuardState current state: %d", logmsg, r.GuardState)
 			return true, false
 		}
 	} else {
