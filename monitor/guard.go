@@ -27,6 +27,7 @@ const (
 type ChanInfo struct {
 	state         uint8
 	triggerTxHash mainchain.HashType
+	triggerBlkNum uint64
 }
 
 func (m *Monitor) processGuardQueue() {
@@ -47,18 +48,37 @@ func (m *Monitor) processGuardQueue() {
 	for i, key := range keys {
 		event := NewEventFromBytes(vals[i])
 		if !event.Processing {
-			log.Infoln("Process guard event", event.Name)
-			var submitted bool
+			var cid mainchain.CidType
+			var eventName EventName
 			switch e := event.ParseEvent(m.ethClient).(type) {
 			case *mainchain.CelerLedgerIntendSettle:
-				submitted, err = m.guardIntendSettle(e.ChannelId, event.Log.TxHash, event.Log.BlockNumber)
+				cid = e.ChannelId
+				eventName = IntendSettle
 			case *mainchain.CelerLedgerIntendWithdraw:
-				submitted, err = m.guardIntendWithdrawChannel(e.ChannelId, event.Log.TxHash, event.Log.BlockNumber)
+				cid = e.ChannelId
+				eventName = IntendWithdrawChannel
+			default:
+				log.Errorln("invalid event type", event.Name)
+				continue
 			}
+			txHash := event.Log.TxHash
+			txBlkNum := event.Log.BlockNumber
+			requests := m.getGuardRequests(cid)
+			if len(requests) == 0 {
+				log.Infof("Ignore guard event %s, cid %x tx %x", eventName, cid, txHash)
+				err = m.dbDelete(GetGuardKey(txHash))
+				if err != nil {
+					log.Errorln("db Delete err", err)
+				}
+				continue
+			}
+			log.Infof("Process guard event %s, cid %x tx %x", eventName, cid, txHash)
+			submitted, err := m.guardChannel(requests, txHash, txBlkNum, IntendSettle)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
+
 			if submitted {
 				m.dbLock.Lock()
 				v, err := m.db.Get(key)
@@ -78,28 +98,6 @@ func (m *Monitor) processGuardQueue() {
 				m.dbLock.Unlock()
 			}
 		}
-	}
-}
-
-func (m *Monitor) guardIntendSettle(cid mainchain.CidType, txHash mainchain.HashType, txBlkNum uint64) (bool, error) {
-	log.Infof("Guard IntendSettle %x, tx hash %x", cid, txHash)
-	requests := m.getGuardRequests(cid)
-	if len(requests) > 0 {
-		return m.guardChannel(requests, txHash, txBlkNum, IntendSettle)
-	} else {
-		err := m.dbDelete(GetGuardKey(txHash))
-		return false, err
-	}
-}
-
-func (m *Monitor) guardIntendWithdrawChannel(cid mainchain.CidType, txHash mainchain.HashType, txBlkNum uint64) (bool, error) {
-	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", cid, txHash)
-	requests := m.getGuardRequests(cid)
-	if len(requests) > 0 {
-		return m.guardChannel(requests, txHash, txBlkNum, IntendWithdrawChannel)
-	} else {
-		err := m.dbDelete(GetGuardKey(txHash))
-		return false, err
 	}
 }
 

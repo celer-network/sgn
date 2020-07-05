@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"bytes"
 	"math/big"
 
 	"github.com/celer-network/goutils/log"
@@ -55,10 +54,6 @@ func (m *Monitor) isPusher() bool {
 	return pusher.ValidatorAddr.Equals(m.operator.Key.GetAddress())
 }
 
-func (m *Monitor) isPullerOrOwner(candidate mainchain.Addr) bool {
-	return m.isPuller() || candidate == m.ethClient.Address
-}
-
 // Is the current node the guard to submit state proof
 func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) bool {
 	assignedGuards := request.AssignedGuards
@@ -93,19 +88,13 @@ func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Req
 		return
 	}
 
-	for _, addr := range addresses {
-		simplexReceiver := addr
+	for i, simplexReceiver := range addresses {
 		request, err := m.getGuardRequest(cid.Bytes(), mainchain.Addr2Hex(simplexReceiver))
 		if err != nil {
 			continue
 		}
-		simplexSender := mainchain.Hex2Addr(request.SimplexSender)
-		seqIndex := 0
-		if bytes.Compare(simplexSender.Bytes(), simplexReceiver.Bytes()) > 0 {
-			seqIndex = 1
-		}
-		if seqNums[seqIndex].Uint64() >= request.SeqNum {
-			log.Infoln("Ignore the intendSettle event with an equal or larger seqNum")
+		if seqNums[1-i].Uint64() >= request.SeqNum {
+			log.Debugln("Ignore the intendSettle event with an equal or larger seqNum")
 			continue
 		}
 
