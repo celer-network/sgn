@@ -363,6 +363,21 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	// verify seqNum
+	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Bytes2Cid(trigger.ChannelId))
+	if err != nil {
+		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
+		return false, false
+	}
+	seqIndex := 0
+	if mainchain.Hex2Addr(trigger.SimplexReceiver) == addrs[0] {
+		seqIndex = 1
+	}
+	if r.SeqNum <= seqNums[seqIndex].Uint64() {
+		log.Errorf("%s. Stored SeqNum %d not larger than mainchain value %s", logmsg, r.SeqNum, seqNums[seqIndex])
+		return false, false
+	}
+
 	// verify onchain trasaction receipt and status
 	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
 	if err != nil {
