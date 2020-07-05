@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -32,7 +33,6 @@ type Monitor struct {
 	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
 	isValidator     bool
-	channels        map[string]*ChanInfo
 	chanLock        sync.RWMutex
 	dbLock          sync.RWMutex
 }
@@ -73,7 +73,6 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		ledgerContract:  ledgerContract,
 		verifiedChanges: verifiedChanges,
 		isValidator:     mainchain.IsBonded(dposCandidateInfo),
-		channels:        make(map[string]*ChanInfo),
 	}
 
 	go m.processQueues()
@@ -253,7 +252,21 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
-			dberr = m.dbSet(GetGuardKey(eLog.TxHash), event.MustMarshal())
+			e, err2 := m.ethClient.Ledger.ParseIntendWithdraw(eLog)
+			if err2 != nil {
+				log.Errorln("ParseIntendWithdraw err", err2)
+				return
+			}
+			chanInfo := &ChanInfo{
+				Cid:        e.ChannelId,
+				PeerStates: make(map[mainchain.Addr]uint8),
+			}
+			val, err2 := json.Marshal(chanInfo)
+			if err2 != nil {
+				log.Errorln("Marshal chanInfo err", err2)
+				return
+			}
+			dberr = m.dbSet(GetGuardKey(e.ChannelId), val)
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -278,7 +291,21 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
-			dberr = m.dbSet(GetGuardKey(eLog.TxHash), event.MustMarshal())
+			e, err2 := m.ethClient.Ledger.ParseIntendSettle(eLog)
+			if err2 != nil {
+				log.Errorln("ParseIntendSettle err", err2)
+				return
+			}
+			chanInfo := &ChanInfo{
+				Cid:        e.ChannelId,
+				PeerStates: make(map[mainchain.Addr]uint8),
+			}
+			val, err2 := json.Marshal(chanInfo)
+			if err2 != nil {
+				log.Errorln("Marshal chanInfo err", err2)
+				return
+			}
+			dberr = m.dbSet(GetGuardKey(e.ChannelId), val)
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}

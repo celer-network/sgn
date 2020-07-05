@@ -26,22 +26,21 @@ const (
 
 // Wrapper for ethereum Event
 type EventWrapper struct {
-	Name       EventName `json:"name"`
-	Log        types.Log `json:"log"`
-	Processing bool      `json:"processing"`
+	Name EventName `json:"name"`
+	Log  types.Log `json:"log"`
 }
 
-func NewEvent(name EventName, l types.Log) EventWrapper {
-	return EventWrapper{
+func NewEvent(name EventName, l types.Log) *EventWrapper {
+	return &EventWrapper{
 		Name: name,
 		Log:  l,
 	}
 }
 
-func NewEventFromBytes(input []byte) EventWrapper {
+func NewEventFromBytes(input []byte) *EventWrapper {
 	event := EventWrapper{}
 	event.MustUnMarshal(input)
-	return event
+	return &event
 }
 
 // Marshal event into json bytes

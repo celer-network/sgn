@@ -1,10 +1,12 @@
 package monitor
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/guard"
@@ -25,9 +27,9 @@ const (
 )
 
 type ChanInfo struct {
-	state         uint8
-	triggerTxHash mainchain.HashType
-	triggerBlkNum uint64
+	Cid        mainchain.CidType
+	PeerStates map[mainchain.Addr]uint8
+	Processed  bool
 }
 
 func (m *Monitor) processGuardQueue() {
@@ -46,34 +48,34 @@ func (m *Monitor) processGuardQueue() {
 	m.dbLock.RUnlock()
 
 	for i, key := range keys {
-		event := NewEventFromBytes(vals[i])
-		if !event.Processing {
-			var cid mainchain.CidType
-			var eventName EventName
-			switch e := event.ParseEvent(m.ethClient).(type) {
-			case *mainchain.CelerLedgerIntendSettle:
-				cid = e.ChannelId
-				eventName = IntendSettle
-			case *mainchain.CelerLedgerIntendWithdraw:
-				cid = e.ChannelId
-				eventName = IntendWithdrawChannel
-			default:
-				log.Errorln("invalid event type", event.Name)
-				continue
-			}
-			txHash := event.Log.TxHash
-			txBlkNum := event.Log.BlockNumber
-			requests := m.getGuardRequests(cid)
+		var chanInfo ChanInfo
+		err := json.Unmarshal(vals[i], &chanInfo)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		if !chanInfo.Processed {
+			requests := m.getGuardRequests(chanInfo.Cid)
 			if len(requests) == 0 {
-				log.Infof("Ignore guard event %s, cid %x tx %x", eventName, cid, txHash)
-				err = m.dbDelete(GetGuardKey(txHash))
+				log.Infof("Ignore guard cid %x", chanInfo.Cid)
+				err = m.dbDelete(GetGuardKey(chanInfo.Cid))
 				if err != nil {
 					log.Errorln("db Delete err", err)
 				}
 				continue
 			}
-			log.Infof("Process guard event %s, cid %x tx %x", eventName, cid, txHash)
-			submitted, err := m.guardChannel(requests, txHash, txBlkNum, IntendSettle)
+			var triggered []*guard.Request
+			for _, request := range requests {
+				if request.GuardState == common.GuardState_Withdraw || request.GuardState == common.GuardState_Settling {
+					triggered = append(triggered, request)
+				}
+			}
+			if len(triggered) == 0 {
+				log.Debugf("guard for channel %x not triggered yet", chanInfo.Cid)
+				continue
+			}
+			log.Infof("Process guard cid %x", chanInfo.Cid)
+			submitted, err := m.guardChannel(triggered, chanInfo.Cid)
 			if err != nil {
 				log.Error(err)
 				continue
@@ -81,19 +83,21 @@ func (m *Monitor) processGuardQueue() {
 
 			if submitted {
 				m.dbLock.Lock()
-				v, err := m.db.Get(key)
+				_, err := m.db.Get(key)
 				if err != nil {
 					log.Errorln("db Get err:", err)
 					m.dbLock.Unlock()
 					continue
 				}
-				e := NewEventFromBytes(v)
-				if !e.Processing {
-					e.Processing = true
-					err = m.db.Set(key, e.MustMarshal())
-					if err != nil {
-						log.Errorln("db Set err", err)
-					}
+				chanInfo.Processed = true
+				val, err := json.Marshal(chanInfo)
+				if err != nil {
+					log.Errorln("Marshal chanInfo err", err)
+					return
+				}
+				err = m.db.Set(key, val)
+				if err != nil {
+					log.Errorln("db Set err", err)
 				}
 				m.dbLock.Unlock()
 			}
@@ -102,7 +106,7 @@ func (m *Monitor) processGuardQueue() {
 }
 
 func (m *Monitor) guardChannel(
-	requests []*guard.Request, txHash mainchain.HashType, txBlkNum uint64, eventName EventName) (bool, error) {
+	requests []*guard.Request, cid mainchain.CidType) (bool, error) {
 
 	if len(requests) != 1 && len(requests) != 2 {
 		return false, fmt.Errorf("invalid requests length")
@@ -111,7 +115,7 @@ func (m *Monitor) guardChannel(
 	isGuard := false
 	for _, request := range requests {
 		log.Infoln("guard request", request)
-		if m.isCurrentGuard(request, txBlkNum) {
+		if m.isCurrentGuard(request, request.TriggerTxBlkNum) {
 			isGuard = true
 			break
 		}
@@ -142,21 +146,21 @@ func (m *Monitor) guardChannel(
 	}
 
 	var tx *ethtypes.Transaction
-	switch eventName {
-	case IntendWithdrawChannel:
+	switch requests[0].GuardState {
+	case common.GuardState_Withdraw:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("SnapshotStates", requests, txHash),
+			m.guardTxHandler("SnapshotStates", requests, cid),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
-	case IntendSettle:
+	case common.GuardState_Settling:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("IntendSettle", requests, txHash),
+			m.guardTxHandler("IntendSettle", requests, cid),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
 	default:
-		return false, fmt.Errorf("Invalid eventName %s", eventName)
+		return false, fmt.Errorf("Invalid guard state %d", requests[0].GuardState)
 	}
 	if err != nil {
 		return false, fmt.Errorf("tx err %w", err)
@@ -168,7 +172,7 @@ func (m *Monitor) guardChannel(
 }
 
 func (m *Monitor) guardTxHandler(
-	description string, requests []*guard.Request, txHash mainchain.HashType) *eth.TransactionStateHandler {
+	description string, requests []*guard.Request, cid mainchain.CidType) *eth.TransactionStateHandler {
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
@@ -185,7 +189,7 @@ func (m *Monitor) guardTxHandler(
 					log.Infof("submit change tx: guard proof request %s", request)
 					m.operator.AddTxMsg(msg)
 				}
-				err := m.dbDelete(GetGuardKey(txHash))
+				err := m.dbDelete(GetGuardKey(cid))
 				if err != nil {
 					log.Errorln("db Delete err", err)
 				}

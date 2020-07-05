@@ -81,6 +81,7 @@ func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (gua
 }
 
 // get guard requests for the channel, return an array with at most two elements
+// TODO: return proper err
 func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Request) {
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
@@ -131,24 +132,6 @@ func (m *Monitor) dbDelete(key []byte) error {
 	return m.db.Delete(key)
 }
 
-func (m *Monitor) getChanState(cid mainchain.CidType, receiver mainchain.Addr) (*ChanInfo, bool) {
-	m.chanLock.RLock()
-	defer m.chanLock.RUnlock()
-	key := mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
-	chainInfo, ok := m.channels[key]
-	return chainInfo, ok
-}
-
-func (m *Monitor) setChanState(cid mainchain.CidType, receiver mainchain.Addr, chanInfo *ChanInfo) {
-	m.chanLock.Lock()
-	defer m.chanLock.Unlock()
-	key := mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
-	m.channels[key] = chanInfo
-}
-
-func (m *Monitor) deleteChanState(cid mainchain.CidType, receiver mainchain.Addr) {
-	m.chanLock.Lock()
-	defer m.chanLock.Unlock()
-	key := mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
-	delete(m.channels, key)
+func chanInfoKey(cid mainchain.CidType, receiver mainchain.Addr) string {
+	return mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
 }
