@@ -1,8 +1,8 @@
 package monitor
 
 import (
+	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -11,14 +11,14 @@ var (
 	PenaltyKeyPrefix = []byte{0x03} // Key prefix for penalty
 )
 
-// get puller key from log
-func GetPullerKey(log types.Log) []byte {
-	return append(PullerKeyPrefix, log.TxHash.Bytes()...)
+// get puller key from mainchain txHash
+func GetPullerKey(txHash mainchain.HashType) []byte {
+	return append(PullerKeyPrefix, txHash.Bytes()...)
 }
 
-// get pusher key from log
-func GetGuardKey(log types.Log) []byte {
-	return append(GuardKeyPrefix, log.TxHash.Bytes()...)
+// get pusher key from mainchain txHash
+func GetGuardKey(txHash mainchain.HashType) []byte {
+	return append(GuardKeyPrefix, txHash.Bytes()...)
 }
 
 // get penalty key from nonce

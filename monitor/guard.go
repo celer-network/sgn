@@ -15,6 +15,20 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+const (
+	ChanState_Null              uint8 = 0
+	ChanState_SettleWaiting     uint8 = 1
+	ChanState_SettleSubmitted   uint8 = 2
+	ChanState_WithdrawWaiting   uint8 = 3
+	ChanState_WithdrawSubmitted uint8 = 4
+	ChanState_SafeChecked       uint8 = 5
+)
+
+type ChanInfo struct {
+	state         uint8
+	triggerTxHash mainchain.HashType
+}
+
 func (m *Monitor) processGuardQueue() {
 	var keys, vals [][]byte
 	m.dbLock.RLock()
@@ -37,11 +51,9 @@ func (m *Monitor) processGuardQueue() {
 			var submitted bool
 			switch e := event.ParseEvent(m.ethClient).(type) {
 			case *mainchain.CelerLedgerIntendSettle:
-				e.Raw = event.Log
-				submitted, err = m.guardIntendSettle(e)
+				submitted, err = m.guardIntendSettle(e.ChannelId, event.Log.TxHash, event.Log.BlockNumber)
 			case *mainchain.CelerLedgerIntendWithdraw:
-				e.Raw = event.Log
-				submitted, err = m.guardIntendWithdrawChannel(e)
+				submitted, err = m.guardIntendWithdrawChannel(e.ChannelId, event.Log.TxHash, event.Log.BlockNumber)
 			}
 			if err != nil {
 				log.Error(err)
@@ -69,29 +81,31 @@ func (m *Monitor) processGuardQueue() {
 	}
 }
 
-func (m *Monitor) guardIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) (bool, error) {
-	log.Infof("Guard IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
-	requests := m.getGuardRequests(intendSettle.ChannelId)
+func (m *Monitor) guardIntendSettle(cid mainchain.CidType, txHash mainchain.HashType, txBlkNum uint64) (bool, error) {
+	log.Infof("Guard IntendSettle %x, tx hash %x", cid, txHash)
+	requests := m.getGuardRequests(cid)
 	if len(requests) > 0 {
-		return m.guardChannel(requests, intendSettle.Raw, IntendSettle)
+		return m.guardChannel(requests, txHash, txBlkNum, IntendSettle)
 	} else {
-		err := m.dbDelete(GetGuardKey(intendSettle.Raw))
+		err := m.dbDelete(GetGuardKey(txHash))
 		return false, err
 	}
 }
 
-func (m *Monitor) guardIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) (bool, error) {
-	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
-	requests := m.getGuardRequests(intendWithdrawChannel.ChannelId)
+func (m *Monitor) guardIntendWithdrawChannel(cid mainchain.CidType, txHash mainchain.HashType, txBlkNum uint64) (bool, error) {
+	log.Infof("Guard intendWithdrawChannel %x, tx hash %x", cid, txHash)
+	requests := m.getGuardRequests(cid)
 	if len(requests) > 0 {
-		return m.guardChannel(requests, intendWithdrawChannel.Raw, IntendWithdrawChannel)
+		return m.guardChannel(requests, txHash, txBlkNum, IntendWithdrawChannel)
 	} else {
-		err := m.dbDelete(GetGuardKey(intendWithdrawChannel.Raw))
+		err := m.dbDelete(GetGuardKey(txHash))
 		return false, err
 	}
 }
 
-func (m *Monitor) guardChannel(requests []*guard.Request, rawLog ethtypes.Log, eventName EventName) (bool, error) {
+func (m *Monitor) guardChannel(
+	requests []*guard.Request, txHash mainchain.HashType, txBlkNum uint64, eventName EventName) (bool, error) {
+
 	if len(requests) != 1 && len(requests) != 2 {
 		return false, fmt.Errorf("invalid requests length")
 	}
@@ -99,7 +113,7 @@ func (m *Monitor) guardChannel(requests []*guard.Request, rawLog ethtypes.Log, e
 	isGuard := false
 	for _, request := range requests {
 		log.Infoln("guard request", request)
-		if m.isCurrentGuard(request, rawLog.BlockNumber) {
+		if m.isCurrentGuard(request, txBlkNum) {
 			isGuard = true
 			break
 		}
@@ -133,13 +147,13 @@ func (m *Monitor) guardChannel(requests []*guard.Request, rawLog ethtypes.Log, e
 	switch eventName {
 	case IntendWithdrawChannel:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("SnapshotStates", requests, rawLog),
+			m.guardTxHandler("SnapshotStates", requests, txHash),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
 	case IntendSettle:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("IntendSettle", requests, rawLog),
+			m.guardTxHandler("IntendSettle", requests, txHash),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
@@ -156,7 +170,7 @@ func (m *Monitor) guardChannel(requests []*guard.Request, rawLog ethtypes.Log, e
 }
 
 func (m *Monitor) guardTxHandler(
-	description string, requests []*guard.Request, rawLog ethtypes.Log) *eth.TransactionStateHandler {
+	description string, requests []*guard.Request, txHash mainchain.HashType) *eth.TransactionStateHandler {
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
@@ -173,7 +187,7 @@ func (m *Monitor) guardTxHandler(
 					log.Infof("submit change tx: guard proof request %s", request)
 					m.operator.AddTxMsg(msg)
 				}
-				err := m.dbDelete(GetGuardKey(rawLog))
+				err := m.dbDelete(GetGuardKey(txHash))
 				if err != nil {
 					log.Errorln("db Delete err", err)
 				}

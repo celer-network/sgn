@@ -141,3 +141,25 @@ func (m *Monitor) dbDelete(key []byte) error {
 	defer m.dbLock.Unlock()
 	return m.db.Delete(key)
 }
+
+func (m *Monitor) getChanState(cid mainchain.CidType, receiver mainchain.Addr) (*ChanInfo, bool) {
+	m.chanLock.RLock()
+	defer m.chanLock.RUnlock()
+	key := mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
+	chainInfo, ok := m.channels[key]
+	return chainInfo, ok
+}
+
+func (m *Monitor) setChanState(cid mainchain.CidType, receiver mainchain.Addr, chanInfo *ChanInfo) {
+	m.chanLock.Lock()
+	defer m.chanLock.Unlock()
+	key := mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
+	m.channels[key] = chanInfo
+}
+
+func (m *Monitor) deleteChanState(cid mainchain.CidType, receiver mainchain.Addr) {
+	m.chanLock.Lock()
+	defer m.chanLock.Unlock()
+	key := mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
+	delete(m.channels, key)
+}
