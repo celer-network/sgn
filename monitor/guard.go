@@ -78,21 +78,15 @@ func (m *Monitor) processGuardQueue() {
 				}
 				continue
 			}
-			var triggered []*guard.Request
+			var guarded bool
 			for _, request := range requests {
-				if request.GuardState == common.GuardState_Withdraw || request.GuardState == common.GuardState_Settling {
-					triggered = append(triggered, request)
+				if request.Status == common.GuardStatus_Withdraw || request.Status == common.GuardStatus_Settling {
+					guarded, err = m.guardChannel(request, chanInfo.Cid)
+					if err != nil {
+						log.Error(err)
+						continue
+					}
 				}
-			}
-			if len(triggered) == 0 {
-				log.Debugf("guard for channel %x not triggered yet", chanInfo.Cid)
-				continue
-			}
-			log.Infof("Process guard cid %x", chanInfo.Cid)
-			guarded, err := m.guardChannel(triggered, chanInfo.Cid)
-			if err != nil {
-				log.Error(err)
-				continue
 			}
 
 			if guarded {
@@ -115,38 +109,25 @@ func (m *Monitor) processGuardQueue() {
 }
 
 func (m *Monitor) guardChannel(
-	requests []*guard.Request, cid mainchain.CidType) (bool, error) {
+	request *guard.Request, cid mainchain.CidType) (bool, error) {
 
-	if len(requests) != 1 && len(requests) != 2 {
-		return false, fmt.Errorf("invalid requests length")
+	if request == nil {
+		return false, fmt.Errorf("nil request")
 	}
-
-	isGuard := false
-	for _, request := range requests {
-		log.Infoln("guard request", request)
-		if m.isCurrentGuard(request, request.TriggerTxBlkNum) {
-			isGuard = true
-			break
-		}
-	}
-	if !isGuard {
-		log.Debug("not my turn to guard the requests")
+	if !m.isCurrentGuard(request, request.TriggerTxBlkNum) {
+		log.Debugf("not my turn to guard request %s", request)
 		return false, nil
 	}
 
+	log.Infof("Guard request %s", request)
+
 	var stateArray chain.SignedSimplexStateArray
-	for _, request := range requests {
-		var signedSimplexState chain.SignedSimplexState
-		err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
-		if err != nil {
-			log.Errorln("Unmarshal SignedSimplexState error:", err)
-			continue
-		}
-		stateArray.SignedSimplexStates = append(stateArray.SignedSimplexStates, &signedSimplexState)
+	var signedSimplexState chain.SignedSimplexState
+	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+	if err != nil {
+		return false, fmt.Errorf("Unmarshal SignedSimplexState err: %w", err)
 	}
-	if len(stateArray.SignedSimplexStates) == 0 {
-		return false, fmt.Errorf("invalid simplex states")
-	}
+	stateArray.SignedSimplexStates = append(stateArray.SignedSimplexStates, &signedSimplexState)
 
 	signedSimplexStateArrayBytes, err := proto.Marshal(&stateArray)
 	if err != nil {
@@ -155,21 +136,21 @@ func (m *Monitor) guardChannel(
 	}
 
 	var tx *ethtypes.Transaction
-	switch requests[0].GuardState {
-	case common.GuardState_Withdraw:
+	switch request.Status {
+	case common.GuardStatus_Withdraw:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("SnapshotStates", requests, cid),
+			m.guardTxHandler("SnapshotStates", request, cid),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
-	case common.GuardState_Settling:
+	case common.GuardStatus_Settling:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("IntendSettle", requests, cid),
+			m.guardTxHandler("IntendSettle", request, cid),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
 	default:
-		return false, fmt.Errorf("Invalid guard state %d", requests[0].GuardState)
+		return false, fmt.Errorf("Invalid guard state %d", request.Status)
 	}
 	if err != nil {
 		return false, fmt.Errorf("tx err %w", err)
@@ -181,32 +162,26 @@ func (m *Monitor) guardChannel(
 }
 
 func (m *Monitor) guardTxHandler(
-	description string, requests []*guard.Request, cid mainchain.CidType) *eth.TransactionStateHandler {
-	guardState := common.GuardState_Idle
+	description string, request *guard.Request, cid mainchain.CidType) *eth.TransactionStateHandler {
+	guardState := common.GuardStatus_Idle
 	if description == "IntendSettle" {
-		guardState = common.GuardState_Settled
+		guardState = common.GuardStatus_Settled
 	}
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
 				log.Infof("%s transaction %x succeeded", description, receipt.TxHash)
-				for _, request := range requests {
-					guardProof := guard.NewGuardProof(
-						mainchain.Bytes2Cid(request.ChannelId),
-						mainchain.Hex2Addr(request.SimplexReceiver),
-						receipt.TxHash,
-						receipt.BlockNumber.Uint64(),
-						m.ethClient.Address,
-						guardState)
-					syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
-					msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
-					log.Infof("submit change tx: guard proof request %s", request)
-					m.operator.AddTxMsg(msg)
-				}
-				err := m.dbDelete(GetGuardKey(cid))
-				if err != nil {
-					log.Errorln("db Delete err", err)
-				}
+				guardProof := guard.NewGuardProof(
+					mainchain.Bytes2Cid(request.ChannelId),
+					mainchain.Hex2Addr(request.SimplexReceiver),
+					receipt.TxHash,
+					receipt.BlockNumber.Uint64(),
+					m.ethClient.Address,
+					guardState)
+				syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
+				msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
+				log.Infof("submit change tx: guard proof request %s", request)
+				m.operator.AddTxMsg(msg)
 			} else {
 				log.Errorf("%s transaction %x failed", description, receipt.TxHash)
 			}

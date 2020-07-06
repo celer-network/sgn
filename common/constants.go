@@ -5,8 +5,8 @@ const (
 	TokenDec      = 1000000000000000000
 
 	// state of simplex channel guard request
-	GuardState_Idle     uint8 = 0
-	GuardState_Withdraw uint8 = 1
-	GuardState_Settling uint8 = 2
-	GuardState_Settled  uint8 = 3
+	GuardStatus_Idle     uint8 = 0
+	GuardStatus_Withdraw uint8 = 1
+	GuardStatus_Settling uint8 = 2
+	GuardStatus_Settled  uint8 = 3
 )

@@ -58,8 +58,8 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
-	if request.GuardState != common.GuardState_Idle {
-		return nil, fmt.Errorf("Guard state is not idle: %d", request.GuardState)
+	if request.Status != common.GuardStatus_Idle {
+		return nil, fmt.Errorf("Guard state is not idle: %d", request.Status)
 	}
 
 	if mainchain.Hex2Addr(request.SimplexSender) != mainchain.Bytes2Addr(simplexChannel.PeerFrom) {

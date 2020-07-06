@@ -400,21 +400,21 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 
 	// verify transaction event type and current request status
 	if triggerLog.Topics[0] == intendSettleEventSig {
-		if trigger.GuardState != common.GuardState_Settling {
+		if trigger.Status != common.GuardStatus_Settling {
 			log.Errorf("%s. Trigger guard state should be settling", logmsg)
 			return true, false
 		}
-		if r.GuardState == common.GuardState_Settling || r.GuardState == common.GuardState_Settled {
-			log.Errorf("%s. Invalid GuardState current state: %d", logmsg, r.GuardState)
+		if r.Status == common.GuardStatus_Settling || r.Status == common.GuardStatus_Settled {
+			log.Errorf("%s. Invalid GuardStatus current state: %d", logmsg, r.Status)
 			return true, false
 		}
 	} else if triggerLog.Topics[0] == intendWithdrawEventSig {
-		if trigger.GuardState != common.GuardState_Withdraw {
+		if trigger.Status != common.GuardStatus_Withdraw {
 			log.Errorf("%s. Trigger guard state should be withdraw", logmsg)
 			return true, false
 		}
-		if r.GuardState != common.GuardState_Idle {
-			log.Errorf("%s. Invalid GuardState current state: %d", logmsg, r.GuardState)
+		if r.Status != common.GuardStatus_Idle {
+			log.Errorf("%s. Invalid GuardStatus current state: %d", logmsg, r.Status)
 			return true, false
 		}
 	} else {
@@ -505,8 +505,8 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return true, false
 	}
 	var seqNum uint64
-	if r.GuardState == common.GuardState_Settling {
-		if proof.GuardState != common.GuardState_Settled {
+	if r.Status == common.GuardStatus_Settling {
+		if proof.Status != common.GuardStatus_Settled {
 			log.Errorf("%s. Proof guard state should be settled", logmsg)
 			return true, false
 		}
@@ -517,8 +517,8 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 			return true, false
 		}
 		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
-	} else if r.GuardState == common.GuardState_Withdraw {
-		if proof.GuardState != common.GuardState_Idle {
+	} else if r.Status == common.GuardStatus_Withdraw {
+		if proof.Status != common.GuardStatus_Idle {
 			log.Errorf("%s. Proof guard state should be idle", logmsg)
 			return true, false
 		}
@@ -530,7 +530,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		}
 		seqNum = snapshotStatesEvent.SeqNums[seqIndex].Uint64()
 	} else {
-		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.GuardState)
+		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.Status)
 		return true, false
 	}
 	if seqNum != r.SeqNum {

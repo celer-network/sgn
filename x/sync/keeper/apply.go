@@ -199,12 +199,12 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 	if !found {
 		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
-	if request.GuardState == common.GuardState_Idle {
+	if request.Status == common.GuardStatus_Idle {
 		request.TriggerTxHash = trigger.TriggerTxHash
 		request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
 		if request.SeqNum > trigger.TriggerSeqNum {
 			request.AssignedGuards = guard.AssignGuards(ctx, keeper.guardKeeper)
-			request.GuardState = trigger.GuardState
+			request.Status = trigger.Status
 		}
 		keeper.guardKeeper.SetRequest(ctx, request)
 	}
@@ -222,14 +222,14 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
-	if request.GuardState != common.GuardState_Withdraw && request.GuardState != common.GuardState_Settling {
-		return fmt.Errorf("Request not in guard pending state: %d", request.GuardState)
+	if request.Status != common.GuardStatus_Withdraw && request.Status != common.GuardStatus_Settling {
+		return fmt.Errorf("Request not in guard pending state: %d", request.Status)
 	}
 
 	request.GuardTxHash = proof.GuardTxHash
 	request.GuardTxBlkNum = proof.GuardTxBlkNum
 	request.GuardSender = proof.GuardSender
-	request.GuardState = proof.GuardState
+	request.Status = proof.Status
 
 	assignedGuards := request.AssignedGuards
 	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum

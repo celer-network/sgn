@@ -15,10 +15,10 @@ type Request struct {
 	SimplexReceiver         string           `json:"simplexReceiver"`
 	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
 	DisputeTimeout          uint64           `json:"disputeTimeout"`
+	Status                  uint8            `json:"status"`
 	AssignedGuards          []sdk.AccAddress `json:"assignedGuards"`
 	TriggerTxHash           string           `json:"triggerTxHash"`
 	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
-	GuardState              uint8            `json:"guardState"`
 	GuardTxHash             string           `json:"guardTxHash"`
 	GuardTxBlkNum           uint64           `json:"guardTxBlkNum"`
 	GuardSender             string           `json:"guardSender"`
@@ -40,11 +40,11 @@ func NewRequest(
 }
 
 func (r Request) String() string {
-	out := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`,
-		r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout)
+	out := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: %d`,
+		r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout, r.Status)
 	if r.TriggerTxHash != "" {
-		out += fmt.Sprintf(`, TriggerTxHash: %s, TriggerTxBlkNum: %d, GuardState: %d`,
-			r.TriggerTxHash, r.TriggerTxBlkNum, r.GuardState)
+		out += fmt.Sprintf(`, TriggerTxHash: %s, TriggerTxBlkNum: %d`,
+			r.TriggerTxHash, r.TriggerTxBlkNum)
 	}
 	if r.GuardTxHash != "" {
 		out += fmt.Sprintf(`, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s`,
@@ -73,12 +73,12 @@ type GuardTrigger struct {
 	TriggerTxHash   string `json:"triggerTxHash"`
 	TriggerTxBlkNum uint64 `json:"triggerTxBlkNum"`
 	TriggerSeqNum   uint64 `json:"triggerSeqNum"`
-	GuardState      uint8  `json:"guardState"`
+	Status          uint8  `json:"status"`
 }
 
 func (gt GuardTrigger) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, TriggerTxHash: %s, TriggerTxBlkNum: %d, TriggerSeqNum: %d, GuardState: %d`,
-		gt.ChannelId, gt.SimplexReceiver, gt.TriggerTxHash, gt.TriggerTxBlkNum, gt.TriggerSeqNum, gt.GuardState))
+	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, TriggerTxHash: %s, TriggerTxBlkNum: %d, TriggerSeqNum: %d, Status: %d`,
+		gt.ChannelId, gt.SimplexReceiver, gt.TriggerTxHash, gt.TriggerTxBlkNum, gt.TriggerSeqNum, gt.Status))
 }
 
 func NewGuardTrigger(
@@ -87,14 +87,14 @@ func NewGuardTrigger(
 	triggerTxHash mainchain.HashType,
 	triggerTxBlkNum uint64,
 	triggerSeqNum uint64,
-	guardState uint8) *GuardTrigger {
+	status uint8) *GuardTrigger {
 	return &GuardTrigger{
 		ChannelId:       channelId.Bytes(),
 		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
 		TriggerTxHash:   triggerTxHash.Hex(),
 		TriggerTxBlkNum: triggerTxBlkNum,
 		TriggerSeqNum:   triggerSeqNum,
-		GuardState:      guardState,
+		Status:          status,
 	}
 }
 
@@ -104,12 +104,12 @@ type GuardProof struct {
 	GuardTxHash     string `json:"guardTxHash"`
 	GuardTxBlkNum   uint64 `json:"guardTxBlkNum"`
 	GuardSender     string `json:"guardSender"`
-	GuardState      uint8  `json:"guardState"`
+	Status          uint8  `json:"status"`
 }
 
 func (gp GuardProof) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s`,
-		gp.ChannelId, gp.SimplexReceiver, gp.GuardTxHash, gp.GuardTxBlkNum, gp.GuardSender))
+	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, GuardTxHash: %s, GuardTxBlkNum: %d, GuardSender: %s, Status: %d`,
+		gp.ChannelId, gp.SimplexReceiver, gp.GuardTxHash, gp.GuardTxBlkNum, gp.GuardSender, gp.Status))
 }
 
 func NewGuardProof(
@@ -118,13 +118,13 @@ func NewGuardProof(
 	guardTxHash mainchain.HashType,
 	guardTxBlkNum uint64,
 	guardSender mainchain.Addr,
-	guardState uint8) *GuardProof {
+	status uint8) *GuardProof {
 	return &GuardProof{
 		ChannelId:       channelId.Bytes(),
 		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
 		GuardTxHash:     guardTxHash.Hex(),
 		GuardTxBlkNum:   guardTxBlkNum,
 		GuardSender:     mainchain.Addr2Hex(guardSender),
-		GuardState:      guardState,
+		Status:          status,
 	}
 }
