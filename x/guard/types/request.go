@@ -72,12 +72,13 @@ type GuardTrigger struct {
 	SimplexReceiver string `json:"simplexReceiver"`
 	TriggerTxHash   string `json:"triggerTxHash"`
 	TriggerTxBlkNum uint64 `json:"triggerTxBlkNum"`
+	TriggerSeqNum   uint64 `json:"triggerSeqNum"`
 	GuardState      uint8  `json:"guardState"`
 }
 
 func (gt GuardTrigger) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, TriggerTxHash: %s, TriggerTxBlkNum: %d, GuardState: %d`,
-		gt.ChannelId, gt.SimplexReceiver, gt.TriggerTxHash, gt.TriggerTxBlkNum, gt.GuardState))
+	return strings.TrimSpace(fmt.Sprintf(`ChannelId: %x, SimplexReceiver: %s, TriggerTxHash: %s, TriggerTxBlkNum: %d, TriggerSeqNum: %d, GuardState: %d`,
+		gt.ChannelId, gt.SimplexReceiver, gt.TriggerTxHash, gt.TriggerTxBlkNum, gt.TriggerSeqNum, gt.GuardState))
 }
 
 func NewGuardTrigger(
@@ -85,12 +86,14 @@ func NewGuardTrigger(
 	simplexReceiver mainchain.Addr,
 	triggerTxHash mainchain.HashType,
 	triggerTxBlkNum uint64,
+	triggerSeqNum uint64,
 	guardState uint8) *GuardTrigger {
 	return &GuardTrigger{
 		ChannelId:       channelId.Bytes(),
 		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
 		TriggerTxHash:   triggerTxHash.Hex(),
 		TriggerTxBlkNum: triggerTxBlkNum,
+		TriggerSeqNum:   triggerSeqNum,
 		GuardState:      guardState,
 	}
 }

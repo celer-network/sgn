@@ -378,6 +378,8 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
+	// TODO: verify triggerSeqNum
+
 	// verify onchain trasaction receipt and status
 	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
 	if err != nil {

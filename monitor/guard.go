@@ -23,7 +23,7 @@ const (
 	ChanState_SettleSubmitted   uint8 = 2
 	ChanState_WithdrawWaiting   uint8 = 3
 	ChanState_WithdrawSubmitted uint8 = 4
-	ChanState_SafeChecked       uint8 = 5
+	ChanState_Done              uint8 = 5
 )
 
 type ChanInfo struct {
@@ -69,7 +69,7 @@ func (m *Monitor) processGuardQueue() {
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
 		if !chanInfo.Guarded {
-			requests := m.getGuardRequests(chanInfo.Cid)
+			requests, _ := m.getGuardRequests(chanInfo.Cid)
 			if len(requests) == 0 {
 				log.Infof("Ignore guard cid %x", chanInfo.Cid)
 				err = m.dbDelete(GetGuardKey(chanInfo.Cid))

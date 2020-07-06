@@ -83,7 +83,7 @@ func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (gua
 
 // get guard requests for the channel, return an array with at most two elements
 // TODO: return proper err
-func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Request) {
+func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Request, seqs []uint64) {
 	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
@@ -104,9 +104,10 @@ func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Req
 		}
 
 		requests = append(requests, &request)
+		seqs = append(seqs, seqNums[1-i].Uint64())
 	}
 
-	return requests
+	return
 }
 
 func (m *Monitor) getCurrentBlockNumber() *big.Int {
