@@ -402,7 +402,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 			log.Errorf("%s. Trigger guard state should be settling", logmsg)
 			return true, false
 		}
-		if r.GuardState == common.GuardState_Settling || r.GuardState == common.GuardState_Closed {
+		if r.GuardState == common.GuardState_Settling || r.GuardState == common.GuardState_Settled {
 			log.Errorf("%s. Invalid GuardState current state: %d", logmsg, r.GuardState)
 			return true, false
 		}
@@ -504,6 +504,10 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	}
 	var seqNum uint64
 	if r.GuardState == common.GuardState_Settling {
+		if proof.GuardState != common.GuardState_Settled {
+			log.Errorf("%s. Proof guard state should be settled", logmsg)
+			return true, false
+		}
 		var intendSettleEvent mainchain.CelerLedgerIntendSettle
 		err = ledgerABI.Unpack(&intendSettleEvent, "IntendSettle", guardLog.Data)
 		if err != nil {
@@ -512,6 +516,10 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		}
 		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
 	} else if r.GuardState == common.GuardState_Withdraw {
+		if proof.GuardState != common.GuardState_Idle {
+			log.Errorf("%s. Proof guard state should be idle", logmsg)
+			return true, false
+		}
 		var snapshotStatesEvent mainchain.CelerLedgerSnapshotStates
 		err = ledgerABI.Unpack(&snapshotStatesEvent, "SnapshotStates", guardLog.Data)
 		if err != nil {

@@ -2,8 +2,10 @@ package monitor
 
 import (
 	"math/big"
+	"strings"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/validator"
@@ -11,15 +13,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type MonitorContractInfo struct {
-	address common.Address
+	address mainchain.Addr
 	abi     string
 }
 
-func (info *MonitorContractInfo) GetAddr() common.Address {
+func (info *MonitorContractInfo) GetAddr() mainchain.Addr {
 	return info.address
 }
 
@@ -27,7 +28,7 @@ func (info *MonitorContractInfo) GetABI() string {
 	return info.abi
 }
 
-func NewMonitorContractInfo(address common.Address, abi string) *MonitorContractInfo {
+func NewMonitorContractInfo(address mainchain.Addr, abi string) *MonitorContractInfo {
 	return &MonitorContractInfo{
 		address: address,
 		abi:     abi,
@@ -92,6 +93,9 @@ func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Req
 	for i, simplexReceiver := range addresses {
 		request, err := m.getGuardRequest(cid.Bytes(), mainchain.Addr2Hex(simplexReceiver))
 		if err != nil {
+			if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+				log.Error(err)
+			}
 			continue
 		}
 		if seqNums[1-i].Uint64() >= request.SeqNum {

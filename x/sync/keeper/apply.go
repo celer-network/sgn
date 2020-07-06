@@ -222,7 +222,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	request.GuardTxHash = proof.GuardTxHash
 	request.GuardTxBlkNum = proof.GuardTxBlkNum
 	request.GuardSender = proof.GuardSender
-	request.GuardState = common.GuardState_Idle
+	request.GuardState = proof.GuardState
 	keeper.guardKeeper.SetRequest(ctx, request)
 
 	assignedGuards := request.AssignedGuards

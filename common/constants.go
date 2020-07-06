@@ -8,5 +8,5 @@ const (
 	GuardState_Idle     uint8 = 0
 	GuardState_Withdraw uint8 = 1
 	GuardState_Settling uint8 = 2
-	GuardState_Closed   uint8 = 3
+	GuardState_Settled  uint8 = 3
 )

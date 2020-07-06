@@ -101,6 +101,7 @@ type GuardProof struct {
 	GuardTxHash     string `json:"guardTxHash"`
 	GuardTxBlkNum   uint64 `json:"guardTxBlkNum"`
 	GuardSender     string `json:"guardSender"`
+	GuardState      uint8  `json:"guardState"`
 }
 
 func (gp GuardProof) String() string {
@@ -113,12 +114,14 @@ func NewGuardProof(
 	simplexReceiver mainchain.Addr,
 	guardTxHash mainchain.HashType,
 	guardTxBlkNum uint64,
-	guardSender mainchain.Addr) *GuardProof {
+	guardSender mainchain.Addr,
+	guardState uint8) *GuardProof {
 	return &GuardProof{
 		ChannelId:       channelId.Bytes(),
 		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
 		GuardTxHash:     guardTxHash.Hex(),
 		GuardTxBlkNum:   guardTxBlkNum,
 		GuardSender:     mainchain.Addr2Hex(guardSender),
+		GuardState:      guardState,
 	}
 }

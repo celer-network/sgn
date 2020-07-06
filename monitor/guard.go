@@ -29,7 +29,7 @@ const (
 type ChanInfo struct {
 	Cid        mainchain.CidType
 	PeerStates map[mainchain.Addr]uint8
-	Processed  bool
+	Guarded    bool
 }
 
 func (ci *ChanInfo) marshal() []byte {
@@ -68,7 +68,7 @@ func (m *Monitor) processGuardQueue() {
 
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
-		if !chanInfo.Processed {
+		if !chanInfo.Guarded {
 			requests := m.getGuardRequests(chanInfo.Cid)
 			if len(requests) == 0 {
 				log.Infof("Ignore guard cid %x", chanInfo.Cid)
@@ -89,13 +89,13 @@ func (m *Monitor) processGuardQueue() {
 				continue
 			}
 			log.Infof("Process guard cid %x", chanInfo.Cid)
-			submitted, err := m.guardChannel(triggered, chanInfo.Cid)
+			guarded, err := m.guardChannel(triggered, chanInfo.Cid)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
 
-			if submitted {
+			if guarded {
 				m.dbLock.Lock()
 				_, err := m.db.Get(key)
 				if err != nil {
@@ -103,14 +103,8 @@ func (m *Monitor) processGuardQueue() {
 					m.dbLock.Unlock()
 					continue
 				}
-				chanInfo.Processed = true
-				val, err := json.Marshal(chanInfo)
-				if err != nil {
-					log.Errorln("Marshal chanInfo err", err)
-					m.dbLock.Unlock()
-					return
-				}
-				err = m.db.Set(key, val)
+				chanInfo.Guarded = true
+				err = m.db.Set(key, chanInfo.marshal())
 				if err != nil {
 					log.Errorln("db Set err", err)
 				}
@@ -188,6 +182,10 @@ func (m *Monitor) guardChannel(
 
 func (m *Monitor) guardTxHandler(
 	description string, requests []*guard.Request, cid mainchain.CidType) *eth.TransactionStateHandler {
+	guardState := common.GuardState_Idle
+	if description == "IntendSettle" {
+		guardState = common.GuardState_Settled
+	}
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
@@ -198,7 +196,8 @@ func (m *Monitor) guardTxHandler(
 						mainchain.Hex2Addr(request.SimplexReceiver),
 						receipt.TxHash,
 						receipt.BlockNumber.Uint64(),
-						m.ethClient.Address)
+						m.ethClient.Address,
+						guardState)
 					syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
 					msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
 					log.Infof("submit change tx: guard proof request %s", request)
