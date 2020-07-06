@@ -32,6 +32,25 @@ type ChanInfo struct {
 	Processed  bool
 }
 
+func (ci *ChanInfo) marshal() []byte {
+	val, err := json.Marshal(ci)
+	if err != nil {
+		log.Errorln("Marshal chanInfo err", err)
+		return nil
+	}
+	return val
+}
+
+func unmarshalChanInfo(input []byte) *ChanInfo {
+	var chanInfo ChanInfo
+	err := json.Unmarshal(input, &chanInfo)
+	if err != nil {
+		log.Errorln("Unmarshal chanInfo err", err)
+		return nil
+	}
+	return &chanInfo
+}
+
 func (m *Monitor) processGuardQueue() {
 	var keys, vals [][]byte
 	m.dbLock.RLock()
@@ -48,12 +67,7 @@ func (m *Monitor) processGuardQueue() {
 	m.dbLock.RUnlock()
 
 	for i, key := range keys {
-		var chanInfo ChanInfo
-		err := json.Unmarshal(vals[i], &chanInfo)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
+		chanInfo := unmarshalChanInfo(vals[i])
 		if !chanInfo.Processed {
 			requests := m.getGuardRequests(chanInfo.Cid)
 			if len(requests) == 0 {
@@ -93,6 +107,7 @@ func (m *Monitor) processGuardQueue() {
 				val, err := json.Marshal(chanInfo)
 				if err != nil {
 					log.Errorln("Marshal chanInfo err", err)
+					m.dbLock.Unlock()
 					return
 				}
 				err = m.db.Set(key, val)

@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -261,12 +260,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 				Cid:        e.ChannelId,
 				PeerStates: make(map[mainchain.Addr]uint8),
 			}
-			val, err2 := json.Marshal(chanInfo)
-			if err2 != nil {
-				log.Errorln("Marshal chanInfo err", err2)
-				return
-			}
-			dberr = m.dbSet(GetGuardKey(e.ChannelId), val)
+			dberr = m.dbSet(GetGuardKey(e.ChannelId), chanInfo.marshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -300,12 +294,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 				Cid:        e.ChannelId,
 				PeerStates: make(map[mainchain.Addr]uint8),
 			}
-			val, err2 := json.Marshal(chanInfo)
-			if err2 != nil {
-				log.Errorln("Marshal chanInfo err", err2)
-				return
-			}
-			dberr = m.dbSet(GetGuardKey(e.ChannelId), val)
+			dberr = m.dbSet(GetGuardKey(e.ChannelId), chanInfo.marshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}

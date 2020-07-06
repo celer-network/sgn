@@ -38,13 +38,13 @@ func NewEvent(name EventName, l types.Log) *EventWrapper {
 }
 
 func NewEventFromBytes(input []byte) *EventWrapper {
-	event := EventWrapper{}
+	event := &EventWrapper{}
 	event.MustUnMarshal(input)
-	return &event
+	return event
 }
 
 // Marshal event into json bytes
-func (e EventWrapper) MustMarshal() []byte {
+func (e *EventWrapper) MustMarshal() []byte {
 	res, err := json.Marshal(&e)
 	if err != nil {
 		panic(err)
@@ -61,7 +61,7 @@ func (e *EventWrapper) MustUnMarshal(input []byte) {
 	}
 }
 
-func (e EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
+func (e *EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 	var res interface{}
 	var err error
 	switch e.Name {
