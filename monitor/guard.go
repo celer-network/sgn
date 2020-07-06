@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
@@ -18,18 +19,20 @@ import (
 )
 
 const (
-	ChanState_Null              uint8 = 0
-	ChanState_SettleWaiting     uint8 = 1
-	ChanState_SettleSubmitted   uint8 = 2
-	ChanState_WithdrawWaiting   uint8 = 3
-	ChanState_WithdrawSubmitted uint8 = 4
-	ChanState_Done              uint8 = 5
+	ChanState_Null           uint8 = 0
+	ChanState_CatchSettle    uint8 = 1
+	ChanState_SubmitSettle   uint8 = 2
+	ChanState_CatchWithdraw  uint8 = 3
+	ChanState_SubmitWithdraw uint8 = 4
+	ChanState_Done           uint8 = 5
 )
 
 type ChanInfo struct {
-	Cid        mainchain.CidType
-	PeerStates map[mainchain.Addr]uint8
-	Guarded    bool
+	Cid             mainchain.CidType
+	SimplexReceiver mainchain.Addr
+	SeqNum          uint64
+	State           uint8
+	Guarded         bool
 }
 
 func (ci *ChanInfo) marshal() []byte {
@@ -69,40 +72,48 @@ func (m *Monitor) processGuardQueue() {
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
 		if !chanInfo.Guarded {
-			requests, _ := m.getGuardRequests(chanInfo.Cid)
-			if len(requests) == 0 {
-				log.Infof("Ignore guard cid %x", chanInfo.Cid)
-				err = m.dbDelete(GetGuardKey(chanInfo.Cid))
+			var skip bool
+			request, err := m.getGuardRequest(chanInfo.Cid.Bytes(), mainchain.Addr2Hex(chanInfo.SimplexReceiver))
+			if err != nil {
+				if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+					log.Error(err)
+					continue
+				}
+				log.Debugf("channel %x receiver %x not guarded by sgn", chanInfo.Cid, chanInfo.SimplexReceiver)
+				skip = true
+			} else if request.SeqNum <= chanInfo.SeqNum {
+				log.Debugf("channel %x receiver %x does not have larger seqNum in sgn", chanInfo.Cid, chanInfo.SimplexReceiver)
+				skip = true
+			}
+			if skip {
+				err = m.dbDelete(GetGuardKey(chanInfo.Cid, chanInfo.SimplexReceiver))
 				if err != nil {
 					log.Errorln("db Delete err", err)
 				}
 				continue
 			}
-			var guarded bool
-			for _, request := range requests {
-				if request.Status == common.GuardStatus_Withdraw || request.Status == common.GuardStatus_Settling {
-					guarded, err = m.guardChannel(request, chanInfo.Cid)
-					if err != nil {
-						log.Error(err)
-						continue
-					}
-				}
-			}
 
-			if guarded {
-				m.dbLock.Lock()
-				_, err := m.db.Get(key)
+			if request.Status == common.GuardStatus_Withdraw || request.Status == common.GuardStatus_Settling {
+				guarded, err := m.guardChannel(request, chanInfo.Cid)
 				if err != nil {
-					log.Errorln("db Get err:", err)
-					m.dbLock.Unlock()
+					log.Error(err)
 					continue
 				}
-				chanInfo.Guarded = true
-				err = m.db.Set(key, chanInfo.marshal())
-				if err != nil {
-					log.Errorln("db Set err", err)
+				if guarded {
+					m.dbLock.Lock()
+					_, err := m.db.Get(key)
+					if err != nil {
+						log.Errorln("db Get err:", err)
+						m.dbLock.Unlock()
+						continue
+					}
+					chanInfo.Guarded = true
+					err = m.db.Set(key, chanInfo.marshal())
+					if err != nil {
+						log.Errorln("db Set err", err)
+					}
+					m.dbLock.Unlock()
 				}
-				m.dbLock.Unlock()
 			}
 		}
 	}

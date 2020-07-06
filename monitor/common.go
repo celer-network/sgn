@@ -77,8 +77,12 @@ func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64
 	return assignedGuards[guardIndex].Equals(m.operator.Key.GetAddress())
 }
 
-func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (guard.Request, error) {
-	return guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, channelId, simplexReceiver)
+func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (*guard.Request, error) {
+	request, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, channelId, simplexReceiver)
+	if err != nil {
+		return nil, err
+	}
+	return &request, nil
 }
 
 // get guard requests for the channel, return an array with at most two elements
@@ -103,7 +107,7 @@ func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Req
 			continue
 		}
 
-		requests = append(requests, &request)
+		requests = append(requests, request)
 		seqs = append(seqs, seqNums[1-i].Uint64())
 	}
 

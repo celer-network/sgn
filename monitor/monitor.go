@@ -236,40 +236,6 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 	}
 }
 
-func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
-	_, err := m.ethMonitor.Monitor(
-		&monitor.Config{
-			EventName:     string(IntendWithdraw),
-			Contract:      m.ledgerContract,
-			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
-		},
-		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendWithdrawChannel, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
-			}
-			e, err2 := m.ethClient.Ledger.ParseIntendWithdraw(eLog)
-			if err2 != nil {
-				log.Errorln("ParseIntendWithdraw err", err2)
-				return
-			}
-			chanInfo := &ChanInfo{
-				Cid:        e.ChannelId,
-				PeerStates: make(map[mainchain.Addr]uint8),
-			}
-			dberr = m.dbSet(GetGuardKey(e.ChannelId), chanInfo.marshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
-			}
-		})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func (m *Monitor) monitorCelerLedgerIntendSettle() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
@@ -280,23 +246,75 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendSettle, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			err2 := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
 			}
 			e, err2 := m.ethClient.Ledger.ParseIntendSettle(eLog)
 			if err2 != nil {
 				log.Errorln("ParseIntendSettle err", err2)
 				return
 			}
-			chanInfo := &ChanInfo{
-				Cid:        e.ChannelId,
-				PeerStates: make(map[mainchain.Addr]uint8),
+			addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, e.ChannelId)
+			if err != nil {
+				log.Errorf("Query StateSeqNumMap for cid %x err: %s", err, e.ChannelId)
+				return
 			}
-			dberr = m.dbSet(GetGuardKey(e.ChannelId), chanInfo.marshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			for i, simplexReceiver := range addresses {
+				chanInfo := &ChanInfo{
+					Cid:             e.ChannelId,
+					SimplexReceiver: simplexReceiver,
+					SeqNum:          seqNums[1-i].Uint64(),
+					State:           ChanState_CatchSettle,
+				}
+				err2 = m.dbSet(GetGuardKey(e.ChannelId, simplexReceiver), chanInfo.marshal())
+				if err2 != nil {
+					log.Errorln("db Set err", err2)
+				}
+			}
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:     string(IntendWithdraw),
+			Contract:      m.ledgerContract,
+			StartBlock:    m.getCurrentBlockNumber(),
+			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
+			err2 := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
+			if err2 != nil {
+				log.Errorln("db Set err", err2)
+			}
+			e, err2 := m.ethClient.Ledger.ParseIntendWithdraw(eLog)
+			if err2 != nil {
+				log.Errorln("ParseIntendWithdraw err", err2)
+				return
+			}
+			addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, e.ChannelId)
+			if err != nil {
+				log.Errorf("Query StateSeqNumMap for cid %x err: %s", err, e.ChannelId)
+				return
+			}
+			for i, simplexReceiver := range addresses {
+				if e.Receiver != simplexReceiver {
+					chanInfo := &ChanInfo{
+						Cid:             e.ChannelId,
+						SimplexReceiver: simplexReceiver,
+						SeqNum:          seqNums[1-i].Uint64(),
+						State:           ChanState_CatchWithdraw,
+					}
+					err2 = m.dbSet(GetGuardKey(e.ChannelId, simplexReceiver), chanInfo.marshal())
+					if err2 != nil {
+						log.Errorln("db Set err", err2)
+					}
+				}
 			}
 		})
 	if err != nil {

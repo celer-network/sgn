@@ -17,8 +17,8 @@ func GetPullerKey(txHash mainchain.HashType) []byte {
 }
 
 // get pusher key from mainchain txHash
-func GetGuardKey(cid mainchain.CidType) []byte {
-	return append(GuardKeyPrefix, cid.Bytes()...)
+func GetGuardKey(cid mainchain.CidType, simplexReceiver mainchain.Addr) []byte {
+	return append(GuardKeyPrefix, append(cid.Bytes(), simplexReceiver.Bytes()...)...)
 }
 
 // get penalty key from nonce
