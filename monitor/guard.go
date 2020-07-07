@@ -20,10 +20,10 @@ import (
 
 const (
 	ChanState_Null           uint8 = 0
-	ChanState_CatchSettle    uint8 = 1
-	ChanState_SubmitSettle   uint8 = 2
-	ChanState_CatchWithdraw  uint8 = 3
-	ChanState_SubmitWithdraw uint8 = 4
+	ChanState_CatchWithdraw  uint8 = 1
+	ChanState_SubmitWithdraw uint8 = 2
+	ChanState_CatchSettle    uint8 = 3
+	ChanState_SubmitSettle   uint8 = 4
 	ChanState_Done           uint8 = 5
 )
 

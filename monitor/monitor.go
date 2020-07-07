@@ -246,31 +246,56 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
-			err2 := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
 			}
-			e, err2 := m.ethClient.Ledger.ParseIntendSettle(eLog)
-			if err2 != nil {
-				log.Errorln("ParseIntendSettle err", err2)
+			e, err := m.ethClient.Ledger.ParseIntendSettle(eLog)
+			if err != nil {
+				log.Errorln("ParseIntendSettle err", err)
 				return
 			}
 			addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, e.ChannelId)
 			if err != nil {
-				log.Errorf("Query StateSeqNumMap for cid %x err: %s", err, e.ChannelId)
+				log.Errorf("Query StateSeqNumMap for cid %x err: %s", e.ChannelId, err)
 				return
 			}
 			for i, simplexReceiver := range addresses {
-				chanInfo := &ChanInfo{
-					Cid:             e.ChannelId,
-					SimplexReceiver: simplexReceiver,
-					SeqNum:          seqNums[1-i].Uint64(),
-					State:           ChanState_CatchSettle,
+				key := GetGuardKey(e.ChannelId, simplexReceiver)
+				m.dbLock.Lock()
+				var chanInfo *ChanInfo
+				exist, err := m.db.Has(key)
+				if err != nil {
+					log.Errorln("db Hash err", err)
+					m.dbLock.Unlock()
+					continue
 				}
-				err2 = m.dbSet(GetGuardKey(e.ChannelId, simplexReceiver), chanInfo.marshal())
-				if err2 != nil {
-					log.Errorln("db Set err", err2)
+				if exist {
+					val, err := m.db.Get(key)
+					if err != nil {
+						log.Errorln("db Get err", err)
+						m.dbLock.Unlock()
+						continue
+					}
+					chanInfo = unmarshalChanInfo(val)
+					log.Infof("ChanInfo for cid %x receiver %x already recorded", chanInfo.Cid, chanInfo.SimplexReceiver)
+					chanInfo.SeqNum = seqNums[1-i].Uint64()
+					if chanInfo.State == ChanState_CatchWithdraw || chanInfo.State == ChanState_SubmitWithdraw {
+						chanInfo.State = ChanState_CatchSettle
+					}
+				} else {
+					chanInfo = &ChanInfo{
+						Cid:             e.ChannelId,
+						SimplexReceiver: simplexReceiver,
+						SeqNum:          seqNums[1-i].Uint64(),
+						State:           ChanState_CatchSettle,
+					}
 				}
+				err = m.db.Set(key, chanInfo.marshal())
+				if err != nil {
+					log.Errorln("db Set err", err)
+				}
+				m.dbLock.Unlock()
 			}
 		})
 	if err != nil {
@@ -288,32 +313,54 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
-			err2 := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
-			if err2 != nil {
-				log.Errorln("db Set err", err2)
+			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
 			}
-			e, err2 := m.ethClient.Ledger.ParseIntendWithdraw(eLog)
-			if err2 != nil {
-				log.Errorln("ParseIntendWithdraw err", err2)
+			e, err := m.ethClient.Ledger.ParseIntendWithdraw(eLog)
+			if err != nil {
+				log.Errorln("ParseIntendWithdraw err", err)
 				return
 			}
 			addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, e.ChannelId)
 			if err != nil {
-				log.Errorf("Query StateSeqNumMap for cid %x err: %s", err, e.ChannelId)
+				log.Errorf("Query StateSeqNumMap for cid %x err: %s", e.ChannelId, err)
 				return
 			}
 			for i, simplexReceiver := range addresses {
 				if e.Receiver != simplexReceiver {
-					chanInfo := &ChanInfo{
-						Cid:             e.ChannelId,
-						SimplexReceiver: simplexReceiver,
-						SeqNum:          seqNums[1-i].Uint64(),
-						State:           ChanState_CatchWithdraw,
+					key := GetGuardKey(e.ChannelId, simplexReceiver)
+					m.dbLock.Lock()
+					var chanInfo *ChanInfo
+					exist, err := m.db.Has(key)
+					if err != nil {
+						log.Errorln("db Hash err", err)
+						m.dbLock.Unlock()
+						continue
 					}
-					err2 = m.dbSet(GetGuardKey(e.ChannelId, simplexReceiver), chanInfo.marshal())
-					if err2 != nil {
-						log.Errorln("db Set err", err2)
+					if exist {
+						val, err := m.db.Get(key)
+						if err != nil {
+							log.Errorln("db Get err", err)
+							m.dbLock.Unlock()
+							continue
+						}
+						chanInfo = unmarshalChanInfo(val)
+						log.Infof("ChanInfo for cid %x receiver %x already recorded", chanInfo.Cid, chanInfo.SimplexReceiver)
+						chanInfo.SeqNum = seqNums[1-i].Uint64()
+					} else {
+						chanInfo = &ChanInfo{
+							Cid:             e.ChannelId,
+							SimplexReceiver: simplexReceiver,
+							SeqNum:          seqNums[1-i].Uint64(),
+							State:           ChanState_CatchWithdraw,
+						}
 					}
+					err = m.db.Set(key, chanInfo.marshal())
+					if err != nil {
+						log.Errorln("db Set err", err)
+					}
+					m.dbLock.Unlock()
 				}
 			}
 		})
