@@ -120,11 +120,11 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests, seqs := m.getGuardRequests(intendWithdrawChannel.ChannelId)
 	for i, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], common.GuardStatus_Withdraw)
+		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], common.GuardStatus_Withdrawing)
 	}
 }
 
-func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardState uint8) {
+func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardStatus common.GuardStatus) {
 	if request.Status != common.GuardStatus_Idle {
 		log.Infoln("The guard state is not idle, current state", request.Status)
 		return
@@ -135,7 +135,7 @@ func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq 
 		rawLog.TxHash,
 		rawLog.BlockNumber,
 		seq,
-		guardState)
+		guardStatus)
 	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(trigger)
 	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.operator.Key.GetAddress())
 	log.Infof("submit change tx: trigger guard request %s", trigger)

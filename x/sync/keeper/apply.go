@@ -222,7 +222,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
-	if request.Status != common.GuardStatus_Withdraw && request.Status != common.GuardStatus_Settling {
+	if request.Status != common.GuardStatus_Withdrawing && request.Status != common.GuardStatus_Settling {
 		return fmt.Errorf("Request not in guard pending state: %d", request.Status)
 	}
 

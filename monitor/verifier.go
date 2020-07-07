@@ -409,7 +409,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 			return true, false
 		}
 	} else if triggerLog.Topics[0] == intendWithdrawEventSig {
-		if trigger.Status != common.GuardStatus_Withdraw {
+		if trigger.Status != common.GuardStatus_Withdrawing {
 			log.Errorf("%s. Trigger guard state should be withdraw", logmsg)
 			return true, false
 		}
@@ -517,7 +517,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 			return true, false
 		}
 		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
-	} else if r.Status == common.GuardStatus_Withdraw {
+	} else if r.Status == common.GuardStatus_Withdrawing {
 		if proof.Status != common.GuardStatus_Idle {
 			log.Errorf("%s. Proof guard state should be idle", logmsg)
 			return true, false

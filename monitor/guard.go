@@ -93,22 +93,33 @@ func (m *Monitor) processGuardQueue() {
 			continue
 		}
 
-		if request.Status == common.GuardStatus_Withdraw || request.Status == common.GuardStatus_Settling {
-			guarded, err := m.guardChannel(request, chanInfo.Cid)
+		if request.Status == common.GuardStatus_Withdrawing || request.Status == common.GuardStatus_Settling {
+			guarded, err := m.guardChannel(request)
 			if err != nil {
 				log.Error(err)
 				continue
 			}
 			if guarded {
 				m.dbLock.Lock()
-				_, err := m.db.Get(key)
+				exist, err := m.db.Has(key)
 				if err != nil {
 					log.Errorln("db Get err:", err)
 					m.dbLock.Unlock()
 					continue
 				}
-				if request.Status == common.GuardStatus_Withdraw {
-					chanInfo.State = ChanState_GuardedWithdraw
+				if exist {
+					val, err2 := m.db.Get(key)
+					if err2 != nil {
+						log.Errorln("db Get err", err2)
+						m.dbLock.Unlock()
+						continue
+					}
+					chanInfo = unmarshalChanInfo(val)
+				}
+				if request.Status == common.GuardStatus_Withdrawing {
+					if chanInfo.State == ChanState_CaughtWithdraw {
+						chanInfo.State = ChanState_GuardedWithdraw
+					}
 				} else {
 					chanInfo.State = ChanState_GuardedSettle
 				}
@@ -122,9 +133,7 @@ func (m *Monitor) processGuardQueue() {
 	}
 }
 
-func (m *Monitor) guardChannel(
-	request *guard.Request, cid mainchain.CidType) (bool, error) {
-
+func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 	if request == nil {
 		return false, fmt.Errorf("nil request")
 	}
@@ -151,15 +160,15 @@ func (m *Monitor) guardChannel(
 
 	var tx *ethtypes.Transaction
 	switch request.Status {
-	case common.GuardStatus_Withdraw:
+	case common.GuardStatus_Withdrawing:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("SnapshotStates", request, cid),
+			m.guardTxHandler("SnapshotStates", request),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
 	case common.GuardStatus_Settling:
 		tx, err = m.ethClient.Transactor.Transact(
-			m.guardTxHandler("IntendSettle", request, cid),
+			m.guardTxHandler("IntendSettle", request),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
@@ -176,7 +185,7 @@ func (m *Monitor) guardChannel(
 }
 
 func (m *Monitor) guardTxHandler(
-	description string, request *guard.Request, cid mainchain.CidType) *eth.TransactionStateHandler {
+	description string, request *guard.Request) *eth.TransactionStateHandler {
 	guardState := common.GuardStatus_Idle
 	if description == "IntendSettle" {
 		guardState = common.GuardStatus_Settled
