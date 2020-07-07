@@ -32,7 +32,6 @@ type Monitor struct {
 	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
 	isValidator     bool
-	chanLock        sync.RWMutex
 	dbLock          sync.RWMutex
 }
 
@@ -271,9 +270,9 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 					continue
 				}
 				if exist {
-					val, err := m.db.Get(key)
-					if err != nil {
-						log.Errorln("db Get err", err)
+					val, err2 := m.db.Get(key)
+					if err2 != nil {
+						log.Errorln("db Get err", err2)
 						m.dbLock.Unlock()
 						continue
 					}
@@ -339,9 +338,9 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 						continue
 					}
 					if exist {
-						val, err := m.db.Get(key)
-						if err != nil {
-							log.Errorln("db Get err", err)
+						val, err2 := m.db.Get(key)
+						if err2 != nil {
+							log.Errorln("db Get err", err2)
 							m.dbLock.Unlock()
 							continue
 						}
