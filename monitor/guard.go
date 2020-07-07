@@ -19,12 +19,11 @@ import (
 )
 
 const (
-	ChanState_Null           uint8 = 0
-	ChanState_CatchWithdraw  uint8 = 1
-	ChanState_SubmitWithdraw uint8 = 2
-	ChanState_CatchSettle    uint8 = 3
-	ChanState_SubmitSettle   uint8 = 4
-	ChanState_Done           uint8 = 5
+	ChanState_Null            uint8 = 0
+	ChanState_CaughtWithdraw  uint8 = 1
+	ChanState_GuardedWithdraw uint8 = 2
+	ChanState_CaughtSettle    uint8 = 3
+	ChanState_GuardedSettle   uint8 = 4
 )
 
 type ChanInfo struct {
@@ -32,7 +31,6 @@ type ChanInfo struct {
 	SimplexReceiver mainchain.Addr
 	SeqNum          uint64
 	State           uint8
-	Guarded         bool
 }
 
 func (ci *ChanInfo) marshal() []byte {
@@ -71,49 +69,54 @@ func (m *Monitor) processGuardQueue() {
 
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
-		if !chanInfo.Guarded {
-			var skip bool
-			request, err := m.getGuardRequest(chanInfo.Cid.Bytes(), mainchain.Addr2Hex(chanInfo.SimplexReceiver))
-			if err != nil {
-				if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-					log.Error(err)
-					continue
-				}
-				log.Debugf("channel %x receiver %x not guarded by sgn", chanInfo.Cid, chanInfo.SimplexReceiver)
-				skip = true
-			} else if request.SeqNum <= chanInfo.SeqNum {
-				log.Debugf("channel %x receiver %x does not have larger seqNum in sgn", chanInfo.Cid, chanInfo.SimplexReceiver)
-				skip = true
-			}
-			if skip {
-				err = m.dbDelete(GetGuardKey(chanInfo.Cid, chanInfo.SimplexReceiver))
-				if err != nil {
-					log.Errorln("db Delete err", err)
-				}
+		if chanInfo.State == ChanState_GuardedWithdraw || chanInfo.State == ChanState_GuardedSettle {
+			continue
+		}
+		var skip bool
+		request, err := m.getGuardRequest(chanInfo.Cid.Bytes(), mainchain.Addr2Hex(chanInfo.SimplexReceiver))
+		if err != nil {
+			if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+				log.Error(err)
 				continue
 			}
+			log.Debugf("channel %x receiver %x not guarded by sgn", chanInfo.Cid, chanInfo.SimplexReceiver)
+			skip = true
+		} else if request.SeqNum <= chanInfo.SeqNum {
+			log.Debugf("channel %x receiver %x does not have larger seqNum in sgn", chanInfo.Cid, chanInfo.SimplexReceiver)
+			skip = true
+		}
+		if skip {
+			err = m.dbDelete(GetGuardKey(chanInfo.Cid, chanInfo.SimplexReceiver))
+			if err != nil {
+				log.Errorln("db Delete err", err)
+			}
+			continue
+		}
 
-			if request.Status == common.GuardStatus_Withdraw || request.Status == common.GuardStatus_Settling {
-				guarded, err := m.guardChannel(request, chanInfo.Cid)
+		if request.Status == common.GuardStatus_Withdraw || request.Status == common.GuardStatus_Settling {
+			guarded, err := m.guardChannel(request, chanInfo.Cid)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			if guarded {
+				m.dbLock.Lock()
+				_, err := m.db.Get(key)
 				if err != nil {
-					log.Error(err)
+					log.Errorln("db Get err:", err)
+					m.dbLock.Unlock()
 					continue
 				}
-				if guarded {
-					m.dbLock.Lock()
-					_, err := m.db.Get(key)
-					if err != nil {
-						log.Errorln("db Get err:", err)
-						m.dbLock.Unlock()
-						continue
-					}
-					chanInfo.Guarded = true
-					err = m.db.Set(key, chanInfo.marshal())
-					if err != nil {
-						log.Errorln("db Set err", err)
-					}
-					m.dbLock.Unlock()
+				if request.Status == common.GuardStatus_Withdraw {
+					chanInfo.State = ChanState_GuardedWithdraw
+				} else {
+					chanInfo.State = ChanState_GuardedSettle
 				}
+				err = m.db.Set(key, chanInfo.marshal())
+				if err != nil {
+					log.Errorln("db Set err", err)
+				}
+				m.dbLock.Unlock()
 			}
 		}
 	}

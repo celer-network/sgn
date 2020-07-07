@@ -279,15 +279,15 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 					chanInfo = unmarshalChanInfo(val)
 					log.Infof("ChanInfo for cid %x receiver %x already recorded", chanInfo.Cid, chanInfo.SimplexReceiver)
 					chanInfo.SeqNum = seqNums[1-i].Uint64()
-					if chanInfo.State == ChanState_CatchWithdraw || chanInfo.State == ChanState_SubmitWithdraw {
-						chanInfo.State = ChanState_CatchSettle
+					if chanInfo.State == ChanState_CaughtWithdraw || chanInfo.State == ChanState_GuardedWithdraw {
+						chanInfo.State = ChanState_CaughtSettle
 					}
 				} else {
 					chanInfo = &ChanInfo{
 						Cid:             e.ChannelId,
 						SimplexReceiver: simplexReceiver,
 						SeqNum:          seqNums[1-i].Uint64(),
-						State:           ChanState_CatchSettle,
+						State:           ChanState_CaughtSettle,
 					}
 				}
 				err = m.db.Set(key, chanInfo.marshal())
@@ -352,7 +352,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 							Cid:             e.ChannelId,
 							SimplexReceiver: simplexReceiver,
 							SeqNum:          seqNums[1-i].Uint64(),
-							State:           ChanState_CatchWithdraw,
+							State:           ChanState_CaughtWithdraw,
 						}
 					}
 					err = m.db.Set(key, chanInfo.marshal())
