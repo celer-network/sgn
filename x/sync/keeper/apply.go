@@ -199,7 +199,7 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 	if !found {
 		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
-	if request.Status == common.GuardStatus_Idle {
+	if request.Status == guard.ChanStatus_Idle {
 		request.TriggerTxHash = trigger.TriggerTxHash
 		request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
 		if request.SeqNum > trigger.TriggerSeqNum {
@@ -222,7 +222,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
-	if request.Status != common.GuardStatus_Withdrawing && request.Status != common.GuardStatus_Settling {
+	if request.Status != guard.ChanStatus_Withdrawing && request.Status != guard.ChanStatus_Settling {
 		return fmt.Errorf("Request not in guard pending state: %d", request.Status)
 	}
 

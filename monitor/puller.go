@@ -112,7 +112,7 @@ func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSett
 	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
 	requests, seqs := m.getGuardRequests(intendSettle.ChannelId)
 	for i, request := range requests {
-		m.triggerGuard(request, intendSettle.Raw, seqs[i], common.GuardStatus_Settling)
+		m.triggerGuard(request, intendSettle.Raw, seqs[i], guard.ChanStatus_Settling)
 	}
 }
 
@@ -120,12 +120,12 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests, seqs := m.getGuardRequests(intendWithdrawChannel.ChannelId)
 	for i, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], common.GuardStatus_Withdrawing)
+		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
 	}
 }
 
-func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardStatus common.GuardStatus) {
-	if request.Status != common.GuardStatus_Idle {
+func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardStatus guard.ChanStatus) {
+	if request.Status != guard.ChanStatus_Idle {
 		log.Infoln("The guard state is not idle, current state", request.Status)
 		return
 	}

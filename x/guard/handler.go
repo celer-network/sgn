@@ -58,7 +58,7 @@ func handleMsgRequestGuard(ctx sdk.Context, keeper Keeper, msg MsgRequestGuard, 
 		return nil, fmt.Errorf("Failed to get request")
 	}
 
-	if request.Status != common.GuardStatus_Idle {
+	if request.Status != ChanStatus_Idle {
 		return nil, fmt.Errorf("Guard state is not idle: %d", request.Status)
 	}
 

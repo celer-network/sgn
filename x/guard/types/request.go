@@ -4,25 +4,49 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type ChanStatus uint8
+
+const (
+	// state of simplex channel guard request
+	ChanStatus_Idle        ChanStatus = 0
+	ChanStatus_Withdrawing ChanStatus = 1
+	ChanStatus_Settling    ChanStatus = 2
+	ChanStatus_Settled     ChanStatus = 3
+)
+
+func (status ChanStatus) String() string {
+	switch status {
+	case ChanStatus_Idle:
+		return "Idle"
+	case ChanStatus_Withdrawing:
+		return "Withdraw"
+	case ChanStatus_Settling:
+		return "Settling"
+	case ChanStatus_Settled:
+		return "Settled"
+	default:
+		return "Invalid"
+	}
+}
+
 type Request struct {
-	ChannelId               []byte             `json:"channelId"`
-	SeqNum                  uint64             `json:"seqNum"`
-	SimplexSender           string             `json:"simplexSender"`
-	SimplexReceiver         string             `json:"simplexReceiver"`
-	SignedSimplexStateBytes []byte             `json:"signedSimplexStateBytes"`
-	DisputeTimeout          uint64             `json:"disputeTimeout"`
-	Status                  common.GuardStatus `json:"status"`
-	AssignedGuards          []sdk.AccAddress   `json:"assignedGuards"`
-	TriggerTxHash           string             `json:"triggerTxHash"`
-	TriggerTxBlkNum         uint64             `json:"triggerTxBlkNum"`
-	GuardTxHash             string             `json:"guardTxHash"`
-	GuardTxBlkNum           uint64             `json:"guardTxBlkNum"`
-	GuardSender             string             `json:"guardSender"`
+	ChannelId               []byte           `json:"channelId"`
+	SeqNum                  uint64           `json:"seqNum"`
+	SimplexSender           string           `json:"simplexSender"`
+	SimplexReceiver         string           `json:"simplexReceiver"`
+	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
+	DisputeTimeout          uint64           `json:"disputeTimeout"`
+	Status                  ChanStatus       `json:"status"`
+	AssignedGuards          []sdk.AccAddress `json:"assignedGuards"`
+	TriggerTxHash           string           `json:"triggerTxHash"`
+	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
+	GuardTxHash             string           `json:"guardTxHash"`
+	GuardTxBlkNum           uint64           `json:"guardTxBlkNum"`
+	GuardSender             string           `json:"guardSender"`
 }
 
 func NewRequest(
@@ -69,12 +93,12 @@ func NewInitRequest(signedSimplexStateBytes, simplexReceiverSig []byte, disputeT
 }
 
 type GuardTrigger struct {
-	ChannelId       []byte             `json:"channelId"`
-	SimplexReceiver string             `json:"simplexReceiver"`
-	TriggerTxHash   string             `json:"triggerTxHash"`
-	TriggerTxBlkNum uint64             `json:"triggerTxBlkNum"`
-	TriggerSeqNum   uint64             `json:"triggerSeqNum"`
-	Status          common.GuardStatus `json:"status"`
+	ChannelId       []byte     `json:"channelId"`
+	SimplexReceiver string     `json:"simplexReceiver"`
+	TriggerTxHash   string     `json:"triggerTxHash"`
+	TriggerTxBlkNum uint64     `json:"triggerTxBlkNum"`
+	TriggerSeqNum   uint64     `json:"triggerSeqNum"`
+	Status          ChanStatus `json:"status"`
 }
 
 func (gt GuardTrigger) String() string {
@@ -88,7 +112,7 @@ func NewGuardTrigger(
 	triggerTxHash mainchain.HashType,
 	triggerTxBlkNum uint64,
 	triggerSeqNum uint64,
-	status common.GuardStatus) *GuardTrigger {
+	status ChanStatus) *GuardTrigger {
 	return &GuardTrigger{
 		ChannelId:       channelId.Bytes(),
 		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),
@@ -100,12 +124,12 @@ func NewGuardTrigger(
 }
 
 type GuardProof struct {
-	ChannelId       []byte             `json:"channelId"`
-	SimplexReceiver string             `json:"simplexReceiver"`
-	GuardTxHash     string             `json:"guardTxHash"`
-	GuardTxBlkNum   uint64             `json:"guardTxBlkNum"`
-	GuardSender     string             `json:"guardSender"`
-	Status          common.GuardStatus `json:"status"`
+	ChannelId       []byte     `json:"channelId"`
+	SimplexReceiver string     `json:"simplexReceiver"`
+	GuardTxHash     string     `json:"guardTxHash"`
+	GuardTxBlkNum   uint64     `json:"guardTxBlkNum"`
+	GuardSender     string     `json:"guardSender"`
+	Status          ChanStatus `json:"status"`
 }
 
 func (gp GuardProof) String() string {
@@ -119,7 +143,7 @@ func NewGuardProof(
 	guardTxHash mainchain.HashType,
 	guardTxBlkNum uint64,
 	guardSender mainchain.Addr,
-	status common.GuardStatus) *GuardProof {
+	status ChanStatus) *GuardProof {
 	return &GuardProof{
 		ChannelId:       channelId.Bytes(),
 		SimplexReceiver: mainchain.Addr2Hex(simplexReceiver),

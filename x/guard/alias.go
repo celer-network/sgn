@@ -13,6 +13,11 @@ const (
 	QueryRequest      = types.QueryRequest
 	QueryEpoch        = types.QueryEpoch
 	QueryParameters   = types.QueryParameters
+
+	ChanStatus_Idle        = types.ChanStatus_Idle
+	ChanStatus_Withdrawing = types.ChanStatus_Withdrawing
+	ChanStatus_Settling    = types.ChanStatus_Settling
+	ChanStatus_Settled     = types.ChanStatus_Settled
 )
 
 var (
@@ -46,6 +51,7 @@ type (
 	GuardTrigger            = types.GuardTrigger
 	GuardProof              = types.GuardProof
 	Request                 = types.Request
+	ChanStatus             = types.ChanStatus
 	Epoch                   = types.Epoch
 	Params                  = types.Params
 	QuerySubscriptionParams = types.QuerySubscriptionParams

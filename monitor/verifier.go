@@ -400,21 +400,21 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 
 	// verify transaction event type and current request status
 	if triggerLog.Topics[0] == intendSettleEventSig {
-		if trigger.Status != common.GuardStatus_Settling {
+		if trigger.Status != guard.ChanStatus_Settling {
 			log.Errorf("%s. Trigger guard state should be settling", logmsg)
 			return true, false
 		}
-		if r.Status == common.GuardStatus_Settling || r.Status == common.GuardStatus_Settled {
-			log.Errorf("%s. Invalid GuardStatus current state: %d", logmsg, r.Status)
+		if r.Status == guard.ChanStatus_Settling || r.Status == guard.ChanStatus_Settled {
+			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
 			return true, false
 		}
 	} else if triggerLog.Topics[0] == intendWithdrawEventSig {
-		if trigger.Status != common.GuardStatus_Withdrawing {
+		if trigger.Status != guard.ChanStatus_Withdrawing {
 			log.Errorf("%s. Trigger guard state should be withdraw", logmsg)
 			return true, false
 		}
-		if r.Status != common.GuardStatus_Idle {
-			log.Errorf("%s. Invalid GuardStatus current state: %d", logmsg, r.Status)
+		if r.Status != guard.ChanStatus_Idle {
+			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
 			return true, false
 		}
 	} else {
@@ -505,8 +505,8 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return true, false
 	}
 	var seqNum uint64
-	if r.Status == common.GuardStatus_Settling {
-		if proof.Status != common.GuardStatus_Settled {
+	if r.Status == guard.ChanStatus_Settling {
+		if proof.Status != guard.ChanStatus_Settled {
 			log.Errorf("%s. Proof guard state should be settled", logmsg)
 			return true, false
 		}
@@ -517,8 +517,8 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 			return true, false
 		}
 		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
-	} else if r.Status == common.GuardStatus_Withdrawing {
-		if proof.Status != common.GuardStatus_Idle {
+	} else if r.Status == guard.ChanStatus_Withdrawing {
+		if proof.Status != guard.ChanStatus_Idle {
 			log.Errorf("%s. Proof guard state should be idle", logmsg)
 			return true, false
 		}

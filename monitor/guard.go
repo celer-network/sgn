@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	ChanState_Null            uint8 = 0
-	ChanState_CaughtWithdraw  uint8 = 1
-	ChanState_GuardedWithdraw uint8 = 2
-	ChanState_CaughtSettle    uint8 = 3
-	ChanState_GuardedSettle   uint8 = 4
+	ChanInfoState_Null            uint8 = 0
+	ChanInfoState_CaughtWithdraw  uint8 = 1
+	ChanInfoState_GuardedWithdraw uint8 = 2
+	ChanInfoState_CaughtSettle    uint8 = 3
+	ChanInfoState_GuardedSettle   uint8 = 4
 )
 
 type ChanInfo struct {
@@ -69,7 +69,7 @@ func (m *Monitor) processGuardQueue() {
 
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
-		if chanInfo.State == ChanState_GuardedWithdraw || chanInfo.State == ChanState_GuardedSettle {
+		if chanInfo.State == ChanInfoState_GuardedWithdraw || chanInfo.State == ChanInfoState_GuardedSettle {
 			continue
 		}
 		var skip bool
@@ -93,7 +93,7 @@ func (m *Monitor) processGuardQueue() {
 			continue
 		}
 
-		if request.Status == common.GuardStatus_Withdrawing || request.Status == common.GuardStatus_Settling {
+		if request.Status == guard.ChanStatus_Withdrawing || request.Status == guard.ChanStatus_Settling {
 			guarded, err := m.guardChannel(request)
 			if err != nil {
 				log.Error(err)
@@ -116,12 +116,12 @@ func (m *Monitor) processGuardQueue() {
 					}
 					chanInfo = unmarshalChanInfo(val)
 				}
-				if request.Status == common.GuardStatus_Withdrawing {
-					if chanInfo.State == ChanState_CaughtWithdraw {
-						chanInfo.State = ChanState_GuardedWithdraw
+				if request.Status == guard.ChanStatus_Withdrawing {
+					if chanInfo.State == ChanInfoState_CaughtWithdraw {
+						chanInfo.State = ChanInfoState_GuardedWithdraw
 					}
 				} else {
-					chanInfo.State = ChanState_GuardedSettle
+					chanInfo.State = ChanInfoState_GuardedSettle
 				}
 				err = m.db.Set(key, chanInfo.marshal())
 				if err != nil {
@@ -160,13 +160,13 @@ func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 
 	var tx *ethtypes.Transaction
 	switch request.Status {
-	case common.GuardStatus_Withdrawing:
+	case guard.ChanStatus_Withdrawing:
 		tx, err = m.ethClient.Transactor.Transact(
 			m.guardTxHandler("SnapshotStates", request),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
-	case common.GuardStatus_Settling:
+	case guard.ChanStatus_Settling:
 		tx, err = m.ethClient.Transactor.Transact(
 			m.guardTxHandler("IntendSettle", request),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
@@ -186,9 +186,9 @@ func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 
 func (m *Monitor) guardTxHandler(
 	description string, request *guard.Request) *eth.TransactionStateHandler {
-	guardState := common.GuardStatus_Idle
+	guardState := guard.ChanStatus_Idle
 	if description == "IntendSettle" {
-		guardState = common.GuardStatus_Settled
+		guardState = guard.ChanStatus_Settled
 	}
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
