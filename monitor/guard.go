@@ -205,6 +205,10 @@ func (m *Monitor) guardTxHandler(
 				msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
 				log.Infof("submit change tx: guard proof request %s", request)
 				m.operator.AddTxMsg(msg)
+				err := m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
+				if err != nil {
+					log.Errorln("db Delete err", err)
+				}
 			} else {
 				log.Errorf("%s transaction %x failed", description, receipt.TxHash)
 			}
