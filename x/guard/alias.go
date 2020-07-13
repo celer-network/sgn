@@ -51,7 +51,7 @@ type (
 	GuardTrigger            = types.GuardTrigger
 	GuardProof              = types.GuardProof
 	Request                 = types.Request
-	ChanStatus             = types.ChanStatus
+	ChanStatus              = types.ChanStatus
 	Epoch                   = types.Epoch
 	Params                  = types.Params
 	QuerySubscriptionParams = types.QuerySubscriptionParams

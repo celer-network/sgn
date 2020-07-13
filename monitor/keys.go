@@ -16,7 +16,7 @@ func GetPullerKey(txHash mainchain.HashType) []byte {
 	return append(PullerKeyPrefix, txHash.Bytes()...)
 }
 
-// get pusher key from mainchain txHash
+// get guard key from mainchain txHash
 func GetGuardKey(cid mainchain.CidType, simplexReceiver mainchain.Addr) []byte {
 	return append(GuardKeyPrefix, append(cid.Bytes(), simplexReceiver.Bytes()...)...)
 }

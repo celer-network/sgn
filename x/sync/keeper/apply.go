@@ -199,16 +199,16 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 	if !found {
 		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
-	if request.Status == guard.ChanStatus_Idle {
-		request.TriggerTxHash = trigger.TriggerTxHash
-		request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
-		if request.SeqNum > trigger.TriggerSeqNum {
-			request.AssignedGuards = guard.AssignGuards(ctx, keeper.guardKeeper)
-			request.Status = trigger.Status
-		}
-		keeper.guardKeeper.SetRequest(ctx, request)
+	if request.Status != guard.ChanStatus_Idle {
+		return fmt.Errorf("request channel %x in non-idle status %s", trigger.ChannelId, request.Status)
 	}
-
+	request.TriggerTxHash = trigger.TriggerTxHash
+	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
+	if request.SeqNum > trigger.TriggerSeqNum {
+		request.AssignedGuards = guard.AssignGuards(ctx, keeper.guardKeeper)
+		request.Status = trigger.Status
+	}
+	keeper.guardKeeper.SetRequest(ctx, request)
 	return nil
 }
 
