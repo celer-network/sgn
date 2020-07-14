@@ -291,7 +291,3 @@ func (m *Monitor) setGuardEvent(eLog ethtypes.Log, state uint8) {
 		m.dbLock.Unlock()
 	}
 }
-
-func (m *Monitor) setGuardSettleEvent(eLog ethtypes.Log) {
-
-}
