@@ -50,8 +50,7 @@ func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) 
 			return fmt.Errorf("Fail to get staking subspace")
 		}
 
-		err := ss.Update(ctx, staking.KeyMaxValidators, keeper.cdc.MustMarshalBinaryBare(uint16(paramChange.NewValue.Uint64())))
-		return err
+		return ss.Update(ctx, staking.KeyMaxValidators, keeper.cdc.MustMarshalBinaryBare(uint16(paramChange.NewValue.Uint64())))
 	}
 
 	return nil
