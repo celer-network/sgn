@@ -73,7 +73,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		isValidator:     mainchain.IsBonded(dposCandidateInfo),
 	}
 
-	go m.checkBlockHead()
+	go m.processQueues()
 
 	go m.monitorDPoSDelegate()
 	go m.monitorDPoSValidatorChange()
@@ -88,31 +88,25 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	go m.monitorSidechainSlash()
 }
 
-func (m *Monitor) checkBlockHead() {
-	// TODO: configure check interval,
-	// different queues could be checked at different times
-	// e.g., guard queue does not need to be checked so frequently
-	ticker := time.NewTicker(500 * time.Millisecond)
+func (m *Monitor) processQueues() {
+	ticker := time.NewTicker(time.Duration(viper.GetUint64(common.FlagEthPollInterval)) * time.Second)
 	defer ticker.Stop()
 
-	blkNum := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+	blkNum := m.getCurrentBlockNumber().Uint64()
 	for {
 		<-ticker.C
-		newblk := m.ethMonitor.GetCurrentBlockNumber().Uint64()
+		newblk := m.getCurrentBlockNumber().Uint64()
 		if blkNum == newblk {
 			continue
 		}
 
 		blkNum = newblk
-		m.processQueue()
+
+		m.processPullerQueue()
+		m.processGuardQueue()
+		m.processPenaltyQueue()
 		m.verifyActiveChanges()
 	}
-}
-
-func (m *Monitor) processQueue() {
-	m.processPullerQueue()
-	m.processGuardQueue()
-	m.processPenaltyQueue()
 }
 
 func (m *Monitor) monitorSGNUpdateSidechainAddr() {
@@ -120,13 +114,13 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 		&monitor.Config{
 			EventName:     string(UpdateSidechainAddr),
 			Contract:      m.sgnContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(UpdateSidechainAddr),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
 			event := NewEvent(UpdateSidechainAddr, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -142,13 +136,13 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 		&monitor.Config{
 			EventName:     string(CandidateUnbonded),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(CandidateUnbonded),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -163,13 +157,13 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 		&monitor.Config{
 			EventName:     string(ConfirmParamProposal),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(ConfirmParamProposal),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
 			event := NewEvent(ConfirmParamProposal, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -184,7 +178,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 		&monitor.Config{
 			EventName:     string(ValidatorChange),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(ValidatorChange),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -209,7 +203,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 					m.isValidator = false
 				}
 				event := NewEvent(ValidatorChange, eLog)
-				dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
+				dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 				if dberr != nil {
 					log.Errorln("db Set err", dberr)
 				}
@@ -225,38 +219,13 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 		&monitor.Config{
 			EventName:     string(IntendWithdraw),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(IntendWithdrawDpos),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x", eLog.TxHash)
 			event := NewEvent(IntendWithdrawDpos, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
-			}
-		})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
-	_, err := m.ethMonitor.Monitor(
-		&monitor.Config{
-			EventName:     string(IntendWithdraw),
-			Contract:      m.ledgerContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
-		},
-		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendWithdrawChannel, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
-			}
-			dberr = m.dbSet(GetGuardKey(eLog), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -271,20 +240,37 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 		&monitor.Config{
 			EventName:     string(IntendSettle),
 			Contract:      m.ledgerContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendSettle, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
 			}
-			dberr = m.dbSet(GetGuardKey(eLog), event.MustMarshal())
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			m.setGuardEvent(eLog, ChanInfoState_CaughtSettle)
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:     string(IntendWithdraw),
+			Contract:      m.ledgerContract,
+			StartBlock:    m.getCurrentBlockNumber(),
+			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
+			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
 			}
+			m.setGuardEvent(eLog, ChanInfoState_CaughtWithdraw)
 		})
 	if err != nil {
 		log.Fatal(err)
@@ -296,7 +282,7 @@ func (m *Monitor) monitorDPoSDelegate() {
 		&monitor.Config{
 			EventName:     string(Delegate),
 			Contract:      m.dposContract,
-			StartBlock:    m.ethMonitor.GetCurrentBlockNumber(),
+			StartBlock:    m.getCurrentBlockNumber(),
 			CheckInterval: eventCheckInterval(Delegate),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {

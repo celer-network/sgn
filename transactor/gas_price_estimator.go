@@ -56,7 +56,10 @@ func (gpe *GasPriceEstimator) collectStatistics() {
 			log.Errorln("Query block error:", err)
 			continue
 		}
-
+		if block.Block == nil {
+			log.Warn("nil block")
+			continue
+		}
 		if gpe.currentHeight == block.Block.Height {
 			continue
 		}

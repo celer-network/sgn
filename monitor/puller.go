@@ -110,30 +110,32 @@ func (m *Monitor) syncUpdateSidechainAddr(updateSidechainAddr *mainchain.SGNUpda
 
 func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle) {
 	log.Infof("Sync IntendSettle %x, tx hash %x", intendSettle.ChannelId, intendSettle.Raw.TxHash)
-	requests := m.getRequests(intendSettle.ChannelId)
-	for _, request := range requests {
-		m.triggerGuard(request, intendSettle.Raw)
+	requests, seqs := m.getGuardRequests(intendSettle.ChannelId)
+	for i, request := range requests {
+		m.triggerGuard(request, intendSettle.Raw, seqs[i], guard.ChanStatus_Settling)
 	}
 }
 
 func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw) {
 	log.Infof("Sync intendWithdrawChannel %x, tx hash %x", intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
-	requests := m.getRequests(intendWithdrawChannel.ChannelId)
-	for _, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw)
+	requests, seqs := m.getGuardRequests(intendWithdrawChannel.ChannelId)
+	for i, request := range requests {
+		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
 	}
 }
 
-func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log) {
-	if request.TriggerTxHash != "" {
-		log.Infoln("The intendSettle event has been synced on sgn")
+func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardStatus guard.ChanStatus) {
+	if request.Status != guard.ChanStatus_Idle {
+		log.Infoln("The guard state is not idle, current state", request.Status)
 		return
 	}
 	trigger := guard.NewGuardTrigger(
 		mainchain.Bytes2Cid(request.ChannelId),
 		mainchain.Hex2Addr(request.SimplexReceiver),
 		rawLog.TxHash,
-		rawLog.BlockNumber)
+		rawLog.BlockNumber,
+		seq,
+		guardStatus)
 	syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(trigger)
 	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.operator.Key.GetAddress())
 	log.Infof("submit change tx: trigger guard request %s", trigger)

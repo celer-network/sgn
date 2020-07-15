@@ -50,8 +50,7 @@ func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) 
 			return fmt.Errorf("Fail to get staking subspace")
 		}
 
-		err := ss.Update(ctx, staking.KeyMaxValidators, keeper.cdc.MustMarshalBinaryBare(uint16(paramChange.NewValue.Uint64())))
-		return err
+		return ss.Update(ctx, staking.KeyMaxValidators, keeper.cdc.MustMarshalBinaryBare(uint16(paramChange.NewValue.Uint64())))
 	}
 
 	return nil
@@ -199,13 +198,16 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 	if !found {
 		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
-
+	if request.Status != guard.ChanStatus_Idle {
+		return fmt.Errorf("request channel %x in non-idle status %s", trigger.ChannelId, request.Status)
+	}
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
-	request.RequestGuards = guard.GetRequestGuards(ctx, keeper.guardKeeper)
-	request.GuardPending = true
+	if request.SeqNum > trigger.TriggerSeqNum {
+		request.AssignedGuards = guard.AssignGuards(ctx, keeper.guardKeeper)
+		request.Status = trigger.Status
+	}
 	keeper.guardKeeper.SetRequest(ctx, request)
-
 	return nil
 }
 
@@ -219,32 +221,38 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
+	if request.Status != guard.ChanStatus_Withdrawing && request.Status != guard.ChanStatus_Settling {
+		return fmt.Errorf("Request not in guard pending state: %d", request.Status)
+	}
+
 	request.GuardTxHash = proof.GuardTxHash
 	request.GuardTxBlkNum = proof.GuardTxBlkNum
 	request.GuardSender = proof.GuardSender
-	request.GuardPending = false
-	keeper.guardKeeper.SetRequest(ctx, request)
+	request.Status = proof.Status
 
-	requestGuards := request.RequestGuards
+	assignedGuards := request.AssignedGuards
 	blockNumberDiff := request.GuardTxBlkNum - request.TriggerTxBlkNum
-	guardIndex := (len(requestGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
+	guardIndex := (len(assignedGuards) + 1) * int(blockNumberDiff) / int(request.DisputeTimeout)
 
 	var rewardValidator sdk.AccAddress
-	if guardIndex < len(requestGuards) {
-		rewardValidator = request.RequestGuards[guardIndex]
+	if guardIndex < len(assignedGuards) {
+		rewardValidator = request.AssignedGuards[guardIndex]
 	} else {
 		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, request.GuardSender)
 		if found {
 			rewardValidator = rewardCandidate.Operator
 		}
 
-		guardIndex = len(requestGuards)
+		guardIndex = len(assignedGuards)
 	}
 
 	// punish corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {
-		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.RequestGuards[i])
+		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.AssignedGuards[i])
 	}
+
+	request.AssignedGuards = nil
+	keeper.guardKeeper.SetRequest(ctx, request)
 
 	return nil
 }

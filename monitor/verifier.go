@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,7 +16,14 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+)
+
+var (
+	intendSettleEventSig   = mainchain.GetEventSignature("IntendSettle(bytes32,uint256[2])")
+	intendWithdrawEventSig = mainchain.GetEventSignature("IntendWithdraw(bytes32,address,uint256)")
+	snapshotStatesEventSig = mainchain.GetEventSignature("SnapshotStates(bytes32,uint256[2])")
 )
 
 func (m *Monitor) verifyActiveChanges() {
@@ -251,12 +259,12 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	logmsg += fmt.Sprintf(". %s, to %x, disputeTimeout: %d",
 		guard.PrintSimplexChannel(simplexChannel), simplexReceiver, request.DisputeTimeout)
 
-	_, err = m.getRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
+	_, err = m.getGuardRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
 		log.Errorf("%s. request already initiated", logmsg)
 		return true, false
 	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-		log.Errorf("%s. getRequest err: %s", logmsg, err)
+		log.Errorf("%s. getGuardRequest err: %s", logmsg, err)
 		return false, false
 	}
 
@@ -324,6 +332,15 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 		return true, false
 	}
 
+	// verify not in active unilateral withdraw state
+	wrecv, _, wblk, _, err := m.ethClient.Ledger.GetWithdrawIntent(&bind.CallOpts{}, cid)
+	if wrecv != mainchain.ZeroAddr {
+		if m.getCurrentBlockNumber().Uint64() <= wblk.Uint64()+request.DisputeTimeout {
+			log.Errorf("%s. channel has pending unilateral withdrawal request", logmsg)
+			return true, false
+		}
+	}
+
 	log.Infof("%s. success", logmsg)
 	return true, true
 }
@@ -333,27 +350,88 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
 
+	// verify request exists
 	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, trigger.ChannelId, trigger.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
 
+	// verify trigger block number
 	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
 		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
 	}
 
-	triggerLog, err := guard.ValidateTriggerTx(
-		m.ethClient, mainchain.Hex2Hash(trigger.TriggerTxHash), mainchain.Bytes2Cid(trigger.ChannelId))
+	// verify seqNum
+	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Bytes2Cid(trigger.ChannelId))
 	if err != nil {
-		log.Errorf("%s. ValidateTriggerTx err: %s", logmsg, err)
+		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
+		return false, false
+	}
+	seqIndex := 0
+	if mainchain.Hex2Addr(trigger.SimplexReceiver) == addrs[0] {
+		seqIndex = 1
+	}
+	if r.SeqNum <= seqNums[seqIndex].Uint64() {
+		log.Errorf("%s. Stored SeqNum %d not larger than mainchain value %s", logmsg, r.SeqNum, seqNums[seqIndex])
 		return false, false
 	}
 
+	// TODO: verify triggerSeqNum
+
+	// verify onchain trasaction receipt and status
+	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
+	if err != nil {
+		log.Errorf("%s. Get trigger tx receipt err: %s", logmsg, err)
+		return false, false
+	}
+	if receipt.Status != mainchain.TxSuccess {
+		log.Errorf("%s. Trigger tx failed: %d", logmsg, receipt.Status)
+		return true, false
+	}
+	triggerLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
+
+	// verify transaction contract address
+	if triggerLog.Address != m.ethClient.LedgerAddress {
+		log.Errorf("%s. Trigger tx contract address not match: %x", logmsg, triggerLog.Address)
+		return true, false
+	}
+
+	// verify transaction event type and current request status
+	if triggerLog.Topics[0] == intendSettleEventSig {
+		if trigger.Status != guard.ChanStatus_Settling {
+			log.Errorf("%s. Trigger guard state should be settling", logmsg)
+			return true, false
+		}
+		if r.Status == guard.ChanStatus_Settling || r.Status == guard.ChanStatus_Settled {
+			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
+			return true, false
+		}
+	} else if triggerLog.Topics[0] == intendWithdrawEventSig {
+		if trigger.Status != guard.ChanStatus_Withdrawing {
+			log.Errorf("%s. Trigger guard state should be withdraw", logmsg)
+			return true, false
+		}
+		if r.Status != guard.ChanStatus_Idle {
+			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
+			return true, false
+		}
+	} else {
+		log.Errorf("%s. Trigger Tx is not for IntendSettle/IntendWithdraw event", logmsg)
+		return true, false
+	}
+
+	// verify transaction channel ID
+	if triggerLog.Topics[1] != mainchain.Bytes2Cid(trigger.ChannelId) {
+		log.Errorf("%s. Trigger Tx channel ID not match, %x", logmsg, triggerLog.Topics[1])
+		return true, false
+	}
+
+	// verify transaction block number
 	if trigger.TriggerTxBlkNum != triggerLog.BlockNumber {
 		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
-		return false, false
+		return true, false
 	}
 
 	log.Infof("%s. success", logmsg)
@@ -365,48 +443,105 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
 	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, proof)
 
+	// verify request exists
 	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, proof.ChannelId, proof.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
 	}
-
 	if r.TriggerTxHash == "" {
 		log.Errorf("%s. Request Trigger event has not been submitted", logmsg)
 		return true, false
 	}
 
-	guardLog, err := guard.ValidateGuardTx(
-		m.ethClient, mainchain.Hex2Hash(proof.GuardTxHash), mainchain.Bytes2Cid(proof.ChannelId))
+	// verify onchain trasaction receipt and status
+	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(proof.GuardTxHash))
 	if err != nil {
-		log.Errorf("%s. ValidateGuardTx err: %s", logmsg, err)
+		log.Errorf("%s. Get trigger transaction receipt err: %s", logmsg, err)
 		return false, false
 	}
+	if receipt.Status != mainchain.TxSuccess {
+		log.Errorf("%s. Trigger transaction failed: %d", logmsg, receipt.Status)
+		return true, false
+	}
+	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
 
+	// verify transaction contract address
+	if guardLog.Address != m.ethClient.LedgerAddress {
+		log.Errorf("%s. Guard tx contract address not match: %x", logmsg, guardLog.Address)
+		return true, false
+	}
+
+	// verify transaction event type
+	if guardLog.Topics[0] != intendSettleEventSig && guardLog.Topics[0] != snapshotStatesEventSig {
+		log.Errorf("%s. Guard Tx is not for IntendSettle/SnapshotStates event", logmsg)
+		return true, false
+	}
+
+	// verify transaction channel ID
+	if guardLog.Topics[1] != mainchain.Bytes2Cid(proof.ChannelId) {
+		log.Errorf("%s. Guard Tx channel ID not match, %x", logmsg, guardLog.Topics[1])
+		return true, false
+	}
+
+	// verify transaction block number
 	if guardLog.BlockNumber <= r.TriggerTxBlkNum {
 		log.Errorf("%s. Invalid block number for GuardTx at at %d", logmsg, guardLog.BlockNumber)
-		return false, false
+		return true, false
 	}
-	// TOTO: more check on request
+	if guardLog.BlockNumber != proof.GuardTxBlkNum {
+		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
+		return true, false
+	}
 
+	// verify channel sequence number and current request status
 	seqIndex := 0
 	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
 		seqIndex = 1
 	}
-	err = guard.ValidateGuardProofSeqNum(guardLog.Data, uint8(seqIndex), r.SeqNum)
+	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
 	if err != nil {
-		log.Errorf("%s. ValidateGuardProofSeqNum err: %s", logmsg, err)
-		return false, false
+		log.Errorf("%s. Failed to parse CelerLedgerABI: %s", logmsg, err)
+		return true, false
+	}
+	var seqNum uint64
+	if r.Status == guard.ChanStatus_Settling {
+		if proof.Status != guard.ChanStatus_Settled {
+			log.Errorf("%s. Proof guard state should be settled", logmsg)
+			return true, false
+		}
+		var intendSettleEvent mainchain.CelerLedgerIntendSettle
+		err = ledgerABI.Unpack(&intendSettleEvent, "IntendSettle", guardLog.Data)
+		if err != nil {
+			log.Errorf("%s. Failed to unpack IntendSettle event: %s", logmsg, err)
+			return true, false
+		}
+		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
+	} else if r.Status == guard.ChanStatus_Withdrawing {
+		if proof.Status != guard.ChanStatus_Idle {
+			log.Errorf("%s. Proof guard state should be idle", logmsg)
+			return true, false
+		}
+		var snapshotStatesEvent mainchain.CelerLedgerSnapshotStates
+		err = ledgerABI.Unpack(&snapshotStatesEvent, "SnapshotStates", guardLog.Data)
+		if err != nil {
+			log.Errorf("%s. Failed to unpack SnapshotStates event: %s", logmsg, err)
+			return true, false
+		}
+		seqNum = snapshotStatesEvent.SeqNums[seqIndex].Uint64()
+	} else {
+		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.Status)
+		return true, false
+	}
+	if seqNum != r.SeqNum {
+		log.Errorf("SeqNum not match, expected: %d, actual: %d", r.SeqNum, seqNum)
+		return true, false
 	}
 
+	// verify guard sender
 	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, proof.GuardTxHash)
 	if err != nil {
 		log.Errorf("%s. GetTxSender err: %s", logmsg, err)
-		return false, false
-	}
-
-	if proof.GuardTxBlkNum != guardLog.BlockNumber {
-		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return false, false
 	}
 	if proof.GuardSender != guardSender {
@@ -414,6 +549,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
+	// TOTO: more check on request
 	log.Infof("%s. success", logmsg)
 	return true, true
 }
