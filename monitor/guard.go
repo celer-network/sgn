@@ -251,43 +251,45 @@ func (m *Monitor) setGuardEvent(eLog ethtypes.Log, state uint8) {
 			// for intentWithdraw, only guard against the withdrawReceiver
 			continue
 		}
-		key := GetGuardKey(cid, simplexReceiver)
-		m.dbLock.Lock()
-		var chanInfo *ChanInfo
-		exist, err := m.db.Has(key)
-		if err != nil {
-			log.Errorln("db Hash err", err)
-			m.dbLock.Unlock()
-			continue
+		m.setChanInfo(cid, simplexReceiver, state, seqNums[1-i].Uint64())
+	}
+}
+
+func (m *Monitor) setChanInfo(cid mainchain.CidType, simplexReceiver mainchain.Addr, state uint8, seqNum uint64) {
+	key := GetGuardKey(cid, simplexReceiver)
+	m.dbLock.Lock()
+	defer m.dbLock.Unlock()
+	var chanInfo *ChanInfo
+	exist, err := m.db.Has(key)
+	if err != nil {
+		log.Errorln("db Hash err", err)
+		return
+	}
+	if exist {
+		val, err2 := m.db.Get(key)
+		if err2 != nil {
+			log.Errorln("db Get err", err2)
+			return
 		}
-		if exist {
-			val, err2 := m.db.Get(key)
-			if err2 != nil {
-				log.Errorln("db Get err", err2)
-				m.dbLock.Unlock()
-				continue
-			}
-			chanInfo = unmarshalChanInfo(val)
-			log.Infof("ChanInfo for cid %x receiver %x already recorded", chanInfo.Cid, chanInfo.SimplexReceiver)
-			chanInfo.SeqNum = seqNums[1-i].Uint64()
-			if state == ChanInfoState_CaughtSettle {
-				// IntendSettle has higher priority than IntendWithdraw
-				if chanInfo.State == ChanInfoState_CaughtWithdraw || chanInfo.State == ChanInfoState_GuardedWithdraw {
-					chanInfo.State = ChanInfoState_CaughtSettle
-				}
-			}
-		} else {
-			chanInfo = &ChanInfo{
-				Cid:             cid,
-				SimplexReceiver: simplexReceiver,
-				SeqNum:          seqNums[1-i].Uint64(),
-				State:           state,
+		chanInfo = unmarshalChanInfo(val)
+		log.Infof("ChanInfo for cid %x receiver %x already recorded", chanInfo.Cid, chanInfo.SimplexReceiver)
+		chanInfo.SeqNum = seqNum
+		if state == ChanInfoState_CaughtSettle {
+			// IntendSettle has higher priority than IntendWithdraw
+			if chanInfo.State == ChanInfoState_CaughtWithdraw || chanInfo.State == ChanInfoState_GuardedWithdraw {
+				chanInfo.State = ChanInfoState_CaughtSettle
 			}
 		}
-		err = m.db.Set(key, chanInfo.marshal())
-		if err != nil {
-			log.Errorln("db Set err", err)
+	} else {
+		chanInfo = &ChanInfo{
+			Cid:             cid,
+			SimplexReceiver: simplexReceiver,
+			SeqNum:          seqNum,
+			State:           state,
 		}
-		m.dbLock.Unlock()
+	}
+	err = m.db.Set(key, chanInfo.marshal())
+	if err != nil {
+		log.Errorln("db Set err", err)
 	}
 }
