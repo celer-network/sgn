@@ -5,8 +5,6 @@ import (
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -22,23 +20,7 @@ const (
 )
 
 func initCandidate() error {
-	ethClient, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthGateway),
-		viper.GetString(common.FlagEthKeystore),
-		viper.GetString(common.FlagEthPassphrase),
-		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
-			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
-			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
-		},
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-	)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
+	ethClient, err := initEthClient()
 	minSelfStake := new(big.Int)
 	minSelfStake.SetString(viper.GetString(minSelfStakeFlag), 10)
 	commissionRate := new(big.Int)

@@ -29,6 +29,7 @@ func main() {
 		tc.AccountsCommand(),
 		channel.ServeCommand(),
 		ops.InitCandidateCommand(),
+		ops.DelegateCommand(),
 	)
 
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
