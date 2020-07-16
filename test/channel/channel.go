@@ -94,15 +94,15 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
+	sgnContractAddress := mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress))
 	err = tc.SetContracts(
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)),
-		mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress)),
+		sgnContractAddress,
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthLedgerAddress)))
 	if err != nil {
 		return
 	}
 
-	log.Infof("Subscribe to sgn")
 	tokenAddr, err := tc.DposContract.CelerToken(&bind.CallOpts{})
 	if err != nil {
 		return
@@ -111,16 +111,28 @@ func NewRestServer() (rs *RestServer, err error) {
 	if err != nil {
 		return
 	}
-
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 18), 10)
-	tx, err := tokenContract.Approve(peer1.Auth, mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)), amt)
-	tc.ChkErr(err, "failed to approve erc20")
-	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "approve erc20")
+	peer1Auth := peer1.Auth
+	allowance, err := tokenContract.Allowance(&bind.CallOpts{}, peer1Auth.From, sgnContractAddress)
+	if allowance.Cmp(amt) < 0 {
+		log.Info("Approving CELR to SGN contract")
+		tx, approveErr := tokenContract.Approve(peer1Auth, sgnContractAddress, amt)
+		tc.ChkErr(approveErr, "failed to approve CELR")
+		tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "approve CELR")
+	}
 
-	tx, err = tc.SgnContract.Subscribe(peer1.Auth, amt)
+	log.Infof("Subscribe to sgn")
+	tx, err := tc.SgnContract.Subscribe(peer1Auth, amt)
 	tc.ChkErr(err, "failed to subscribe")
-	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, viper.GetUint64(blockDelayFlag)+3, tc.PollingInterval, "Subscribe on SGN contract")
+	tc.WaitMinedWithChk(
+		context.Background(),
+		tc.EthClient,
+		tx,
+		viper.GetUint64(blockDelayFlag)+3,
+		tc.PollingInterval,
+		"Subscribe on SGN contract",
+	)
 
 	if gateway == "" {
 		subscription := guard.NewSubscription(peer1.Address.Hex())
@@ -131,6 +143,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	} else {
 		reqBody, err2 := json.Marshal(map[string]string{
 			"ethAddr": peer1.Address.Hex(),
+			"amount":  amt.String(),
 		})
 		if err2 != nil {
 			return nil, err2
