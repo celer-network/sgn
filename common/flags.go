@@ -7,6 +7,7 @@ const (
 	FlagStartMonitor = "startMonitor"
 
 	FlagEthGateway       = "eth.gateway"
+	FlagEthCelrAddress   = "eth.contracts.celrAddress"
 	FlagEthDPoSAddress   = "eth.contracts.dposAddress"
 	FlagEthSGNAddress    = "eth.contracts.sgnAddress"
 	FlagEthLedgerAddress = "eth.contracts.ledgerAddress"
