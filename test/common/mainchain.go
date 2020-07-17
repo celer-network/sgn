@@ -245,7 +245,7 @@ func OpenChannel(peer0, peer1 *TestEthClient) (channelId [32]byte, err error) {
 		return
 	}
 
-	tx, err := LedgerContract.OpenChannel(Client0.Auth, requestBytes)
+	tx, err := LedgerContract.OpenChannel(peer0.Auth, requestBytes)
 	if err != nil {
 		return
 	}
