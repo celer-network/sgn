@@ -168,14 +168,13 @@ sgnd start
 sgncli gateway --laddr tcp://0.0.0.0:1317` to run a gateway.
 ```
 
-14.
-In case your local state is corrupted, you can try to reset the state by running:
+14. In case your local state is corrupted, you can try to reset the state by running:
 
 ```shellscript
 sgnd unsafe-reset-all
 ```
 
-**Please contact us before doing so**.
+**Please contact us before doing this**.
 
 ## Local Testing
 
