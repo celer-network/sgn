@@ -22,7 +22,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams) {
 		sgnParams = &tc.SGNParams{
 			CelrAddr:               tc.E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
-			GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
+			GovernVoteTimeout:      big.NewInt(3), // TODO: use a more practical value
 			BlameTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(11),
