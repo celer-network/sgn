@@ -3,9 +3,10 @@ package ops
 import (
 	"math/big"
 
-	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
@@ -28,33 +29,45 @@ func initCandidate() error {
 	rateLockEndTime := new(big.Int)
 	rateLockEndTime.SetString(viper.GetString(rateLockEndTimeFlag), 10)
 
-	log.Infof(
-		"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s, rateLockEndTime: %s",
-		minSelfStake,
-		commissionRate,
-		rateLockEndTime,
-	)
-	tx, err := ethClient.Transactor.Transact(
-		&eth.TransactionStateHandler{
-			OnMined: func(receipt *ethtypes.Receipt) {
-				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
-					log.Infof("Initialize candidate transaction %x succeeded", receipt.TxHash)
-				} else {
-					log.Errorf("Initialize candidate transaction %x failed", receipt.TxHash)
-				}
+	dposContract := ethClient.DPoS
+	info, err := dposContract.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
+	if err != nil {
+		return err
+	}
+	if !info.Initialized {
+		log.Infof(
+			"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s, rateLockEndTime: %s",
+			minSelfStake,
+			commissionRate,
+			rateLockEndTime,
+		)
+		receipt, initCandidateErr := ethClient.Transactor.TransactWaitMined(
+			"InitializeCandidate",
+			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+				return dposContract.InitializeCandidate(opts, minSelfStake, commissionRate, rateLockEndTime)
 			},
-			OnError: func(tx *ethtypes.Transaction, err error) {
-				log.Errorf("Initialize candidate transaction %x err: %s", tx.Hash(), err)
-			},
-		},
+		)
+		if initCandidateErr != nil {
+			return initCandidateErr
+		}
+		log.Infof("Initialize candidate transaction %x succeeded", receipt.TxHash.Hex())
+	}
+
+	operatorAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	if err != nil {
+		return err
+	}
+	log.Infof("Calling updateSidechainAddr for %s", operatorAddress)
+	receipt, err := ethClient.Transactor.TransactWaitMined(
+		"UpdateSidechainAddr",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return ethClient.DPoS.InitializeCandidate(opts, minSelfStake, commissionRate, rateLockEndTime)
+			return ethClient.SGN.UpdateSidechainAddr(opts, operatorAddress.Bytes())
 		},
 	)
 	if err != nil {
 		return err
 	}
-	log.Infof("Initialize candidate transaction: %x", tx.Hash())
+	log.Infof("Update sidechain address transaction %x succeeded", receipt.TxHash.Hex())
 	return nil
 }
 
