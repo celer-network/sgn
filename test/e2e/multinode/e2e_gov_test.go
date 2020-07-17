@@ -19,13 +19,13 @@ import (
 
 func setupGov() {
 	log.Infoln("Set up new sgn env")
-	setupNewSGNEnv(nil)
+	// setupNewSGNEnv(nil)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2EGov(t *testing.T) {
 	t.Run("e2e-gov", func(t *testing.T) {
-		// t.Run("sidechainGovTest", sidechainGovTest)
+		t.Run("sidechainGovTest", sidechainGovTest)
 		t.Run("mainchainGovTest", mainchainGovTest)
 	})
 }
