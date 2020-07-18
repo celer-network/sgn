@@ -1,15 +1,19 @@
 package multinode
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/test/common"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
 	"github.com/celer-network/sgn/x/guard"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,16 +24,17 @@ func setupGov() {
 }
 
 func TestE2EGov(t *testing.T) {
-	setupGov()
-
 	t.Run("e2e-gov", func(t *testing.T) {
-		t.Run("govTest", govTest)
+		t.Run("sidechainGovTest", sidechainGovTest)
+		t.Run("mainchainGovTest", mainchainGovTest)
 	})
 }
 
-func govTest(t *testing.T) {
+func sidechainGovTest(t *testing.T) {
 	log.Info("=====================================================================")
-	log.Info("======================== Test gov ===========================")
+	log.Info("======================== Test sidechain gov ===========================")
+
+	setupGov()
 
 	transactor0 := tc.NewTransactor(
 		t,
@@ -204,5 +209,63 @@ func govTest(t *testing.T) {
 	guardParams, err = guard.CLIQueryParams(transactor0.CliCtx, guard.RouterKey)
 	tc.ChkTestErr(t, err, "failed to query guard params")
 	assert.Equal(t, uint64(5), guardParams.EpochLength, "EpochLength params should stay 5")
+}
 
+func mainchainGovTest(t *testing.T) {
+	log.Info("=====================================================================")
+	log.Info("======================== Test mainchain gov ===========================")
+
+	setupGov()
+
+	transactor := tc.NewTransactor(
+		t,
+		tc.SgnCLIHomes[0],
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnOperators[0],
+		tc.SgnPassphrase,
+	)
+
+	amt1 := big.NewInt(3000000000000000000)
+	amt2 := big.NewInt(2000000000000000000)
+	amt3 := big.NewInt(2000000000000000000)
+	amts := []*big.Int{amt1, amt2, amt3}
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+
+	_, auth0, err := tc.GetAuth(tc.ValEthKs[0])
+	tc.ChkTestErr(t, err, "failed to get auth0")
+	_, auth1, err := tc.GetAuth(tc.ValEthKs[1])
+	tc.ChkTestErr(t, err, "failed to get auth1")
+
+	ctx := context.Background()
+	tx, err := tc.E2eProfile.CelrContract.Approve(auth0, tc.E2eProfile.DPoSAddr, amt1)
+	tc.ChkTestErr(t, err, "failed to approve CELR to DPoS contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to DPoS contract")
+
+	tx, err = tc.DposContract.CreateParamProposal(auth0, big.NewInt(mainchain.MaxValidatorNum), big.NewInt(20))
+	tc.ChkTestErr(t, err, "failed to create param proposal")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Create param proposal")
+
+	tx, err = tc.DposContract.VoteParam(auth0, big.NewInt(0), 1)
+	tc.ChkTestErr(t, err, "failed to vote param proposal 0 for client0")
+	tx, err = tc.DposContract.VoteParam(auth1, big.NewInt(0), 1)
+	tc.ChkTestErr(t, err, "failed to vote param proposal 0 for client1")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Vote param proposal 0")
+
+	tx, err = tc.DposContract.ConfirmParamProposal(auth0, big.NewInt(0))
+	tc.ChkTestErr(t, err, "failed to confirm param proposal 0")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Confirm param proposal 0")
+
+	var params staking.Params
+	for retry := 0; retry < tc.RetryLimit; retry++ {
+		bz, _, err := transactor.CliCtx.Query(fmt.Sprintf("custom/%s/%s", staking.StoreKey, staking.QueryParameters))
+		tc.ChkTestErr(t, err, "failed to query staking params")
+		transactor.CliCtx.Codec.MustUnmarshalJSON(bz, &params)
+		if params.MaxValidators == 20 {
+			break
+		}
+		time.Sleep(tc.RetryPeriod)
+	}
+
+	assert.Equal(t, uint16(20), params.MaxValidators, "MaxValidators params should be 20")
 }
