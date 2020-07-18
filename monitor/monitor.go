@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/allegro/bigcache"
+	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/eth/monitor"
 	"github.com/celer-network/goutils/eth/watcher"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
@@ -31,6 +33,7 @@ type Monitor struct {
 	sgnContract     monitor.Contract
 	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
+	sidechainAcct   sdk.AccAddress
 	isValidator     bool
 	dbLock          sync.RWMutex
 }
@@ -71,6 +74,10 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		ledgerContract:  ledgerContract,
 		verifiedChanges: verifiedChanges,
 		isValidator:     mainchain.IsBonded(dposCandidateInfo),
+	}
+	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	if err != nil {
+		log.Fatalln("Sidechain acct error")
 	}
 
 	go m.processQueues()
@@ -123,6 +130,16 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
+			}
+			if !m.isValidator {
+				e, perr := m.ethClient.SGN.ParseUpdateSidechainAddr(eLog)
+				if perr != nil {
+					log.Errorln("parse event err", perr)
+					return
+				}
+				if e.Candidate == m.ethClient.Address && m.shouldClaimValidator() {
+					m.claimValidatorOnMainchain()
+				}
 			}
 		},
 	)
@@ -311,34 +328,70 @@ func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
 
 	if m.isValidator {
 		m.syncValidator(delegate.Candidate)
-	} else {
+	} else if m.shouldClaimValidator() {
 		m.claimValidatorOnMainchain()
 	}
 }
 
-func (m *Monitor) claimValidatorOnMainchain() {
+func (m *Monitor) shouldClaimValidator() bool {
 	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
 	if err != nil {
 		log.Errorln("GetCandidateInfo err", err)
-		return
+		return false
 	}
+
+	if !candidate.Initialized {
+		log.Errorln("Candidate not initialized on mainchain")
+		return false
+	}
+
+	if mainchain.IsBonded(candidate) {
+		log.Infoln("Already bonded on mainchain")
+		return false
+	}
+
 	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
 		log.Debug("Not enough stake to become validator")
-		return
+		return false
 	}
 
 	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
-		return
+		return false
 	}
 	if candidate.StakingPool.Cmp(minStake) == -1 {
 		log.Debug("Not enough stake to become validator")
-		return
+		return false
 	}
 
-	_, err = m.ethClient.Transactor.Transact(
-		nil,
+	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, m.ethClient.Address)
+	if err != nil {
+		log.Errorln("Query sidechain address error:", err)
+		return false
+	}
+	if !sdk.AccAddress(sidechainAddr).Equals(m.sidechainAcct) {
+		log.Errorf("sidechain address not match, %s %s", sdk.AccAddress(sidechainAddr), m.sidechainAcct)
+		return false
+	}
+
+	return true
+}
+
+func (m *Monitor) claimValidatorOnMainchain() {
+	_, err := m.ethClient.Transactor.Transact(
+		&eth.TransactionStateHandler{
+			OnMined: func(receipt *ethtypes.Receipt) {
+				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
+					log.Infof("ClaimValidator transaction %x succeeded", receipt.TxHash)
+				} else {
+					log.Errorf("ClaimValidator transaction %x failed", receipt.TxHash)
+				}
+			},
+			OnError: func(tx *ethtypes.Transaction, err error) {
+				log.Errorf("ClaimValidator transaction %x err: %s", tx.Hash(), err)
+			},
+		},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return m.ethClient.DPoS.ClaimValidator(opts)
 		},
