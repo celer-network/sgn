@@ -8,6 +8,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	candidateFlag = "candidate"
+	amountFlag    = "amount"
+)
+
 func initEthClient() (*mainchain.EthClient, error) {
 	return mainchain.NewEthClient(
 		viper.GetString(common.FlagEthGateway),

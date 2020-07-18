@@ -30,6 +30,10 @@ func main() {
 		channel.ServeCommand(),
 		ops.InitCandidateCommand(),
 		ops.DelegateCommand(),
+		ops.IntendWithdrawCommand(),
+		ops.ConfirmWithdrawCommand(),
+		ops.ConfirmUnbondedCandidateCommand(),
+		ops.WithdrawFromUnbondedCandidateCommand(),
 	)
 
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
