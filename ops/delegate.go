@@ -3,7 +3,6 @@ package ops
 import (
 	"math/big"
 
-	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -62,19 +61,8 @@ func delegate() error {
 		stake,
 		candidate.Hex(),
 	)
-	tx, err := ethClient.Transactor.Transact(
-		&eth.TransactionStateHandler{
-			OnMined: func(receipt *ethtypes.Receipt) {
-				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
-					log.Infof("Delegate transaction %x succeeded", receipt.TxHash)
-				} else {
-					log.Errorf("Delegate transaction %x failed", receipt.TxHash)
-				}
-			},
-			OnError: func(tx *ethtypes.Transaction, err error) {
-				log.Errorf("Delegate transaction %x err: %s", tx.Hash(), err)
-			},
-		},
+	receipt, err := ethClient.Transactor.TransactWaitMined(
+		"Delegate",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return ethClient.DPoS.Delegate(opts, candidate, stake)
 		},
@@ -82,7 +70,7 @@ func delegate() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Delegate transaction: %x", tx.Hash())
+	log.Infof("Delegate transaction %x succeeded", receipt.TxHash.Hex())
 	return nil
 }
 
