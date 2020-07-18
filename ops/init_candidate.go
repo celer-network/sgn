@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	minSelfStakeFlag    = "minselfstake"
-	commissionRateFlag  = "commissionrate"
-	rateLockEndTimeFlag = "ratelockendtime"
+	minSelfStakeFlag    = "min-self-stake"
+	commissionRateFlag  = "commission-rate"
+	rateLockEndTimeFlag = "rate-lock-end-time"
 )
 
 func initCandidate() error {
@@ -73,7 +73,7 @@ func initCandidate() error {
 
 func InitCandidateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "initcandidate",
+		Use:   "init-candidate",
 		Short: "Initialize a validator candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return initCandidate()

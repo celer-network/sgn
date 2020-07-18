@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	stakeFlag     = "stake"
-	candidateFlag = "candidate"
+	stakeFlag = "stake"
 )
 
 func delegate() error {
@@ -101,7 +100,7 @@ func DelegateCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String(stakeFlag, "", "stake")
-	cmd.Flags().String(candidateFlag, "", "candidate ETH address")
+	cmd.Flags().String(stakeFlag, "", "Stake amount")
+	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
 	return cmd
 }
