@@ -19,7 +19,7 @@ import (
 
 func setupGov() {
 	log.Infoln("Set up new sgn env")
-	// setupNewSGNEnv(nil)
+	setupNewSGNEnv(nil)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
