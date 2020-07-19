@@ -28,7 +28,7 @@ func confirmWithdraw() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Transaction %x succeeded", receipt.TxHash.Hex())
+	log.Infof("Transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 

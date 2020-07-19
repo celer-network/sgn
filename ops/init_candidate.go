@@ -50,7 +50,7 @@ func initCandidate() error {
 		if initCandidateErr != nil {
 			return initCandidateErr
 		}
-		log.Infof("Initialize candidate transaction %x succeeded", receipt.TxHash.Hex())
+		log.Infof("Initialize candidate transaction %x succeeded", receipt.TxHash)
 	}
 
 	operatorAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
@@ -67,7 +67,7 @@ func initCandidate() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Update sidechain address transaction %x succeeded", receipt.TxHash.Hex())
+	log.Infof("Update sidechain address transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
