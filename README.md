@@ -176,15 +176,40 @@ sgnops init-candidate --commission-rate 1 --min-self-stake 1 --rate-lock-end-tim
 
 It will take a while to complete the transactions on Ropsten.
 
-13. (Optional) In another terminal window, start an SGN gateway server:
+14. Delegate 10000 Ropsten CELR to your candidate, which is the minimum amount required for it to
+    become a validator:
+
+```shellscript
+sgnops delegate --candidate <candidate-eth-address> --amount 10000
+```
+
+`<candidate-eth-address>` is the ETH address obtained in step 10. It will take a while to complete
+the transactions on Ropsten.
+
+15. (Optional) In another terminal window, start an SGN gateway server:
 
 ```shellscript
 sgncli gateway --laddr tcp://0.0.0.0:1317` to run a gateway.
 ```
 
-14. Verify your candidate status at `http://54.218.106.24:8000/#/dpos`
+16. Verify your candidate status at `http://54.218.106.24:8000/#/dpos`
 
-15. In case your local state is corrupted, you can try to reset the state by running:
+17. (Optional) You can withdraw your self-stake and unbond your validator candidate by running:
+
+```shellscript
+sgnops intend-withdraw --candidate <candidate-eth-address> --amount 10000
+```
+
+After 24 hours, confirm the unbonded status and the withdrawal of your stake:
+
+```shellscript
+sgnops confirm-unbonded-candidate --candidate <candidate-eth-address>
+sgnops withdraw-from-unbonded-candidate --candidate <candidate-eth-address> --amount 10000
+```
+
+Each command will take a while to complete the transactions on Ropsten.
+
+18. In case your local state is corrupted, you can try to reset the state by running:
 
 ```shellscript
 sgnd unsafe-reset-all
