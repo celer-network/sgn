@@ -85,12 +85,13 @@ export GOBIN=~/go/bin;export GOPATH=~/go;export PATH=$PATH:\$GOBIN
 
 Your actual paths might be different.
 
-3. Clone the repository and install the `sgnd` and `sgncli` binaries:
+3. Clone the repository and install the `sgnd`, `sgncli` and `sgnops` binaries:
 
 ```shellscript
 git clone https://github.com/celer-network/sgn
 cd sgn
 WITH_CLEVELDB=yes make install
+make install-ops
 ```
 
 4. Initialize the validator node:
@@ -101,13 +102,16 @@ sgnd init <validator-name> --chain-id sgnchain
 
 `<validator-name>` can be any name of your choice.
 
-5.
+5. Initialize `config.toml` containing general Cosmos SDK configs:
 
 ```shellscript
-sgncli config chain-id sgnchain; sgncli config output json; sgncli config indent true; sgncli config trust-node true
+sgncli config chain-id sgnchain
+sgncli config output json
+sgncli config indent true
+sgncli config trust-node true
 ```
 
-6. Initialize the validator config file:
+6. Initialize `config.json` containing SGN specific configs:
 
 ```shellscript
 cd networks/ropsten
@@ -162,13 +166,50 @@ geth account new --lightkdf --keystore <path-to-keystore-folder>
 sgnd start
 ```
 
-13. (Optional) In another terminal window, start an SGN gateway server:
+It will take a while to sync the node.
+
+13. Initialize the candidate status for your validator node:
+
+```shellscript
+sgnops init-candidate --commission-rate 1 --min-self-stake 1 --rate-lock-end-time 10000
+```
+
+It will take a while to complete the transactions on Ropsten.
+
+14. Delegate 10000 Ropsten CELR to your candidate, which is the minimum amount required for it to
+    become a validator:
+
+```shellscript
+sgnops delegate --candidate <candidate-eth-address> --amount 10000
+```
+
+`<candidate-eth-address>` is the ETH address obtained in step 10. It will take a while to complete
+the transactions on Ropsten.
+
+15. (Optional) In another terminal window, start an SGN gateway server:
 
 ```shellscript
 sgncli gateway --laddr tcp://0.0.0.0:1317` to run a gateway.
 ```
 
-14. In case your local state is corrupted, you can try to reset the state by running:
+16. Verify your candidate status at `http://54.218.106.24:8000/#/dpos`
+
+17. (Optional) You can withdraw your self-stake and unbond your validator candidate by running:
+
+```shellscript
+sgnops intend-withdraw --candidate <candidate-eth-address> --amount 10000
+```
+
+After 24 hours, confirm the unbonded status and the withdrawal of your stake:
+
+```shellscript
+sgnops confirm-unbonded-candidate --candidate <candidate-eth-address>
+sgnops withdraw-from-unbonded-candidate --candidate <candidate-eth-address> --amount 10000
+```
+
+Each command will take a while to complete the transactions on Ropsten.
+
+18. In case your local state is corrupted, you can try to reset the state by running:
 
 ```shellscript
 sgnd unsafe-reset-all
