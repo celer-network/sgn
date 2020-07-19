@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"math/big"
 	"sync"
 	"time"
 
@@ -341,17 +342,12 @@ func (m *Monitor) shouldClaimValidator() bool {
 	}
 
 	if !candidate.Initialized {
-		log.Errorln("Candidate not initialized on mainchain")
+		log.Debug("Candidate not initialized on mainchain")
 		return false
 	}
 
 	if mainchain.IsBonded(candidate) {
 		log.Infoln("Already bonded on mainchain")
-		return false
-	}
-
-	if candidate.StakingPool.Cmp(candidate.MinSelfStake) == -1 {
-		log.Debug("Not enough stake to become validator")
 		return false
 	}
 
@@ -361,7 +357,27 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 	if candidate.StakingPool.Cmp(minStake) == -1 {
-		log.Debug("Not enough stake to become validator")
+		log.Debugf("Not enough stake to become a validator, my pool: %s, current min pool: %s", candidate.StakingPool, minStake)
+		return false
+	}
+
+	delegator, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, m.ethClient.Address, m.ethClient.Address)
+	if err != nil {
+		log.Errorln("GetDelegatorInfo err", err)
+		return false
+	}
+	if delegator.DelegatedStake.Cmp(candidate.MinSelfStake) == -1 {
+		log.Debugf("Not enough self-delegate stake, current: %s, require: %s", delegator.DelegatedStake, candidate.MinSelfStake)
+		return false
+	}
+
+	minStakeInPool, err := m.ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(mainchain.MinStakeInPool))
+	if err != nil {
+		log.Errorln("Get MinStakeInPool param err", err)
+		return false
+	}
+	if candidate.StakingPool.Cmp(minStakeInPool) == -1 {
+		log.Debugf("Not enough stake to become a validator, my pool: %s, required min pool: %s", candidate.StakingPool, minStakeInPool)
 		return false
 	}
 
@@ -371,7 +387,7 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 	if !sdk.AccAddress(sidechainAddr).Equals(m.sidechainAcct) {
-		log.Errorf("sidechain address not match, %s %s", sdk.AccAddress(sidechainAddr), m.sidechainAcct)
+		log.Debugf("sidechain address not match, %s %s", sdk.AccAddress(sidechainAddr), m.sidechainAcct)
 		return false
 	}
 
