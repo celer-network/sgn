@@ -15,18 +15,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	stakeFlag = "stake"
-)
-
 func delegate() error {
 	ethClient, err := initEthClient()
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	stake := new(big.Int)
-	stake.SetString(viper.GetString(stakeFlag), 10)
+	amount := new(big.Int)
+	amount.SetString(viper.GetString(amountFlag), 10)
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	dPoSAddress := ethClient.DPoSAddress
@@ -42,12 +38,12 @@ func delegate() error {
 	if err != nil {
 		return err
 	}
-	if allowance.Cmp(stake) < 0 {
+	if allowance.Cmp(amount) < 0 {
 		log.Info("Approving CELR to DPoS contract")
 		_, approveErr := ethClient.Transactor.TransactWaitMined(
 			"Approve",
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-				return celrContract.Approve(opts, dPoSAddress, stake)
+				return celrContract.Approve(opts, dPoSAddress, amount)
 			},
 		)
 		if approveErr != nil {
@@ -56,20 +52,20 @@ func delegate() error {
 	}
 
 	log.Infof(
-		"Sending delegate transaction with stake: %s, candidate: %s ",
-		stake,
+		"Sending delegate transaction with amount: %s, candidate: %s",
+		amount,
 		candidate.Hex(),
 	)
 	receipt, err := ethClient.Transactor.TransactWaitMined(
 		"Delegate",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return ethClient.DPoS.Delegate(opts, candidate, stake)
+			return ethClient.DPoS.Delegate(opts, candidate, amount)
 		},
 	)
 	if err != nil {
 		return err
 	}
-	log.Infof("Delegate transaction %x succeeded", receipt.TxHash.Hex())
+	log.Infof("Delegate transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
@@ -81,7 +77,7 @@ func DelegateCommand() *cobra.Command {
 			return delegate()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(stakeFlag)
+			err := cmd.MarkFlagRequired(amountFlag)
 			if err != nil {
 				return err
 			}
@@ -89,7 +85,7 @@ func DelegateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = viper.BindPFlag(stakeFlag, cmd.Flags().Lookup(stakeFlag))
+			err = viper.BindPFlag(amountFlag, cmd.Flags().Lookup(amountFlag))
 			if err != nil {
 				return err
 			}
@@ -100,7 +96,7 @@ func DelegateCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String(stakeFlag, "", "Stake amount")
+	cmd.Flags().String(amountFlag, "", "Stake amount")
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
 	return cmd
 }
