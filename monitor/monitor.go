@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"math/big"
 	"sync"
 	"time"
 
@@ -350,6 +351,16 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 
+	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
+	if err != nil {
+		log.Errorln("GetMinStakingPool err", err)
+		return false
+	}
+	if candidate.StakingPool.Cmp(minStake) == -1 {
+		log.Debugf("Not enough stake to become a validator, my pool: %s, current min pool: %s", candidate.StakingPool, minStake)
+		return false
+	}
+
 	delegator, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, m.ethClient.Address, m.ethClient.Address)
 	if err != nil {
 		log.Errorln("GetDelegatorInfo err", err)
@@ -360,13 +371,13 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 
-	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
+	minStakeInPool, err := m.ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(mainchain.MinStakeInPool))
 	if err != nil {
-		log.Errorln("GetMinStakingPool err", err)
+		log.Errorln("Get MinStakeInPool param err", err)
 		return false
 	}
-	if candidate.StakingPool.Cmp(minStake) == -1 {
-		log.Debugf("Not enough stake to become a validator, pool: %s, min: %s", candidate.StakingPool, minStake)
+	if candidate.StakingPool.Cmp(minStakeInPool) == -1 {
+		log.Debugf("Not enough stake to become a validator, my pool: %s, required min pool: %s", candidate.StakingPool, minStakeInPool)
 		return false
 	}
 
