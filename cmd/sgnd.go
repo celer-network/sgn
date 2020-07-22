@@ -1,9 +1,13 @@
-package main
+package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 
+	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -11,13 +15,71 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
+	tlog "github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 )
 
-// AddGenesisAccountCmd returns add-genesis-account cobra Command.
-func AddGenesisAccountCmd(
+func GetSgndExecutor() cli.Executor {
+	cdc := app.MakeCodec()
+	ctx := server.NewDefaultContext()
+	rootCmd := &cobra.Command{
+		Use:               "sgnd",
+		Short:             "SGN App Daemon (server)",
+		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
+	}
+	// CLI commands to initialize the chain
+	rootCmd.AddCommand(
+		genutilcli.InitCmd(ctx, cdc, app.ModuleBasics, app.DefaultNodeHome),
+		genutilcli.CollectGenTxsCmd(ctx, cdc, auth.GenesisAccountIterator{}, app.DefaultNodeHome),
+		genutilcli.MigrateGenesisCmd(ctx, cdc),
+		genutilcli.GenTxCmd(ctx, cdc, app.ModuleBasics, staking.AppModuleBasic{}, auth.GenesisAccountIterator{}, app.DefaultNodeHome, app.DefaultCLIHome),
+		genutilcli.ValidateGenesisCmd(ctx, cdc, app.ModuleBasics),
+		// addGenesisAccountCmd allows users to add accounts to the genesis file
+		addGenesisAccountCmd(ctx, cdc, app.DefaultNodeHome, app.DefaultCLIHome),
+	)
+
+	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
+	rootCmd.PersistentFlags().String(common.FlagCLIHome, app.DefaultCLIHome, "directory for cli config and data")
+
+	// prepare and add flags
+	return cli.PrepareBaseCmd(rootCmd, "SGN", app.DefaultNodeHome)
+}
+
+func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+	skipUpgradeHeights := make(map[int64]bool)
+	for _, h := range viper.GetIntSlice(server.FlagUnsafeSkipUpgrades) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+
+	return app.NewSgnApp(logger, db, skipUpgradeHeights, baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)))
+}
+
+func exportAppStateAndTMValidators(
+	logger tlog.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
+) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+
+	if height != -1 {
+		nsApp := app.NewSgnApp(logger, db, map[int64]bool{})
+		err := nsApp.LoadHeight(height)
+		if err != nil {
+			return nil, nil, err
+		}
+		return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+	}
+
+	nsApp := app.NewSgnApp(logger, db, map[int64]bool{})
+
+	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+}
+
+func addGenesisAccountCmd(
 	ctx *server.Context, cdc *codec.Codec, defaultNodeHome, defaultClientHome string,
 ) *cobra.Command {
 
