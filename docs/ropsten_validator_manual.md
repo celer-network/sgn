@@ -1,6 +1,6 @@
 # Ropsten Validator Manual
 
-1. Pick a Linux machine with a minimum of 1GB RAM (2GB recommended).Make sure you have go (version 1.13+), gcc, make, git and libleveldb-dev installed.
+1. Pick a Linux machine with a minimum of 1GB RAM (2GB recommended). Make sure you have go (version 1.13+), gcc, make, git and libleveldb-dev installed.
 
 2. Make sure you set \$GOBIN and add \$GOBIN to \$PATH. Eg:
 
