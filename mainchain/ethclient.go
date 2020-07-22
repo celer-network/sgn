@@ -33,12 +33,18 @@ type TransactorConfig struct {
 	BlockDelay           uint64
 	BlockPollingInterval uint64
 	ChainId              *big.Int
+	AddGasPriceGwei      uint64
+	MinGasPriceGwei      uint64
 }
 
 func NewEthClient(
-	ethurl, ksfile, passphrase string,
+	ethurl string,
+	ksfile string,
+	passphrase string,
 	tconfig *TransactorConfig,
-	dposAddrStr, sgnAddrStr, ledgerAddrStr string) (*EthClient, error) {
+	dposAddrStr string,
+	sgnAddrStr string,
+	ledgerAddrStr string) (*EthClient, error) {
 	ethClient := &EthClient{}
 
 	rpcClient, err := ethrpc.Dial(ethurl)
@@ -64,9 +70,15 @@ func NewEthClient(
 	}
 
 	transactor, err := eth.NewTransactor(
-		string(ksBytes), passphrase, ethClient.Client, tconfig.ChainId,
+		string(ksBytes),
+		passphrase,
+		ethClient.Client,
+		tconfig.ChainId,
 		eth.WithBlockDelay(tconfig.BlockDelay),
-		eth.WithPollingInterval(time.Duration(tconfig.BlockPollingInterval)*time.Second))
+		eth.WithPollingInterval(time.Duration(tconfig.BlockPollingInterval)*time.Second),
+		eth.WithAddGasGwei(tconfig.AddGasPriceGwei),
+		eth.WithMinGasGwei(tconfig.MinGasPriceGwei),
+	)
 	if err != nil {
 		return nil, err
 	}
