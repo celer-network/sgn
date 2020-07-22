@@ -412,6 +412,8 @@ func (app *sgnApp) startMonitor(db dbm.DB) {
 			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
 			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
 			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
+			AddGasPriceGwei:      viper.GetUint64(common.FlagEthAddGasPriceGwei),
+			MinGasPriceGwei:      viper.GetUint64(common.FlagEthMinGasPriceGwei),
 		},
 		viper.GetString(common.FlagEthDPoSAddress),
 		viper.GetString(common.FlagEthSGNAddress),

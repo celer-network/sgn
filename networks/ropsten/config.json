@@ -16,7 +16,9 @@
     "gateway": "[ETHEREUM_GATEWAY_URL]",
     "keystore": "[KEYSTORE_PATH]",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
-    "pollInterval": 15
+    "pollInterval": 15,
+    "addGasPriceGwei": 1,
+    "minGasPriceGwei": 10
   },
   "log": {
     "color": false,
