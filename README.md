@@ -200,11 +200,11 @@ sgncli gateway --laddr tcp://0.0.0.0:1317` to run a gateway.
 sgnops intend-withdraw --candidate <candidate-eth-address> --amount 10000
 ```
 
-After 24 hours, confirm the unbonded status and the withdrawal of your stake:
+After 2 hours, confirm the unbonded status and the withdrawal of your stake:
 
 ```shellscript
 sgnops confirm-unbonded-candidate --candidate <candidate-eth-address>
-sgnops withdraw-from-unbonded-candidate --candidate <candidate-eth-address> --amount 10000
+sgnops confirm-withdraw --candidate <candidate-eth-address>
 ```
 
 Each command will take a while to complete the transactions on Ropsten.
