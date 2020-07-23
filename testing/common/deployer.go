@@ -1,4 +1,4 @@
-package testcommon
+package common
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/test/channel-eth-go/deploy"
-	"github.com/celer-network/sgn/test/channel-eth-go/ledger"
+	"github.com/celer-network/sgn/testing/channel-eth-go/deploy"
+	"github.com/celer-network/sgn/testing/channel-eth-go/ledger"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"

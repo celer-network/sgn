@@ -9,7 +9,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/cosmos/cosmos-sdk/types/rest"

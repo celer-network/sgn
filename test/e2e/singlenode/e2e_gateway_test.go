@@ -12,7 +12,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/viper"

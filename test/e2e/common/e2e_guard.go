@@ -1,4 +1,4 @@
-package e2ecommon
+package common
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/guard"
 	stypes "github.com/celer-network/sgn/x/guard/types"

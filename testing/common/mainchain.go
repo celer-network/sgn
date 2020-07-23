@@ -1,6 +1,4 @@
-// Copyright 2018 Celer Network
-
-package testcommon
+package common
 
 import (
 	"bytes"
