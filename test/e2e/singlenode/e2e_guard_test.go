@@ -7,8 +7,8 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tc "github.com/celer-network/sgn/test/common"
 	e2ecommon "github.com/celer-network/sgn/test/e2e/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/spf13/viper"
 )
 

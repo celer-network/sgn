@@ -5,7 +5,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
 	"github.com/celer-network/sgn/x/guard"
 	sdk "github.com/cosmos/cosmos-sdk/types"

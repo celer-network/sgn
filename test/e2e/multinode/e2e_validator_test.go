@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

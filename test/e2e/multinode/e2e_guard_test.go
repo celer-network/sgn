@@ -9,8 +9,8 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	tc "github.com/celer-network/sgn/test/common"
 	e2ecommon "github.com/celer-network/sgn/test/e2e/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"

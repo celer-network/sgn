@@ -1,6 +1,6 @@
 module github.com/celer-network/sgn
 
-go 1.13
+go 1.14
 
 require (
 	github.com/allegro/bigcache v1.2.1
@@ -12,7 +12,6 @@ require (
 	github.com/golang/protobuf v1.3.4
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/mux v1.7.4
-	github.com/prometheus/common v0.9.1
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
