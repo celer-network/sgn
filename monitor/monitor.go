@@ -36,6 +36,7 @@ type Monitor struct {
 	verifiedChanges *bigcache.BigCache
 	sidechainAcct   sdk.AccAddress
 	isValidator     bool
+	executeSlash    bool
 	dbLock          sync.RWMutex
 }
 
@@ -75,6 +76,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		ledgerContract:  ledgerContract,
 		verifiedChanges: verifiedChanges,
 		isValidator:     mainchain.IsBonded(dposCandidateInfo),
+		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
 	}
 	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
 	if err != nil {
@@ -93,7 +95,9 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	go m.monitorCelerLedgerIntendWithdraw()
 
 	go m.monitorSidechainWithdrawReward()
-	go m.monitorSidechainSlash()
+	if m.executeSlash {
+		go m.monitorSidechainSlash()
+	}
 }
 
 func (m *Monitor) processQueues() {
@@ -112,8 +116,10 @@ func (m *Monitor) processQueues() {
 
 		m.processPullerQueue()
 		m.processGuardQueue()
-		m.processPenaltyQueue()
 		m.verifyActiveChanges()
+		if m.executeSlash {
+			m.processPenaltyQueue()
+		}
 	}
 }
 

@@ -34,6 +34,7 @@
       "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
     ],
     "keyringBackend": "file",
-    "timeoutCommit": 2
+    "timeoutCommit": 2,
+    "executeSlash": true
   }
 }

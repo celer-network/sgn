@@ -29,6 +29,7 @@ const (
 	FlagSgnBaseGasPrice   = "sgn.baseGasPrice"
 	FlagSgnTimeoutCommit  = "sgn.timeoutCommit"
 	FlagSgnKeyringBackend = "sgn.keyringBackend"
+	FlagSgnExecuteSlash   = "sgn.executeSlash"
 
 	FlagLogLevel = "log.level"
 	FlagLogColor = "log.color"

@@ -169,7 +169,8 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
 
-	log.Infof("Failed validator %s slashed by %s", failedValidator.GetOperator(), slashAmount)
+	log.Warnf("Slash validator: %s, amount: %s, reason: %s, nonce: %d",
+		failedValidator.GetOperator(), slashAmount, reason, penalty.Nonce)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

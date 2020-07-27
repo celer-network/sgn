@@ -30,6 +30,7 @@
     "pubkey": "cosmosvalconspub1zcjduepqxqz973gvjkk84p2d8m9j92pfffghhrv677gd35jcn9ppzvm9gn0q3yldua",
     "transactors": ["cosmos1k88dweqanvd3j2csaak034amvjuyzlkefgmv8t"],
     "timeoutCommit": 2,
-    "keyringbackend": "test"
+    "keyringbackend": "test",
+    "executeSlash": true
   }
 }
