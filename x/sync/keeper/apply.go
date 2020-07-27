@@ -124,9 +124,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
-	}
-
-	if validator.Status == sdk.Unbonded {
+	} else if validator.Status == sdk.Unbonded {
 		validator.Tokens = sdk.ZeroInt()
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	}

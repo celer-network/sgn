@@ -18,7 +18,7 @@ import (
 
 func setUpUpgrade() {
 	log.Infoln("Set up new sgn env")
-	setupNewSGNEnv(nil)
+	tc.SetupNewSGNEnv(nil)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
