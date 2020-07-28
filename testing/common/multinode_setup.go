@@ -100,6 +100,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams) {
 		viper.SetConfigFile(configPath)
 		err = viper.ReadInConfig()
 		ChkErr(err, "Failed to read config")
+		viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
 		viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
 		viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
 		viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)

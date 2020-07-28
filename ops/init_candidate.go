@@ -22,6 +22,9 @@ const (
 
 func initCandidate() error {
 	ethClient, err := initEthClient()
+	if err != nil {
+		return err
+	}
 	minSelfStake := new(big.Int)
 	minSelfStake.SetString(viper.GetString(minSelfStakeFlag), 10)
 	commissionRate := new(big.Int)
