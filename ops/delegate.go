@@ -1,8 +1,6 @@
 package ops
 
 import (
-	"math/big"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -21,8 +19,7 @@ func delegate() error {
 		log.Error(err)
 		return err
 	}
-	amount := new(big.Int)
-	amount.SetString(viper.GetString(amountFlag), 10)
+	amount := calcRawAmount()
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	dPoSAddress := ethClient.DPoSAddress
