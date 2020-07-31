@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2020-06-18T14:29:42.29535Z",
+  "genesis_time": "2020-07-27T11:53:01.126174Z",
   "chain_id": "sgnchain",
   "consensus_params": {
     "block": {
@@ -12,13 +12,32 @@
       "max_age_duration": "172800000000000"
     },
     "validator": {
-      "pub_key_types": [
-        "ed25519"
-      ]
+      "pub_key_types": ["ed25519"]
     }
   },
   "app_hash": "",
   "app_state": {
+    "cron": {},
+    "staking": {
+      "params": {
+        "unbonding_time": "7200000000000",
+        "max_validators": 21,
+        "max_entries": 7,
+        "historical_entries": 0,
+        "bond_denom": "stake"
+      },
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": null,
+      "delegations": null,
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
+    },
+    "upgrade": {},
+    "supply": {
+      "supply": []
+    },
     "auth": {
       "params": {
         "max_memo_characters": "256",
@@ -45,14 +64,6 @@
         }
       ]
     },
-    "validator": {
-      "params": {
-        "pullerDuration": "10",
-        "pusherDuration": "10",
-        "miningReward": "10000000000000",
-        "pullerReward": "500000000000"
-      }
-    },
     "govern": {
       "starting_proposal_id": "1",
       "deposits": null,
@@ -72,9 +83,25 @@
         "veto": "0.334000000000000000"
       }
     },
-    "bank": {
-      "send_enabled": true
+    "slash": {
+      "params": {
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "slashFractionDoubleSign": "0.050000000000000000",
+        "slashFractionDowntime": "0.010000000000000000",
+        "slashFractionGuardFailure": "0.010000000000000000",
+        "fallbackGuardReward": "0.500000000000000000"
+      }
     },
+    "guard": {
+      "params": {
+        "requestGuardCount": "3",
+        "epochLength": "60",
+        "requestCost": "1000000000000000000",
+        "minDisputeTimeout": "80000"
+      }
+    },
+    "params": null,
     "sync": {
       "starting_change_id": "1",
       "changes": null,
@@ -84,23 +111,6 @@
       "tally_params": {
         "threshold": "0.668000000000000000"
       }
-    },
-    "cron": {},
-    "staking": {
-      "params": {
-        "unbonding_time": "1814400000000000",
-        "max_validators": 100,
-        "max_entries": 7,
-        "historical_entries": 0,
-        "bond_denom": "stake"
-      },
-      "last_total_power": "0",
-      "last_validator_powers": null,
-      "validators": null,
-      "delegations": null,
-      "unbonding_delegations": null,
-      "redelegations": null,
-      "exported": false
     },
     "genutil": {
       "gentxs": [
@@ -124,7 +134,7 @@
                   "pubkey": "cosmosvalconspub1zcjduepqmvn5zak3gsfuppl3chuqy5u94y07yuxlz0u84q7hgjl3fmk7sfwshl5yms",
                   "value": {
                     "denom": "stake",
-                    "amount": "100"
+                    "amount": "10000"
                   }
                 }
               }
@@ -139,35 +149,24 @@
                   "type": "tendermint/PubKeySecp256k1",
                   "value": "A1z0tW3XkS6IaBsvzvM1Dd48IJ/4572yQXtAeN01iVp/"
                 },
-                "signature": "pFz5VRgNBqPoRsUkM4/UHuOuD7ONqR38M6or9hsE/sAXBHGj71+6nc7r8s2Q5fmaOH7U7/SWqQ6y5iXX18/1HA=="
+                "signature": "ck8lyM0OJQhgSJADZfpAB0Sl4IMpPfdzHmbpOgZb3HRAEiGQpmywTwP+aZiZFr0aoyObBbX68vrwy5sULP2AKA=="
               }
             ],
-            "memo": "f188fa23d57ff2320eede90f5a06d126a1973a46@192.168.1.6:26656"
+            "memo": "f188fa23d57ff2320eede90f5a06d126a1973a4@192.168.10.106:26656"
           }
         }
       ]
     },
-    "guard": {
+    "validator": {
       "params": {
-        "requestGuardCount": "3",
-        "epochLength": "60",
-        "requestCost": "1000000000000000000",
-        "minDisputeTimeout": "2000"
+        "pullerDuration": "5",
+        "pusherDuration": "5",
+        "miningReward": "10000000000000",
+        "pullerReward": "500000000000"
       }
     },
-    "slash": {
-      "params": {
-        "signed_blocks_window": "100",
-        "min_signed_per_window": "0.500000000000000000",
-        "slashFractionDoubleSign": "0.050000000000000000",
-        "slashFractionDowntime": "0.010000000000000000",
-        "slashFractionGuardFailure": "0.010000000000000000",
-        "fallbackGuardReward": "0.500000000000000000"
-      }
-    },
-    "supply": {
-      "supply": []
-    },
-    "params": null
+    "bank": {
+      "send_enabled": true
+    }
   }
 }
