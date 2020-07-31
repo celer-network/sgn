@@ -2,7 +2,9 @@
 
 Follow instructions below to easily start a local testnet and play with multiple validator nodes on your local machine.
 
-## Start local testnet. `go run localnet.go -up`
+## Start local testnet. 
+
+`go run localnet.go -up`
 
 ## Configure node0 to become a validator
 
