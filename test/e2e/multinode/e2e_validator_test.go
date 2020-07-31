@@ -82,6 +82,10 @@ func validatorTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 2)
 	tc.CheckValidatorStatus(t, transactor, tc.SgnOperators[2], sdk.Unbonding)
 
+	err = tc.ConfirmUnbondedCandidate(auth, ethAddr)
+	tc.ChkTestErr(t, err, "failed to confirmUnbondedCandidate")
+	tc.CheckCandidate(t, transactor, ethAddr, tc.SgnOperators[2], big.NewInt(0))
+
 	err = tc.DelegateStake(auth, ethAddr, amts[2])
 	tc.ChkTestErr(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)

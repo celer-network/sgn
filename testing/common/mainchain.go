@@ -277,6 +277,18 @@ func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *
 	return nil
 }
 
+func ConfirmUnbondedCandidate(auth *bind.TransactOpts, candidateAddr mainchain.Addr) error {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	defer cancel()
+	log.Info("Call confirmUnbondedCandidate on DPoS contract using the validator ETH address...")
+	tx, err := DposContract.ConfirmUnbondedCandidate(auth, candidateAddr)
+	if err != nil {
+		return err
+	}
+	WaitMinedWithChk(ctx, EthClient, tx, BlockDelay, PollingInterval, "ConfirmUnbondedCandidate")
+	return nil
+}
+
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int, commissionRate *big.Int, rateLockEndTime *big.Int) error {
 	conn := EthClient
 	dposContract := DposContract
