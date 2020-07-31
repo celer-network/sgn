@@ -46,7 +46,7 @@ func SetEthBaseKs(prefix string) {
 }
 
 // SetupEthClients sets Client part (Client) and Auth part (PrivateKey, Address, Auth)
-// Contracts part (DPoSAddress, DPoS, SGNAddress, SGN, LedgerAddress, Ledger) is set after deploying DPoS and SGN contracts in setupNewSGNEnv()
+// Contracts part (DPoSAddress, DPoS, SGNAddress, SGN, LedgerAddress, Ledger) is set after deploying DPoS and SGN contracts in SetupNewSGNEnv()
 func SetupEthClients() {
 	rpcClient, err := rpc.Dial(LocalGeth)
 	if err != nil {
