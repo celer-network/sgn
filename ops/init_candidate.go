@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/celer-network/goutils/log"
@@ -15,9 +16,9 @@ import (
 )
 
 const (
-	minSelfStakeFlag    = "min-self-stake"
-	commissionRateFlag  = "commission-rate"
-	rateLockEndTimeFlag = "rate-lock-end-time"
+	minSelfStakeFlag   = "min-self-stake"
+	commissionRateFlag = "commission-rate"
+	rateLockPeriodFlag = "rate-lock-period"
 )
 
 func initCandidate() error {
@@ -29,8 +30,8 @@ func initCandidate() error {
 	minSelfStake.SetString(viper.GetString(minSelfStakeFlag), 10)
 	commissionRate := new(big.Int)
 	commissionRate.SetString(viper.GetString(commissionRateFlag), 10)
-	rateLockEndTime := new(big.Int)
-	rateLockEndTime.SetString(viper.GetString(rateLockEndTimeFlag), 10)
+	rateLockPeriod := new(big.Int)
+	rateLockPeriod.SetString(viper.GetString(rateLockPeriodFlag), 10)
 
 	dposContract := ethClient.DPoS
 	info, err := dposContract.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
@@ -38,6 +39,11 @@ func initCandidate() error {
 		return err
 	}
 	if !info.Initialized {
+		header, headerErr := ethClient.Client.HeaderByNumber(context.Background(), nil)
+		if headerErr != nil {
+			return headerErr
+		}
+		rateLockEndTime := new(big.Int).Add(header.Number, rateLockPeriod)
 		log.Infof(
 			"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s, rateLockEndTime: %s",
 			minSelfStake,
@@ -90,7 +96,7 @@ func InitCandidateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = cmd.MarkFlagRequired(rateLockEndTimeFlag)
+			err = cmd.MarkFlagRequired(rateLockPeriodFlag)
 			if err != nil {
 				return err
 			}
@@ -102,7 +108,7 @@ func InitCandidateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = viper.BindPFlag(rateLockEndTimeFlag, cmd.Flags().Lookup(rateLockEndTimeFlag))
+			err = viper.BindPFlag(rateLockPeriodFlag, cmd.Flags().Lookup(rateLockPeriodFlag))
 			if err != nil {
 				return err
 			}
@@ -111,6 +117,6 @@ func InitCandidateCommand() *cobra.Command {
 	}
 	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self stake")
 	cmd.Flags().String(commissionRateFlag, "", "Commission rate")
-	cmd.Flags().String(rateLockEndTimeFlag, "", "Rate lock end time")
+	cmd.Flags().String(rateLockPeriodFlag, "", "Rate lock period")
 	return cmd
 }
