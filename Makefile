@@ -23,6 +23,8 @@ install-all: go.sum
 
 generate-docs: go.sum
 	go run ./cmd/gendocs ./docs
+	find ./docs -type f | xargs sed -i '' 's|'"$$HOME"'|\$$HOME|g'
+	find ./docs -type f | xargs sed -i '' 's|'"$$HOSTNAME"'|\$$HOSTNAME|g'
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
