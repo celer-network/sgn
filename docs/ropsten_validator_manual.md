@@ -101,23 +101,42 @@ sgnops init-candidate --commission-rate 1 --min-self-stake 1 --rate-lock-period 
 
 It will take a while to complete the transactions on Ropsten.
 
-14. Delegate 10000 Ropsten CELR to your candidate, which is the minimum amount required for it to
-    become a validator:
+14. Delegate 10000 Ropsten CELR to your candidate, which is the minimum amount required for it to become a validator:
 
 ```shellscript
 sgnops delegate --candidate <candidate-eth-address> --amount 10000
 ```
 
-`<candidate-eth-address>` is the ETH address obtained in step 10. It will take a while to complete
-the transactions on Ropsten.
+`<candidate-eth-address>` is the ETH address obtained in step 10. It will take a while to complete the transactions on Ropsten.
 
-15. (Optional) In another terminal window, start an SGN gateway server:
+15. Note that it will take some time for the existing SGN validators to sync your new validator from the mainchain. After a while, verify your validator status
+
+```shellscript
+sgncli query validator candidate <candidate-eth-address>
+```
+
+You should be able to see that your candidate has a `delegatedStake` of `10000000000000000000000`, which is 10000 Ropsten CELR denominated in wei.
+
+```shellscript
+sgncli query validator validators
+```
+
+You should see an entry with `identity` equal to your `<candidate-eth-address>`.
+Make a note of the `consensus_pubkey` - the address prefixed with `cosmosvalconspub`.
+
+```shellscript
+sgncli query tendermint-validator-set
+```
+
+You should see an entry with `pub_key` matching the `consensus_pubkey`.
+
+You should also be able to see your validator on the dashboard at `http://54.218.106.24:8000/#/dpos`.
+
+16. (Optional) In another terminal window, start an SGN gateway server:
 
 ```shellscript
 sgncli gateway --laddr tcp://0.0.0.0:1317` to run a gateway.
 ```
-
-16. Verify your candidate status at `http://54.218.106.24:8000/#/dpos`
 
 17. (Optional) You can withdraw your self-stake and unbond your validator candidate by running:
 
