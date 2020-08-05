@@ -27,10 +27,13 @@ func GetSgnopsExecutor() cli.Executor {
 		channel.ServeCommand(),
 		ops.InitCandidateCommand(),
 		ops.DelegateCommand(),
+		ops.ClaimValidatorCommand(),
 		ops.IntendWithdrawCommand(),
 		ops.ConfirmWithdrawCommand(),
 		ops.ConfirmUnbondedCandidateCommand(),
 		ops.WithdrawFromUnbondedCandidateCommand(),
+		ops.GetCandidateInfoCommand(),
+		ops.GetDelegatorInfoCommand(),
 	)
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 
