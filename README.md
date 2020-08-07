@@ -10,4 +10,4 @@ Please refer to the [local test instructions](./test/README.md) to test SGN on y
 
 ## Ropsten Testnet
 
-Please refer to instruction in the [docs folder](./docs) to see how to [run a validator](./docs/ropsten_validator_manual.md), how to [test as a state channel client](./docs/ropsten_test_user_manual.md), and how to run other CLI commands.
+Please refer to instructions in the [docs folder](./docs) to see how to [run a validator](./docs/ropsten_validator_manual.md), how to [test as a state channel client](./docs/ropsten_test_user_manual.md), and how to do other operations through CLI commands.
