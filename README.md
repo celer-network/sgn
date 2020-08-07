@@ -6,7 +6,7 @@ Official sidechain implementation of the [Celer State Guardian Network (SGN)](ht
 
 ## Run Local Tests
 
-Please refer to the [local test instructions](./test/README.md) to test SGN on your machine.
+Please follow the [local test instructions](./test/README.md) to test SGN on your machine.
 
 ## Ropsten Testnet
 
