@@ -1,57 +1,13 @@
-# SGN
+# Celer State Guardian Network
 
 [![CircleCI](https://circleci.com/gh/celer-network/sgn/tree/master.svg?style=svg)](https://circleci.com/gh/celer-network/sgn/tree/master)
 
-## Local Testing
+Official sidechain implementation of the [Celer State Guardian Network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html).
 
-### Multinode Local Tests
+## Run Local Tests
 
-#### Requirements
+Please follow the [local test instructions](./test/README.md) to test SGN on your machine.
 
-- Install [docker](https://docs.docker.com/install/)
-- Install [docker-compose](https://docs.docker.com/compose/install/)
+## Ropsten Testnet
 
-#### Steps
-
-1. Start Docker daemon
-2. cd to repo's root folder and run the following command (`sudo` may be required)
-
-```shellscript
-go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinode
-```
-
-#### Test Logs
-
-- geth log path: docker-volumes/geth-env/geth.log
-- sgn nodeN log path: docker-volumes/nodeN/sgn/sgnd.log
-
-### Manual Tests
-
-### Setup
-
-1. `cp ./test/config/local_config.json ./config.json`
-2. start docker geth container `docker-compose up geth`
-3. `WITH_CLEVELDB=yes make install-all`
-4. `sgntest deploy`
-5. `sgntest osp`
-6. `sgnd start`
-
-#### Test Guard
-
-1. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
-2. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'`
-
-#### Test Upgrade
-
-1. `sgncli tx govern submit-proposal software-upgrade test --title "upgrade test" --description "upgrade test" --deposit 10 --upgrade-height 100 --from jack --keyring-backend file`
-2. `sgncli tx govern vote 1 yes --from jack --keyring-backend file`
-3. Add upgrade handler to app.go, after the chain halts
-
-```go
-app.upgradeKeeper.SetUpgradeHandler("tesy", func(ctx sdk.Context, plan upgrade.Plan) {
-// upgrade changes here
-log.Infof("upgrade to tesy")
-})
-```
-
-4. Restart the chain with `sgnd start`
+Please refer to instructions in the [docs folder](./docs) to see how to [run a validator](./docs/ropsten_validator_manual.md), how to [test as a state channel client](./docs/ropsten_test_user_manual.md), and how to do other operations through CLI commands.
