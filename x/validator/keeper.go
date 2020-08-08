@@ -235,7 +235,7 @@ func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate)
 	for _, validator := range validators {
 		ethAddr := mainchain.FormatAddrHex(validator.Description.Identity)
 		if ethAddr == "" {
-			log.Errorf("Miss eth address for validator %x", validator.OperatorAddress)
+			log.Errorf("Miss eth address for validator %s", validator.OperatorAddress)
 			continue
 		}
 		candidate, found := k.GetCandidate(ctx, ethAddr)
@@ -251,7 +251,7 @@ func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate)
 func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
 	account := k.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
-		log.Infof("Set new account %x", accAddress)
+		log.Infof("Set new account %s", accAddress)
 		account = k.accountKeeper.NewAccountWithAddress(ctx, accAddress)
 		k.accountKeeper.SetAccount(ctx, account)
 	}

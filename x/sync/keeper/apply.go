@@ -100,15 +100,13 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	}
 	valAddress := sdk.ValAddress(candidate.Operator)
 
-	log.Infof("apply sync validator %s ethaddr %x status %s token %s commission %s",
-		candidate.Operator.String(),
-		mainchain.Hex2Addr(v.Description.Identity),
-		v.Status, v.Tokens, v.Commission)
+	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission %s",
+		candidate.Operator, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission)
 
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-			return fmt.Errorf("Invalid change initiator %s for validator %s", change.Initiator, valAddress)
+			return fmt.Errorf("Invalid change initiator %s for validator %s", change.Initiator, candidate.Operator)
 		}
 
 		validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
