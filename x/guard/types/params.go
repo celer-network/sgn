@@ -38,10 +38,10 @@ var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for guard
 type Params struct {
-	RequestGuardCount uint64  `json:"requestGuardCount" yaml:"requestGuardCount"` // request guard count
-	EpochLength       uint64  `json:"epochLength" yaml:"epochLength"`             // epoch length based on seconds
-	RequestCost       sdk.Int `json:"requestCost" yaml:"requestCost"`             // request cost
-	MinDisputeTimeout uint64  `json:"minDisputeTimeout" yaml:"minDisputeTimeout"` // minimal channel dispute timeout in mainchain blocks
+	RequestGuardCount uint64  `json:"request_guard_count" yaml:"request_guard_count"` // request guard count
+	EpochLength       uint64  `json:"epoch_length" yaml:"epoch_length"`               // epoch length based on seconds
+	RequestCost       sdk.Int `json:"request_cost" yaml:"request_cost"`               // request cost
+	MinDisputeTimeout uint64  `json:"min_dispute_timeout" yaml:"min_dispute_timeout"` // minimal channel dispute timeout in mainchain blocks
 
 }
 

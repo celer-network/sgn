@@ -19,10 +19,10 @@
   "app_state": {
     "validator": {
       "params": {
-        "pullerDuration": "5",
-        "pusherDuration": "5",
-        "miningReward": "100000000000000000",
-        "pullerReward": "1000000000000000"
+        "puller_duration": "5",
+        "pusher_duration": "5",
+        "mining_reward": "100000000000000000",
+        "puller_reward": "1000000000000000"
       }
     },
     "genutil": {
@@ -114,10 +114,10 @@
       "params": {
         "signed_blocks_window": "1500",
         "min_signed_per_window": "0.500000000000000000",
-        "slashFractionDoubleSign": "0.050000000000000000",
-        "slashFractionDowntime": "0.010000000000000000",
-        "slashFractionGuardFailure": "0.010000000000000000",
-        "fallbackGuardReward": "0.500000000000000000"
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000",
+        "slash_fraction_guard_failure": "0.010000000000000000",
+        "fallback_guard_reward": "0.500000000000000000"
       }
     },
     "sync": {
@@ -136,10 +136,10 @@
     },
     "guard": {
       "params": {
-        "requestGuardCount": "3",
-        "epochLength": "60",
-        "requestCost": "10000000000000000",
-        "minDisputeTimeout": "80000"
+        "request_guard_count": "3",
+        "epoch_length": "60",
+        "request_cost": "10000000000000000",
+        "min_dispute_timeout": "80000"
       }
     },
     "auth": {
