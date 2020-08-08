@@ -206,7 +206,11 @@ func (m *Monitor) setTransactors() {
 		transactors,
 		m.operator.Key.GetAddress(),
 	)
-	log.Infoln("set transactors", transactors)
+	logmsg := ""
+	for _, transactor := range transactors {
+		logmsg += transactor.String() + " "
+	}
+	log.Infoln("set transactors", logmsg)
 	m.operator.AddTxMsg(setTransactorsMsg)
 }
 

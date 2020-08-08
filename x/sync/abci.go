@@ -37,7 +37,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		}
 
 		if totalVote.GTE(threshold) {
-			log.Infof("Change type: %s, total vote: %s, threshold %s", change.Type, totalVote, threshold)
+			log.Infof("Change id: %d, type: %s, total vote: %s, threshold %s", change.ID, change.Type, totalVote, threshold)
 
 			err := keeper.ApplyChange(ctx, change)
 			if err != nil {
@@ -58,6 +58,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		if ctx.BlockTime().After(change.VotingEndTime) {
 			change.Status = StatusFailed
 			tagValue = types.AttributeValueChangeFailed
+			log.Debugf("Change msg timeout, id: %d, type: %s", change.ID, change.Type)
 		}
 
 		if change.Status != StatusActive {
