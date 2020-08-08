@@ -13,7 +13,7 @@ import (
 
 func intendWithdraw() error {
 	ethClient, err := initEthClient()
-	amount := calcRawAmount()
+	amount := calcRawAmount(viper.GetString(amountFlag))
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	log.Infof(

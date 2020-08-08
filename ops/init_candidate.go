@@ -26,8 +26,7 @@ func initCandidate() error {
 	if err != nil {
 		return err
 	}
-	minSelfStake := new(big.Int)
-	minSelfStake.SetString(viper.GetString(minSelfStakeFlag), 10)
+	minSelfStake := calcRawAmount(viper.GetString(minSelfStakeFlag))
 	commissionRate := new(big.Int)
 	commissionRate.SetString(viper.GetString(commissionRateFlag), 10)
 	rateLockPeriod := new(big.Int)

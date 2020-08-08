@@ -19,7 +19,7 @@ func delegate() error {
 		log.Error(err)
 		return err
 	}
-	amount := calcRawAmount()
+	amount := calcRawAmount(viper.GetString(amountFlag))
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	dPoSAddress := ethClient.DPoSAddress
