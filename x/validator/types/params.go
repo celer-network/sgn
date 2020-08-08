@@ -31,10 +31,10 @@ var (
 var _ params.ParamSet = (*Params)(nil)
 
 type Params struct {
-	PullerDuration uint    `json:"pullerDuration" yaml:"pullerDuration"`
-	PusherDuration uint    `json:"pusherDuration" yaml:"pusherDuration"`
-	MiningReward   sdk.Int `json:"miningReward" yaml:"miningReward"`
-	PullerReward   sdk.Int `json:"pullerReward" yaml:"pullerReward"`
+	PullerDuration uint    `json:"puller_duration" yaml:"puller_duration"`
+	PusherDuration uint    `json:"pusher_duration" yaml:"pusher_duration"`
+	MiningReward   sdk.Int `json:"mining_reward" yaml:"mining_reward"`
+	PullerReward   sdk.Int `json:"puller_reward" yaml:"puller_reward"`
 }
 
 // NewParams creates a new Params instance

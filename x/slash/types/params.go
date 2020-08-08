@@ -38,10 +38,10 @@ var _ params.ParamSet = (*Params)(nil)
 type Params struct {
 	SignedBlocksWindow        int64   `json:"signed_blocks_window" yaml:"signed_blocks_window"`
 	MinSignedPerWindow        sdk.Dec `json:"min_signed_per_window" yaml:"min_signed_per_window"`
-	SlashFractionDoubleSign   sdk.Dec `json:"slashFractionDoubleSign" yaml:"slashFractionDoubleSign"`
-	SlashFractionDowntime     sdk.Dec `json:"slashFractionDowntime" yaml:"slashFractionDowntime"`
-	SlashFractionGuardFailure sdk.Dec `json:"slashFractionGuardFailure" yaml:"slashFractionGuardFailure"`
-	FallbackGuardReward       sdk.Dec `json:"fallbackGuardReward" yaml:"fallbackGuardReward"`
+	SlashFractionDoubleSign   sdk.Dec `json:"slash_fraction_double_sign" yaml:"slash_fraction_double_sign"`
+	SlashFractionDowntime     sdk.Dec `json:"slash_fraction_downtime" yaml:"slash_fraction_downtime"`
+	SlashFractionGuardFailure sdk.Dec `json:"slash_fraction_guard_failure" yaml:"slash_fraction_guard_failure"`
+	FallbackGuardReward       sdk.Dec `json:"fallback_guard_reward" yaml:"fallback_guard_reward"`
 }
 
 // NewParams creates a new Params instance
