@@ -31,8 +31,8 @@ func initEthClient() (*mainchain.EthClient, error) {
 	)
 }
 
-func calcRawAmount() *big.Int {
-	amount := new(big.Int)
-	amount.SetString(viper.GetString(amountFlag), 10)
-	return new(big.Int).Mul(amount, big.NewInt(common.TokenDec))
+func calcRawAmount(amount string) *big.Int {
+	rawAmount := new(big.Int)
+	rawAmount.SetString(amount, 10)
+	return new(big.Int).Mul(rawAmount, big.NewInt(common.TokenDec))
 }

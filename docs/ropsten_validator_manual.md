@@ -106,7 +106,7 @@ It will take a while to sync the node.
 15. Initialize the candidate status for your validator node:
 
 ```shellscript
-sgnops init-candidate --commission-rate 1 --min-self-stake 1 --rate-lock-period 10000
+sgnops init-candidate --commission-rate 1 --min-self-stake 1000 --rate-lock-period 10000
 ```
 
 It will take a while to complete the transactions on Ropsten.
