@@ -124,7 +124,7 @@
       "starting_change_id": "1",
       "changes": null,
       "voting_params": {
-        "voting_period": "15000000000"
+        "voting_period": "120000000000"
       },
       "tally_params": {
         "threshold": "0.668000000000000000"
