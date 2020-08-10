@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
@@ -27,13 +28,13 @@ func (msg MsgSignPenalty) Route() string { return RouterKey }
 func (msg MsgSignPenalty) Type() string { return "sign_penalty" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgSignPenalty) ValidateBasic() sdk.Error {
+func (msg MsgSignPenalty) ValidateBasic() error {
 	if len(msg.Sig) == 0 {
-		return sdk.ErrUnknownRequest("Sig cannot be empty")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Sig cannot be empty")
 	}
 
 	if msg.Sender.Empty() {
-		return sdk.ErrInvalidAddress(msg.Sender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil

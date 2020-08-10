@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/tendermint/tendermint/crypto"
 )
@@ -54,7 +55,19 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr 
 		beneficiaries = append(beneficiaries, NewAccountFractionPair(beneficiaryValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
 	}
 
-	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx), beneficiaries)
+	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, calculateSlashAmount(failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx)), beneficiaries)
+}
+
+// HandleProposalDepositBurn handles a depositor supports refused proposal.
+func (k Keeper) HandleProposalDepositBurn(ctx sdk.Context, depositor sdk.AccAddress, amount sdk.Int) {
+	valAddr := sdk.ValAddress(depositor)
+	validator, found := k.validatorKeeper.GetValidator(ctx, valAddr)
+	if !found {
+		log.Errorf("Cannot find failed validator %s", valAddr)
+		return
+	}
+
+	k.Slash(ctx, AttributeValueDepositBurn, validator, amount.MulRaw(common.TokenDec), []AccountFractionPair{})
 }
 
 // HandleDoubleSign handles a validator signing two blocks at the same height.
@@ -68,7 +81,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	}
 
 	log.Infof("Confirmed double sign from %s", consAddr)
-	k.Slash(ctx, types.AttributeValueDoubleSign, validator, power, k.SlashFractionDoubleSign(ctx), []AccountFractionPair{})
+	k.Slash(ctx, slashing.AttributeValueDoubleSign, validator, calculateSlashAmount(power, k.SlashFractionDoubleSign(ctx)), []AccountFractionPair{})
 }
 
 // HandleValidatorSignature handles a validator signature, must be called once per validator per block.
@@ -83,7 +96,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 	signInfo, found := k.GetValidatorSigningInfo(ctx, consAddr)
 	if !found {
-		signInfo = types.NewValidatorSigningInfo(
+		signInfo = slashing.NewValidatorSigningInfo(
 			consAddr,
 			height,
 			0,
@@ -130,7 +143,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 		signInfo.MissedBlocksCounter = 0
 		signInfo.IndexOffset = 0
 		k.ClearValidatorMissedBlockBitArray(ctx, consAddr)
-		k.Slash(ctx, types.AttributeValueMissingSignature, validator, power, k.SlashFractionDowntime(ctx), []AccountFractionPair{})
+		k.Slash(ctx, slashing.AttributeValueMissingSignature, validator, calculateSlashAmount(power, k.SlashFractionDowntime(ctx)), []AccountFractionPair{})
 	}
 
 	k.SetValidatorSigningInfo(ctx, signInfo)
@@ -138,23 +151,17 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
-func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, power int64, slashFactor sdk.Dec, beneficiaries []AccountFractionPair) {
-	if slashFactor.IsNegative() {
-		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashFactor))
-	}
-
-	// Amount of slashing = slash slashFactor * power at time of infraction
-	amount := sdk.TokensFromConsensusPower(power).Mul(validator.PowerReduction)
-	slashAmount := amount.ToDec().Mul(slashFactor).TruncateInt()
+func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, slashAmount sdk.Int, beneficiaries []AccountFractionPair) {
 	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
 	if !found {
 		log.Errorln("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
+		return
 	}
 
 	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, failedValidator.Description.Identity)
 	for _, delegator := range candidate.Delegators {
 		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-		accountAmtPair := NewAccountAmtPair(delegator.EthAddress, penaltyAmt)
+		accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
 		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
 	}
 
@@ -162,15 +169,15 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
 
-	log.Infof("Failed validator %s slashed by %s with slash factor of %s",
-		failedValidator.GetOperator(), slashAmount, slashFactor.String())
+	log.Warnf("Slash validator: %s, amount: %s, reason: %s, nonce: %d",
+		failedValidator.GetOperator(), slashAmount, reason, penalty.Nonce)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			EventTypeSlash,
 			sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
 			sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
-			sdk.NewAttribute(types.AttributeKeyReason, reason),
+			sdk.NewAttribute(slashing.AttributeKeyReason, reason),
 		),
 	)
 }
@@ -206,9 +213,9 @@ func (k Keeper) SetPenalty(ctx sdk.Context, penalty Penalty) {
 }
 
 // Stored by *validator* address (not operator address)
-func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress) (info types.ValidatorSigningInfo, found bool) {
+func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress) (info slashing.ValidatorSigningInfo, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetValidatorSigningInfoKey(address))
+	bz := store.Get(slashing.GetValidatorSigningInfoKey(address))
 	if bz == nil {
 		found = false
 		return
@@ -220,16 +227,16 @@ func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress
 }
 
 // Stored by *validator* address (not operator address)
-func (k Keeper) SetValidatorSigningInfo(ctx sdk.Context, info types.ValidatorSigningInfo) {
+func (k Keeper) SetValidatorSigningInfo(ctx sdk.Context, info slashing.ValidatorSigningInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(info)
-	store.Set(types.GetValidatorSigningInfoKey(info.Address), bz)
+	store.Set(slashing.GetValidatorSigningInfoKey(info.Address), bz)
 }
 
 // Stored by *validator* address (not operator address)
 func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.ConsAddress, index int64) (missed bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetValidatorMissedBlockBitArrayKey(address, index))
+	bz := store.Get(slashing.GetValidatorMissedBlockBitArrayKey(address, index))
 	if bz == nil {
 		// lazy: treat empty key as not missed
 		missed = false
@@ -244,15 +251,24 @@ func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.Con
 func (k Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.ConsAddress, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(missed)
-	store.Set(types.GetValidatorMissedBlockBitArrayKey(address, index), bz)
+	store.Set(slashing.GetValidatorMissedBlockBitArrayKey(address, index), bz)
 }
 
 // Stored by *validator* address (not operator address)
 func (k Keeper) ClearValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.ConsAddress) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetValidatorMissedBlockBitArrayPrefixKey(address))
+	iter := sdk.KVStorePrefixIterator(store, slashing.GetValidatorMissedBlockBitArrayPrefixKey(address))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
 	}
+}
+
+func calculateSlashAmount(power int64, slashFactor sdk.Dec) sdk.Int {
+	if slashFactor.IsNegative() {
+		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashFactor))
+	}
+	// Amount of slashing = slash slashFactor * power at time of infraction
+	amount := sdk.TokensFromConsensusPower(power).MulRaw(common.TokenDec)
+	return amount.ToDec().Mul(slashFactor).TruncateInt()
 }

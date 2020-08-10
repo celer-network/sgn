@@ -9,36 +9,43 @@ import (
 )
 
 type Delegator struct {
-	EthAddress     string  `json:"ethAddress"`
+	CandidateAddr  string  `json:"candidateAddr"`
+	DelegatorAddr  string  `json:"delegatorAddr"`
 	DelegatedStake sdk.Int `json:"delegatedStake"`
 }
 
-func NewDelegator(ethAddress string) Delegator {
+func NewDelegator(candidateAddr, delegatorAddr string) Delegator {
 	return Delegator{
-		EthAddress: mainchain.FormatAddrHex(ethAddress),
+		CandidateAddr: mainchain.FormatAddrHex(candidateAddr),
+		DelegatorAddr: mainchain.FormatAddrHex(delegatorAddr),
 	}
 }
 
 // implement fmt.Stringer
-func (c Delegator) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`EthAddress: %s, DelegatedStake: %v`, c.EthAddress, c.DelegatedStake))
+func (d Delegator) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`CandidateAddr: %s, DelegatorAddr: %s, DelegatedStake: %v`,
+		d.CandidateAddr, d.DelegatorAddr, d.DelegatedStake))
 }
 
 // operator will be used for running validator node, and transactor will be used for running gateway
 type Candidate struct {
-	Operator    sdk.AccAddress   `json:"operator"`
-	Transactors []sdk.AccAddress `json:"transactors"`
-	StakingPool sdk.Int          `json:"stakingPool"`
-	Delegators  []Delegator      `json:"delegators"`
+	EthAddress     string           `json:"ethAddress"`
+	Operator       sdk.AccAddress   `json:"operator"`
+	Transactors    []sdk.AccAddress `json:"transactors"`
+	Delegators     []Delegator      `json:"delegators"`
+	StakingPool    sdk.Int          `json:"stakingPool"`
+	CommissionRate sdk.Dec          `json:"commissionRate"`
+	RequestCount   sdk.Int          `json:"requestCount"`
 }
 
-func NewCandidate(operator sdk.AccAddress) Candidate {
+func NewCandidate(ethAddress string, operator sdk.AccAddress) Candidate {
 	return Candidate{
-		Operator: operator,
+		EthAddress: mainchain.FormatAddrHex(ethAddress),
+		Operator:   operator,
 	}
 }
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, StakingPool: %v`, c.Operator, c.StakingPool))
+	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, EthAddress: %s, StakingPool: %v`, c.Operator, c.EthAddress, c.StakingPool))
 }

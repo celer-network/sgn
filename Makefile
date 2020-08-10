@@ -1,18 +1,30 @@
-include Makefile.ledger
+# include Makefile.ledger
+
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += cleveldb
+endif
+
+BUILD_FLAGS := -tags "$(build_tags)"
+
 .PHONY: all
 all: lint install
 
 .PHONY: install
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/sgn
+		go install $(BUILD_FLAGS) ./cmd/sgnd
 		go install $(BUILD_FLAGS) ./cmd/sgncli
 
-install-test: go.sum
-	go install $(BUILD_FLAGS) ./cmd/sgntest
+install-ops: go.sum
+	go install $(BUILD_FLAGS) ./cmd/sgnops
 
 install-all: go.sum
 	make install
-	make install-test
+	make install-ops
+
+generate-docs: go.sum
+	go run ./cmd/gendocs ./docs
+	find ./docs -type f | xargs sed -i '' 's|'"$$HOME"'|\$$HOME|g'
+	find ./docs -type f | xargs sed -i '' 's|'"$$HOSTNAME"'|\$$HOSTNAME|g'
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
@@ -24,43 +36,39 @@ lint:
 	go mod verify
 
 copy-test-data:
-	cp -r test/data/.sgn ~/.sgn
+	cp -r test/data/.sgnd ~/.sgnd
 	cp -r test/data/.sgncli ~/.sgncli
 
 remove-test-data:
-	rm -rf ~/.sgn ~/.sgncli
+	rm -rf ~/.sgnd ~/.sgncli
 
 .PHONY: update-test-data
 update-test-data: remove-test-data copy-test-data
 
 copy-test-config:
-	cp test/data/.sgn/config/genesis.json ~/.sgn/config/genesis.json
+	cp test/data/.sgnd/config/genesis.json ~/.sgnd/config/genesis.json
 	cp test/data/.sgncli/config/config.toml ~/.sgncli/config/config.toml
 
 ################################ Docker related ################################
 .PHONY: build
 build: go.sum
 	mkdir -p ./build
-	go build -o ./build/sgn ./cmd/sgn
+	go build -o ./build/sgnd ./cmd/sgnd
 	go build -o ./build/sgncli ./cmd/sgncli
 
 .PHONY: build-linux
 build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
-GETH_VER = geth-linux-amd64-1.9.1-b7b2f60f
-.PHONY: get-geth
-get-geth:
-	mkdir -p ./build
-	curl -sL https://gethstore.blob.core.windows.net/builds/$(GETH_VER).tar.gz | tar -xz --strip 1 $(GETH_VER)/geth && mv geth ./build;
-
 .PHONY: build-dockers
 build-dockers:
-	$(MAKE) -C networks/local
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/geth networks/local/geth
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/sgnnode .
+	# $(MAKE) -C networks/local
 
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env
-prepare-docker-env: build-dockers get-geth build-linux prepare-geth-data
+prepare-docker-env: build-dockers build-linux prepare-geth-data
 
 # Run geth
 .PHONY: localnet-start-geth

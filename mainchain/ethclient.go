@@ -1,44 +1,90 @@
 package mainchain
 
 import (
-	"crypto/ecdsa"
+	"encoding/hex"
 	"io/ioutil"
-	"strings"
+	"math/big"
+	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/celer-network/goutils/eth"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 )
 
 type EthClient struct {
-	// initialized by SetClient()
-	Client *ethclient.Client
-	// initialized by SetAuth()
-	PrivateKey *ecdsa.PrivateKey
+	// init by NewEthClient
+	Client     *ethclient.Client
+	Transactor *eth.Transactor
+	Signer     eth.Signer
 	Address    Addr
-	Auth       *bind.TransactOpts
-	// initialized by SetContracts()
-	GuardAddress  Addr
-	Guard         *Guard
+
+	// init by SetContracts
+	DPoSAddress   Addr
+	DPoS          *DPoS
+	SGNAddress    Addr
+	SGN           *SGN
 	LedgerAddress Addr
 	Ledger        *CelerLedger
 }
 
-// NewEthClient creates a new eth client and initializes all fields
-func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthClient, error) {
+type TransactorConfig struct {
+	BlockDelay           uint64
+	BlockPollingInterval uint64
+	ChainId              *big.Int
+	AddGasPriceGwei      uint64
+	MinGasPriceGwei      uint64
+}
+
+func NewEthClient(
+	ethurl string,
+	ksfile string,
+	passphrase string,
+	tconfig *TransactorConfig,
+	dposAddrStr string,
+	sgnAddrStr string,
+	ledgerAddrStr string) (*EthClient, error) {
 	ethClient := &EthClient{}
-	err := ethClient.SetClient(ws)
+
+	rpcClient, err := ethrpc.Dial(ethurl)
+	if err != nil {
+		return nil, err
+	}
+	ethClient.Client = ethclient.NewClient(rpcClient)
+
+	ksBytes, err := ioutil.ReadFile(ksfile)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ethClient.SetAuth(ks, passphrase)
+	key, err := keystore.DecryptKey(ksBytes, passphrase)
+	if err != nil {
+		return nil, err
+	}
+	ethClient.Address = key.Address
+
+	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)), tconfig.ChainId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ethClient.SetContracts(guardAddrStr, ledgerAddrStr)
+	transactor, err := eth.NewTransactor(
+		string(ksBytes),
+		passphrase,
+		ethClient.Client,
+		tconfig.ChainId,
+		eth.WithBlockDelay(tconfig.BlockDelay),
+		eth.WithPollingInterval(time.Duration(tconfig.BlockPollingInterval)*time.Second),
+		eth.WithAddGasGwei(tconfig.AddGasPriceGwei),
+		eth.WithMinGasGwei(tconfig.MinGasPriceGwei),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ethClient.Transactor = transactor
+
+	err = ethClient.setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
 	if err != nil {
 		return nil, err
 	}
@@ -46,41 +92,15 @@ func NewEthClient(ws, guardAddrStr, ledgerAddrStr, ks, passphrase string) (*EthC
 	return ethClient, nil
 }
 
-func (ethClient *EthClient) SetClient(ws string) error {
-	rpcClient, err := ethrpc.Dial(ws)
+func (ethClient *EthClient) setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
+	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
+	dpos, err := NewDPoS(ethClient.DPoSAddress, ethClient.Client)
 	if err != nil {
 		return err
 	}
 
-	ethClient.Client = ethclient.NewClient(rpcClient)
-	return nil
-}
-
-func (ethClient *EthClient) SetAuth(ks, passphrase string) error {
-	keystoreBytes, err := ioutil.ReadFile(ks)
-	if err != nil {
-		return err
-	}
-
-	key, err := keystore.DecryptKey(keystoreBytes, passphrase)
-	if err != nil {
-		return err
-	}
-
-	auth, err := bind.NewTransactor(strings.NewReader(string(keystoreBytes)), passphrase)
-	if err != nil {
-		return err
-	}
-
-	ethClient.PrivateKey = key.PrivateKey
-	ethClient.Address = key.Address
-	ethClient.Auth = auth
-	return nil
-}
-
-func (ethClient *EthClient) SetContracts(guardAddrStr, ledgerAddrStr string) error {
-	ethClient.GuardAddress = Hex2Addr(guardAddrStr)
-	guard, err := NewGuard(ethClient.GuardAddress, ethClient.Client)
+	ethClient.SGNAddress = Hex2Addr(sgnAddrStr)
+	sgn, err := NewSGN(ethClient.SGNAddress, ethClient.Client)
 	if err != nil {
 		return err
 	}
@@ -91,7 +111,12 @@ func (ethClient *EthClient) SetContracts(guardAddrStr, ledgerAddrStr string) err
 		return err
 	}
 
-	ethClient.Guard = guard
+	ethClient.DPoS = dpos
+	ethClient.SGN = sgn
 	ethClient.Ledger = ledger
 	return nil
+}
+
+func (ethClient *EthClient) SignEthMessage(data []byte) ([]byte, error) {
+	return ethClient.Signer.SignEthMessage(data)
 }

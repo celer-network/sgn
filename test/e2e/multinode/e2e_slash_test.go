@@ -8,29 +8,30 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
-	tc "github.com/celer-network/sgn/test/common"
-	"github.com/celer-network/sgn/x/slash"
-	stypes "github.com/celer-network/sgn/x/slash/types"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 )
 
-func setUpSlash() {
+func setupSlash() {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
+		CelrAddr:               tc.E2eProfile.CelrAddr,
+		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
-		MinStakingPool:         big.NewInt(0),
-		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        big.NewInt(11),
+		MinStakingPool:         big.NewInt(0),
+		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	setupNewSGNEnv(p)
+	tc.SetupNewSGNEnv(p)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
 func TestE2ESlash(t *testing.T) {
-	setUpSlash()
+	setupSlash()
 
 	t.Run("e2e-slash", func(t *testing.T) {
 		t.Run("slashTest", slashTest)
@@ -44,49 +45,36 @@ func slashTest(t *testing.T) {
 
 	transactor := tc.NewTransactor(
 		t,
-		tc.SgnCLIHome,
+		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
-	amts := []*big.Int{big.NewInt(1000000000000000000), big.NewInt(1000000000000000000), big.NewInt(100000000000000000)}
+	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(2000000000000000000), big.NewInt(1000000000000000000)}
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
-
 	shutdownNode(2)
 
 	log.Infoln("Query sgn about penalty info...")
-	var penalty stypes.Penalty
-	var err error
 	nonce := uint64(0)
-	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000`, tc.ValEthAddrs[2])
-	for retry := 0; retry < 30; retry++ {
-		penalty, err = slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
-		if err == nil && penalty.String() == expRes1 && penalty.PenalizedDelegators[0].String() == expRes2 &&
-			len(penalty.PenaltyProtoBytes) > 0 && len(penalty.Sigs) == 2 {
-			break
-		}
-		time.Sleep(2 * time.Second)
-	}
+	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 2)
 	tc.ChkTestErr(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
+	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
-	assert.Greater(t, len(penalty.PenaltyProtoBytes), 0, fmt.Sprintf("The length of penaltyProtoBytes should be larger than 0"))
-	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
-	for retry := 0; retry < 30; retry++ {
-		ci, _ := tc.Client0.Guard.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
+	for retry := 0; retry < tc.RetryLimit; retry++ {
+		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "99000000000000000" {
+		if poolAmt == "990000000000000000" {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(tc.RetryPeriod)
 	}
-	assert.Equal(t, "99000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 99000000000000000"))
+	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
 }

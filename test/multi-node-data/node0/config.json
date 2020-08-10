@@ -1,18 +1,29 @@
 {
   "eth": {
-    "guardaddress": "0xC4c7d65D45BA37Ab46b6b36d1bb90Bb79ae8E0F8",
+    "chainId": 883,
+    "blockDelay": 1,
+    "checkInterval": {
+      "IntendSettle": 1,
+      "IntendWithdrawChannel": 1,
+      "ConfirmParamProposal": 2
+    },
+    "contracts": {
+      "celrAddress": "",
+      "dposAddress": "",
+      "ledgerAddress": "",
+      "sgnAddress": ""
+    },
+    "gateway": "http://192.168.10.1:8545",
     "keystore": "./keys/ethks0.json",
-    "ledgeraddress": "0120812110a089b49bdc5a68d61ee7213a2e2c94",
     "passphrase": "",
-    "instance": "http://192.168.10.1:8545",
     "pollInterval": 1
   },
-  "logcolor": false,
-  "loglevel": "debug",
-  "loglongfile": true,
+  "log": {
+    "level": "debug"
+  },
   "sgn": {
     "chainid": "sgnchain",
-    "gasprice": "",
+    "baseGasPrice": 0,
     "nodeuri": "tcp://localhost:26657",
     "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
     "passphrase": "12341234",
@@ -22,6 +33,8 @@
       "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
     ],
     "timeoutCommit": 2,
-    "seedNode": true
+    "keyringbackend": "test",
+    "bootNode": true,
+    "executeSlash": true
   }
 }

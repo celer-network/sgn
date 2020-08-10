@@ -1,0 +1,5 @@
+.vscode
+.git
+build
+docker-volumes
+test

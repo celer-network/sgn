@@ -13,6 +13,13 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+type RewardType int
+
+const (
+	ServiceReward = iota
+	MiningReward
+)
+
 type Reward struct {
 	Receiver         string       `json:"receiver"`
 	MiningReward     sdk.Int      `json:"miningReward"`
@@ -41,7 +48,11 @@ func (r Reward) HasNewReward() bool {
 	}
 
 	var reward sgn.Reward
-	proto.Unmarshal(r.RewardProtoBytes, &reward)
+	err := proto.Unmarshal(r.RewardProtoBytes, &reward)
+	if err != nil {
+		log.Errorln("proto umarshal err", err)
+		return false
+	}
 
 	hasNewServiceReward := new(big.Int).SetBytes(reward.CumulativeServiceReward).Cmp(r.ServiceReward.BigInt()) != 0
 	hasNewMingingReward := new(big.Int).SetBytes(reward.CumulativeMiningReward).Cmp(r.MiningReward.BigInt()) != 0

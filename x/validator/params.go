@@ -34,12 +34,19 @@ func (k Keeper) MiningReward(ctx sdk.Context) (res sdk.Int) {
 	return
 }
 
+// PullerReward - puller reward
+func (k Keeper) PullerReward(ctx sdk.Context) (res sdk.Int) {
+	k.paramstore.Get(ctx, types.KeyPullerReward, &res)
+	return
+}
+
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.PullerDuration(ctx),
 		k.PusherDuration(ctx),
 		k.MiningReward(ctx),
+		k.PullerReward(ctx),
 	)
 }
 

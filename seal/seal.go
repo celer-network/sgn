@@ -31,6 +31,7 @@ func NewMsgLog() *MsgLog {
 	return &MsgLog{
 		ChanInfo:        &ChannelInfo{},
 		Penalty:         &Penalty{},
+		Change:          &Change{},
 		ExecutionTimeMs: (float64)(now),
 	}
 }
@@ -44,6 +45,11 @@ func CommitMsgLog(entry *MsgLog) {
 	if entry.Penalty.Nonce == 0 && len(entry.Penalty.Validator) == 0 {
 		entry.Penalty = nil
 	}
+
+	if entry.Change.Id == 0 {
+		entry.Change = nil
+	}
+
 	if len(entry.Error) > 0 {
 		log.Errorln("MsgLog:", entry)
 	} else if len(entry.Warn) > 0 {

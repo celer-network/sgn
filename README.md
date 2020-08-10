@@ -1,37 +1,13 @@
-# SGN
+# Celer State Guardian Network
 
 [![CircleCI](https://circleci.com/gh/celer-network/sgn/tree/master.svg?style=svg)](https://circleci.com/gh/celer-network/sgn/tree/master)
 
-## Test
+Official sidechain implementation of the [Celer State Guardian Network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html).
 
-### Multinode Local Tests
+## Run Local Tests
 
-#### Requirements
+Please follow the [local test instructions](./test/README.md) to test SGN on your machine.
 
-- Install [docker](https://docs.docker.com/install/)
-- Install [docker-compose](https://docs.docker.com/compose/install/)
+## Ropsten Testnet
 
-#### Steps
-
-1. Start Docker daemon
-2. cd to repo's root folder and run the following command (`sudo` may be required)
-
-   `go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinode`
-
-#### Test Logs
-
-- geth log path: docker-volumes/geth-env/geth.log
-- sgn nodeN log path: docker-volumes/nodeN/sgn/sgn.log
-
-### Manual Tests
-
-#### Steps
-
-1. `cp ./test/config/local_config.json ./config.json`
-1. start docker geth container `docker-compose up geth`
-1. `make install-all`
-1. `sgntest deploy`
-1. `sgntest osp`
-1. `sgn start`
-1. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
-1. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'`
+Please refer to instructions in the [docs folder](./docs) to see how to [run a validator](./docs/ropsten_validator_manual.md), how to [test as a state channel client](./docs/ropsten_test_user_manual.md), and how to do other operations through CLI commands.

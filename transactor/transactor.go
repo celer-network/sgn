@@ -6,17 +6,17 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/seal"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gammazero/deque"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -32,10 +32,12 @@ type Transactor struct {
 	Key        keys.Info
 	Passphrase string
 	msgQueue   deque.Deque
+	gpe        *GasPriceEstimator
 }
 
-func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice string, cdc *codec.Codec) (*Transactor, error) {
-	kb, err := client.NewKeyBaseFromDir(cliHome)
+func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
+	kb, err := keys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
+		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +56,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 			break
 		}
 		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
+			log.Errorln("kb.GetByAddress error:", err)
 			return nil, err
 		}
 		if try != maxSignRetry-1 {
@@ -62,14 +65,12 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 		}
 	}
 
-	txBldr := auth.
-		NewTxBuilderFromCLI().
+	txBldr := NewTxBuilder().
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID).
-		WithKeybase(kb).
-		WithGasPrices(gasPrice)
+		WithKeybase(kb)
 
-	cliCtx := client.
+	cliCtx := context.
 		NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(key.GetAddress()).
@@ -83,6 +84,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase, gasPrice stri
 		CliCtx:     cliCtx,
 		Key:        key,
 		Passphrase: passphrase,
+		gpe:        gpe,
 	}
 
 	go transactor.start()
@@ -152,6 +154,10 @@ func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse,
 }
 
 func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
+	if t.gpe != nil {
+		t.TxBuilder = t.TxBuilder.WithGasPrices(t.gpe.GetGasPrice())
+	}
+
 	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 	if err != nil {
 		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)

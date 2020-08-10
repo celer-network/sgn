@@ -2,7 +2,9 @@ package app
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -10,26 +12,28 @@ import (
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/cron"
-	"github.com/celer-network/sgn/x/global"
+	"github.com/celer-network/sgn/x/gov"
+	govclient "github.com/celer-network/sgn/x/gov/client"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/slash"
-	"github.com/celer-network/sgn/x/subscribe"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	tlog "github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -40,34 +44,32 @@ var (
 	// default home directories for the application CLI
 	DefaultCLIHome = os.ExpandEnv("$HOME/.sgncli")
 
-	// DefaultNodeHome sets the folder where the applcation data and configuration will be stored
-	DefaultNodeHome = os.ExpandEnv("$HOME/.sgn")
+	// DefaultNodeHome sets the folder where the application data and configuration will be stored
+	DefaultNodeHome = os.ExpandEnv("$HOME/.sgnd")
 
 	// ModuleBasicManager is in charge of setting up basic module elemnets
 	ModuleBasics = module.NewBasicManager(
-		genaccounts.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		auth.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
 
 		cron.AppModule{},
-		global.AppModule{},
+		gov.NewAppModuleBasic(govclient.ParamProposalHandler, govclient.UpgradeProposalHandler),
 		slash.AppModule{},
-		subscribe.AppModule{},
+		guard.AppModule{},
+		sync.AppModule{},
 		validator.AppModuleBasic{},
 	)
 	// account permissions
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
-		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
-		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
-
-	monitored = false
-	ethClient *mainchain.EthClient
 )
 
 // MakeCodec generates the necessary codecs for Amino
@@ -91,10 +93,12 @@ type sgnApp struct {
 	keySupply    *sdk.KVStoreKey
 	keyStaking   *sdk.KVStoreKey
 	keyParams    *sdk.KVStoreKey
+	keyUpgrade   *sdk.KVStoreKey
 	keyCron      *sdk.KVStoreKey
-	keyGlobal    *sdk.KVStoreKey
+	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
-	keySubscribe *sdk.KVStoreKey
+	keyGuard     *sdk.KVStoreKey
+	keySync      *sdk.KVStoreKey
 	keyValidator *sdk.KVStoreKey
 
 	// Keepers
@@ -103,10 +107,12 @@ type sgnApp struct {
 	stakingKeeper   staking.Keeper
 	supplyKeeper    supply.Keeper
 	paramsKeeper    params.Keeper
+	upgradeKeeper   upgrade.Keeper
 	cronKeeper      cron.Keeper
-	globalKeeper    global.Keeper
+	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
-	subscribeKeeper subscribe.Keeper
+	guardKeeper     guard.Keeper
+	syncKeeper      sync.Keeper
 	validatorKeeper validator.Keeper
 
 	// Module Manager
@@ -114,32 +120,19 @@ type sgnApp struct {
 }
 
 // NewSgnApp is a constructor function for sgnApp
-func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
+func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
 	viper.SetConfigFile("config.json")
 	err := viper.ReadInConfig()
 	if err != nil {
-		cmn.Exit(err.Error())
+		tmos.Exit(err.Error())
 	}
 	viper.SetDefault(common.FlagStartMonitor, true)
-	viper.SetDefault(common.FlagEthPollInterval, 5)
-
-	ethClient, err = mainchain.NewEthClient(
-		viper.GetString(common.FlagEthInstance),
-		viper.GetString(common.FlagEthGuardAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-		viper.GetString(common.FlagEthKeystore),
-		viper.GetString(common.FlagEthPassphrase),
-	)
-	if err != nil {
-		cmn.Exit(err.Error())
-	}
+	viper.SetDefault(common.FlagEthPollInterval, 15)
+	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
-	}
-	if viper.GetBool(common.FlagLogLongFile) {
-		common.EnableLogLongFile()
 	}
 
 	// First define the top level codec that will be shared by the different modules
@@ -160,23 +153,26 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		tkeyStaking:  sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyParams:    sdk.NewKVStoreKey(params.StoreKey),
 		tkeyParams:   sdk.NewTransientStoreKey(params.TStoreKey),
+		keyUpgrade:   sdk.NewKVStoreKey(upgrade.StoreKey),
 		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
-		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
+		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
-		keySubscribe: sdk.NewKVStoreKey(subscribe.StoreKey),
+		keyGuard:     sdk.NewKVStoreKey(guard.StoreKey),
+		keySync:      sdk.NewKVStoreKey(sync.StoreKey),
 		keyValidator: sdk.NewKVStoreKey(validator.StoreKey),
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
-	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams, params.DefaultCodespace)
+	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams)
 	// Set specific subspaces
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
-	globalSubspace := app.paramsKeeper.Subspace(global.DefaultParamspace)
+	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
-	subscribeSubspace := app.paramsKeeper.Subspace(subscribe.DefaultParamspace)
+	guardSubspace := app.paramsKeeper.Subspace(guard.DefaultParamspace)
+	syncSubspace := app.paramsKeeper.Subspace(sync.DefaultParamspace).WithKeyTable(sync.ParamKeyTable())
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -190,7 +186,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	app.bankKeeper = bank.NewBaseKeeper(
 		app.accountKeeper,
 		bankSupspace,
-		bank.DefaultCodespace,
 		app.ModuleAccountAddrs(),
 	)
 
@@ -206,10 +201,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 	stakingKeeper := staking.NewKeeper(
 		app.cdc,
 		app.keyStaking,
-		app.tkeyStaking,
 		app.supplyKeeper,
 		stakingSubspace,
-		staking.DefaultCodespace,
 	)
 
 	// register the staking hooks
@@ -218,22 +211,15 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		staking.NewMultiStakingHooks(),
 	)
 
-	app.globalKeeper = global.NewKeeper(
-		app.keyGlobal,
-		app.cdc,
-		ethClient,
-		globalSubspace,
-	)
-
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyValidator,
 		app.cdc,
-		ethClient,
-		app.globalKeeper,
 		app.accountKeeper,
 		app.stakingKeeper,
 		validatorSubspace,
 	)
+
+	app.upgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, app.keyUpgrade, app.cdc)
 
 	app.slashKeeper = slash.NewKeeper(
 		app.keySlash,
@@ -242,14 +228,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		slashSubspace,
 	)
 
-	app.subscribeKeeper = subscribe.NewKeeper(
-		app.keySubscribe,
+	app.guardKeeper = guard.NewKeeper(
+		app.keyGuard,
 		app.cdc,
-		ethClient,
-		app.globalKeeper,
-		app.slashKeeper,
 		app.validatorKeeper,
-		subscribeSubspace,
+		guardSubspace,
 	)
 
 	app.cronKeeper = cron.NewKeeper(
@@ -259,35 +242,60 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.validatorKeeper,
 	)
 
+	govRouter := gov.NewRouter()
+	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
+		AddRoute(params.RouterKey, gov.NewParamChangeProposalHandler(app.paramsKeeper)).
+		AddRoute(upgrade.RouterKey, gov.NewUpgradeProposalHandler(app.upgradeKeeper))
+	app.govKeeper = gov.NewKeeper(
+		app.cdc,
+		app.keyGov,
+		govSubspace,
+		app.validatorKeeper,
+		app.slashKeeper,
+		govRouter,
+	)
+
+	app.syncKeeper = sync.NewKeeper(
+		app.cdc,
+		app.keySync,
+		syncSubspace,
+		app.paramsKeeper,
+		app.slashKeeper,
+		app.stakingKeeper,
+		app.guardKeeper,
+		app.validatorKeeper,
+	)
+
 	app.mm = module.NewManager(
-		genaccounts.NewAppModule(app.accountKeeper),
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		staking.NewAppModule(app.stakingKeeper, distr.Keeper{}, app.accountKeeper, app.supplyKeeper),
-		cron.NewAppModule(app.cronKeeper, app.bankKeeper),
-		global.NewAppModule(app.globalKeeper, app.bankKeeper),
-		slash.NewAppModule(app.slashKeeper, app.bankKeeper),
-		subscribe.NewAppModule(app.subscribeKeeper, app.bankKeeper),
-		validator.NewAppModule(app.validatorKeeper, app.bankKeeper),
+		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
+		upgrade.NewAppModule(app.upgradeKeeper),
+		cron.NewAppModule(app.cronKeeper),
+		slash.NewAppModule(app.slashKeeper),
+		guard.NewAppModule(app.guardKeeper),
+		validator.NewAppModule(app.validatorKeeper),
+		gov.NewAppModule(app.govKeeper, app.accountKeeper),
+		sync.NewAppModule(app.syncKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers(slash.ModuleName)
-	app.mm.SetOrderEndBlockers(subscribe.ModuleName, validator.ModuleName, cron.ModuleName)
+	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, slash.ModuleName)
+	app.mm.SetOrderEndBlockers(guard.ModuleName, validator.ModuleName, cron.ModuleName, gov.ModuleName, sync.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	app.mm.SetOrderInitGenesis(
-		genaccounts.ModuleName,
 		staking.ModuleName,
 		auth.ModuleName,
 		bank.ModuleName,
 		genutil.ModuleName,
 		cron.ModuleName,
-		global.ModuleName,
 		slash.ModuleName,
-		subscribe.ModuleName,
+		guard.ModuleName,
 		validator.ModuleName,
+		gov.ModuleName,
+		sync.ModuleName,
 	)
 
 	// register all module routes and module queriers
@@ -315,16 +323,22 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseAp
 		app.keySupply,
 		app.keyStaking,
 		app.keyParams,
+		app.keyUpgrade,
 		app.keyCron,
-		app.keyGlobal,
 		app.keySlash,
-		app.keySubscribe,
+		app.keyGuard,
 		app.keyValidator,
+		app.keyGov,
+		app.keySync,
 	)
 
 	err = app.LoadLatestVersion(app.keyMain)
 	if err != nil {
-		cmn.Exit(err.Error())
+		tmos.Exit(err.Error())
+	}
+
+	if viper.GetBool(common.FlagStartMonitor) {
+		go app.startMonitor(db)
 	}
 
 	return app
@@ -349,10 +363,6 @@ func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.
 }
 
 func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if !monitored {
-		monitored = true
-		go app.startMonitor(ctx)
-	}
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -393,36 +403,44 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-func (app *sgnApp) startMonitor(ctx sdk.Context) {
-	if !viper.GetBool(common.FlagStartMonitor) {
-		return
+func (app *sgnApp) startMonitor(db dbm.DB) {
+	ethClient, err := mainchain.NewEthClient(
+		viper.GetString(common.FlagEthGateway),
+		viper.GetString(common.FlagEthKeystore),
+		viper.GetString(common.FlagEthPassphrase),
+		&mainchain.TransactorConfig{
+			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
+			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
+			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
+			AddGasPriceGwei:      viper.GetUint64(common.FlagEthAddGasPriceGwei),
+			MinGasPriceGwei:      viper.GetUint64(common.FlagEthMinGasPriceGwei),
+		},
+		viper.GetString(common.FlagEthDPoSAddress),
+		viper.GetString(common.FlagEthSGNAddress),
+		viper.GetString(common.FlagEthLedgerAddress),
+	)
+	if err != nil {
+		tmos.Exit(err.Error())
 	}
 
 	operator, err := transactor.NewTransactor(
 		viper.GetString(common.FlagCLIHome),
-		ctx.ChainID(),
+		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnOperator),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 		app.cdc,
+		transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
 	)
 	if err != nil {
-		cmn.Exit(err.Error())
+		tmos.Exit(err.Error())
 	}
 
-	transactor, err := transactor.NewTransactor(
-		viper.GetString(common.FlagCLIHome),
-		ctx.ChainID(),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[0],
-		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
-		app.cdc,
-	)
-	if err != nil {
-		cmn.Exit(err.Error())
+	_, err = rpc.GetChainHeight(operator.CliCtx)
+	for err != nil {
+		time.Sleep(time.Second)
+		_, err = rpc.GetChainHeight(operator.CliCtx)
 	}
 
-	monitor.NewEthMonitor(ethClient, operator, transactor)
+	monitor.NewMonitor(ethClient, operator, db)
 }

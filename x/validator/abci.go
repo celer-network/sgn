@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/celer-network/goutils/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -13,7 +14,7 @@ import (
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
 	setPuller(ctx, req, keeper)
-	setPusher(ctx, keeper)
+	setPusher(ctx, req, keeper)
 	miningReward := keeper.MiningReward(ctx)
 	keeper.DistributeReward(ctx, miningReward, MiningReward)
 
@@ -30,20 +31,21 @@ func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	if puller.ValidatorIdx != vIdx || puller.ValidatorAddr.Empty() {
 		puller = NewPuller(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
 		keeper.SetPuller(ctx, puller)
+		log.Infof("set puller to %s", puller.ValidatorAddr)
 	}
 }
 
 // Update pusher for every pusherDuration
-func setPusher(ctx sdk.Context, keeper Keeper) {
+func setPusher(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 	pusher := keeper.GetPusher(ctx)
 	validators := keeper.GetValidators(ctx)
-	latestBlock := keeper.globalKeeper.GetLatestBlock(ctx)
 	pusherDuration := keeper.PusherDuration(ctx)
-	vIdx := uint(latestBlock.Number) / pusherDuration % uint(len(validators))
+	vIdx := uint(req.Height) / pusherDuration % uint(len(validators))
 
 	if pusher.ValidatorIdx != vIdx || pusher.ValidatorAddr.Empty() {
 		pusher = NewPusher(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
 		keeper.SetPusher(ctx, pusher)
+		log.Infof("set pusher to %s", pusher.ValidatorAddr)
 	}
 }
 
