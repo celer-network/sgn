@@ -1,0 +1,12 @@
+{
+  "title": "Guard Param Change",
+  "description": "Update EpochLength",
+  "changes": [
+    {
+      "subspace": "guard",
+      "key": "EpochLength",
+      "value": "3"
+    }
+  ],
+  "deposit": 10
+}

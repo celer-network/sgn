@@ -9,7 +9,7 @@ checkout_pr_merge: &checkout_pr_merge
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     resource_class: large
     steps:
       - checkout
@@ -25,7 +25,7 @@ jobs:
       - run:
           name: go vet source code
           command: go vet ./...
-      - run: make install-test
+      - run: make install-ops
       - run:
           name: fetch geth if not found and run e2e test
           environment:
@@ -33,10 +33,11 @@ jobs:
           command: |
             which geth || { curl -sL https://gethstore.blob.core.windows.net/builds/$GETH_VER.tar.gz | tar -xz --strip 1 $GETH_VER/geth && mv geth /go/bin; }
             which geth  # ensure geth is in PATH
+            sudo apt-get install libleveldb-dev
             go test -failfast -v -timeout 15m github.com/celer-network/sgn/test/e2e/singlenode -loglevel=debug
           no_output_timeout: 16m
       - save_cache:
           key: go-cache-{{ checksum "go.sum" }}
           paths:
-            - "/go/pkg"
-            - "/go/bin"
+            - '/go/pkg'
+            - '/go/bin'

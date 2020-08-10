@@ -5,21 +5,24 @@ import (
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func setUpValidator(maxValidatorNum *big.Int) {
+func setupValidator(maxValidatorNum *big.Int) {
 	log.Infoln("set up new sgn env")
 	p := &tc.SGNParams{
+		CelrAddr:               tc.E2eProfile.CelrAddr,
+		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 		BlameTimeout:           big.NewInt(0),
 		MinValidatorNum:        big.NewInt(1),
-		MinStakingPool:         big.NewInt(1),
-		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        maxValidatorNum,
+		MinStakingPool:         big.NewInt(1),
+		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	setupNewSGNEnv(p)
+	tc.SetupNewSGNEnv(p)
 	tc.SleepWithLog(10, "sgn being ready")
 }
 
@@ -33,16 +36,15 @@ func TestE2EValidator(t *testing.T) {
 func validatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
-	setUpValidator(big.NewInt(11))
+	setupValidator(big.NewInt(11))
 
 	transactor := tc.NewTransactor(
 		t,
-		tc.SgnCLIHome,
+		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	// delegation ratio. V0 : V1 : V2 = 2 : 1 : 1
@@ -55,7 +57,7 @@ func validatorTest(t *testing.T) {
 		// get auth
 		ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[i])
 		tc.ChkTestErr(t, err, "failed to get auth")
-		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[i], amts[i], big.NewInt(1), true)
+		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[i], amts[i], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 		tc.CheckValidatorNum(t, transactor, i+1)
 	}
 
@@ -63,12 +65,12 @@ func validatorTest(t *testing.T) {
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[2])
 	tc.ChkTestErr(t, err, "failed to get auth")
 	initialDelegation := big.NewInt(1)
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], initialDelegation, big.NewInt(10), false)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], initialDelegation, big.NewInt(10), big.NewInt(1), big.NewInt(10000), false)
 	log.Info("Query sgn about validators to check if validator 2 is not added...")
 	tc.CheckValidatorNum(t, transactor, 2)
 
 	log.Infoln("---------- It should correctly add validator 2 with enough delegation ----------")
-	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
+	err = tc.DelegateStake(auth, ethAddr, big.NewInt(0).Sub(amts[2], initialDelegation))
 	tc.ChkTestErr(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)
 	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
@@ -80,7 +82,11 @@ func validatorTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 2)
 	tc.CheckValidatorStatus(t, transactor, tc.SgnOperators[2], sdk.Unbonding)
 
-	err = tc.DelegateStake(tc.E2eProfile.CelrContract, tc.E2eProfile.GuardAddr, auth, ethAddr, amts[2])
+	err = tc.ConfirmUnbondedCandidate(auth, ethAddr)
+	tc.ChkTestErr(t, err, "failed to confirmUnbondedCandidate")
+	tc.CheckCandidate(t, transactor, ethAddr, tc.SgnOperators[2], big.NewInt(0))
+
+	err = tc.DelegateStake(auth, ethAddr, amts[2])
 	tc.ChkTestErr(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)
 	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
@@ -90,16 +96,15 @@ func validatorTest(t *testing.T) {
 func replaceValidatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("========================  Test replacing validator ===========================")
-	setUpValidator(big.NewInt(2))
+	setupValidator(big.NewInt(2))
 
 	transactor := tc.NewTransactor(
 		t,
-		tc.SgnCLIHome,
+		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		tc.SgnGasPrice,
 	)
 
 	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
@@ -109,7 +114,7 @@ func replaceValidatorTest(t *testing.T) {
 	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[2])
 	tc.ChkTestErr(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], amts[2], big.NewInt(1), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[2], amts[2], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
 	log.Info("Query sgn about the validators...")
 	tc.CheckValidatorNum(t, transactor, 2)

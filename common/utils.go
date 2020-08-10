@@ -1,46 +1,71 @@
 package common
 
 import (
-	"runtime"
-	"strings"
+	"math/big"
 	"time"
 
-	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/chain"
+	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
 	retryTimeout = 500 * time.Millisecond
 )
 
-// EnableLogLongFile set the log file splitter from the sgn root folder
-func EnableLogLongFile() {
-	log.EnableLongFile()
-	_, file, _, ok := runtime.Caller(0)
-	if ok {
-		pref := file[:strings.LastIndex(file[:strings.LastIndex(file, "/")], "/")+1]
-		log.SetFilePathSplit(pref)
-	}
-}
-
-func RobustQuery(cliCtx context.CLIContext, route string) (res []byte, err error) {
-	res, _, err = cliCtx.Query(route)
+func RobustQuery(cliCtx context.CLIContext, route string) ([]byte, error) {
+	res, _, err := cliCtx.Query(route)
 	if err != nil {
 		time.Sleep(retryTimeout)
 		res, _, err = cliCtx.Query(route)
-		return
+		return res, err
 	}
 
-	return
+	return res, err
 }
 
-func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) (res []byte, err error) {
-	res, _, err = cliCtx.QueryWithData(route, data)
+func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) ([]byte, error) {
+	res, _, err := cliCtx.QueryWithData(route, data)
 	if err != nil {
 		time.Sleep(retryTimeout)
 		res, _, err = cliCtx.QueryWithData(route, data)
-		return
+		return res, err
 	}
 
-	return
+	return res, err
+}
+
+func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (staking.Commission, error) {
+	commissionBase, err := ethClient.DPoS.COMMISSIONRATEBASE(&bind.CallOpts{})
+	if err != nil {
+		return staking.Commission{}, err
+	}
+
+	prec := int64(len(commissionBase.String()) - 1)
+	return staking.Commission{
+		CommissionRates: staking.CommissionRates{
+			Rate:          sdk.NewDecFromBigIntWithPrec(commissionRate, prec),
+			MaxRate:       sdk.NewDec(1),
+			MaxChangeRate: sdk.NewDec(1),
+		},
+	}, nil
+}
+
+func UnmarshalSignedSimplexStateBytes(input []byte) (*chain.SignedSimplexState, *entity.SimplexPaymentChannel, error) {
+	var signedSimplexState chain.SignedSimplexState
+	err := proto.Unmarshal(input, &signedSimplexState)
+	if err != nil {
+		return nil, nil, err
+	}
+	var simplexChannel entity.SimplexPaymentChannel
+	err = proto.Unmarshal(signedSimplexState.SimplexState, &simplexChannel)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &signedSimplexState, &simplexChannel, nil
 }

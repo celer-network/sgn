@@ -3,10 +3,10 @@ syntax = "proto3";
 package seal; // sgn event aggregated log
 
 message TransactorLog {
-    string tx_hash = 1;
-    uint32 msg_num = 2;
-    map<string, uint32> msg_type = 3;
-    string sender = 4;
+    uint32 msg_num = 1;
+    map<string, uint32> msg_type = 2;
+    string sender = 3;
+    string tx_hash = 4;
 
     double execution_time_ms = 100;
     repeated string error = 101;
@@ -23,6 +23,7 @@ message MsgLog {
     Penalty penalty = 8;
     uint64 block_num = 9;
     string deposit = 10;
+    Change change = 11;
 
     string sender = 99;
     double execution_time_ms = 100;
@@ -46,4 +47,10 @@ message Penalty {
     uint64 nonce = 1;
     string validator = 2;
     string reason = 3;
+}
+
+
+message Change {
+    uint64 id = 1;
+    string type = 2;
 }

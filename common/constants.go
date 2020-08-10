@@ -1,6 +1,6 @@
 package common
 
 const (
-	StakeName = "stake"
-	StakeDec  = 1000000000000000000
+	QuotaCoinName = "quota"
+	TokenDec      = 1000000000000000000
 )

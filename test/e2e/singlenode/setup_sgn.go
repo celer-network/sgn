@@ -1,8 +1,7 @@
-// Copyright 2018 Celer Network
-
 package singlenode
 
 import (
+	"context"
 	"math/big"
 	"os"
 	"os/exec"
@@ -10,28 +9,34 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 )
 
 func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 	if sgnParams == nil {
 		sgnParams = &tc.SGNParams{
+			CelrAddr:               tc.E2eProfile.CelrAddr,
+			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+			GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 			BlameTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
-			MinStakingPool:         big.NewInt(100),
-			SidechainGoLiveTimeout: big.NewInt(0),
-			CelrAddr:               tc.E2eProfile.CelrAddr,
 			MaxValidatorNum:        big.NewInt(11),
+			MinStakingPool:         big.NewInt(100),
+			IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
-	tc.E2eProfile.GuardAddr = tc.DeployGuardContract(sgnParams)
+	var tx *types.Transaction
+	tx, tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr = tc.DeployDPoSSGNContracts(sgnParams)
+	tc.WaitMinedWithChk(context.Background(), tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "DeployDPoSSGNContracts")
 
 	updateSGNConfig()
 
 	sgnProc, err := startSidechain(outRootDir, testName)
 	tc.ChkErr(err, "start sidechain")
-	tc.SetContracts(tc.E2eProfile.GuardAddr, tc.E2eProfile.LedgerAddr)
+	tc.SetContracts(tc.E2eProfile.DPoSAddr, tc.E2eProfile.SGNAddr, tc.E2eProfile.LedgerAddr)
 
 	killable := []tc.Killable{sgnProc}
 	if sgnParams.StartGateway {
@@ -53,8 +58,9 @@ func updateSGNConfig() {
 	clientKeystore, err := filepath.Abs("../../keys/ethks0.json")
 	tc.ChkErr(err, "get client keystore path")
 
-	viper.Set(common.FlagEthInstance, tc.LocalGeth)
-	viper.Set(common.FlagEthGuardAddress, tc.E2eProfile.GuardAddr)
+	viper.Set(common.FlagEthGateway, tc.LocalGeth)
+	viper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
+	viper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
 	viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
 	viper.Set(common.FlagEthKeystore, clientKeystore)
 	viper.WriteConfig()
@@ -62,13 +68,18 @@ func updateSGNConfig() {
 
 func installSgn() error {
 	cmd := exec.Command("make", "install")
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "WITH_CLEVELDB=yes")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("cp", "./test/config/local_config.json", "./config.json")
+	cmd = exec.Command("cp", "./test/data/local_config.json", "./config.json")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	if err := cmd.Run(); err != nil {
@@ -88,12 +99,12 @@ func startSidechain(rootDir, testName string) (*os.Process, error) {
 		return nil, err
 	}
 
-	cmd = exec.Command("sgn", "start")
+	cmd = exec.Command("sgnd", "start")
 	cmd.Dir, _ = filepath.Abs("../../..")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		log.Errorln("Failed to run \"sgn start\": ", err)
+		log.Errorln("Failed to run \"sgnd start\": ", err)
 		return nil, err
 	}
 

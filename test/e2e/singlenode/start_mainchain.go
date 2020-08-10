@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/celer-network/goutils/log"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 )
 
 // start process to handle eth rpc, and fund etherbase and server account

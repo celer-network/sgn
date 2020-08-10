@@ -6,18 +6,21 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	tc "github.com/celer-network/sgn/test/common"
+	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/spf13/viper"
 )
 
-func setUpValidator() []tc.Killable {
+func setupValidator() []tc.Killable {
 	p := &tc.SGNParams{
+		CelrAddr:               tc.E2eProfile.CelrAddr,
+		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
+		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
 		BlameTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(1),
-		MinStakingPool:         big.NewInt(1),
-		SidechainGoLiveTimeout: big.NewInt(0),
-		CelrAddr:               tc.E2eProfile.CelrAddr,
 		MaxValidatorNum:        big.NewInt(11),
+		MinStakingPool:         big.NewInt(1),
+		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")
 	tc.SleepWithLog(10, "sgn being ready")
@@ -26,7 +29,7 @@ func setUpValidator() []tc.Killable {
 }
 
 func TestE2EValidator(t *testing.T) {
-	toKill := setUpValidator()
+	toKill := setupValidator()
 	defer tc.TearDown(toKill)
 
 	t.Run("e2e-validator", func(t *testing.T) {
@@ -43,14 +46,14 @@ func validatorTest(t *testing.T) {
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetStringSlice(common.FlagSgnTransactors)[1],
+		viper.GetStringSlice(common.FlagSgnTransactors)[0],
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetString(common.FlagSgnGasPrice),
 	)
 	amt := big.NewInt(1000000000000000000)
 
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	log.Infof("my eth address %x", ethAddr)
 	tc.ChkTestErr(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 	tc.CheckValidatorNum(t, transactor, 1)
 }
