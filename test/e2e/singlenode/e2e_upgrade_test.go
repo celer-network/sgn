@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setUpUpgrade() []tc.Killable {
@@ -66,6 +67,6 @@ func upgradeTest(t *testing.T) {
 		}
 	}
 
-	tc.ChkTestErr(t, err, "failed to query block height")
+	require.NoError(t, err, "failed to query block height")
 	assert.Equal(t, height, upgradeHeight-1, "The chain should stop at upgrade height")
 }

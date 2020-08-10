@@ -3,7 +3,6 @@ package common
 import (
 	"os"
 	"os/exec"
-	"testing"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -51,13 +50,6 @@ func StartProcess(name string, args ...string) *os.Process {
 func KillProcess(p *os.Process) {
 	ChkErr(p.Kill(), "kill process error")
 	ChkErr(p.Release(), "kill release error")
-}
-
-func ChkTestErr(t *testing.T, err error, msg string) {
-	if err != nil {
-		log.Errorln(msg, err)
-		t.FailNow()
-	}
 }
 
 func ChkErr(err error, msg string) {
