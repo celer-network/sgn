@@ -37,7 +37,7 @@ type Monitor struct {
 	sidechainAcct   sdk.AccAddress
 	isValidator     bool
 	executeSlash    bool
-	dbLock          sync.RWMutex
+	lock            sync.RWMutex
 }
 
 func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, db dbm.DB) {
@@ -138,7 +138,7 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
-			if !m.isValidator {
+			if !m.isBonded() {
 				e, perr := m.ethClient.SGN.ParseUpdateSidechainAddr(eLog)
 				if perr != nil {
 					log.Errorln("parse event err", perr)
@@ -216,7 +216,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 				// self init sync if add validator
 				if validatorChange.EthAddr == m.ethClient.Address {
 					log.Infof("%s. Init my own validator.", logmsg)
-					m.isValidator = true
+					m.bond()
 					m.syncValidator(validatorChange.EthAddr)
 					m.setTransactors()
 				}
@@ -224,7 +224,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 				// self only put removal event to puller queue
 				log.Infof("%s, eth addr: %x", logmsg, validatorChange.EthAddr)
 				if validatorChange.EthAddr == m.ethClient.Address {
-					m.isValidator = false
+					m.unbond()
 				}
 				event := NewEvent(ValidatorChange, eLog)
 				dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
@@ -333,7 +333,7 @@ func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
 		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
 	m.syncDelegator(delegate.Candidate, delegate.Delegator)
 
-	if m.isValidator {
+	if m.isBonded() {
 		m.syncValidator(delegate.Candidate)
 	} else if m.shouldClaimValidator() {
 		m.claimValidatorOnMainchain()

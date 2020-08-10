@@ -124,23 +124,37 @@ func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
 }
 
 func (m *Monitor) dbGet(key []byte) ([]byte, error) {
-	m.dbLock.RLock()
-	defer m.dbLock.RUnlock()
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 	return m.db.Get(key)
 }
 
 func (m *Monitor) dbSet(key, val []byte) error {
-	m.dbLock.Lock()
-	defer m.dbLock.Unlock()
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	return m.db.Set(key, val)
 }
 
 func (m *Monitor) dbDelete(key []byte) error {
-	m.dbLock.Lock()
-	defer m.dbLock.Unlock()
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	return m.db.Delete(key)
 }
 
-func chanInfoKey(cid mainchain.CidType, receiver mainchain.Addr) string {
-	return mainchain.Cid2Hex(cid) + ":" + mainchain.Addr2Hex(receiver)
+func (m *Monitor) isBonded() bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	return m.isValidator
+}
+
+func (m *Monitor) bond() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.isValidator = true
+}
+
+func (m *Monitor) unbond() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.isValidator = false
 }

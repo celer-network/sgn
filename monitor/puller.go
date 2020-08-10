@@ -21,7 +21,7 @@ func (m *Monitor) processPullerQueue() {
 		return
 	}
 	var keys, vals [][]byte
-	m.dbLock.RLock()
+	m.lock.RLock()
 	iterator, err := m.db.Iterator(PullerKeyPrefix, storetypes.PrefixEndBytes(PullerKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -32,7 +32,7 @@ func (m *Monitor) processPullerQueue() {
 		vals = append(vals, iterator.Value())
 	}
 	iterator.Close()
-	m.dbLock.RUnlock()
+	m.lock.RUnlock()
 
 	for i, key := range keys {
 		event := NewEventFromBytes(vals[i])
