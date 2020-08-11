@@ -20,7 +20,7 @@ func (m *Monitor) processPenaltyQueue() {
 		return
 	}
 	var keys, vals [][]byte
-	m.dbLock.RLock()
+	m.lock.RLock()
 	iterator, err := m.db.Iterator(PenaltyKeyPrefix, storetypes.PrefixEndBytes(PenaltyKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -31,7 +31,7 @@ func (m *Monitor) processPenaltyQueue() {
 		vals = append(vals, iterator.Value())
 	}
 	iterator.Close()
-	m.dbLock.RUnlock()
+	m.lock.RUnlock()
 
 	for i, key := range keys {
 		event := NewPenaltyEventFromBytes(vals[i])

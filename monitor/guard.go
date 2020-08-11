@@ -54,7 +54,7 @@ func unmarshalChanInfo(input []byte) *ChanInfo {
 
 func (m *Monitor) processGuardQueue() {
 	var keys, vals [][]byte
-	m.dbLock.RLock()
+	m.lock.RLock()
 	iterator, err := m.db.Iterator(GuardKeyPrefix, storetypes.PrefixEndBytes(GuardKeyPrefix))
 	if err != nil {
 		log.Errorln("Create db iterator err", err)
@@ -65,7 +65,7 @@ func (m *Monitor) processGuardQueue() {
 		vals = append(vals, iterator.Value())
 	}
 	iterator.Close()
-	m.dbLock.RUnlock()
+	m.lock.RUnlock()
 
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
@@ -100,18 +100,18 @@ func (m *Monitor) processGuardQueue() {
 				continue
 			}
 			if guarded {
-				m.dbLock.Lock()
+				m.lock.Lock()
 				exist, err := m.db.Has(key)
 				if err != nil {
 					log.Errorln("db Get err:", err)
-					m.dbLock.Unlock()
+					m.lock.Unlock()
 					continue
 				}
 				if exist {
 					val, err2 := m.db.Get(key)
 					if err2 != nil {
 						log.Errorln("db Get err", err2)
-						m.dbLock.Unlock()
+						m.lock.Unlock()
 						continue
 					}
 					chanInfo = unmarshalChanInfo(val)
@@ -127,7 +127,7 @@ func (m *Monitor) processGuardQueue() {
 				if err != nil {
 					log.Errorln("db Set err", err)
 				}
-				m.dbLock.Unlock()
+				m.lock.Unlock()
 			}
 		}
 	}
@@ -257,8 +257,8 @@ func (m *Monitor) setGuardEvent(eLog ethtypes.Log, state uint8) {
 
 func (m *Monitor) setChanInfo(cid mainchain.CidType, simplexReceiver mainchain.Addr, state uint8, seqNum uint64) {
 	key := GetGuardKey(cid, simplexReceiver)
-	m.dbLock.Lock()
-	defer m.dbLock.Unlock()
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	var chanInfo *ChanInfo
 	exist, err := m.db.Has(key)
 	if err != nil {
