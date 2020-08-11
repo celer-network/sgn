@@ -144,17 +144,17 @@ func (m *Monitor) dbDelete(key []byte) error {
 func (m *Monitor) isBonded() bool {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
-	return m.isValidator
+	return m.bonded
 }
 
-func (m *Monitor) bond() {
+func (m *Monitor) setBonded() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	m.isValidator = true
+	m.bonded = true
 }
 
-func (m *Monitor) unbond() {
+func (m *Monitor) setUnbonded() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	m.isValidator = false
+	m.bonded = false
 }

@@ -35,7 +35,7 @@ type Monitor struct {
 	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
 	sidechainAcct   sdk.AccAddress
-	isValidator     bool
+	bonded          bool
 	executeSlash    bool
 	lock            sync.RWMutex
 }
@@ -75,7 +75,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		sgnContract:     sgnContract,
 		ledgerContract:  ledgerContract,
 		verifiedChanges: verifiedChanges,
-		isValidator:     mainchain.IsBonded(dposCandidateInfo),
+		bonded:          mainchain.IsBonded(dposCandidateInfo),
 		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
 	}
 	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
@@ -216,7 +216,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 				// self init sync if add validator
 				if validatorChange.EthAddr == m.ethClient.Address {
 					log.Infof("%s. Init my own validator.", logmsg)
-					m.bond()
+					m.setBonded()
 					m.syncValidator(validatorChange.EthAddr)
 					m.setTransactors()
 				}
@@ -224,7 +224,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 				// self only put removal event to puller queue
 				log.Infof("%s, eth addr: %x", logmsg, validatorChange.EthAddr)
 				if validatorChange.EthAddr == m.ethClient.Address {
-					m.unbond()
+					m.setUnbonded()
 				}
 				event := NewEvent(ValidatorChange, eLog)
 				dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
