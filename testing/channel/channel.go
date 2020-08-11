@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tlog "github.com/tendermint/tendermint/libs/log"
-	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
+	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 )
 
 // RestServer represents the Light Client Rest server
@@ -164,7 +164,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	}
 	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 
-	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.logger, cfg)
+	return rpcserver.Serve(rs.listener, rs.Mux, rs.logger, cfg)
 }
 
 // ServeCommand will start the application REST service as a blocking process. It

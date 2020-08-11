@@ -10,7 +10,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/client/http"
 	tm "github.com/tendermint/tendermint/types"
 )
 
@@ -58,7 +58,7 @@ func (m *Monitor) monitorSidechainSlash() {
 }
 
 func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client, err := client.NewHTTP(m.Transactor.CliCtx.NodeURI, "/websocket")
+	client, err := http.New(m.Transactor.CliCtx.NodeURI, "/websocket")
 	if err != nil {
 		log.Errorln("Fail to start create http client", err)
 		return
