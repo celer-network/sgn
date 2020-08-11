@@ -10,6 +10,7 @@ import (
 	e2ecommon "github.com/celer-network/sgn/test/e2e/common"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 )
 
 func setupGuard() []tc.Killable {
@@ -55,7 +56,7 @@ func guardTest(t *testing.T) {
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
-	tc.ChkTestErr(t, err, "failed to get auth")
+	require.NoError(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
 	e2ecommon.SubscribteTestCommon(t, transactor, amt, "", 1)

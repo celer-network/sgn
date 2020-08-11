@@ -11,6 +11,7 @@ import (
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupSlash() {
@@ -59,7 +60,7 @@ func slashTest(t *testing.T) {
 	log.Infoln("Query sgn about penalty info...")
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 2)
-	tc.ChkTestErr(t, err, "failed to query penalty")
+	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
 	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
 	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])

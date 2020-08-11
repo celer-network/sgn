@@ -14,6 +14,7 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupGuard() {
@@ -62,7 +63,7 @@ func guardTest(t *testing.T) {
 	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
 	_, auth, err := tc.GetAuth(tc.ValEthKs[1])
 	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
-	tc.ChkTestErr(t, err, "failed to delegate stake")
+	require.NoError(t, err, "failed to delegate stake")
 
 	turnOffMonitor(2)
 
@@ -79,7 +80,7 @@ func guardTest(t *testing.T) {
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
-	tc.ChkTestErr(t, err, "failed to query penalty")
+	require.NoError(t, err, "failed to query penalty")
 	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
