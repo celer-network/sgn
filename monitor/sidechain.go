@@ -21,7 +21,7 @@ var (
 
 func (m *Monitor) monitorSidechainWithdrawReward() {
 	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
-		if !m.isValidator {
+		if !m.isBonded() {
 			return
 		}
 
@@ -34,7 +34,7 @@ func (m *Monitor) monitorSidechainWithdrawReward() {
 
 func (m *Monitor) monitorSidechainSlash() {
 	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
-		if !m.isValidator {
+		if !m.isBonded() {
 			return
 		}
 
