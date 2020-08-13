@@ -58,7 +58,7 @@ func (m *Monitor) monitorSidechainSlash() {
 }
 
 func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client, err := client.NewHTTP(m.operator.CliCtx.NodeURI, "/websocket")
+	client, err := client.NewHTTP(m.Transactor.CliCtx.NodeURI, "/websocket")
 	if err != nil {
 		log.Errorln("Fail to start create http client", err)
 		return
@@ -97,36 +97,36 @@ func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event
 func (m *Monitor) handleInitiateWithdrawReward(ethAddr string) {
 	log.Infoln("New initiate withdraw", ethAddr)
 
-	reward, err := validator.CLIQueryReward(m.operator.CliCtx, validator.StoreKey, ethAddr)
+	reward, err := validator.CLIQueryReward(m.Transactor.CliCtx, validator.StoreKey, ethAddr)
 	if err != nil {
 		log.Errorln("Query reward err", err)
 		return
 	}
 
-	sig, err := m.ethClient.SignEthMessage(reward.RewardProtoBytes)
+	sig, err := m.EthClient.SignEthMessage(reward.RewardProtoBytes)
 	if err != nil {
 		log.Errorln("SignEthMessage err", err)
 		return
 	}
 
-	msg := validator.NewMsgSignReward(ethAddr, sig, m.operator.Key.GetAddress())
-	m.operator.AddTxMsg(msg)
+	msg := validator.NewMsgSignReward(ethAddr, sig, m.Transactor.Key.GetAddress())
+	m.Transactor.AddTxMsg(msg)
 }
 
 func (m *Monitor) handlePenalty(penaltyEvent PenaltyEvent) {
-	penalty, err := slash.CLIQueryPenalty(m.operator.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
+	penalty, err := slash.CLIQueryPenalty(m.Transactor.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
 	if err != nil {
 		log.Errorf("Query penalty %d err %s", penaltyEvent.Nonce, err)
 		return
 	}
 	log.Infof("New penalty to %s, reason %s, nonce %d", penalty.ValidatorAddr, penalty.Reason, penaltyEvent.Nonce)
 
-	sig, err := m.ethClient.SignEthMessage(penalty.PenaltyProtoBytes)
+	sig, err := m.EthClient.SignEthMessage(penalty.PenaltyProtoBytes)
 	if err != nil {
 		log.Errorln("SignEthMessage err", err)
 		return
 	}
 
-	msg := slash.NewMsgSignPenalty(penaltyEvent.Nonce, sig, m.operator.Key.GetAddress())
-	m.operator.AddTxMsg(msg)
+	msg := slash.NewMsgSignPenalty(penaltyEvent.Nonce, sig, m.Transactor.Key.GetAddress())
+	m.Transactor.AddTxMsg(msg)
 }

@@ -69,3 +69,17 @@ func UnmarshalSignedSimplexStateBytes(input []byte) (*chain.SignedSimplexState, 
 	}
 	return &signedSimplexState, &simplexChannel, nil
 }
+
+func ParseTransactorAddrs(ts []string) ([]sdk.AccAddress, error) {
+	var transactors []sdk.AccAddress
+	for _, t := range ts {
+		transactor, err := sdk.AccAddressFromBech32(t)
+		if err != nil {
+			return transactors, err
+		}
+
+		transactors = append(transactors, transactor)
+	}
+
+	return transactors, nil
+}

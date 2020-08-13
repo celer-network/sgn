@@ -6,12 +6,15 @@ import (
 	"github.com/celer-network/sgn/ops"
 	"github.com/celer-network/sgn/testing/channel"
 	tc "github.com/celer-network/sgn/testing/common"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
 func GetSgnopsExecutor() cli.Executor {
+	cdc := app.MakeCodec()
+
 	rootCmd := &cobra.Command{
 		Use:   "sgnops",
 		Short: "sgn ops utility",
@@ -22,6 +25,7 @@ func GetSgnopsExecutor() cli.Executor {
 	}
 
 	rootCmd.AddCommand(
+		transactor.GetSyncCmd(cdc),
 		tc.DeployCommand(),
 		tc.AccountsCommand(),
 		channel.ServeCommand(),

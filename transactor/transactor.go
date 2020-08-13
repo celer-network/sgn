@@ -65,7 +65,28 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		}
 	}
 
-	txBldr := NewTxBuilder().
+	fees, err := sdk.ParseCoins(viper.GetString(flags.FlagFees))
+	if err != nil {
+		panic(err)
+	}
+
+	gasPrices, err := sdk.ParseDecCoins(viper.GetString(flags.FlagGasPrices))
+	if err != nil {
+		panic(err)
+	}
+
+	txBldr := types.NewTxBuilder(
+		nil,
+		viper.GetUint64(flags.FlagAccountNumber),
+		viper.GetUint64(flags.FlagSequence),
+		flags.GasFlagVar.Gas,
+		viper.GetFloat64(flags.FlagGasAdjustment),
+		flags.GasFlagVar.Simulate,
+		viper.GetString(flags.FlagChainID),
+		viper.GetString(flags.FlagMemo),
+		fees,
+		gasPrices)
+	txBldr = txBldr.
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID).
 		WithKeybase(kb)

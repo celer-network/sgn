@@ -47,7 +47,7 @@ func (m *Monitor) processPenaltyQueue() {
 func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	log.Infoln("Process Penalty", penaltyEvent.Nonce)
 
-	used, err := m.ethClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
+	used, err := m.EthClient.DPoS.UsedPenaltyNonce(&bind.CallOpts{}, big.NewInt(int64(penaltyEvent.Nonce)))
 	if err != nil {
 		log.Errorln("Get usedPenaltyNonce err", err)
 		return
@@ -58,13 +58,13 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.operator.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
+	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.Transactor.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
 	if err != nil {
 		log.Errorln("QueryPenaltyRequest err", err)
 		return
 	}
 
-	tx, err := m.ethClient.Transactor.Transact(
+	tx, err := m.EthClient.Transactor.Transact(
 		&eth.TransactionStateHandler{
 			OnMined: func(receipt *ethtypes.Receipt) {
 				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
@@ -78,7 +78,7 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 			},
 		},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return m.ethClient.DPoS.Punish(opts, penaltyRequest)
+			return m.EthClient.DPoS.Punish(opts, penaltyRequest)
 		},
 	)
 	if err != nil {

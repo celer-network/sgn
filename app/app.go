@@ -2,13 +2,11 @@ package app
 
 import (
 	"encoding/json"
-	"math/big"
 	"os"
 	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/cron"
@@ -404,43 +402,16 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(db dbm.DB) {
-	ethClient, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthGateway),
-		viper.GetString(common.FlagEthKeystore),
-		viper.GetString(common.FlagEthPassphrase),
-		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
-			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
-			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
-			AddGasPriceGwei:      viper.GetUint64(common.FlagEthAddGasPriceGwei),
-			MinGasPriceGwei:      viper.GetUint64(common.FlagEthMinGasPriceGwei),
-		},
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-	)
+	operator, err := transactor.NewOperator(app.cdc)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
 
-	operator, err := transactor.NewTransactor(
-		viper.GetString(common.FlagCLIHome),
-		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnOperator),
-		viper.GetString(common.FlagSgnPassphrase),
-		app.cdc,
-		transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
-	)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-
-	_, err = rpc.GetChainHeight(operator.CliCtx)
+	_, err = rpc.GetChainHeight(operator.Transactor.CliCtx)
 	for err != nil {
 		time.Sleep(time.Second)
-		_, err = rpc.GetChainHeight(operator.CliCtx)
+		_, err = rpc.GetChainHeight(operator.Transactor.CliCtx)
 	}
 
-	monitor.NewMonitor(ethClient, operator, db)
+	monitor.NewMonitor(operator, db)
 }
