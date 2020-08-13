@@ -20,7 +20,7 @@ type Operator struct {
 	Transactor *Transactor
 }
 
-func NewOperator(cdc *codec.Codec) (operator Operator, err error) {
+func NewOperator(cdc *codec.Codec) (operator *Operator, err error) {
 	ethClient, err := mainchain.NewEthClient(
 		viper.GetString(common.FlagEthGateway),
 		viper.GetString(common.FlagEthKeystore),
@@ -53,13 +53,13 @@ func NewOperator(cdc *codec.Codec) (operator Operator, err error) {
 		return
 	}
 
-	return Operator{
+	return &Operator{
 		EthClient:  ethClient,
 		Transactor: transactor,
 	}, nil
 }
 
-func (o Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
+func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 	sidechainAddr, err := o.EthClient.SGN.SidechainAddrMap(&bind.CallOpts{}, candidateAddr)
 	if err != nil {
 		log.Errorln("Query sidechain address error:", err)
@@ -79,7 +79,7 @@ func (o Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 	o.Transactor.AddTxMsg(msg)
 }
 
-func (o Operator) SyncValidator(candidateAddr mainchain.Addr) {
+func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	ci, err := o.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, candidateAddr)
 	if err != nil {
 		log.Errorln("Failed to query candidate info:", err)
@@ -132,7 +132,7 @@ func (o Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	o.Transactor.AddTxMsg(msg)
 }
 
-func (o Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
+func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	di, err := o.EthClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, candidatorAddr, delegatorAddr)
 	if err != nil {
 		log.Errorf("Failed to query delegator info: %s", err)

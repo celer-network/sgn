@@ -26,7 +26,7 @@ const (
 )
 
 type Monitor struct {
-	transactor.Operator
+	*transactor.Operator
 	db              dbm.DB
 	ethMonitor      *monitor.Service
 	dposContract    monitor.Contract
@@ -39,7 +39,7 @@ type Monitor struct {
 	lock            sync.RWMutex
 }
 
-func NewMonitor(operator transactor.Operator, db dbm.DB) {
+func NewMonitor(operator *transactor.Operator, db dbm.DB) {
 	monitorDb := dbm.NewPrefixDB(db, []byte(prefixMonitor))
 	dal := newWatcherDAL(monitorDb)
 	watchService := watcher.NewWatchService(operator.EthClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
