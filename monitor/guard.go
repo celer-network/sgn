@@ -161,16 +161,16 @@ func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 	var tx *ethtypes.Transaction
 	switch request.Status {
 	case guard.ChanStatus_Withdrawing:
-		tx, err = m.ethClient.Transactor.Transact(
+		tx, err = m.EthClient.Transactor.Transact(
 			m.guardTxHandler("SnapshotStates", request),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-				return m.ethClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
+				return m.EthClient.Ledger.SnapshotStates(opts, signedSimplexStateArrayBytes)
 			})
 	case guard.ChanStatus_Settling:
-		tx, err = m.ethClient.Transactor.Transact(
+		tx, err = m.EthClient.Transactor.Transact(
 			m.guardTxHandler("IntendSettle", request),
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-				return m.ethClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
+				return m.EthClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
 	default:
 		return false, fmt.Errorf("Invalid guard state %d", request.Status)
@@ -199,12 +199,12 @@ func (m *Monitor) guardTxHandler(
 					mainchain.Hex2Addr(request.SimplexReceiver),
 					receipt.TxHash,
 					receipt.BlockNumber.Uint64(),
-					m.ethClient.Address,
+					m.EthClient.Address,
 					guardState)
-				syncData := m.operator.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
-				msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.operator.Key.GetAddress())
+				syncData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
+				msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.Transactor.Key.GetAddress())
 				log.Infof("submit change tx: guard proof request %s", request)
-				m.operator.AddTxMsg(msg)
+				m.Transactor.AddTxMsg(msg)
 				err := m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
 				if err != nil {
 					log.Errorln("db Delete err", err)
@@ -223,14 +223,14 @@ func (m *Monitor) setGuardEvent(eLog ethtypes.Log, state uint8) {
 	var cid mainchain.CidType
 	var withdrawReceiver mainchain.Addr // not used for settle event
 	if state == ChanInfoState_CaughtSettle {
-		e, err := m.ethClient.Ledger.ParseIntendSettle(eLog)
+		e, err := m.EthClient.Ledger.ParseIntendSettle(eLog)
 		if err != nil {
 			log.Errorln("ParseIntendSettle err", err)
 			return
 		}
 		cid = e.ChannelId
 	} else if state == ChanInfoState_CaughtWithdraw {
-		e, err := m.ethClient.Ledger.ParseIntendWithdraw(eLog)
+		e, err := m.EthClient.Ledger.ParseIntendWithdraw(eLog)
 		if err != nil {
 			log.Errorln("ParseIntendWithdraw err", err)
 			return
@@ -241,7 +241,7 @@ func (m *Monitor) setGuardEvent(eLog ethtypes.Log, state uint8) {
 		log.Errorln("invalid chanInfoState", state)
 		return
 	}
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	addresses, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorf("Query StateSeqNumMap for cid %x err: %s", cid, err)
 		return

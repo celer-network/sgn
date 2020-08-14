@@ -4,7 +4,7 @@ import (
 	"bufio"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -46,7 +46,7 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Info(viper.GetStringSlice(flagTransactors))
-			transactors, err := transactor.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
+			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
 			if err != nil {
 				return err
 			}

@@ -27,12 +27,12 @@ var (
 )
 
 func (m *Monitor) verifyActiveChanges() {
-	v, _ := validator.CLIQueryValidator(m.operator.CliCtx, staking.RouterKey, m.operator.Key.GetAddress().String())
+	v, _ := validator.CLIQueryValidator(m.Transactor.CliCtx, staking.RouterKey, m.Transactor.Key.GetAddress().String())
 	if v.GetStatus() != sdk.Bonded {
 		log.Traceln("skip verifying changes as I am not a bonded validator")
 		return
 	}
-	activeChanges, err := sync.CLIQueryActiveChanges(m.operator.CliCtx, sync.RouterKey)
+	activeChanges, err := sync.CLIQueryActiveChanges(m.Transactor.CliCtx, sync.RouterKey)
 	if err != nil {
 		log.Errorln("Query active changes error:", err)
 		return
@@ -52,8 +52,8 @@ func (m *Monitor) verifyActiveChanges() {
 				continue
 			}
 			if approve {
-				msg := sync.NewMsgApprove(change.ID, m.operator.Key.GetAddress())
-				m.operator.AddTxMsg(msg)
+				msg := sync.NewMsgApprove(change.ID, m.Transactor.Key.GetAddress())
+				m.Transactor.AddTxMsg(msg)
 			}
 		}
 	}
@@ -85,10 +85,10 @@ func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (bool, bool) {
 	var paramChange common.ParamChange
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &paramChange)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &paramChange)
 	logmsg := fmt.Sprintf("verify change id %d, pramameter: %s", change.ID, paramChange)
 
-	paramValue, err := m.ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, paramChange.Record.BigInt())
+	paramValue, err := m.EthClient.DPoS.GetUIntValue(&bind.CallOpts{}, paramChange.Record.BigInt())
 	if err != nil {
 		log.Errorf("%s. err: %s", logmsg, err)
 		return false, false
@@ -105,10 +105,10 @@ func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 	var candidate validator.Candidate
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &candidate)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &candidate)
 	logmsg := fmt.Sprintf("verify change id %d, sidechain addr for candidate: %s", change.ID, candidate)
 
-	c, err := validator.CLIQueryCandidate(m.operator.CliCtx, validator.RouterKey, candidate.EthAddress)
+	c, err := validator.CLIQueryCandidate(m.Transactor.CliCtx, validator.RouterKey, candidate.EthAddress)
 	if err == nil {
 		if candidate.Operator.Equals(c.Operator) {
 			log.Warnf("%s. sidechain addr not changed", logmsg)
@@ -116,7 +116,7 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 		}
 	}
 
-	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(candidate.EthAddress))
+	sidechainAddr, err := m.EthClient.SGN.SidechainAddrMap(&bind.CallOpts{}, mainchain.Hex2Addr(candidate.EthAddress))
 	if err != nil {
 		log.Errorf("%s. query sidechain address err: %s", logmsg, err)
 		return false, false
@@ -133,10 +133,10 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 	var delegator validator.Delegator
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
 	logmsg := fmt.Sprintf("verify change id %d, sync delegator: %s", change.ID, delegator)
 
-	d, err := validator.CLIQueryDelegator(m.operator.CliCtx, validator.RouterKey, delegator.CandidateAddr, delegator.DelegatorAddr)
+	d, err := validator.CLIQueryDelegator(m.Transactor.CliCtx, validator.RouterKey, delegator.CandidateAddr, delegator.DelegatorAddr)
 	if err == nil {
 		if delegator.DelegatedStake.Equal(d.DelegatedStake) {
 			log.Warnf("%s. delegator stake not changed", logmsg)
@@ -144,7 +144,7 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 		}
 	}
 
-	di, err := m.ethClient.DPoS.GetDelegatorInfo(
+	di, err := m.EthClient.DPoS.GetDelegatorInfo(
 		&bind.CallOpts{}, mainchain.Hex2Addr(delegator.CandidateAddr), mainchain.Hex2Addr(delegator.DelegatorAddr))
 	if err != nil {
 		log.Errorf("%s. query delegator info err: %s", logmsg, err)
@@ -162,11 +162,11 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 	var vt staking.Validator
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
 
 	candidateEthAddr := vt.Description.Identity
 	candidate, err := validator.CLIQueryCandidate(
-		m.operator.CliCtx, validator.RouterKey, candidateEthAddr)
+		m.Transactor.CliCtx, validator.RouterKey, candidateEthAddr)
 	if err != nil {
 		log.Errorf("verify change id %d, sync validator err: %s", change.ID, err)
 		return false, false
@@ -176,7 +176,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		change.ID, candidate.Operator.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission)
 
 	v, err := validator.CLIQueryValidator(
-		m.operator.CliCtx, staking.RouterKey, candidate.Operator.String())
+		m.Transactor.CliCtx, staking.RouterKey, candidate.Operator.String())
 	if err == nil {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
 			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
@@ -185,7 +185,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		}
 	}
 
-	ci, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(vt.Description.Identity))
+	ci, err := m.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(vt.Description.Identity))
 	if err != nil {
 		log.Errorf("%s. query candidate info err: %s", logmsg, err)
 		return false, false
@@ -202,7 +202,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	commission, err := common.NewCommission(m.ethClient, ci.CommissionRate)
+	commission, err := common.NewCommission(m.EthClient, ci.CommissionRate)
 	if err != nil {
 		log.Errorf("%s. create new commission err: %s", logmsg, err)
 		return false, false
@@ -219,10 +219,10 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 	var subscription guard.Subscription
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &subscription)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &subscription)
 	logmsg := fmt.Sprintf("verify change id %d, subscription: %s", change.ID, subscription)
 
-	deposit, err := m.ethClient.SGN.SubscriptionDeposits(
+	deposit, err := m.EthClient.SGN.SubscriptionDeposits(
 		&bind.CallOpts{}, mainchain.Hex2Addr(subscription.EthAddress))
 	if err != nil {
 		log.Errorf("%s. query subscription desposit err: %s", logmsg, err)
@@ -240,7 +240,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	var request guard.InitRequest
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, init request", change.ID)
 
 	signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(request.SignedSimplexStateBytes)
@@ -277,7 +277,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	}
 
 	// verify channel state
-	chanState, err := m.ethClient.Ledger.GetChannelStatus(&bind.CallOpts{}, cid)
+	chanState, err := m.EthClient.Ledger.GetChannelStatus(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorf("%s. GetChannelStatus err: %s", logmsg, err)
 		return false, false
@@ -288,7 +288,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	}
 
 	// verify addr
-	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
 		return false, false
@@ -313,7 +313,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	}
 
 	// verify dispute timeout
-	disputeTimeout, err := m.ethClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, cid)
+	disputeTimeout, err := m.EthClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorf("%s. get dispute timeout err: %s", logmsg, err)
 		return false, false
@@ -322,7 +322,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 		log.Errorf("%s. dispute timeout not match mainchain value %s", logmsg, disputeTimeout)
 		return true, false
 	}
-	params, err := guard.CLIQueryParams(m.operator.CliCtx, guard.RouterKey)
+	params, err := guard.CLIQueryParams(m.Transactor.CliCtx, guard.RouterKey)
 	if err != nil {
 		log.Errorf("%s. query guard params err: %s", logmsg, err)
 		return false, false
@@ -333,7 +333,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	}
 
 	// verify not in active unilateral withdraw state
-	wrecv, _, wblk, _, err := m.ethClient.Ledger.GetWithdrawIntent(&bind.CallOpts{}, cid)
+	wrecv, _, wblk, _, err := m.EthClient.Ledger.GetWithdrawIntent(&bind.CallOpts{}, cid)
 	if wrecv != mainchain.ZeroAddr {
 		if m.getCurrentBlockNumber().Uint64() <= wblk.Uint64()+request.DisputeTimeout {
 			log.Errorf("%s. channel has pending unilateral withdrawal request", logmsg)
@@ -347,11 +347,11 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	var trigger guard.GuardTrigger
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
 
 	// verify request exists
-	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, trigger.ChannelId, trigger.SimplexReceiver)
+	r, err := guard.CLIQueryRequest(m.Transactor.CliCtx, guard.RouterKey, trigger.ChannelId, trigger.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
@@ -364,7 +364,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	}
 
 	// verify seqNum
-	addrs, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Bytes2Cid(trigger.ChannelId))
+	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Bytes2Cid(trigger.ChannelId))
 	if err != nil {
 		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
 		return false, false
@@ -381,7 +381,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	// TODO: verify triggerSeqNum
 
 	// verify onchain trasaction receipt and status
-	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
+	receipt, err := m.EthClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
 	if err != nil {
 		log.Errorf("%s. Get trigger tx receipt err: %s", logmsg, err)
 		return false, false
@@ -393,7 +393,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	triggerLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
 
 	// verify transaction contract address
-	if triggerLog.Address != m.ethClient.LedgerAddress {
+	if triggerLog.Address != m.EthClient.LedgerAddress {
 		log.Errorf("%s. Trigger tx contract address not match: %x", logmsg, triggerLog.Address)
 		return true, false
 	}
@@ -440,11 +440,11 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 
 func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	var proof guard.GuardProof
-	m.operator.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
 	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, proof)
 
 	// verify request exists
-	r, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, proof.ChannelId, proof.SimplexReceiver)
+	r, err := guard.CLIQueryRequest(m.Transactor.CliCtx, guard.RouterKey, proof.ChannelId, proof.SimplexReceiver)
 	if err != nil {
 		log.Errorf("%s. query request err: %s", logmsg, err)
 		return false, false
@@ -455,7 +455,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	}
 
 	// verify onchain trasaction receipt and status
-	receipt, err := m.ethClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(proof.GuardTxHash))
+	receipt, err := m.EthClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(proof.GuardTxHash))
 	if err != nil {
 		log.Errorf("%s. Get trigger transaction receipt err: %s", logmsg, err)
 		return false, false
@@ -467,7 +467,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
 
 	// verify transaction contract address
-	if guardLog.Address != m.ethClient.LedgerAddress {
+	if guardLog.Address != m.EthClient.LedgerAddress {
 		log.Errorf("%s. Guard tx contract address not match: %x", logmsg, guardLog.Address)
 		return true, false
 	}
@@ -539,7 +539,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 	}
 
 	// verify guard sender
-	guardSender, err := mainchain.GetTxSender(m.ethClient.Client, proof.GuardTxHash)
+	guardSender, err := mainchain.GetTxSender(m.EthClient.Client, proof.GuardTxHash)
 	if err != nil {
 		log.Errorf("%s. GetTxSender err: %s", logmsg, err)
 		return false, false

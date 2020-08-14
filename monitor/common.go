@@ -36,23 +36,23 @@ func NewMonitorContractInfo(address mainchain.Addr, abi string) *MonitorContract
 }
 
 func (m *Monitor) isPuller() bool {
-	puller, err := validator.CLIQueryPuller(m.operator.CliCtx, validator.StoreKey)
+	puller, err := validator.CLIQueryPuller(m.Transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Errorln("Get puller err", err)
 		return false
 	}
 
-	return puller.ValidatorAddr.Equals(m.operator.Key.GetAddress())
+	return puller.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
 }
 
 func (m *Monitor) isPusher() bool {
-	pusher, err := validator.CLIQueryPusher(m.operator.CliCtx, validator.StoreKey)
+	pusher, err := validator.CLIQueryPusher(m.Transactor.CliCtx, validator.StoreKey)
 	if err != nil {
 		log.Errorln("Get pusher err", err)
 		return false
 	}
 
-	return pusher.ValidatorAddr.Equals(m.operator.Key.GetAddress())
+	return pusher.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
 }
 
 // Is the current node the guard to submit state proof
@@ -74,11 +74,11 @@ func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64
 	}
 	log.Debugln("Assigned guard:", blkNum, eventBlockNumber, guardIndex, assignedGuards[guardIndex].String())
 
-	return assignedGuards[guardIndex].Equals(m.operator.Key.GetAddress())
+	return assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
 }
 
 func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (*guard.Request, error) {
-	request, err := guard.CLIQueryRequest(m.operator.CliCtx, guard.RouterKey, channelId, simplexReceiver)
+	request, err := guard.CLIQueryRequest(m.Transactor.CliCtx, guard.RouterKey, channelId, simplexReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (*gu
 // get guard requests for the channel, return an array with at most two elements
 // TODO: return proper err
 func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Request, seqs []uint64) {
-	addresses, seqNums, err := m.ethClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	addresses, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
 		return
@@ -119,7 +119,7 @@ func (m *Monitor) getCurrentBlockNumber() *big.Int {
 }
 
 func (m *Monitor) getAccount(addr sdk.AccAddress) (exported.Account, error) {
-	accGetter := types.NewAccountRetriever(m.operator.CliCtx)
+	accGetter := types.NewAccountRetriever(m.Transactor.CliCtx)
 	return accGetter.GetAccount(addr)
 }
 
