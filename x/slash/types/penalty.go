@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	emptyAddr  = "0x0000000000000000000000000000000000000000"
 	expireTime = ^uint64(0)
 )
 
@@ -94,7 +93,7 @@ func (p *Penalty) GenerateProtoBytes() {
 	restPenalty := totalPenalty.Sub(totalBeneficiary)
 	if restPenalty.IsPositive() {
 		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
-			Account: mainchain.Hex2Addr(emptyAddr).Bytes(),
+			Account: mainchain.ZeroAddr.Bytes(),
 			Amt:     restPenalty.BigInt().Bytes(),
 		})
 	}

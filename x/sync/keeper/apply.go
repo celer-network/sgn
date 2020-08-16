@@ -195,7 +195,7 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
 	if request.Status != guard.ChanStatus_Idle {
-		return fmt.Errorf("request channel %x in non-idle status %s", trigger.ChannelId, request.Status)
+		return fmt.Errorf("request channel %x in non-idle status: %s", trigger.ChannelId, request.Status)
 	}
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
