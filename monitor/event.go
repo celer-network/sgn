@@ -13,15 +13,16 @@ import (
 type EventName string
 
 const (
-	UpdateSidechainAddr   EventName = "UpdateSidechainAddr"
-	ConfirmParamProposal  EventName = "ConfirmParamProposal"
-	Delegate              EventName = "Delegate"
-	CandidateUnbonded     EventName = "CandidateUnbonded"
-	ValidatorChange       EventName = "ValidatorChange"
-	IntendSettle          EventName = "IntendSettle"
-	IntendWithdraw        EventName = "IntendWithdraw"
-	IntendWithdrawDpos    EventName = "IntendWithdrawDpos"
-	IntendWithdrawChannel EventName = "IntendWithdrawChannel"
+	UpdateSidechainAddr    EventName = "UpdateSidechainAddr"
+	AddSubscriptionBalance EventName = "AddSubscriptionBalance"
+	ConfirmParamProposal   EventName = "ConfirmParamProposal"
+	Delegate               EventName = "Delegate"
+	CandidateUnbonded      EventName = "CandidateUnbonded"
+	ValidatorChange        EventName = "ValidatorChange"
+	IntendSettle           EventName = "IntendSettle"
+	IntendWithdraw         EventName = "IntendWithdraw"
+	IntendWithdrawDpos     EventName = "IntendWithdrawDpos"
+	IntendWithdrawChannel  EventName = "IntendWithdrawChannel"
 )
 
 // Wrapper for ethereum Event
@@ -67,6 +68,8 @@ func (e *EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 	switch e.Name {
 	case UpdateSidechainAddr:
 		res, err = ethClient.SGN.ParseUpdateSidechainAddr(e.Log)
+	case AddSubscriptionBalance:
+		res, err = ethClient.SGN.ParseAddSubscriptionBalance(e.Log)
 	case ConfirmParamProposal:
 		res, err = ethClient.DPoS.ParseConfirmParamProposal(e.Log)
 	case Delegate:

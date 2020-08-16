@@ -15,7 +15,7 @@ import (
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/guard"
-	stypes "github.com/celer-network/sgn/x/guard/types"
+	guardtypes "github.com/celer-network/sgn/x/guard/types"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,13 +49,8 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	require.NoError(t, err, "failed to call subscribe of SGN contract")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
 
-	log.Infoln("Send tx on sidechain to sync mainchain subscription balance...")
-	subscription := stypes.NewSubscription(tc.Client0.Address.Hex())
+	subscription := guardtypes.NewSubscription(tc.Client0.Address.Hex())
 	subscription.Deposit = sdk.NewIntFromBigInt(amt)
-	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-	msgSubmitChange := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, transactor.Key.GetAddress())
-	transactor.AddTxMsg(msgSubmitChange)
-
 	log.Infoln("Query sgn about the subscription info...")
 	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
 	for retry := 0; retry < tc.RetryLimit; retry++ {
@@ -85,7 +80,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	require.NoError(t, err, "failed to sign signedSimplexStateBytes")
 	initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig, tc.DisputeTimeout)
 	syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(initRequest)
-	msgSubmitChange = sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
+	msgSubmitChange := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")

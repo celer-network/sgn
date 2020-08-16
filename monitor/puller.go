@@ -51,6 +51,8 @@ func (m *Monitor) processPullerQueue() {
 			m.syncConfirmParamProposal(e)
 		case *mainchain.SGNUpdateSidechainAddr:
 			m.SyncUpdateSidechainAddr(e.Candidate)
+		case *mainchain.SGNAddSubscriptionBalance:
+			m.syncSGNAddSubscriptionBalance(e)
 		case *mainchain.CelerLedgerIntendSettle:
 			e.Raw = event.Log
 			m.syncIntendSettle(e)
@@ -99,6 +101,19 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	for i, request := range requests {
 		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
 	}
+}
+
+func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance) {
+	consumer := event.Consumer
+	amount := event.Amount
+	log.Infof("Sync AddSubscriptionBalance for %x, amount %s, tx hash %x", consumer, amount, event.Raw.TxHash)
+	transactor := m.Transactor
+	subscription := guard.NewSubscription(consumer.Hex())
+	subscription.Deposit = sdk.NewIntFromBigInt(amount)
+	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
+	msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.Transactor.Key.GetAddress())
+	log.Infof("submit change tx: subscribe EthAddress %s, Amount %s", consumer, amount)
+	transactor.AddTxMsg(msg)
 }
 
 func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardStatus guard.ChanStatus) {

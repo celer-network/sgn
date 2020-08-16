@@ -89,6 +89,7 @@ func NewMonitor(operator *transactor.Operator, db dbm.DB) {
 	go m.monitorDPoSCandidateUnbonded()
 	go m.monitorDPoSConfirmParamProposal()
 	go m.monitorSGNUpdateSidechainAddr()
+	go m.monitorSGNAddSubscriptionBalance()
 	go m.monitorCelerLedgerIntendSettle()
 	go m.monitorCelerLedgerIntendWithdraw()
 
@@ -145,6 +146,28 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 				if e.Candidate == m.EthClient.Address && m.shouldClaimValidator() {
 					m.claimValidatorOnMainchain()
 				}
+			}
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorSGNAddSubscriptionBalance() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:     string(AddSubscriptionBalance),
+			Contract:      m.sgnContract,
+			StartBlock:    m.getCurrentBlockNumber(),
+			CheckInterval: eventCheckInterval(AddSubscriptionBalance),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event AddSubscriptionBalance, tx hash: %x", eLog.TxHash)
+			event := NewEvent(AddSubscriptionBalance, eLog)
+			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		},
 	)
