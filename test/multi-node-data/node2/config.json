@@ -22,7 +22,7 @@
     "level": "debug"
   },
   "sgn": {
-    "chainid": "sgnchain",
+    "chainid": "sgntest",
     "baseGasPrice": 0,
     "nodeuri": "tcp://localhost:26657",
     "operator": "cosmos122w97t8vsa3538fr3ylvz3hvuqxrgpnax8es8f",
