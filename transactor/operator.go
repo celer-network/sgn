@@ -94,7 +94,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 
 	vt := staking.Validator{
 		Description: staking.Description{
-			Identity: candidateAddr.Hex(),
+			Identity: mainchain.Addr2Hex(candidateAddr),
 		},
 		Tokens:     sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
 		Status:     mainchain.ParseStatus(ci),
