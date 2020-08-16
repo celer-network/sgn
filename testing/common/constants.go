@@ -10,7 +10,7 @@ const (
 	EnvDir           = "../../env"
 	LocalGeth        = "http://127.0.0.1:8545"
 
-	SgnChainID    = "sgnchain"
+	SgnChainID    = "sgntest"
 	SgnPassphrase = "12341234"
 	SgnGasPrice   = ""
 	SgnCLIAddr    = "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
