@@ -65,7 +65,7 @@ func NewRequest(
 }
 
 func (r Request) String() string {
-	out := fmt.Sprintf(`ChannelId %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: %s`,
+	out := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: %s`,
 		r.ChannelId, r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout, r.Status)
 	if r.TriggerTxHash != "" {
 		out += fmt.Sprintf(`, TriggerTxHash: %s, TriggerTxBlkNum: %d`,
