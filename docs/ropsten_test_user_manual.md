@@ -5,6 +5,7 @@
 ```shellscript
 git clone https://github.com/celer-network/sgn
 cd sgn
+git checkout master
 make install-ops
 cd networks/ropsten
 ```
