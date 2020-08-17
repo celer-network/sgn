@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	rateFlag                 = "rate"
-	additionalLockPeriodFlag = "additional-lock-period"
+	rateFlag    = "rate"
+	addLockTime = "add-lock-time"
 )
 
 func UpdateCommissionRate() *cobra.Command {
@@ -25,7 +25,7 @@ func UpdateCommissionRate() *cobra.Command {
 	cmd.AddCommand(
 		announceIncreaseCommissionRate(),
 		confirmIncreaseCommissionRate(),
-		reduceCommissionRate(),
+		decreaseCommissionRate(),
 		extendCommissionRateLockTime(),
 	)
 	return cmd
@@ -33,7 +33,7 @@ func UpdateCommissionRate() *cobra.Command {
 
 func announceIncreaseCommissionRate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "announce-increase",
+		Use:   "announce-increase-rate",
 		Short: "Announce increase commission rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
@@ -43,7 +43,7 @@ func announceIncreaseCommissionRate() *cobra.Command {
 			newRate := new(big.Int)
 			newRate.SetString(viper.GetString(rateFlag), 10)
 			rateLockPeriod := new(big.Int)
-			rateLockPeriod.SetString(viper.GetString(additionalLockPeriodFlag), 10)
+			rateLockPeriod.SetString(viper.GetString(addLockTime), 10)
 			info, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 			if err != nil {
 				return err
@@ -63,7 +63,7 @@ func announceIncreaseCommissionRate() *cobra.Command {
 				newLockEndTime = new(big.Int).Add(header.Number, rateLockPeriod)
 			}
 			log.Infof("Announce increase commission rate to %s (in unit of 0.01%%), rateLockEndTime: %s", newRate, newLockEndTime)
-			receipt, err := ethClient.Transactor.TransactWaitMined(
+			_, err = ethClient.Transactor.TransactWaitMined(
 				"AnnounceIncreaseCommissionRate",
 				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 					return ethClient.DPoS.AnnounceIncreaseCommissionRate(opts, newRate, newLockEndTime)
@@ -72,7 +72,6 @@ func announceIncreaseCommissionRate() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("Transaction %x succeeded", receipt.TxHash)
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -88,13 +87,13 @@ func announceIncreaseCommissionRate() *cobra.Command {
 		},
 	}
 	cmd.Flags().String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
-	cmd.Flags().String(additionalLockPeriodFlag, "", "(optional) additional rate lock period")
+	cmd.Flags().String(addLockTime, "", "(optional) additional rate lock period")
 	return cmd
 }
 
 func confirmIncreaseCommissionRate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "confirm-increase",
+		Use:   "confirm-increase-rate",
 		Short: "Confirm increase commission rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
@@ -102,7 +101,7 @@ func confirmIncreaseCommissionRate() *cobra.Command {
 				return err
 			}
 			log.Infof("Confirm increase commission rate")
-			receipt, err := ethClient.Transactor.TransactWaitMined(
+			_, err = ethClient.Transactor.TransactWaitMined(
 				"ConfirmIncreaseCommissionRate",
 				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 					return ethClient.DPoS.ConfirmIncreaseCommissionRate(opts)
@@ -111,17 +110,16 @@ func confirmIncreaseCommissionRate() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("Transaction %x succeeded", receipt.TxHash)
 			return nil
 		},
 	}
 	return cmd
 }
 
-func reduceCommissionRate() *cobra.Command {
+func decreaseCommissionRate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reduce",
-		Short: "Reduce commission rate",
+		Use:   "decrease-rate",
+		Short: "Decrease commission rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
 			if err != nil {
@@ -130,7 +128,7 @@ func reduceCommissionRate() *cobra.Command {
 			newRate := new(big.Int)
 			newRate.SetString(viper.GetString(rateFlag), 10)
 			rateLockPeriod := new(big.Int)
-			rateLockPeriod.SetString(viper.GetString(additionalLockPeriodFlag), 10)
+			rateLockPeriod.SetString(viper.GetString(addLockTime), 10)
 			info, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 			if err != nil {
 				return err
@@ -149,8 +147,8 @@ func reduceCommissionRate() *cobra.Command {
 			if header.Number.Cmp(info.RateLockEndTime) > 0 {
 				newLockEndTime = new(big.Int).Add(header.Number, rateLockPeriod)
 			}
-			log.Infof("Reduce commission rate to %s (in unit of 0.01%%), rateLockEndTime: %s", newRate, newLockEndTime)
-			receipt, err := ethClient.Transactor.TransactWaitMined(
+			log.Infof("Decrease commission rate to %s (in unit of 0.01%%), rateLockEndTime: %s", newRate, newLockEndTime)
+			_, err = ethClient.Transactor.TransactWaitMined(
 				"NonIncreaseCommissionRate",
 				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 					return ethClient.DPoS.NonIncreaseCommissionRate(opts, newRate, newLockEndTime)
@@ -159,7 +157,6 @@ func reduceCommissionRate() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("Transaction %x succeeded", receipt.TxHash)
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -175,13 +172,13 @@ func reduceCommissionRate() *cobra.Command {
 		},
 	}
 	cmd.Flags().String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
-	cmd.Flags().String(additionalLockPeriodFlag, "", "(optional) additional rate lock period")
+	cmd.Flags().String(addLockTime, "", "(optional) additional rate lock period")
 	return cmd
 }
 
 func extendCommissionRateLockTime() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "extend-lock-period",
+		Use:   "extend-lock",
 		Short: "Extend commission rate lock end time",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
@@ -189,7 +186,7 @@ func extendCommissionRateLockTime() *cobra.Command {
 				return err
 			}
 			rateLockPeriod := new(big.Int)
-			rateLockPeriod.SetString(viper.GetString(additionalLockPeriodFlag), 10)
+			rateLockPeriod.SetString(viper.GetString(addLockTime), 10)
 			info, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
 			if err != nil {
 				return err
@@ -206,7 +203,7 @@ func extendCommissionRateLockTime() *cobra.Command {
 				newLockEndTime = new(big.Int).Add(header.Number, rateLockPeriod)
 			}
 			log.Infof("Extend commission rateLockEndTime: %s", newLockEndTime)
-			receipt, err := ethClient.Transactor.TransactWaitMined(
+			_, err = ethClient.Transactor.TransactWaitMined(
 				"NonIncreaseCommissionRate",
 				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 					return ethClient.DPoS.NonIncreaseCommissionRate(opts, info.CommissionRate, newLockEndTime)
@@ -215,21 +212,20 @@ func extendCommissionRateLockTime() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("Transaction %x succeeded", receipt.TxHash)
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(additionalLockPeriodFlag)
+			err := cmd.MarkFlagRequired(addLockTime)
 			if err != nil {
 				return err
 			}
-			err = viper.BindPFlag(additionalLockPeriodFlag, cmd.Flags().Lookup(additionalLockPeriodFlag))
+			err = viper.BindPFlag(addLockTime, cmd.Flags().Lookup(addLockTime))
 			if err != nil {
 				return err
 			}
 			return nil
 		},
 	}
-	cmd.Flags().String(additionalLockPeriodFlag, "", "additional rate lock period")
+	cmd.Flags().String(addLockTime, "", "additional rate lock period")
 	return cmd
 }
