@@ -3,7 +3,6 @@ package singlenode
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -58,5 +57,4 @@ func validatorTest(t *testing.T) {
 	require.NoError(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 	tc.CheckValidatorNum(t, transactor, 1)
-	time.Sleep(time.Hour)
 }
