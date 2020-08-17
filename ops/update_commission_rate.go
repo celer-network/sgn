@@ -62,7 +62,7 @@ func announceIncreaseCommissionRate() *cobra.Command {
 			if header.Number.Cmp(info.RateLockEndTime) > 0 {
 				newLockEndTime = new(big.Int).Add(header.Number, rateLockPeriod)
 			}
-			log.Infof("Announce increase commission rate: %s, rateLockEndTime: %s", newRate, newLockEndTime)
+			log.Infof("Announce increase commission rate to %s (in unit of 0.01%%), rateLockEndTime: %s", newRate, newLockEndTime)
 			receipt, err := ethClient.Transactor.TransactWaitMined(
 				"AnnounceIncreaseCommissionRate",
 				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
@@ -149,7 +149,7 @@ func reduceCommissionRate() *cobra.Command {
 			if header.Number.Cmp(info.RateLockEndTime) > 0 {
 				newLockEndTime = new(big.Int).Add(header.Number, rateLockPeriod)
 			}
-			log.Infof("Reduce commission rate: %s, rateLockEndTime: %s", newRate, newLockEndTime)
+			log.Infof("Reduce commission rate to %s (in unit of 0.01%%), rateLockEndTime: %s", newRate, newLockEndTime)
 			receipt, err := ethClient.Transactor.TransactWaitMined(
 				"NonIncreaseCommissionRate",
 				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {

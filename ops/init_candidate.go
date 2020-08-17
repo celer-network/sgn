@@ -44,7 +44,7 @@ func initCandidate() error {
 		}
 		rateLockEndTime := new(big.Int).Add(header.Number, rateLockPeriod)
 		log.Infof(
-			"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s, rateLockEndTime: %s",
+			"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s (in unit of 0.01%%), rateLockEndTime: %s",
 			minSelfStake,
 			commissionRate,
 			rateLockEndTime,
