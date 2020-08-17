@@ -4,14 +4,16 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 const RouterKey = ModuleName // this was defined in your key.go file
 
 const (
-	TypeMsgSetTransactors = "set_transactors"
-	TypeMsgWithdrawReward = "withdraw_reward"
-	TypeMsgSignReward     = "sign_reward"
+	TypeMsgSetTransactors           = "set_transactors"
+	TypeMsgEditCandidateDescription = "edit_candidate_description"
+	TypeMsgWithdrawReward           = "withdraw_reward"
+	TypeMsgSignReward               = "sign_reward"
 )
 
 type MsgSetTransactors struct {
@@ -61,6 +63,54 @@ func (msg MsgSetTransactors) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSetTransactors) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+type MsgEditCandidateDescription struct {
+	EthAddress  string              `json:"ethAddress"`
+	Description staking.Description `json:"description"`
+	Sender      sdk.AccAddress      `json:"sender"`
+}
+
+// NewMsgEditCandidateDescription is a constructor function for MsgEditCandidateDescription
+func NewMsgEditCandidateDescription(ethAddress string, description staking.Description, sender sdk.AccAddress) MsgEditCandidateDescription {
+	return MsgEditCandidateDescription{
+		EthAddress:  mainchain.FormatAddrHex(ethAddress),
+		Description: description,
+		Sender:      sender,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgEditCandidateDescription) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgEditCandidateDescription) Type() string { return TypeMsgEditCandidateDescription }
+
+// ValidateBasic runs stateless checks on the message
+func (msg MsgEditCandidateDescription) ValidateBasic() error {
+	if msg.EthAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
+	}
+
+	if msg.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
+	}
+
+	if msg.Description == (staking.Description{}) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgEditCandidateDescription) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgEditCandidateDescription) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 

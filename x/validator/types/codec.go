@@ -13,6 +13,7 @@ func init() {
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSetTransactors{}, "validator/MsgSetTransactors", nil)
+	cdc.RegisterConcrete(MsgEditCandidateDescription{}, "validator/MsgEditCandidateDescription", nil)
 	cdc.RegisterConcrete(MsgWithdrawReward{}, "validator/MsgWithdrawReward", nil)
 	cdc.RegisterConcrete(MsgSignReward{}, "validator/MsgSignReward", nil)
 }
