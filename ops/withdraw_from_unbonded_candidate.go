@@ -1,8 +1,6 @@
 package ops
 
 import (
-	"math/big"
-
 	"github.com/celer-network/goutils/log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,8 +13,7 @@ import (
 
 func withdrawFromUnbondedCandidate() error {
 	ethClient, err := initEthClient()
-	amount := new(big.Int)
-	amount.SetString(viper.GetString(amountFlag), 10)
+	amount := calcRawAmount(viper.GetString(amountFlag))
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	log.Infof(
