@@ -104,11 +104,20 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 }
 
 func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance) {
-	consumer := event.Consumer
-	amount := event.Amount
-	log.Infof("Sync AddSubscriptionBalance for %x, amount %s, tx hash %x", consumer, amount, event.Raw.TxHash)
 	transactor := m.Transactor
-	subscription := guard.NewSubscription(consumer.Hex())
+	consumer := event.Consumer
+	consumerEthAddress := consumer.Hex()
+	amount := event.Amount
+	amountInt := sdk.NewIntFromBigInt(amount)
+	subscription, err := guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, consumerEthAddress)
+	if err == nil {
+		if subscription.Deposit.Equal(amountInt) {
+			log.Infof("Subscription already updated for %s, amount %s", consumerEthAddress, amount)
+			return
+		}
+	}
+	log.Infof("Sync AddSubscriptionBalance for %s, amount %s, tx hash %x", consumerEthAddress, amount, event.Raw.TxHash)
+	subscription = guard.NewSubscription(consumer.Hex())
 	subscription.Deposit = sdk.NewIntFromBigInt(amount)
 	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
 	msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.Transactor.Key.GetAddress())
