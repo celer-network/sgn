@@ -49,6 +49,8 @@ func (m *Monitor) processPullerQueue() {
 			m.syncDPoSCandidateUnbonded(e)
 		case *mainchain.DPoSConfirmParamProposal:
 			m.syncConfirmParamProposal(e)
+		case *mainchain.DPoSUpdateCommissionRate:
+			m.syncUpdateCommissionRate(e)
 		case *mainchain.SGNUpdateSidechainAddr:
 			m.SyncUpdateSidechainAddr(e.Candidate)
 		case *mainchain.CelerLedgerIntendSettle:
@@ -75,6 +77,11 @@ func (m *Monitor) syncDPoSIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWit
 func (m *Monitor) syncDPoSCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded) {
 	log.Infof("puller queue process candidate unbonded %x", candidateUnbonded.Candidate)
 	m.SyncValidator(candidateUnbonded.Candidate)
+}
+
+func (m *Monitor) syncUpdateCommissionRate(commission *mainchain.DPoSUpdateCommissionRate) {
+	log.Infof("puller queue process commission update %x, %s", commission.Candidate, commission.NewRate)
+	m.SyncValidator(commission.Candidate)
 }
 
 func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {

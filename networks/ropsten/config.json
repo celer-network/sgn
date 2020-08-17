@@ -5,7 +5,8 @@
     "checkInterval": {
       "IntendSettle": 2,
       "IntendWithdrawChannel": 2,
-      "ConfirmParamProposal": 10
+      "ConfirmParamProposal": 10,
+      "UpdateCommissionRate": 10
     },
     "contracts": {
       "celrAddress": "0xb37f671dFc6C7c03462C76313Ec1a35b0c0A76d5",
