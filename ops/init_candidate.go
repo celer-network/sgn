@@ -114,8 +114,8 @@ func InitCandidateCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self stake")
-	cmd.Flags().String(commissionRateFlag, "", "Commission rate")
-	cmd.Flags().String(rateLockPeriodFlag, "", "Rate lock period")
+	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self-delegated stake")
+	cmd.Flags().String(commissionRateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
+	cmd.Flags().String(rateLockPeriodFlag, "", "Rate lock period in unit of ETH block number")
 	return cmd
 }

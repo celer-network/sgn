@@ -24,7 +24,7 @@ func updateMinSelfStake() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Transaction %x succeeded", receipt.TxHash)
+	log.Infof("UpdateMinSelfStake transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
