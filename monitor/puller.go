@@ -116,12 +116,11 @@ func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscript
 			return
 		}
 	}
-	log.Infof("Sync AddSubscriptionBalance for %s, amount %s, tx hash %x", consumerEthAddress, amount, event.Raw.TxHash)
 	subscription = guard.NewSubscription(consumer.Hex())
 	subscription.Deposit = sdk.NewIntFromBigInt(amount)
 	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
 	msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.Transactor.Key.GetAddress())
-	log.Infof("submit change tx: subscribe EthAddress %s, Amount %s", consumer, amount)
+	log.Infof("Submit change tx: subscribe ethAddress %s, amount %s, mainchain tx hash %x", consumerEthAddress, amount, event.Raw.TxHash)
 	transactor.AddTxMsg(msg)
 }
 
