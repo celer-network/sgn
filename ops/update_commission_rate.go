@@ -25,7 +25,7 @@ func flagSetCommissionRate() *pflag.FlagSet {
 	return fs
 }
 
-func UpdateCommissionRate() *cobra.Command {
+func UpdateCommissionRateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-commission-rate",
 		Short: "Update commission rate",

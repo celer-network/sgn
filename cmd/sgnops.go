@@ -37,7 +37,7 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.WithdrawFromUnbondedCandidateCommand(),
 		ops.ConfirmUnbondedCandidateCommand(),
 		ops.UpdateMinSelfStakeCommand(),
-		ops.UpdateCommissionRate(),
+		ops.UpdateCommissionRateCommand(),
 		ops.GetCandidateInfoCommand(),
 		ops.GetDelegatorInfoCommand(),
 	)
