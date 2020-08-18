@@ -29,6 +29,7 @@ sgncli tx validator [flags]
 ### SEE ALSO
 
 * [sgncli tx](sgncli_tx.md)	 - Transactions subcommands
+* [sgncli tx validator edit-candidate-description](sgncli_tx_validator_edit-candidate-description.md)	 - Edit candidate description for the eth address
 * [sgncli tx validator set-transasctors](sgncli_tx_validator_set-transasctors.md)	 - set transasctors for the eth address
 * [sgncli tx validator withdraw-reward](sgncli_tx_validator_withdraw-reward.md)	 - withdraw reward for the eth address
 
