@@ -1,8 +1,6 @@
 package ops
 
 import (
-	"math/big"
-
 	"github.com/celer-network/goutils/log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,8 +13,7 @@ import (
 
 func withdrawFromUnbondedCandidate() error {
 	ethClient, err := initEthClient()
-	amount := new(big.Int)
-	amount.SetString(viper.GetString(amountFlag), 10)
+	amount := calcRawAmount(viper.GetString(amountFlag))
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	log.Infof(
@@ -44,27 +41,10 @@ func WithdrawFromUnbondedCandidateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return withdrawFromUnbondedCandidate()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(candidateFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(amountFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(candidateFlag, cmd.Flags().Lookup(candidateFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(amountFlag, cmd.Flags().Lookup(amountFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
 	cmd.Flags().String(amountFlag, "", "Withdraw amount")
+	cmd.MarkFlagRequired(candidateFlag)
+	cmd.MarkFlagRequired(amountFlag)
 	return cmd
 }

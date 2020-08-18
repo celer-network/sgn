@@ -88,6 +88,7 @@ func NewMonitor(operator *transactor.Operator, db dbm.DB) {
 	go m.monitorDPoSIntendWithdraw()
 	go m.monitorDPoSCandidateUnbonded()
 	go m.monitorDPoSConfirmParamProposal()
+	go m.monitorDPoSUpdateCommissionRate()
 	go m.monitorSGNUpdateSidechainAddr()
 	go m.monitorSGNAddSubscriptionBalance()
 	go m.monitorCelerLedgerIntendSettle()
@@ -208,6 +209,27 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
 			event := NewEvent(ConfirmParamProposal, eLog)
+			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
+			}
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorDPoSUpdateCommissionRate() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:     string(UpdateCommissionRate),
+			Contract:      m.dposContract,
+			StartBlock:    m.getCurrentBlockNumber(),
+			CheckInterval: eventCheckInterval(UpdateCommissionRate),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event UpdateCommissionRate, tx hash: %x", eLog.TxHash)
+			event := NewEvent(UpdateCommissionRate, eLog)
 			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)

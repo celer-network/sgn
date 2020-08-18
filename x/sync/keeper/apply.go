@@ -100,8 +100,8 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 	}
 	valAddress := sdk.ValAddress(candidate.Operator)
 
-	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission %s",
-		candidate.Operator, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission)
+	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission rate %s",
+		candidate.Operator, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission.CommissionRates.Rate)
 
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {

@@ -39,18 +39,8 @@ func ConfirmWithdrawCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return confirmWithdraw()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(candidateFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(candidateFlag, cmd.Flags().Lookup(candidateFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
+	cmd.MarkFlagRequired(candidateFlag)
 	return cmd
 }

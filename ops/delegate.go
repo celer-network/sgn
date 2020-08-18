@@ -73,27 +73,10 @@ func DelegateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return delegate()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(amountFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(candidateFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(amountFlag, cmd.Flags().Lookup(amountFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(candidateFlag, cmd.Flags().Lookup(candidateFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(amountFlag, "", "Stake amount")
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
+	cmd.MarkFlagRequired(amountFlag)
+	cmd.MarkFlagRequired(candidateFlag)
 	return cmd
 }
