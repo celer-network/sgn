@@ -35,18 +35,8 @@ func UpdateMinSelfStakeCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return updateMinSelfStake()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(amountFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(amountFlag, cmd.Flags().Lookup(amountFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(amountFlag, "", "Minimal self-delegated stake")
+	cmd.MarkFlagRequired(amountFlag)
 	return cmd
 }

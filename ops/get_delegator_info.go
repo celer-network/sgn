@@ -43,27 +43,10 @@ func GetDelegatorInfoCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getDelegatorInfo()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(candidateFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(delegatorFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(candidateFlag, cmd.Flags().Lookup(candidateFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(delegatorFlag, cmd.Flags().Lookup(delegatorFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
 	cmd.Flags().String(delegatorFlag, "", "Delegator ETH address")
+	cmd.MarkFlagRequired(candidateFlag)
+	cmd.MarkFlagRequired(delegatorFlag)
 	return cmd
 }

@@ -86,36 +86,12 @@ func InitCandidateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return initCandidate()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(minSelfStakeFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(commissionRateFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(rateLockPeriodFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(minSelfStakeFlag, cmd.Flags().Lookup(minSelfStakeFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(commissionRateFlag, cmd.Flags().Lookup(commissionRateFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(rateLockPeriodFlag, cmd.Flags().Lookup(rateLockPeriodFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self-delegated stake")
 	cmd.Flags().String(commissionRateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
 	cmd.Flags().String(rateLockPeriodFlag, "", "Rate lock period in unit of ETH block number")
+	cmd.MarkFlagRequired(minSelfStakeFlag)
+	cmd.MarkFlagRequired(commissionRateFlag)
+	cmd.MarkFlagRequired(rateLockPeriodFlag)
 	return cmd
 }

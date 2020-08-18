@@ -74,20 +74,10 @@ func announceIncreaseCommissionRate() *cobra.Command {
 			}
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(rateFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(rateFlag, cmd.Flags().Lookup(rateFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
 	cmd.Flags().String(addLockTime, "", "(optional) additional rate lock period")
+	cmd.MarkFlagRequired(rateFlag)
 	return cmd
 }
 
@@ -159,20 +149,10 @@ func decreaseCommissionRate() *cobra.Command {
 			}
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(rateFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(rateFlag, cmd.Flags().Lookup(rateFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
 	cmd.Flags().String(addLockTime, "", "(optional) additional rate lock period")
+	cmd.MarkFlagRequired(rateFlag)
 	return cmd
 }
 
@@ -214,18 +194,8 @@ func extendCommissionRateLockTime() *cobra.Command {
 			}
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(addLockTime)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(addLockTime, cmd.Flags().Lookup(addLockTime))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(addLockTime, "", "additional rate lock period")
+	cmd.MarkFlagRequired(addLockTime)
 	return cmd
 }
