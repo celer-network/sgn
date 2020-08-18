@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -16,6 +17,13 @@ const (
 	rateFlag    = "rate"
 	addLockTime = "add-lock-time"
 )
+
+func flagSetCommissionRate() *pflag.FlagSet {
+	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
+	fs.String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
+	fs.String(addLockTime, "", "(optional) additional rate lock period")
+	return fs
+}
 
 func UpdateCommissionRate() *cobra.Command {
 	cmd := &cobra.Command{
@@ -75,8 +83,7 @@ func announceIncreaseCommissionRate() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
-	cmd.Flags().String(addLockTime, "", "(optional) additional rate lock period")
+	cmd.Flags().AddFlagSet(flagSetCommissionRate())
 	cmd.MarkFlagRequired(rateFlag)
 	return cmd
 }
@@ -150,8 +157,7 @@ func decreaseCommissionRate() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
-	cmd.Flags().String(addLockTime, "", "(optional) additional rate lock period")
+	cmd.Flags().AddFlagSet(flagSetCommissionRate())
 	cmd.MarkFlagRequired(rateFlag)
 	return cmd
 }
