@@ -6,6 +6,7 @@ import (
 
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	staking "github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 type Delegator struct {
@@ -29,13 +30,14 @@ func (d Delegator) String() string {
 
 // operator will be used for running validator node, and transactor will be used for running gateway
 type Candidate struct {
-	EthAddress     string           `json:"ethAddress"`
-	Operator       sdk.AccAddress   `json:"operator"`
-	Transactors    []sdk.AccAddress `json:"transactors"`
-	Delegators     []Delegator      `json:"delegators"`
-	StakingPool    sdk.Int          `json:"stakingPool"`
-	CommissionRate sdk.Dec          `json:"commissionRate"`
-	RequestCount   sdk.Int          `json:"requestCount"`
+	EthAddress     string              `json:"ethAddress"`
+	Operator       sdk.AccAddress      `json:"operator"`
+	Transactors    []sdk.AccAddress    `json:"transactors"`
+	Delegators     []Delegator         `json:"delegators"`
+	StakingPool    sdk.Int             `json:"stakingPool"`
+	CommissionRate sdk.Dec             `json:"commissionRate"`
+	RequestCount   sdk.Int             `json:"requestCount"`
+	Description    staking.Description `json:"description"`
 }
 
 func NewCandidate(ethAddress string, operator sdk.AccAddress) Candidate {

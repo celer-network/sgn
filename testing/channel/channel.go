@@ -1,12 +1,9 @@
 package channel
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"math/big"
 	"net"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -17,12 +14,9 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/guard"
-	"github.com/celer-network/sgn/x/sync"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -133,27 +127,6 @@ func NewRestServer() (rs *RestServer, err error) {
 		tc.PollingInterval,
 		"Subscribe on SGN contract",
 	)
-
-	if gateway == "" {
-		subscription := guard.NewSubscription(peer1.Address.Hex())
-		subscription.Deposit = sdk.NewIntFromBigInt(amt)
-		subscriptionData := ts.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-		msgSubmitChange := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, ts.Key.GetAddress())
-		ts.AddTxMsg(msgSubmitChange)
-	} else {
-		reqBody, err2 := json.Marshal(map[string]string{
-			"ethAddr": peer1.Address.Hex(),
-			"amount":  amt.String(),
-		})
-		if err2 != nil {
-			return nil, err2
-		}
-		_, err2 = http.Post(gateway+"/guard/subscribe",
-			"application/json", bytes.NewBuffer(reqBody))
-		if err2 != nil {
-			return nil, err2
-		}
-	}
 
 	channelID, err := tc.OpenChannel(peer1, peer2)
 	if err != nil {
