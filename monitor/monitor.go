@@ -207,7 +207,7 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 			CheckInterval: eventCheckInterval(ConfirmParamProposal),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event ConfirmParamProposal, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(ConfirmParamProposal, eLog)
 			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
@@ -228,7 +228,7 @@ func (m *Monitor) monitorDPoSUpdateCommissionRate() {
 			CheckInterval: eventCheckInterval(UpdateCommissionRate),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event UpdateCommissionRate, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event UpdateCommissionRate, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(UpdateCommissionRate, eLog)
 			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
@@ -249,7 +249,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 			CheckInterval: eventCheckInterval(ValidatorChange),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			logmsg := fmt.Sprintf("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
+			logmsg := fmt.Sprintf("Catch event ValidatorChange, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			validatorChange, perr := m.EthClient.DPoS.ParseValidatorChange(eLog)
 			if perr != nil {
 				log.Errorf("%s. parse event err: %s", logmsg, perr)
@@ -292,7 +292,7 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 			CheckInterval: eventCheckInterval(IntendWithdrawDpos),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(IntendWithdrawDpos, eLog)
 			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
 			if dberr != nil {
@@ -313,7 +313,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 			CheckInterval: eventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event IntendSettle, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
@@ -334,7 +334,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
@@ -355,7 +355,7 @@ func (m *Monitor) monitorDPoSDelegate() {
 			CheckInterval: eventCheckInterval(Delegate),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event Delegate, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			delegate, perr := m.EthClient.DPoS.ParseDelegate(eLog)
 			if perr != nil {
 				log.Errorln("parse event err", perr)

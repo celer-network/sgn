@@ -96,7 +96,7 @@ func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (bool, bool) {
 
 	if !paramChange.NewValue.Equal(sdk.NewIntFromBigInt(paramValue)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. new value does not match mainchain value: %s", logmsg, paramValue)
+			log.Errorf("%s. new value not match mainchain value: %s", logmsg, paramValue)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, value: %s", logmsg, paramValue)
@@ -128,7 +128,7 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 
 	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. operator does not match mainchain value: %s", logmsg, sdk.AccAddress(sidechainAddr))
+			log.Errorf("%s. operator not match mainchain value: %s", logmsg, sdk.AccAddress(sidechainAddr))
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, operator: %s", logmsg, sdk.AccAddress(sidechainAddr))
@@ -161,7 +161,7 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. stake does not match mainchain value: %s", logmsg, di.DelegatedStake)
+			log.Errorf("%s. stake not match mainchain value: %s", logmsg, di.DelegatedStake)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, stake: %s", logmsg, di.DelegatedStake)
@@ -205,7 +205,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 
 	if !vt.Status.Equal(mainchain.ParseStatus(ci)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. status does not match mainchain value: %s", logmsg, mainchain.ParseStatus(ci))
+			log.Errorf("%s. status not match mainchain value: %s", logmsg, mainchain.ParseStatus(ci))
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, status: %s", logmsg, mainchain.ParseStatus(ci))
@@ -215,7 +215,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 	mtk := sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)
 	if !vt.Tokens.Equal(mtk) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. tokens does not match mainchain value: %s", logmsg, mtk)
+			log.Errorf("%s. tokens not match mainchain value: %s", logmsg, mtk)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, token: %s", logmsg, mtk)
@@ -230,7 +230,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 
 	if !vt.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. commission does not match mainchain value: %s", logmsg, commission.CommissionRates.Rate)
+			log.Errorf("%s. commission not match mainchain value: %s", logmsg, commission.CommissionRates.Rate)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, commission: %s", logmsg, commission.CommissionRates.Rate)
@@ -255,7 +255,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 
 	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. deposit does not match mainchain value: %s", logmsg, deposit)
+			log.Errorf("%s. deposit not match mainchain value: %s", logmsg, deposit)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, deposit: %s", logmsg, deposit)
@@ -462,7 +462,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 
 	// verify transaction block number
 	if trigger.TriggerTxBlkNum != triggerLog.BlockNumber {
-		log.Errorf("%s. TriggerTxBlkNum does not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
+		log.Errorf("%s. TriggerTxBlkNum not match mainchain value: %d", logmsg, triggerLog.BlockNumber)
 		return true, false
 	}
 
@@ -522,7 +522,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return true, false
 	}
 	if guardLog.BlockNumber != proof.GuardTxBlkNum {
-		log.Errorf("%s. GuardTxBlkNum does not match mainchain value: %d", logmsg, guardLog.BlockNumber)
+		log.Errorf("%s. GuardTxBlkNum not match mainchain value: %d", logmsg, guardLog.BlockNumber)
 		return true, false
 	}
 
@@ -577,7 +577,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
 		return false, false
 	}
 	if proof.GuardSender != guardSender {
-		log.Errorf("%s. GuardSender does not match mainchain value: %s", logmsg, guardSender)
+		log.Errorf("%s. GuardSender not match mainchain value: %s", logmsg, guardSender)
 		return true, false
 	}
 
