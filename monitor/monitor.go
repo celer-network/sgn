@@ -134,7 +134,7 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
 			event := NewEvent(UpdateSidechainAddr, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -166,7 +166,7 @@ func (m *Monitor) monitorSGNAddSubscriptionBalance() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event AddSubscriptionBalance, tx hash: %x", eLog.TxHash)
 			event := NewEvent(AddSubscriptionBalance, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -188,7 +188,7 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -209,7 +209,7 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(ConfirmParamProposal, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -230,7 +230,7 @@ func (m *Monitor) monitorDPoSUpdateCommissionRate() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateCommissionRate, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(UpdateCommissionRate, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -272,7 +272,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 					m.setUnbonded()
 				}
 				event := NewEvent(ValidatorChange, eLog)
-				dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+				dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 				if dberr != nil {
 					log.Errorln("db Set err", dberr)
 				}
@@ -294,7 +294,7 @@ func (m *Monitor) monitorDPoSIntendWithdraw() {
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(IntendWithdrawDpos, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -314,7 +314,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
-			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
+			err := m.dbSet(GetPullerKey(eLog), NewEvent(IntendSettle, eLog).MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}
@@ -335,7 +335,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
-			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
+			err := m.dbSet(GetPullerKey(eLog), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}

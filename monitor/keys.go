@@ -1,8 +1,11 @@
 package monitor
 
 import (
+	"strconv"
+
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -12,8 +15,10 @@ var (
 )
 
 // get puller key from mainchain txHash
-func GetPullerKey(txHash mainchain.HashType) []byte {
-	return append(PullerKeyPrefix, txHash.Bytes()...)
+func GetPullerKey(eLog ethtypes.Log) []byte {
+	key := strconv.AppendUint(PullerKeyPrefix, eLog.BlockNumber, 10)
+	key = strconv.AppendUint(key, uint64(eLog.Index), 10)
+	return append(key, eLog.TxHash.Bytes()...)
 }
 
 // get guard key from mainchain txHash
