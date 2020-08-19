@@ -68,7 +68,7 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 
 	c, err := validator.CLIQueryCandidate(o.Transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(candidateAddr))
 	if err == nil && sdk.AccAddress(sidechainAddr).Equals(c.Operator) {
-		log.Infof("The sidechain address of candidate %x has been updated", candidateAddr)
+		log.Debugf("sidechain address of candidate %x is already updated", candidateAddr)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	if err == nil {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
 			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
-			log.Infof("no need to sync updated validator %x", candidateAddr)
+			log.Debugf("validator %x is already updated", candidateAddr)
 			return
 		}
 	}
@@ -137,6 +137,15 @@ func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	if err != nil {
 		log.Errorf("Failed to query delegator info: %s", err)
 		return
+	}
+
+	d, err := validator.CLIQueryDelegator(
+		o.Transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
+	if err == nil {
+		if d.DelegatedStake.BigInt().Cmp(di.DelegatedStake) == 0 {
+			log.Debugf("delegator %x candidate %x stake %s is already updated", delegatorAddr, candidatorAddr, d.DelegatedStake)
+			return
+		}
 	}
 
 	delegator := validator.NewDelegator(mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
