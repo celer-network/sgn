@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -191,7 +190,7 @@ func (_DPoS *DPoSTransactorRaw) Transact(opts *bind.TransactOpts, method string,
 
 // COMMISSIONRATEBASE is a free data retrieval call binding the contract method 0xbee8380e.
 //
-// Solidity: function COMMISSION_RATE_BASE() constant returns(uint256)
+// Solidity: function COMMISSION_RATE_BASE() view returns(uint256)
 func (_DPoS *DPoSCaller) COMMISSIONRATEBASE(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -203,21 +202,21 @@ func (_DPoS *DPoSCaller) COMMISSIONRATEBASE(opts *bind.CallOpts) (*big.Int, erro
 
 // COMMISSIONRATEBASE is a free data retrieval call binding the contract method 0xbee8380e.
 //
-// Solidity: function COMMISSION_RATE_BASE() constant returns(uint256)
+// Solidity: function COMMISSION_RATE_BASE() view returns(uint256)
 func (_DPoS *DPoSSession) COMMISSIONRATEBASE() (*big.Int, error) {
 	return _DPoS.Contract.COMMISSIONRATEBASE(&_DPoS.CallOpts)
 }
 
 // COMMISSIONRATEBASE is a free data retrieval call binding the contract method 0xbee8380e.
 //
-// Solidity: function COMMISSION_RATE_BASE() constant returns(uint256)
+// Solidity: function COMMISSION_RATE_BASE() view returns(uint256)
 func (_DPoS *DPoSCallerSession) COMMISSIONRATEBASE() (*big.Int, error) {
 	return _DPoS.Contract.COMMISSIONRATEBASE(&_DPoS.CallOpts)
 }
 
 // UIntStorage is a free data retrieval call binding the contract method 0x64ed600a.
 //
-// Solidity: function UIntStorage(uint256 ) constant returns(uint256)
+// Solidity: function UIntStorage(uint256 ) view returns(uint256)
 func (_DPoS *DPoSCaller) UIntStorage(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -229,21 +228,21 @@ func (_DPoS *DPoSCaller) UIntStorage(opts *bind.CallOpts, arg0 *big.Int) (*big.I
 
 // UIntStorage is a free data retrieval call binding the contract method 0x64ed600a.
 //
-// Solidity: function UIntStorage(uint256 ) constant returns(uint256)
+// Solidity: function UIntStorage(uint256 ) view returns(uint256)
 func (_DPoS *DPoSSession) UIntStorage(arg0 *big.Int) (*big.Int, error) {
 	return _DPoS.Contract.UIntStorage(&_DPoS.CallOpts, arg0)
 }
 
 // UIntStorage is a free data retrieval call binding the contract method 0x64ed600a.
 //
-// Solidity: function UIntStorage(uint256 ) constant returns(uint256)
+// Solidity: function UIntStorage(uint256 ) view returns(uint256)
 func (_DPoS *DPoSCallerSession) UIntStorage(arg0 *big.Int) (*big.Int, error) {
 	return _DPoS.Contract.UIntStorage(&_DPoS.CallOpts, arg0)
 }
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
-// Solidity: function celerToken() constant returns(address)
+// Solidity: function celerToken() view returns(address)
 func (_DPoS *DPoSCaller) CelerToken(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -255,21 +254,21 @@ func (_DPoS *DPoSCaller) CelerToken(opts *bind.CallOpts) (common.Address, error)
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
-// Solidity: function celerToken() constant returns(address)
+// Solidity: function celerToken() view returns(address)
 func (_DPoS *DPoSSession) CelerToken() (common.Address, error) {
 	return _DPoS.Contract.CelerToken(&_DPoS.CallOpts)
 }
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
-// Solidity: function celerToken() constant returns(address)
+// Solidity: function celerToken() view returns(address)
 func (_DPoS *DPoSCallerSession) CelerToken() (common.Address, error) {
 	return _DPoS.Contract.CelerToken(&_DPoS.CallOpts)
 }
 
 // CheckedValidators is a free data retrieval call binding the contract method 0x3702db39.
 //
-// Solidity: function checkedValidators(address ) constant returns(bool)
+// Solidity: function checkedValidators(address ) view returns(bool)
 func (_DPoS *DPoSCaller) CheckedValidators(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -281,21 +280,21 @@ func (_DPoS *DPoSCaller) CheckedValidators(opts *bind.CallOpts, arg0 common.Addr
 
 // CheckedValidators is a free data retrieval call binding the contract method 0x3702db39.
 //
-// Solidity: function checkedValidators(address ) constant returns(bool)
+// Solidity: function checkedValidators(address ) view returns(bool)
 func (_DPoS *DPoSSession) CheckedValidators(arg0 common.Address) (bool, error) {
 	return _DPoS.Contract.CheckedValidators(&_DPoS.CallOpts, arg0)
 }
 
 // CheckedValidators is a free data retrieval call binding the contract method 0x3702db39.
 //
-// Solidity: function checkedValidators(address ) constant returns(bool)
+// Solidity: function checkedValidators(address ) view returns(bool)
 func (_DPoS *DPoSCallerSession) CheckedValidators(arg0 common.Address) (bool, error) {
 	return _DPoS.Contract.CheckedValidators(&_DPoS.CallOpts, arg0)
 }
 
 // DposGoLiveTime is a free data retrieval call binding the contract method 0x39c9563e.
 //
-// Solidity: function dposGoLiveTime() constant returns(uint256)
+// Solidity: function dposGoLiveTime() view returns(uint256)
 func (_DPoS *DPoSCaller) DposGoLiveTime(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -307,21 +306,21 @@ func (_DPoS *DPoSCaller) DposGoLiveTime(opts *bind.CallOpts) (*big.Int, error) {
 
 // DposGoLiveTime is a free data retrieval call binding the contract method 0x39c9563e.
 //
-// Solidity: function dposGoLiveTime() constant returns(uint256)
+// Solidity: function dposGoLiveTime() view returns(uint256)
 func (_DPoS *DPoSSession) DposGoLiveTime() (*big.Int, error) {
 	return _DPoS.Contract.DposGoLiveTime(&_DPoS.CallOpts)
 }
 
 // DposGoLiveTime is a free data retrieval call binding the contract method 0x39c9563e.
 //
-// Solidity: function dposGoLiveTime() constant returns(uint256)
+// Solidity: function dposGoLiveTime() view returns(uint256)
 func (_DPoS *DPoSCallerSession) DposGoLiveTime() (*big.Int, error) {
 	return _DPoS.Contract.DposGoLiveTime(&_DPoS.CallOpts)
 }
 
 // EnableWhitelist is a free data retrieval call binding the contract method 0xcdfb2b4e.
 //
-// Solidity: function enableWhitelist() constant returns(bool)
+// Solidity: function enableWhitelist() view returns(bool)
 func (_DPoS *DPoSCaller) EnableWhitelist(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -333,21 +332,21 @@ func (_DPoS *DPoSCaller) EnableWhitelist(opts *bind.CallOpts) (bool, error) {
 
 // EnableWhitelist is a free data retrieval call binding the contract method 0xcdfb2b4e.
 //
-// Solidity: function enableWhitelist() constant returns(bool)
+// Solidity: function enableWhitelist() view returns(bool)
 func (_DPoS *DPoSSession) EnableWhitelist() (bool, error) {
 	return _DPoS.Contract.EnableWhitelist(&_DPoS.CallOpts)
 }
 
 // EnableWhitelist is a free data retrieval call binding the contract method 0xcdfb2b4e.
 //
-// Solidity: function enableWhitelist() constant returns(bool)
+// Solidity: function enableWhitelist() view returns(bool)
 func (_DPoS *DPoSCallerSession) EnableWhitelist() (bool, error) {
 	return _DPoS.Contract.EnableWhitelist(&_DPoS.CallOpts)
 }
 
 // GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
 //
-// Solidity: function getCandidateInfo(address _candidateAddr) constant returns(bool initialized, uint256 minSelfStake, uint256 stakingPool, uint256 status, uint256 unbondTime, uint256 commissionRate, uint256 rateLockEndTime)
+// Solidity: function getCandidateInfo(address _candidateAddr) view returns(bool initialized, uint256 minSelfStake, uint256 stakingPool, uint256 status, uint256 unbondTime, uint256 commissionRate, uint256 rateLockEndTime)
 func (_DPoS *DPoSCaller) GetCandidateInfo(opts *bind.CallOpts, _candidateAddr common.Address) (struct {
 	Initialized     bool
 	MinSelfStake    *big.Int
@@ -373,7 +372,7 @@ func (_DPoS *DPoSCaller) GetCandidateInfo(opts *bind.CallOpts, _candidateAddr co
 
 // GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
 //
-// Solidity: function getCandidateInfo(address _candidateAddr) constant returns(bool initialized, uint256 minSelfStake, uint256 stakingPool, uint256 status, uint256 unbondTime, uint256 commissionRate, uint256 rateLockEndTime)
+// Solidity: function getCandidateInfo(address _candidateAddr) view returns(bool initialized, uint256 minSelfStake, uint256 stakingPool, uint256 status, uint256 unbondTime, uint256 commissionRate, uint256 rateLockEndTime)
 func (_DPoS *DPoSSession) GetCandidateInfo(_candidateAddr common.Address) (struct {
 	Initialized     bool
 	MinSelfStake    *big.Int
@@ -388,7 +387,7 @@ func (_DPoS *DPoSSession) GetCandidateInfo(_candidateAddr common.Address) (struc
 
 // GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
 //
-// Solidity: function getCandidateInfo(address _candidateAddr) constant returns(bool initialized, uint256 minSelfStake, uint256 stakingPool, uint256 status, uint256 unbondTime, uint256 commissionRate, uint256 rateLockEndTime)
+// Solidity: function getCandidateInfo(address _candidateAddr) view returns(bool initialized, uint256 minSelfStake, uint256 stakingPool, uint256 status, uint256 unbondTime, uint256 commissionRate, uint256 rateLockEndTime)
 func (_DPoS *DPoSCallerSession) GetCandidateInfo(_candidateAddr common.Address) (struct {
 	Initialized     bool
 	MinSelfStake    *big.Int
@@ -403,7 +402,7 @@ func (_DPoS *DPoSCallerSession) GetCandidateInfo(_candidateAddr common.Address) 
 
 // GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
 //
-// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) constant returns(uint256 delegatedStake, uint256 undelegatingStake, uint256[] intentAmounts, uint256[] intentProposedTimes)
+// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) view returns(uint256 delegatedStake, uint256 undelegatingStake, uint256[] intentAmounts, uint256[] intentProposedTimes)
 func (_DPoS *DPoSCaller) GetDelegatorInfo(opts *bind.CallOpts, _candidateAddr common.Address, _delegatorAddr common.Address) (struct {
 	DelegatedStake      *big.Int
 	UndelegatingStake   *big.Int
@@ -423,7 +422,7 @@ func (_DPoS *DPoSCaller) GetDelegatorInfo(opts *bind.CallOpts, _candidateAddr co
 
 // GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
 //
-// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) constant returns(uint256 delegatedStake, uint256 undelegatingStake, uint256[] intentAmounts, uint256[] intentProposedTimes)
+// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) view returns(uint256 delegatedStake, uint256 undelegatingStake, uint256[] intentAmounts, uint256[] intentProposedTimes)
 func (_DPoS *DPoSSession) GetDelegatorInfo(_candidateAddr common.Address, _delegatorAddr common.Address) (struct {
 	DelegatedStake      *big.Int
 	UndelegatingStake   *big.Int
@@ -435,7 +434,7 @@ func (_DPoS *DPoSSession) GetDelegatorInfo(_candidateAddr common.Address, _deleg
 
 // GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
 //
-// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) constant returns(uint256 delegatedStake, uint256 undelegatingStake, uint256[] intentAmounts, uint256[] intentProposedTimes)
+// Solidity: function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) view returns(uint256 delegatedStake, uint256 undelegatingStake, uint256[] intentAmounts, uint256[] intentProposedTimes)
 func (_DPoS *DPoSCallerSession) GetDelegatorInfo(_candidateAddr common.Address, _delegatorAddr common.Address) (struct {
 	DelegatedStake      *big.Int
 	UndelegatingStake   *big.Int
@@ -447,7 +446,7 @@ func (_DPoS *DPoSCallerSession) GetDelegatorInfo(_candidateAddr common.Address, 
 
 // GetMinQuorumStakingPool is a free data retrieval call binding the contract method 0xa3e814b9.
 //
-// Solidity: function getMinQuorumStakingPool() constant returns(uint256)
+// Solidity: function getMinQuorumStakingPool() view returns(uint256)
 func (_DPoS *DPoSCaller) GetMinQuorumStakingPool(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -459,21 +458,21 @@ func (_DPoS *DPoSCaller) GetMinQuorumStakingPool(opts *bind.CallOpts) (*big.Int,
 
 // GetMinQuorumStakingPool is a free data retrieval call binding the contract method 0xa3e814b9.
 //
-// Solidity: function getMinQuorumStakingPool() constant returns(uint256)
+// Solidity: function getMinQuorumStakingPool() view returns(uint256)
 func (_DPoS *DPoSSession) GetMinQuorumStakingPool() (*big.Int, error) {
 	return _DPoS.Contract.GetMinQuorumStakingPool(&_DPoS.CallOpts)
 }
 
 // GetMinQuorumStakingPool is a free data retrieval call binding the contract method 0xa3e814b9.
 //
-// Solidity: function getMinQuorumStakingPool() constant returns(uint256)
+// Solidity: function getMinQuorumStakingPool() view returns(uint256)
 func (_DPoS *DPoSCallerSession) GetMinQuorumStakingPool() (*big.Int, error) {
 	return _DPoS.Contract.GetMinQuorumStakingPool(&_DPoS.CallOpts)
 }
 
 // GetMinStakingPool is a free data retrieval call binding the contract method 0x8e9472a3.
 //
-// Solidity: function getMinStakingPool() constant returns(uint256)
+// Solidity: function getMinStakingPool() view returns(uint256)
 func (_DPoS *DPoSCaller) GetMinStakingPool(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -485,21 +484,21 @@ func (_DPoS *DPoSCaller) GetMinStakingPool(opts *bind.CallOpts) (*big.Int, error
 
 // GetMinStakingPool is a free data retrieval call binding the contract method 0x8e9472a3.
 //
-// Solidity: function getMinStakingPool() constant returns(uint256)
+// Solidity: function getMinStakingPool() view returns(uint256)
 func (_DPoS *DPoSSession) GetMinStakingPool() (*big.Int, error) {
 	return _DPoS.Contract.GetMinStakingPool(&_DPoS.CallOpts)
 }
 
 // GetMinStakingPool is a free data retrieval call binding the contract method 0x8e9472a3.
 //
-// Solidity: function getMinStakingPool() constant returns(uint256)
+// Solidity: function getMinStakingPool() view returns(uint256)
 func (_DPoS *DPoSCallerSession) GetMinStakingPool() (*big.Int, error) {
 	return _DPoS.Contract.GetMinStakingPool(&_DPoS.CallOpts)
 }
 
 // GetParamProposalVote is a free data retrieval call binding the contract method 0x581c53c5.
 //
-// Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) constant returns(uint8)
+// Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSCaller) GetParamProposalVote(opts *bind.CallOpts, _proposalId *big.Int, _voter common.Address) (uint8, error) {
 	var (
 		ret0 = new(uint8)
@@ -511,21 +510,21 @@ func (_DPoS *DPoSCaller) GetParamProposalVote(opts *bind.CallOpts, _proposalId *
 
 // GetParamProposalVote is a free data retrieval call binding the contract method 0x581c53c5.
 //
-// Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) constant returns(uint8)
+// Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSSession) GetParamProposalVote(_proposalId *big.Int, _voter common.Address) (uint8, error) {
 	return _DPoS.Contract.GetParamProposalVote(&_DPoS.CallOpts, _proposalId, _voter)
 }
 
 // GetParamProposalVote is a free data retrieval call binding the contract method 0x581c53c5.
 //
-// Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) constant returns(uint8)
+// Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSCallerSession) GetParamProposalVote(_proposalId *big.Int, _voter common.Address) (uint8, error) {
 	return _DPoS.Contract.GetParamProposalVote(&_DPoS.CallOpts, _proposalId, _voter)
 }
 
 // GetSidechainProposalVote is a free data retrieval call binding the contract method 0x8515b0e2.
 //
-// Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) constant returns(uint8)
+// Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSCaller) GetSidechainProposalVote(opts *bind.CallOpts, _proposalId *big.Int, _voter common.Address) (uint8, error) {
 	var (
 		ret0 = new(uint8)
@@ -537,21 +536,21 @@ func (_DPoS *DPoSCaller) GetSidechainProposalVote(opts *bind.CallOpts, _proposal
 
 // GetSidechainProposalVote is a free data retrieval call binding the contract method 0x8515b0e2.
 //
-// Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) constant returns(uint8)
+// Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSSession) GetSidechainProposalVote(_proposalId *big.Int, _voter common.Address) (uint8, error) {
 	return _DPoS.Contract.GetSidechainProposalVote(&_DPoS.CallOpts, _proposalId, _voter)
 }
 
 // GetSidechainProposalVote is a free data retrieval call binding the contract method 0x8515b0e2.
 //
-// Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) constant returns(uint8)
+// Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSCallerSession) GetSidechainProposalVote(_proposalId *big.Int, _voter common.Address) (uint8, error) {
 	return _DPoS.Contract.GetSidechainProposalVote(&_DPoS.CallOpts, _proposalId, _voter)
 }
 
 // GetTotalValidatorStakingPool is a free data retrieval call binding the contract method 0x89ed7939.
 //
-// Solidity: function getTotalValidatorStakingPool() constant returns(uint256)
+// Solidity: function getTotalValidatorStakingPool() view returns(uint256)
 func (_DPoS *DPoSCaller) GetTotalValidatorStakingPool(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -563,21 +562,21 @@ func (_DPoS *DPoSCaller) GetTotalValidatorStakingPool(opts *bind.CallOpts) (*big
 
 // GetTotalValidatorStakingPool is a free data retrieval call binding the contract method 0x89ed7939.
 //
-// Solidity: function getTotalValidatorStakingPool() constant returns(uint256)
+// Solidity: function getTotalValidatorStakingPool() view returns(uint256)
 func (_DPoS *DPoSSession) GetTotalValidatorStakingPool() (*big.Int, error) {
 	return _DPoS.Contract.GetTotalValidatorStakingPool(&_DPoS.CallOpts)
 }
 
 // GetTotalValidatorStakingPool is a free data retrieval call binding the contract method 0x89ed7939.
 //
-// Solidity: function getTotalValidatorStakingPool() constant returns(uint256)
+// Solidity: function getTotalValidatorStakingPool() view returns(uint256)
 func (_DPoS *DPoSCallerSession) GetTotalValidatorStakingPool() (*big.Int, error) {
 	return _DPoS.Contract.GetTotalValidatorStakingPool(&_DPoS.CallOpts)
 }
 
 // GetUIntValue is a free data retrieval call binding the contract method 0x64c66395.
 //
-// Solidity: function getUIntValue(uint256 _record) constant returns(uint256)
+// Solidity: function getUIntValue(uint256 _record) view returns(uint256)
 func (_DPoS *DPoSCaller) GetUIntValue(opts *bind.CallOpts, _record *big.Int) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -589,21 +588,21 @@ func (_DPoS *DPoSCaller) GetUIntValue(opts *bind.CallOpts, _record *big.Int) (*b
 
 // GetUIntValue is a free data retrieval call binding the contract method 0x64c66395.
 //
-// Solidity: function getUIntValue(uint256 _record) constant returns(uint256)
+// Solidity: function getUIntValue(uint256 _record) view returns(uint256)
 func (_DPoS *DPoSSession) GetUIntValue(_record *big.Int) (*big.Int, error) {
 	return _DPoS.Contract.GetUIntValue(&_DPoS.CallOpts, _record)
 }
 
 // GetUIntValue is a free data retrieval call binding the contract method 0x64c66395.
 //
-// Solidity: function getUIntValue(uint256 _record) constant returns(uint256)
+// Solidity: function getUIntValue(uint256 _record) view returns(uint256)
 func (_DPoS *DPoSCallerSession) GetUIntValue(_record *big.Int) (*big.Int, error) {
 	return _DPoS.Contract.GetUIntValue(&_DPoS.CallOpts, _record)
 }
 
 // GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
 //
-// Solidity: function getValidatorNum() constant returns(uint256)
+// Solidity: function getValidatorNum() view returns(uint256)
 func (_DPoS *DPoSCaller) GetValidatorNum(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -615,21 +614,21 @@ func (_DPoS *DPoSCaller) GetValidatorNum(opts *bind.CallOpts) (*big.Int, error) 
 
 // GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
 //
-// Solidity: function getValidatorNum() constant returns(uint256)
+// Solidity: function getValidatorNum() view returns(uint256)
 func (_DPoS *DPoSSession) GetValidatorNum() (*big.Int, error) {
 	return _DPoS.Contract.GetValidatorNum(&_DPoS.CallOpts)
 }
 
 // GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
 //
-// Solidity: function getValidatorNum() constant returns(uint256)
+// Solidity: function getValidatorNum() view returns(uint256)
 func (_DPoS *DPoSCallerSession) GetValidatorNum() (*big.Int, error) {
 	return _DPoS.Contract.GetValidatorNum(&_DPoS.CallOpts)
 }
 
 // GovernToken is a free data retrieval call binding the contract method 0x51abe57b.
 //
-// Solidity: function governToken() constant returns(address)
+// Solidity: function governToken() view returns(address)
 func (_DPoS *DPoSCaller) GovernToken(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -641,21 +640,21 @@ func (_DPoS *DPoSCaller) GovernToken(opts *bind.CallOpts) (common.Address, error
 
 // GovernToken is a free data retrieval call binding the contract method 0x51abe57b.
 //
-// Solidity: function governToken() constant returns(address)
+// Solidity: function governToken() view returns(address)
 func (_DPoS *DPoSSession) GovernToken() (common.Address, error) {
 	return _DPoS.Contract.GovernToken(&_DPoS.CallOpts)
 }
 
 // GovernToken is a free data retrieval call binding the contract method 0x51abe57b.
 //
-// Solidity: function governToken() constant returns(address)
+// Solidity: function governToken() view returns(address)
 func (_DPoS *DPoSCallerSession) GovernToken() (common.Address, error) {
 	return _DPoS.Contract.GovernToken(&_DPoS.CallOpts)
 }
 
 // IsMigrating is a free data retrieval call binding the contract method 0xf05e777d.
 //
-// Solidity: function isMigrating() constant returns(bool)
+// Solidity: function isMigrating() view returns(bool)
 func (_DPoS *DPoSCaller) IsMigrating(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -667,21 +666,21 @@ func (_DPoS *DPoSCaller) IsMigrating(opts *bind.CallOpts) (bool, error) {
 
 // IsMigrating is a free data retrieval call binding the contract method 0xf05e777d.
 //
-// Solidity: function isMigrating() constant returns(bool)
+// Solidity: function isMigrating() view returns(bool)
 func (_DPoS *DPoSSession) IsMigrating() (bool, error) {
 	return _DPoS.Contract.IsMigrating(&_DPoS.CallOpts)
 }
 
 // IsMigrating is a free data retrieval call binding the contract method 0xf05e777d.
 //
-// Solidity: function isMigrating() constant returns(bool)
+// Solidity: function isMigrating() view returns(bool)
 func (_DPoS *DPoSCallerSession) IsMigrating() (bool, error) {
 	return _DPoS.Contract.IsMigrating(&_DPoS.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_DPoS *DPoSCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -693,21 +692,21 @@ func (_DPoS *DPoSCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_DPoS *DPoSSession) IsOwner() (bool, error) {
 	return _DPoS.Contract.IsOwner(&_DPoS.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_DPoS *DPoSCallerSession) IsOwner() (bool, error) {
 	return _DPoS.Contract.IsOwner(&_DPoS.CallOpts)
 }
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
 //
-// Solidity: function isPauser(address account) constant returns(bool)
+// Solidity: function isPauser(address account) view returns(bool)
 func (_DPoS *DPoSCaller) IsPauser(opts *bind.CallOpts, account common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -719,21 +718,21 @@ func (_DPoS *DPoSCaller) IsPauser(opts *bind.CallOpts, account common.Address) (
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
 //
-// Solidity: function isPauser(address account) constant returns(bool)
+// Solidity: function isPauser(address account) view returns(bool)
 func (_DPoS *DPoSSession) IsPauser(account common.Address) (bool, error) {
 	return _DPoS.Contract.IsPauser(&_DPoS.CallOpts, account)
 }
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
 //
-// Solidity: function isPauser(address account) constant returns(bool)
+// Solidity: function isPauser(address account) view returns(bool)
 func (_DPoS *DPoSCallerSession) IsPauser(account common.Address) (bool, error) {
 	return _DPoS.Contract.IsPauser(&_DPoS.CallOpts, account)
 }
 
 // IsSidechainRegistered is a free data retrieval call binding the contract method 0x325820b3.
 //
-// Solidity: function isSidechainRegistered(address _sidechainAddr) constant returns(bool)
+// Solidity: function isSidechainRegistered(address _sidechainAddr) view returns(bool)
 func (_DPoS *DPoSCaller) IsSidechainRegistered(opts *bind.CallOpts, _sidechainAddr common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -745,21 +744,21 @@ func (_DPoS *DPoSCaller) IsSidechainRegistered(opts *bind.CallOpts, _sidechainAd
 
 // IsSidechainRegistered is a free data retrieval call binding the contract method 0x325820b3.
 //
-// Solidity: function isSidechainRegistered(address _sidechainAddr) constant returns(bool)
+// Solidity: function isSidechainRegistered(address _sidechainAddr) view returns(bool)
 func (_DPoS *DPoSSession) IsSidechainRegistered(_sidechainAddr common.Address) (bool, error) {
 	return _DPoS.Contract.IsSidechainRegistered(&_DPoS.CallOpts, _sidechainAddr)
 }
 
 // IsSidechainRegistered is a free data retrieval call binding the contract method 0x325820b3.
 //
-// Solidity: function isSidechainRegistered(address _sidechainAddr) constant returns(bool)
+// Solidity: function isSidechainRegistered(address _sidechainAddr) view returns(bool)
 func (_DPoS *DPoSCallerSession) IsSidechainRegistered(_sidechainAddr common.Address) (bool, error) {
 	return _DPoS.Contract.IsSidechainRegistered(&_DPoS.CallOpts, _sidechainAddr)
 }
 
 // IsValidDPoS is a free data retrieval call binding the contract method 0xeab2ed8c.
 //
-// Solidity: function isValidDPoS() constant returns(bool)
+// Solidity: function isValidDPoS() view returns(bool)
 func (_DPoS *DPoSCaller) IsValidDPoS(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -771,21 +770,21 @@ func (_DPoS *DPoSCaller) IsValidDPoS(opts *bind.CallOpts) (bool, error) {
 
 // IsValidDPoS is a free data retrieval call binding the contract method 0xeab2ed8c.
 //
-// Solidity: function isValidDPoS() constant returns(bool)
+// Solidity: function isValidDPoS() view returns(bool)
 func (_DPoS *DPoSSession) IsValidDPoS() (bool, error) {
 	return _DPoS.Contract.IsValidDPoS(&_DPoS.CallOpts)
 }
 
 // IsValidDPoS is a free data retrieval call binding the contract method 0xeab2ed8c.
 //
-// Solidity: function isValidDPoS() constant returns(bool)
+// Solidity: function isValidDPoS() view returns(bool)
 func (_DPoS *DPoSCallerSession) IsValidDPoS() (bool, error) {
 	return _DPoS.Contract.IsValidDPoS(&_DPoS.CallOpts)
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
 //
-// Solidity: function isValidator(address _addr) constant returns(bool)
+// Solidity: function isValidator(address _addr) view returns(bool)
 func (_DPoS *DPoSCaller) IsValidator(opts *bind.CallOpts, _addr common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -797,21 +796,21 @@ func (_DPoS *DPoSCaller) IsValidator(opts *bind.CallOpts, _addr common.Address) 
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
 //
-// Solidity: function isValidator(address _addr) constant returns(bool)
+// Solidity: function isValidator(address _addr) view returns(bool)
 func (_DPoS *DPoSSession) IsValidator(_addr common.Address) (bool, error) {
 	return _DPoS.Contract.IsValidator(&_DPoS.CallOpts, _addr)
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
 //
-// Solidity: function isValidator(address _addr) constant returns(bool)
+// Solidity: function isValidator(address _addr) view returns(bool)
 func (_DPoS *DPoSCallerSession) IsValidator(_addr common.Address) (bool, error) {
 	return _DPoS.Contract.IsValidator(&_DPoS.CallOpts, _addr)
 }
 
 // IsWhitelistAdmin is a free data retrieval call binding the contract method 0xbb5f747b.
 //
-// Solidity: function isWhitelistAdmin(address account) constant returns(bool)
+// Solidity: function isWhitelistAdmin(address account) view returns(bool)
 func (_DPoS *DPoSCaller) IsWhitelistAdmin(opts *bind.CallOpts, account common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -823,21 +822,21 @@ func (_DPoS *DPoSCaller) IsWhitelistAdmin(opts *bind.CallOpts, account common.Ad
 
 // IsWhitelistAdmin is a free data retrieval call binding the contract method 0xbb5f747b.
 //
-// Solidity: function isWhitelistAdmin(address account) constant returns(bool)
+// Solidity: function isWhitelistAdmin(address account) view returns(bool)
 func (_DPoS *DPoSSession) IsWhitelistAdmin(account common.Address) (bool, error) {
 	return _DPoS.Contract.IsWhitelistAdmin(&_DPoS.CallOpts, account)
 }
 
 // IsWhitelistAdmin is a free data retrieval call binding the contract method 0xbb5f747b.
 //
-// Solidity: function isWhitelistAdmin(address account) constant returns(bool)
+// Solidity: function isWhitelistAdmin(address account) view returns(bool)
 func (_DPoS *DPoSCallerSession) IsWhitelistAdmin(account common.Address) (bool, error) {
 	return _DPoS.Contract.IsWhitelistAdmin(&_DPoS.CallOpts, account)
 }
 
 // IsWhitelisted is a free data retrieval call binding the contract method 0x3af32abf.
 //
-// Solidity: function isWhitelisted(address account) constant returns(bool)
+// Solidity: function isWhitelisted(address account) view returns(bool)
 func (_DPoS *DPoSCaller) IsWhitelisted(opts *bind.CallOpts, account common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -849,21 +848,21 @@ func (_DPoS *DPoSCaller) IsWhitelisted(opts *bind.CallOpts, account common.Addre
 
 // IsWhitelisted is a free data retrieval call binding the contract method 0x3af32abf.
 //
-// Solidity: function isWhitelisted(address account) constant returns(bool)
+// Solidity: function isWhitelisted(address account) view returns(bool)
 func (_DPoS *DPoSSession) IsWhitelisted(account common.Address) (bool, error) {
 	return _DPoS.Contract.IsWhitelisted(&_DPoS.CallOpts, account)
 }
 
 // IsWhitelisted is a free data retrieval call binding the contract method 0x3af32abf.
 //
-// Solidity: function isWhitelisted(address account) constant returns(bool)
+// Solidity: function isWhitelisted(address account) view returns(bool)
 func (_DPoS *DPoSCallerSession) IsWhitelisted(account common.Address) (bool, error) {
 	return _DPoS.Contract.IsWhitelisted(&_DPoS.CallOpts, account)
 }
 
 // MiningPool is a free data retrieval call binding the contract method 0x73397597.
 //
-// Solidity: function miningPool() constant returns(uint256)
+// Solidity: function miningPool() view returns(uint256)
 func (_DPoS *DPoSCaller) MiningPool(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -875,21 +874,21 @@ func (_DPoS *DPoSCaller) MiningPool(opts *bind.CallOpts) (*big.Int, error) {
 
 // MiningPool is a free data retrieval call binding the contract method 0x73397597.
 //
-// Solidity: function miningPool() constant returns(uint256)
+// Solidity: function miningPool() view returns(uint256)
 func (_DPoS *DPoSSession) MiningPool() (*big.Int, error) {
 	return _DPoS.Contract.MiningPool(&_DPoS.CallOpts)
 }
 
 // MiningPool is a free data retrieval call binding the contract method 0x73397597.
 //
-// Solidity: function miningPool() constant returns(uint256)
+// Solidity: function miningPool() view returns(uint256)
 func (_DPoS *DPoSCallerSession) MiningPool() (*big.Int, error) {
 	return _DPoS.Contract.MiningPool(&_DPoS.CallOpts)
 }
 
 // NextParamProposalId is a free data retrieval call binding the contract method 0x22da7927.
 //
-// Solidity: function nextParamProposalId() constant returns(uint256)
+// Solidity: function nextParamProposalId() view returns(uint256)
 func (_DPoS *DPoSCaller) NextParamProposalId(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -901,21 +900,21 @@ func (_DPoS *DPoSCaller) NextParamProposalId(opts *bind.CallOpts) (*big.Int, err
 
 // NextParamProposalId is a free data retrieval call binding the contract method 0x22da7927.
 //
-// Solidity: function nextParamProposalId() constant returns(uint256)
+// Solidity: function nextParamProposalId() view returns(uint256)
 func (_DPoS *DPoSSession) NextParamProposalId() (*big.Int, error) {
 	return _DPoS.Contract.NextParamProposalId(&_DPoS.CallOpts)
 }
 
 // NextParamProposalId is a free data retrieval call binding the contract method 0x22da7927.
 //
-// Solidity: function nextParamProposalId() constant returns(uint256)
+// Solidity: function nextParamProposalId() view returns(uint256)
 func (_DPoS *DPoSCallerSession) NextParamProposalId() (*big.Int, error) {
 	return _DPoS.Contract.NextParamProposalId(&_DPoS.CallOpts)
 }
 
 // NextSidechainProposalId is a free data retrieval call binding the contract method 0x2bf0fe59.
 //
-// Solidity: function nextSidechainProposalId() constant returns(uint256)
+// Solidity: function nextSidechainProposalId() view returns(uint256)
 func (_DPoS *DPoSCaller) NextSidechainProposalId(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -927,21 +926,21 @@ func (_DPoS *DPoSCaller) NextSidechainProposalId(opts *bind.CallOpts) (*big.Int,
 
 // NextSidechainProposalId is a free data retrieval call binding the contract method 0x2bf0fe59.
 //
-// Solidity: function nextSidechainProposalId() constant returns(uint256)
+// Solidity: function nextSidechainProposalId() view returns(uint256)
 func (_DPoS *DPoSSession) NextSidechainProposalId() (*big.Int, error) {
 	return _DPoS.Contract.NextSidechainProposalId(&_DPoS.CallOpts)
 }
 
 // NextSidechainProposalId is a free data retrieval call binding the contract method 0x2bf0fe59.
 //
-// Solidity: function nextSidechainProposalId() constant returns(uint256)
+// Solidity: function nextSidechainProposalId() view returns(uint256)
 func (_DPoS *DPoSCallerSession) NextSidechainProposalId() (*big.Int, error) {
 	return _DPoS.Contract.NextSidechainProposalId(&_DPoS.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_DPoS *DPoSCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -953,21 +952,21 @@ func (_DPoS *DPoSCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_DPoS *DPoSSession) Owner() (common.Address, error) {
 	return _DPoS.Contract.Owner(&_DPoS.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_DPoS *DPoSCallerSession) Owner() (common.Address, error) {
 	return _DPoS.Contract.Owner(&_DPoS.CallOpts)
 }
 
 // ParamProposals is a free data retrieval call binding the contract method 0x7e5fb8f3.
 //
-// Solidity: function paramProposals(uint256 ) constant returns(address proposer, uint256 deposit, uint256 voteDeadline, uint256 record, uint256 newValue, uint8 status)
+// Solidity: function paramProposals(uint256 ) view returns(address proposer, uint256 deposit, uint256 voteDeadline, uint256 record, uint256 newValue, uint8 status)
 func (_DPoS *DPoSCaller) ParamProposals(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Proposer     common.Address
 	Deposit      *big.Int
@@ -991,7 +990,7 @@ func (_DPoS *DPoSCaller) ParamProposals(opts *bind.CallOpts, arg0 *big.Int) (str
 
 // ParamProposals is a free data retrieval call binding the contract method 0x7e5fb8f3.
 //
-// Solidity: function paramProposals(uint256 ) constant returns(address proposer, uint256 deposit, uint256 voteDeadline, uint256 record, uint256 newValue, uint8 status)
+// Solidity: function paramProposals(uint256 ) view returns(address proposer, uint256 deposit, uint256 voteDeadline, uint256 record, uint256 newValue, uint8 status)
 func (_DPoS *DPoSSession) ParamProposals(arg0 *big.Int) (struct {
 	Proposer     common.Address
 	Deposit      *big.Int
@@ -1005,7 +1004,7 @@ func (_DPoS *DPoSSession) ParamProposals(arg0 *big.Int) (struct {
 
 // ParamProposals is a free data retrieval call binding the contract method 0x7e5fb8f3.
 //
-// Solidity: function paramProposals(uint256 ) constant returns(address proposer, uint256 deposit, uint256 voteDeadline, uint256 record, uint256 newValue, uint8 status)
+// Solidity: function paramProposals(uint256 ) view returns(address proposer, uint256 deposit, uint256 voteDeadline, uint256 record, uint256 newValue, uint8 status)
 func (_DPoS *DPoSCallerSession) ParamProposals(arg0 *big.Int) (struct {
 	Proposer     common.Address
 	Deposit      *big.Int
@@ -1019,7 +1018,7 @@ func (_DPoS *DPoSCallerSession) ParamProposals(arg0 *big.Int) (struct {
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool)
+// Solidity: function paused() view returns(bool)
 func (_DPoS *DPoSCaller) Paused(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -1031,21 +1030,21 @@ func (_DPoS *DPoSCaller) Paused(opts *bind.CallOpts) (bool, error) {
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool)
+// Solidity: function paused() view returns(bool)
 func (_DPoS *DPoSSession) Paused() (bool, error) {
 	return _DPoS.Contract.Paused(&_DPoS.CallOpts)
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool)
+// Solidity: function paused() view returns(bool)
 func (_DPoS *DPoSCallerSession) Paused() (bool, error) {
 	return _DPoS.Contract.Paused(&_DPoS.CallOpts)
 }
 
 // RedeemedMiningReward is a free data retrieval call binding the contract method 0x87e53fef.
 //
-// Solidity: function redeemedMiningReward(address ) constant returns(uint256)
+// Solidity: function redeemedMiningReward(address ) view returns(uint256)
 func (_DPoS *DPoSCaller) RedeemedMiningReward(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -1057,21 +1056,21 @@ func (_DPoS *DPoSCaller) RedeemedMiningReward(opts *bind.CallOpts, arg0 common.A
 
 // RedeemedMiningReward is a free data retrieval call binding the contract method 0x87e53fef.
 //
-// Solidity: function redeemedMiningReward(address ) constant returns(uint256)
+// Solidity: function redeemedMiningReward(address ) view returns(uint256)
 func (_DPoS *DPoSSession) RedeemedMiningReward(arg0 common.Address) (*big.Int, error) {
 	return _DPoS.Contract.RedeemedMiningReward(&_DPoS.CallOpts, arg0)
 }
 
 // RedeemedMiningReward is a free data retrieval call binding the contract method 0x87e53fef.
 //
-// Solidity: function redeemedMiningReward(address ) constant returns(uint256)
+// Solidity: function redeemedMiningReward(address ) view returns(uint256)
 func (_DPoS *DPoSCallerSession) RedeemedMiningReward(arg0 common.Address) (*big.Int, error) {
 	return _DPoS.Contract.RedeemedMiningReward(&_DPoS.CallOpts, arg0)
 }
 
 // RegisteredSidechains is a free data retrieval call binding the contract method 0x49444b71.
 //
-// Solidity: function registeredSidechains(address ) constant returns(bool)
+// Solidity: function registeredSidechains(address ) view returns(bool)
 func (_DPoS *DPoSCaller) RegisteredSidechains(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -1083,21 +1082,21 @@ func (_DPoS *DPoSCaller) RegisteredSidechains(opts *bind.CallOpts, arg0 common.A
 
 // RegisteredSidechains is a free data retrieval call binding the contract method 0x49444b71.
 //
-// Solidity: function registeredSidechains(address ) constant returns(bool)
+// Solidity: function registeredSidechains(address ) view returns(bool)
 func (_DPoS *DPoSSession) RegisteredSidechains(arg0 common.Address) (bool, error) {
 	return _DPoS.Contract.RegisteredSidechains(&_DPoS.CallOpts, arg0)
 }
 
 // RegisteredSidechains is a free data retrieval call binding the contract method 0x49444b71.
 //
-// Solidity: function registeredSidechains(address ) constant returns(bool)
+// Solidity: function registeredSidechains(address ) view returns(bool)
 func (_DPoS *DPoSCallerSession) RegisteredSidechains(arg0 common.Address) (bool, error) {
 	return _DPoS.Contract.RegisteredSidechains(&_DPoS.CallOpts, arg0)
 }
 
 // SidechainProposals is a free data retrieval call binding the contract method 0xe97b7452.
 //
-// Solidity: function sidechainProposals(uint256 ) constant returns(address proposer, uint256 deposit, uint256 voteDeadline, address sidechainAddr, bool registered, uint8 status)
+// Solidity: function sidechainProposals(uint256 ) view returns(address proposer, uint256 deposit, uint256 voteDeadline, address sidechainAddr, bool registered, uint8 status)
 func (_DPoS *DPoSCaller) SidechainProposals(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	Proposer      common.Address
 	Deposit       *big.Int
@@ -1121,7 +1120,7 @@ func (_DPoS *DPoSCaller) SidechainProposals(opts *bind.CallOpts, arg0 *big.Int) 
 
 // SidechainProposals is a free data retrieval call binding the contract method 0xe97b7452.
 //
-// Solidity: function sidechainProposals(uint256 ) constant returns(address proposer, uint256 deposit, uint256 voteDeadline, address sidechainAddr, bool registered, uint8 status)
+// Solidity: function sidechainProposals(uint256 ) view returns(address proposer, uint256 deposit, uint256 voteDeadline, address sidechainAddr, bool registered, uint8 status)
 func (_DPoS *DPoSSession) SidechainProposals(arg0 *big.Int) (struct {
 	Proposer      common.Address
 	Deposit       *big.Int
@@ -1135,7 +1134,7 @@ func (_DPoS *DPoSSession) SidechainProposals(arg0 *big.Int) (struct {
 
 // SidechainProposals is a free data retrieval call binding the contract method 0xe97b7452.
 //
-// Solidity: function sidechainProposals(uint256 ) constant returns(address proposer, uint256 deposit, uint256 voteDeadline, address sidechainAddr, bool registered, uint8 status)
+// Solidity: function sidechainProposals(uint256 ) view returns(address proposer, uint256 deposit, uint256 voteDeadline, address sidechainAddr, bool registered, uint8 status)
 func (_DPoS *DPoSCallerSession) SidechainProposals(arg0 *big.Int) (struct {
 	Proposer      common.Address
 	Deposit       *big.Int
@@ -1149,7 +1148,7 @@ func (_DPoS *DPoSCallerSession) SidechainProposals(arg0 *big.Int) (struct {
 
 // UsedPenaltyNonce is a free data retrieval call binding the contract method 0xfb878749.
 //
-// Solidity: function usedPenaltyNonce(uint256 ) constant returns(bool)
+// Solidity: function usedPenaltyNonce(uint256 ) view returns(bool)
 func (_DPoS *DPoSCaller) UsedPenaltyNonce(opts *bind.CallOpts, arg0 *big.Int) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -1161,21 +1160,21 @@ func (_DPoS *DPoSCaller) UsedPenaltyNonce(opts *bind.CallOpts, arg0 *big.Int) (b
 
 // UsedPenaltyNonce is a free data retrieval call binding the contract method 0xfb878749.
 //
-// Solidity: function usedPenaltyNonce(uint256 ) constant returns(bool)
+// Solidity: function usedPenaltyNonce(uint256 ) view returns(bool)
 func (_DPoS *DPoSSession) UsedPenaltyNonce(arg0 *big.Int) (bool, error) {
 	return _DPoS.Contract.UsedPenaltyNonce(&_DPoS.CallOpts, arg0)
 }
 
 // UsedPenaltyNonce is a free data retrieval call binding the contract method 0xfb878749.
 //
-// Solidity: function usedPenaltyNonce(uint256 ) constant returns(bool)
+// Solidity: function usedPenaltyNonce(uint256 ) view returns(bool)
 func (_DPoS *DPoSCallerSession) UsedPenaltyNonce(arg0 *big.Int) (bool, error) {
 	return _DPoS.Contract.UsedPenaltyNonce(&_DPoS.CallOpts, arg0)
 }
 
 // ValidatorSet is a free data retrieval call binding the contract method 0xe64808f3.
 //
-// Solidity: function validatorSet(uint256 ) constant returns(address)
+// Solidity: function validatorSet(uint256 ) view returns(address)
 func (_DPoS *DPoSCaller) ValidatorSet(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -1187,14 +1186,14 @@ func (_DPoS *DPoSCaller) ValidatorSet(opts *bind.CallOpts, arg0 *big.Int) (commo
 
 // ValidatorSet is a free data retrieval call binding the contract method 0xe64808f3.
 //
-// Solidity: function validatorSet(uint256 ) constant returns(address)
+// Solidity: function validatorSet(uint256 ) view returns(address)
 func (_DPoS *DPoSSession) ValidatorSet(arg0 *big.Int) (common.Address, error) {
 	return _DPoS.Contract.ValidatorSet(&_DPoS.CallOpts, arg0)
 }
 
 // ValidatorSet is a free data retrieval call binding the contract method 0xe64808f3.
 //
-// Solidity: function validatorSet(uint256 ) constant returns(address)
+// Solidity: function validatorSet(uint256 ) view returns(address)
 func (_DPoS *DPoSCallerSession) ValidatorSet(arg0 *big.Int) (common.Address, error) {
 	return _DPoS.Contract.ValidatorSet(&_DPoS.CallOpts, arg0)
 }

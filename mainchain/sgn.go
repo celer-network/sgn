@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -191,7 +190,7 @@ func (_SGN *SGNTransactorRaw) Transact(opts *bind.TransactOpts, method string, p
 
 // DPoSContract is a free data retrieval call binding the contract method 0x71273548.
 //
-// Solidity: function DPoSContract() constant returns(address)
+// Solidity: function DPoSContract() view returns(address)
 func (_SGN *SGNCaller) DPoSContract(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -203,21 +202,21 @@ func (_SGN *SGNCaller) DPoSContract(opts *bind.CallOpts) (common.Address, error)
 
 // DPoSContract is a free data retrieval call binding the contract method 0x71273548.
 //
-// Solidity: function DPoSContract() constant returns(address)
+// Solidity: function DPoSContract() view returns(address)
 func (_SGN *SGNSession) DPoSContract() (common.Address, error) {
 	return _SGN.Contract.DPoSContract(&_SGN.CallOpts)
 }
 
 // DPoSContract is a free data retrieval call binding the contract method 0x71273548.
 //
-// Solidity: function DPoSContract() constant returns(address)
+// Solidity: function DPoSContract() view returns(address)
 func (_SGN *SGNCallerSession) DPoSContract() (common.Address, error) {
 	return _SGN.Contract.DPoSContract(&_SGN.CallOpts)
 }
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
-// Solidity: function celerToken() constant returns(address)
+// Solidity: function celerToken() view returns(address)
 func (_SGN *SGNCaller) CelerToken(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -229,21 +228,21 @@ func (_SGN *SGNCaller) CelerToken(opts *bind.CallOpts) (common.Address, error) {
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
-// Solidity: function celerToken() constant returns(address)
+// Solidity: function celerToken() view returns(address)
 func (_SGN *SGNSession) CelerToken() (common.Address, error) {
 	return _SGN.Contract.CelerToken(&_SGN.CallOpts)
 }
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
 //
-// Solidity: function celerToken() constant returns(address)
+// Solidity: function celerToken() view returns(address)
 func (_SGN *SGNCallerSession) CelerToken() (common.Address, error) {
 	return _SGN.Contract.CelerToken(&_SGN.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_SGN *SGNCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -255,21 +254,21 @@ func (_SGN *SGNCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_SGN *SGNSession) IsOwner() (bool, error) {
 	return _SGN.Contract.IsOwner(&_SGN.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_SGN *SGNCallerSession) IsOwner() (bool, error) {
 	return _SGN.Contract.IsOwner(&_SGN.CallOpts)
 }
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
 //
-// Solidity: function isPauser(address account) constant returns(bool)
+// Solidity: function isPauser(address account) view returns(bool)
 func (_SGN *SGNCaller) IsPauser(opts *bind.CallOpts, account common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -281,21 +280,21 @@ func (_SGN *SGNCaller) IsPauser(opts *bind.CallOpts, account common.Address) (bo
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
 //
-// Solidity: function isPauser(address account) constant returns(bool)
+// Solidity: function isPauser(address account) view returns(bool)
 func (_SGN *SGNSession) IsPauser(account common.Address) (bool, error) {
 	return _SGN.Contract.IsPauser(&_SGN.CallOpts, account)
 }
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
 //
-// Solidity: function isPauser(address account) constant returns(bool)
+// Solidity: function isPauser(address account) view returns(bool)
 func (_SGN *SGNCallerSession) IsPauser(account common.Address) (bool, error) {
 	return _SGN.Contract.IsPauser(&_SGN.CallOpts, account)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_SGN *SGNCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -307,21 +306,21 @@ func (_SGN *SGNCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_SGN *SGNSession) Owner() (common.Address, error) {
 	return _SGN.Contract.Owner(&_SGN.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_SGN *SGNCallerSession) Owner() (common.Address, error) {
 	return _SGN.Contract.Owner(&_SGN.CallOpts)
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool)
+// Solidity: function paused() view returns(bool)
 func (_SGN *SGNCaller) Paused(opts *bind.CallOpts) (bool, error) {
 	var (
 		ret0 = new(bool)
@@ -333,21 +332,21 @@ func (_SGN *SGNCaller) Paused(opts *bind.CallOpts) (bool, error) {
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool)
+// Solidity: function paused() view returns(bool)
 func (_SGN *SGNSession) Paused() (bool, error) {
 	return _SGN.Contract.Paused(&_SGN.CallOpts)
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool)
+// Solidity: function paused() view returns(bool)
 func (_SGN *SGNCallerSession) Paused() (bool, error) {
 	return _SGN.Contract.Paused(&_SGN.CallOpts)
 }
 
 // RedeemedServiceReward is a free data retrieval call binding the contract method 0xc57f6661.
 //
-// Solidity: function redeemedServiceReward(address ) constant returns(uint256)
+// Solidity: function redeemedServiceReward(address ) view returns(uint256)
 func (_SGN *SGNCaller) RedeemedServiceReward(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -359,21 +358,21 @@ func (_SGN *SGNCaller) RedeemedServiceReward(opts *bind.CallOpts, arg0 common.Ad
 
 // RedeemedServiceReward is a free data retrieval call binding the contract method 0xc57f6661.
 //
-// Solidity: function redeemedServiceReward(address ) constant returns(uint256)
+// Solidity: function redeemedServiceReward(address ) view returns(uint256)
 func (_SGN *SGNSession) RedeemedServiceReward(arg0 common.Address) (*big.Int, error) {
 	return _SGN.Contract.RedeemedServiceReward(&_SGN.CallOpts, arg0)
 }
 
 // RedeemedServiceReward is a free data retrieval call binding the contract method 0xc57f6661.
 //
-// Solidity: function redeemedServiceReward(address ) constant returns(uint256)
+// Solidity: function redeemedServiceReward(address ) view returns(uint256)
 func (_SGN *SGNCallerSession) RedeemedServiceReward(arg0 common.Address) (*big.Int, error) {
 	return _SGN.Contract.RedeemedServiceReward(&_SGN.CallOpts, arg0)
 }
 
 // ServicePool is a free data retrieval call binding the contract method 0xe42a06c8.
 //
-// Solidity: function servicePool() constant returns(uint256)
+// Solidity: function servicePool() view returns(uint256)
 func (_SGN *SGNCaller) ServicePool(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -385,21 +384,21 @@ func (_SGN *SGNCaller) ServicePool(opts *bind.CallOpts) (*big.Int, error) {
 
 // ServicePool is a free data retrieval call binding the contract method 0xe42a06c8.
 //
-// Solidity: function servicePool() constant returns(uint256)
+// Solidity: function servicePool() view returns(uint256)
 func (_SGN *SGNSession) ServicePool() (*big.Int, error) {
 	return _SGN.Contract.ServicePool(&_SGN.CallOpts)
 }
 
 // ServicePool is a free data retrieval call binding the contract method 0xe42a06c8.
 //
-// Solidity: function servicePool() constant returns(uint256)
+// Solidity: function servicePool() view returns(uint256)
 func (_SGN *SGNCallerSession) ServicePool() (*big.Int, error) {
 	return _SGN.Contract.ServicePool(&_SGN.CallOpts)
 }
 
 // SidechainAddrMap is a free data retrieval call binding the contract method 0xe27b4110.
 //
-// Solidity: function sidechainAddrMap(address ) constant returns(bytes)
+// Solidity: function sidechainAddrMap(address ) view returns(bytes)
 func (_SGN *SGNCaller) SidechainAddrMap(opts *bind.CallOpts, arg0 common.Address) ([]byte, error) {
 	var (
 		ret0 = new([]byte)
@@ -411,21 +410,21 @@ func (_SGN *SGNCaller) SidechainAddrMap(opts *bind.CallOpts, arg0 common.Address
 
 // SidechainAddrMap is a free data retrieval call binding the contract method 0xe27b4110.
 //
-// Solidity: function sidechainAddrMap(address ) constant returns(bytes)
+// Solidity: function sidechainAddrMap(address ) view returns(bytes)
 func (_SGN *SGNSession) SidechainAddrMap(arg0 common.Address) ([]byte, error) {
 	return _SGN.Contract.SidechainAddrMap(&_SGN.CallOpts, arg0)
 }
 
 // SidechainAddrMap is a free data retrieval call binding the contract method 0xe27b4110.
 //
-// Solidity: function sidechainAddrMap(address ) constant returns(bytes)
+// Solidity: function sidechainAddrMap(address ) view returns(bytes)
 func (_SGN *SGNCallerSession) SidechainAddrMap(arg0 common.Address) ([]byte, error) {
 	return _SGN.Contract.SidechainAddrMap(&_SGN.CallOpts, arg0)
 }
 
 // SubscriptionDeposits is a free data retrieval call binding the contract method 0x1e77733a.
 //
-// Solidity: function subscriptionDeposits(address ) constant returns(uint256)
+// Solidity: function subscriptionDeposits(address ) view returns(uint256)
 func (_SGN *SGNCaller) SubscriptionDeposits(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -437,14 +436,14 @@ func (_SGN *SGNCaller) SubscriptionDeposits(opts *bind.CallOpts, arg0 common.Add
 
 // SubscriptionDeposits is a free data retrieval call binding the contract method 0x1e77733a.
 //
-// Solidity: function subscriptionDeposits(address ) constant returns(uint256)
+// Solidity: function subscriptionDeposits(address ) view returns(uint256)
 func (_SGN *SGNSession) SubscriptionDeposits(arg0 common.Address) (*big.Int, error) {
 	return _SGN.Contract.SubscriptionDeposits(&_SGN.CallOpts, arg0)
 }
 
 // SubscriptionDeposits is a free data retrieval call binding the contract method 0x1e77733a.
 //
-// Solidity: function subscriptionDeposits(address ) constant returns(uint256)
+// Solidity: function subscriptionDeposits(address ) view returns(uint256)
 func (_SGN *SGNCallerSession) SubscriptionDeposits(arg0 common.Address) (*big.Int, error) {
 	return _SGN.Contract.SubscriptionDeposits(&_SGN.CallOpts, arg0)
 }
