@@ -68,5 +68,5 @@ func upgradeTest(t *testing.T) {
 	}
 
 	require.NoError(t, err, "failed to query block height")
-	assert.Equal(t, height, upgradeHeight-1, "The chain should stop at upgrade height")
+	assert.Equal(t, height, upgradeHeight, "The chain should stop at upgrade height")
 }
