@@ -10,7 +10,7 @@ import (
 )
 
 // SubmitChange create new change given a content
-func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byte, initiatorAddr sdk.AccAddress) (types.Change, error) {
+func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byte, blockNum uint64, initiatorAddr sdk.AccAddress) (types.Change, error) {
 	changeID, err := keeper.GetChangeID(ctx)
 	if err != nil {
 		return types.Change{}, err
@@ -18,7 +18,7 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 
 	submitTime := ctx.BlockHeader().Time
 	votingPeriod := keeper.GetVotingParams(ctx).VotingPeriod
-	change := types.NewChange(changeID, changeType, data, submitTime, submitTime.Add(votingPeriod), initiatorAddr)
+	change := types.NewChange(changeID, changeType, data, blockNum, submitTime, submitTime.Add(votingPeriod), initiatorAddr)
 	change.Rewardable = keeper.checkRewardable(ctx, change)
 
 	keeper.SetChange(ctx, change)

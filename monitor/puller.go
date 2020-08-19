@@ -42,18 +42,25 @@ func (m *Monitor) processPullerQueue() {
 
 		switch e := event.ParseEvent(m.EthClient).(type) {
 		case *mainchain.DPoSValidatorChange:
+			e.Raw = event.Log
 			m.syncDPoSValidatorChange(e)
 		case *mainchain.DPoSIntendWithdraw:
+			e.Raw = event.Log
 			m.syncDPoSIntendWithdraw(e)
 		case *mainchain.DPoSCandidateUnbonded:
+			e.Raw = event.Log
 			m.syncDPoSCandidateUnbonded(e)
 		case *mainchain.DPoSConfirmParamProposal:
+			e.Raw = event.Log
 			m.syncConfirmParamProposal(e)
 		case *mainchain.DPoSUpdateCommissionRate:
+			e.Raw = event.Log
 			m.syncUpdateCommissionRate(e)
 		case *mainchain.SGNUpdateSidechainAddr:
+			e.Raw = event.Log
 			m.SyncUpdateSidechainAddr(e.Candidate)
 		case *mainchain.SGNAddSubscriptionBalance:
+			e.Raw = event.Log
 			m.syncSGNAddSubscriptionBalance(e)
 		case *mainchain.CelerLedgerIntendSettle:
 			e.Raw = event.Log
@@ -89,7 +96,7 @@ func (m *Monitor) syncUpdateCommissionRate(commission *mainchain.DPoSUpdateCommi
 func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal) {
 	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
-	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.Transactor.Key.GetAddress())
+	msg := m.Transactor.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.EthClient.Client)
 	log.Infof("submit change tx: confirm param proposal Record %v, NewValue %v", confirmParamProposal.Record, confirmParamProposal.NewValue)
 	m.Transactor.AddTxMsg(msg)
 }
@@ -126,7 +133,7 @@ func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscript
 	subscription = guard.NewSubscription(consumer.Hex())
 	subscription.Deposit = sdk.NewIntFromBigInt(amount)
 	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-	msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.Transactor.Key.GetAddress())
+	msg := m.Transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.EthClient.Client)
 	log.Infof("Submit change tx: subscribe ethAddress %s, amount %s, mainchain tx hash %x", consumerEthAddress, amount, event.Raw.TxHash)
 	transactor.AddTxMsg(msg)
 }
@@ -144,7 +151,7 @@ func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq 
 		seq,
 		guardStatus)
 	syncData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(trigger)
-	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.Transactor.Key.GetAddress())
+	msg := m.Transactor.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.EthClient.Client)
 	log.Infof("submit change tx: trigger guard request %s", trigger)
 	m.Transactor.AddTxMsg(msg)
 }

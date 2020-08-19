@@ -36,8 +36,9 @@ func handleMsgSubmitChange(ctx sdk.Context, keeper Keeper, msg MsgSubmitChange, 
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
 	logEntry.Change.Type = msg.ChangeType
+	logEntry.Change.BlockNum = msg.BlockNum
 
-	change, err := keeper.SubmitChange(ctx, msg.ChangeType, msg.Data, msg.Sender)
+	change, err := keeper.SubmitChange(ctx, msg.ChangeType, msg.Data, msg.BlockNum, msg.Sender)
 	if err != nil {
 		return nil, err
 	}

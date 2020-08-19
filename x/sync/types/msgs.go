@@ -7,7 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// Governance message types and routes
+// Change message types and routes
 const (
 	TypeMsgApprove      = "approve_change"
 	TypeMsgSubmitChange = "submit_change"
@@ -25,13 +25,14 @@ const (
 // MsgSubmitChange defines a message to create a sync change
 type MsgSubmitChange struct {
 	ChangeType string         `json:"changeType" yaml:"changeType"`
-	Data       []byte         `json:"data" yaml:"data"`     //  Initial deposit paid by sender. Must be strictly positive
-	Sender     sdk.AccAddress `json:"sender" yaml:"sender"` //  Address of the sender
+	Data       []byte         `json:"data" yaml:"data"`         // The serialized information to sync
+	BlockNum   uint64         `json:"blockNum" yaml:"blockNum"` // Claimed mainchain block number when the infomation was queried
+	Sender     sdk.AccAddress `json:"sender" yaml:"sender"`     // Address of the sender
 }
 
 // NewMsgSubmitChange creates a new MsgSubmitChange instance
-func NewMsgSubmitChange(changeType string, data []byte, sender sdk.AccAddress) MsgSubmitChange {
-	return MsgSubmitChange{changeType, data, sender}
+func NewMsgSubmitChange(changeType string, data []byte, blockNum uint64, sender sdk.AccAddress) MsgSubmitChange {
+	return MsgSubmitChange{changeType, data, blockNum, sender}
 }
 
 // Route implements Msg
@@ -59,10 +60,8 @@ func (msg MsgSubmitChange) ValidateBasic() error {
 
 // String implements the Stringer interface
 func (msg MsgSubmitChange) String() string {
-	return fmt.Sprintf(`Submit Change Message:
-  ChangeType:         %s
-  Sender: %s
-`, msg.ChangeType, msg.Sender)
+	return fmt.Sprintf(`Submit Change Message: ChangeType:%s, BlockNum:%d, Sender:%s`,
+		msg.ChangeType, msg.BlockNum, msg.Sender)
 }
 
 // GetSignBytes implements Msg
@@ -79,7 +78,7 @@ func (msg MsgSubmitChange) GetSigners() []sdk.AccAddress {
 // MsgApprove defines a message to cast a vote
 type MsgApprove struct {
 	ChangeID uint64         `json:"change_id" yaml:"change_id"` // ID of the change
-	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`       //  address of the sender
+	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`       // Address of the sender
 }
 
 // NewMsgApprove creates a message to cast a vote on an active change
@@ -104,7 +103,7 @@ func (msg MsgApprove) ValidateBasic() error {
 
 // String implements the Stringer interface
 func (msg MsgApprove) String() string {
-	return fmt.Sprintf("Vote Message: Change ID: %d", msg.ChangeID)
+	return fmt.Sprintf("Approve Message: Change ID: %d", msg.ChangeID)
 }
 
 // GetSignBytes implements Msg

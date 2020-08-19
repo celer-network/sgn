@@ -87,11 +87,13 @@ func validatorTest(t *testing.T) {
 	require.NoError(t, err, "failed to confirmUnbondedCandidate")
 	tc.CheckCandidate(t, transactor, ethAddr, tc.SgnOperators[2], big.NewInt(0))
 
+	log.Infoln("---------- It should successfully add back validator 2 with enough delegation ----------")
 	err = tc.DelegateStake(auth, ethAddr, amts[2])
 	require.NoError(t, err, "failed to delegate stake")
 	tc.CheckValidatorNum(t, transactor, 3)
 	tc.CheckValidator(t, transactor, tc.SgnOperators[2], amts[2], sdk.Bonded)
-	// TODO: normally add back validator 1
+
+	//tc.SleepWithLog(10, "sgn wait a while to check logs")
 }
 
 func replaceValidatorTest(t *testing.T) {

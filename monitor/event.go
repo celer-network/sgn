@@ -94,7 +94,6 @@ func (e *EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 	if err != nil {
 		panic(err)
 	}
-
 	return res
 }
 

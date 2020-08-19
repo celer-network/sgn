@@ -74,7 +74,7 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 
 	candidate := validator.NewCandidate(candidateAddr.Hex(), sdk.AccAddress(sidechainAddr))
 	candidateData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(candidate)
-	msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, o.Transactor.Key.GetAddress())
+	msg := o.Transactor.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, o.EthClient.Client)
 	log.Infof("submit change tx: update sidechain addr for candidate %s %s", candidate.EthAddress, candidate.Operator.String())
 	o.Transactor.AddTxMsg(msg)
 }
@@ -127,7 +127,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	}
 
 	validatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(vt)
-	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, o.Transactor.Key.GetAddress())
+	msg := o.Transactor.NewMsgSubmitChange(sync.SyncValidator, validatorData, o.EthClient.Client)
 	log.Infof("submit change tx: sync validator %x", candidateAddr)
 	o.Transactor.AddTxMsg(msg)
 }
@@ -151,7 +151,7 @@ func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	delegator := validator.NewDelegator(mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
 	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 	delegatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(delegator)
-	msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, o.Transactor.Key.GetAddress())
+	msg := o.Transactor.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, o.EthClient.Client)
 	log.Infof("submit change tx: sync delegator %x candidate %x stake %s", delegatorAddr, candidatorAddr, delegator.DelegatedStake)
 	o.Transactor.AddTxMsg(msg)
 }
