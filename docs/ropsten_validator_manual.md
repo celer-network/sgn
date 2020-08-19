@@ -16,6 +16,7 @@ Your actual paths might be different.
 ```shellscript
 git clone https://github.com/celer-network/sgn
 cd sgn
+git checkout master
 WITH_CLEVELDB=yes make install
 make install-ops
 ```
