@@ -43,8 +43,8 @@
                   },
                   "min_self_delegation": "1",
                   "delegator_address": "cosmos1zpfnm00d6uusyt5n5c4chygfy762yucd4zr53f",
-                  "validator_address": "cosmosvaloper1zpfnm00d6uusyt5n5c4chygfy762yucdskhpa6",
-                  "pubkey": "cosmosvalconspub1zcjduepqmvn5zak3gsfuppl3chuqy5u94y07yuxlz0u84q7hgjl3fmk7sfwshl5yms",
+                  "validator_address": "sgnvaloper1zpfnm00d6uusyt5n5c4chygfy762yucdskhpa6",
+                  "pubkey": "sgnvalconspub1zcjduepqmvn5zak3gsfuppl3chuqy5u94y07yuxlz0u84q7hgjl3fmk7sfwshl5yms",
                   "value": {
                     "denom": "stake",
                     "amount": "10000"
