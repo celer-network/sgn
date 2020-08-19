@@ -75,7 +75,7 @@
         {
           "type": "cosmos-sdk/Account",
           "value": {
-            "address": "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
+            "address": "sgn104gnaehlj7a32r9l5za7nhf463yvgnyf6r9vr9",
             "coins": [
               {
                 "denom": "stake",

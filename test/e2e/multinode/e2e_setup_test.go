@@ -20,6 +20,7 @@ func TestMain(m *testing.M) {
 	repoRoot, _ := filepath.Abs("../../..")
 
 	tc.SetupMainchain()
+	tc.SetupSidechain()
 
 	log.Infoln("run all e2e tests")
 	ret := m.Run()

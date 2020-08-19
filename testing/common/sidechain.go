@@ -41,6 +41,14 @@ type SGNParams struct {
 	StartGateway           bool
 }
 
+func SetupSidechain() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(common.Bech32PrefixAccAddr, common.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(common.Bech32PrefixValAddr, common.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(common.Bech32PrefixConsAddr, common.Bech32PrefixConsPub)
+	config.Seal()
+}
+
 func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase string) *transactor.Transactor {
 	cdc := app.MakeCodec()
 	tr, err := transactor.NewTransactor(

@@ -61,6 +61,7 @@ func TestMain(m *testing.M) {
 	err = installSgn()
 	tc.ChkErr(err, "installing sgn and sgncli")
 
+	tc.SetupSidechain()
 	// run all e2e tests
 	ret := m.Run()
 
