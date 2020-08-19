@@ -262,10 +262,12 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 					m.setBonded()
 					m.SyncValidator(validatorChange.EthAddr)
 					m.setTransactors()
+				} else {
+					log.Infof("%s, addValidator addr: %x, ", logmsg, validatorChange.EthAddr)
 				}
 			} else {
 				// self only put removal event to puller queue
-				log.Infof("%s, eth addr: %x", logmsg, validatorChange.EthAddr)
+				log.Infof("%s, removeValidator addr: %x, ", logmsg, validatorChange.EthAddr)
 				if validatorChange.EthAddr == m.EthClient.Address {
 					m.setUnbonded()
 				}

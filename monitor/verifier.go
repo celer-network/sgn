@@ -173,7 +173,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 	}
 
 	logmsg := fmt.Sprintf("verify change id %d, sync validator: Operator: %s, EthAddress %x, Status %s, Token %s, Commission %s",
-		change.ID, candidate.Operator.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission)
+		change.ID, candidate.Operator.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission.CommissionRates.Rate)
 
 	v, err := validator.CLIQueryValidator(
 		m.Transactor.CliCtx, staking.RouterKey, candidate.Operator.String())
