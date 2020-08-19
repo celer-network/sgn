@@ -13,7 +13,7 @@
             "details": ""
           },
           "min_self_delegation": "1",
-          "delegator_address": "sgn1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+          "delegator_address": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
           "validator_address": "sgnvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
           "pubkey": "sgnvalconspub1zcjduepq0znzgu7fgf32z7896mlqna6qxk5ft2k3wjwk3my8a0v26u937wsspmnlqd",
           "value": { "denom": "stake", "amount": "100000000" }
