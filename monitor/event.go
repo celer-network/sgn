@@ -16,13 +16,12 @@ const (
 	UpdateSidechainAddr    EventName = "UpdateSidechainAddr"
 	AddSubscriptionBalance EventName = "AddSubscriptionBalance"
 	ConfirmParamProposal   EventName = "ConfirmParamProposal"
-	Delegate               EventName = "Delegate"
+	UpdateDelegatedStake   EventName = "UpdateDelegatedStake"
 	CandidateUnbonded      EventName = "CandidateUnbonded"
 	ValidatorChange        EventName = "ValidatorChange"
 	UpdateCommissionRate   EventName = "UpdateCommissionRate"
 	IntendSettle           EventName = "IntendSettle"
 	IntendWithdraw         EventName = "IntendWithdraw"
-	IntendWithdrawDpos     EventName = "IntendWithdrawDpos"
 	IntendWithdrawChannel  EventName = "IntendWithdrawChannel"
 )
 
@@ -73,16 +72,14 @@ func (e *EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 		res, err = ethClient.SGN.ParseAddSubscriptionBalance(e.Log)
 	case ConfirmParamProposal:
 		res, err = ethClient.DPoS.ParseConfirmParamProposal(e.Log)
-	case Delegate:
-		res, err = ethClient.DPoS.ParseDelegate(e.Log)
+	case UpdateDelegatedStake:
+		res, err = ethClient.DPoS.ParseUpdateDelegatedStake(e.Log)
 	case CandidateUnbonded:
 		res, err = ethClient.DPoS.ParseCandidateUnbonded(e.Log)
 	case ValidatorChange:
 		res, err = ethClient.DPoS.ParseValidatorChange(e.Log)
 	case UpdateCommissionRate:
 		res, err = ethClient.DPoS.ParseUpdateCommissionRate(e.Log)
-	case IntendWithdrawDpos:
-		res, err = ethClient.DPoS.ParseIntendWithdraw(e.Log)
 	case IntendWithdrawChannel:
 		res, err = ethClient.Ledger.ParseIntendWithdraw(e.Log)
 	case IntendSettle:

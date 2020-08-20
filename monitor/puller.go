@@ -50,12 +50,9 @@ func (m *Monitor) processPullerQueue() {
 			log.Infof("%s. validator change %x type %d", logmsg, e.EthAddr, e.ChangeType)
 			validators[e.EthAddr] = true
 
-		case *mainchain.DPoSDelegate:
-			log.Infof("%s. delegator %x to candidate %x, stake %s, pool %s", logmsg, e.Delegator, e.Candidate, e.NewStake, e.StakingPool)
-			delegators[getDelegatorKey(e.Candidate, e.Delegator)] = true
-
-		case *mainchain.DPoSIntendWithdraw:
-			log.Infof("%s. intend withdraw candidate %x delegator %x amount %s", logmsg, e.Candidate, e.Delegator, e.WithdrawAmount)
+		case *mainchain.DPoSUpdateDelegatedStake:
+			log.Infof("%s. stake update delegator %x, candidate %x, stake %s, pool %s",
+				logmsg, e.Delegator, e.Candidate, e.DelegatorStake, e.CandidatePool)
 			validators[e.Candidate] = true
 			delegators[getDelegatorKey(e.Candidate, e.Delegator)] = true
 
@@ -86,8 +83,10 @@ func (m *Monitor) processPullerQueue() {
 		}
 	}
 
-	for validatorAddr := range validators {
-		m.SyncValidator(validatorAddr)
+	if m.isBootstrapped() {
+		for validatorAddr := range validators {
+			m.SyncValidator(validatorAddr)
+		}
 	}
 	for delegatorKey := range delegators {
 		candidatorAddr := mainchain.Hex2Addr(strings.Split(delegatorKey, ":")[0])
