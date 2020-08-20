@@ -37,9 +37,9 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 }
 
 func (keeper Keeper) checkRewardable(ctx sdk.Context, change types.Change) bool {
-	puller := keeper.validatorKeeper.GetPuller(ctx)
+	syncer := keeper.validatorKeeper.GetSyncer(ctx)
 
-	if !puller.ValidatorAddr.Equals(change.Initiator) {
+	if !syncer.ValidatorAddr.Equals(change.Initiator) {
 		return false
 	}
 

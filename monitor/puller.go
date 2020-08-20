@@ -17,7 +17,7 @@ import (
 )
 
 func (m *Monitor) processPullerQueue() {
-	if !m.isPuller() {
+	if !m.isSyncer() {
 		return
 	}
 	var keys, vals [][]byte

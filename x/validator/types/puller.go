@@ -7,19 +7,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type Puller struct {
+type Syncer struct {
 	ValidatorIdx  uint           `json:"validatorIdx"`
 	ValidatorAddr sdk.AccAddress `json:"validatorAddr"`
 }
 
-func NewPuller(validatorIdx uint, validatorAddr sdk.AccAddress) Puller {
-	return Puller{
+func NewSyncer(validatorIdx uint, validatorAddr sdk.AccAddress) Syncer {
+	return Syncer{
 		ValidatorIdx:  validatorIdx,
 		ValidatorAddr: validatorAddr,
 	}
 }
 
 // implement fmt.Stringer
-func (r Puller) String() string {
+func (r Syncer) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`ValidatorIdx: %d, ValidatorAddr: %x`, r.ValidatorIdx, r.ValidatorAddr))
 }

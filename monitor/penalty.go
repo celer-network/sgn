@@ -16,7 +16,7 @@ const (
 )
 
 func (m *Monitor) processPenaltyQueue() {
-	if !m.isPuller() {
+	if !m.isSyncer() {
 		return
 	}
 	var keys, vals [][]byte

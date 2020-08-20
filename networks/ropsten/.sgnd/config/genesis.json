@@ -19,7 +19,7 @@
   "app_state": {
     "validator": {
       "params": {
-        "puller_duration": "5",
+        "syncer_duration": "5",
         "mining_reward": "100000000000000000",
         "puller_reward": "1000000000000000"
       }

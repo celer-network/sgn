@@ -51,24 +51,24 @@ func (k Keeper) IterateBondedValidatorsByPower(ctx sdk.Context, fn func(index in
 	k.stakingKeeper.IterateBondedValidatorsByPower(ctx, fn)
 }
 
-// Get the entire Puller metadata
-func (k Keeper) GetPuller(ctx sdk.Context) Puller {
+// Get the entire Syncer metadata
+func (k Keeper) GetSyncer(ctx sdk.Context) Syncer {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has(PullerKey) {
-		return Puller{}
+	if !store.Has(SyncerKey) {
+		return Syncer{}
 	}
 
-	value := store.Get(PullerKey)
-	var puller Puller
-	k.cdc.MustUnmarshalBinaryBare(value, &puller)
-	return puller
+	value := store.Get(SyncerKey)
+	var syncer Syncer
+	k.cdc.MustUnmarshalBinaryBare(value, &syncer)
+	return syncer
 }
 
-// Sets the entire Puller metadata
-func (k Keeper) SetPuller(ctx sdk.Context, puller Puller) {
+// Sets the entire Syncer metadata
+func (k Keeper) SetSyncer(ctx sdk.Context, syncer Syncer) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(PullerKey, k.cdc.MustMarshalBinaryBare(puller))
+	store.Set(SyncerKey, k.cdc.MustMarshalBinaryBare(syncer))
 }
 
 // Get the entire Delegator metadata for a candidateAddr and delegatorAddr

@@ -35,14 +35,14 @@ func NewMonitorContractInfo(address mainchain.Addr, abi string) *MonitorContract
 	}
 }
 
-func (m *Monitor) isPuller() bool {
-	puller, err := validator.CLIQueryPuller(m.Transactor.CliCtx, validator.StoreKey)
+func (m *Monitor) isSyncer() bool {
+	syncer, err := validator.CLIQuerySyncer(m.Transactor.CliCtx, validator.StoreKey)
 	if err != nil {
-		log.Errorln("Get puller err", err)
+		log.Errorln("Get syncer err", err)
 		return false
 	}
 
-	return puller.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
+	return syncer.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
 }
 
 // Is the current node the guard to submit state proof

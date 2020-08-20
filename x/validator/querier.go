@@ -14,8 +14,8 @@ import (
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
-		case QueryPuller:
-			return queryPuller(ctx, req, keeper)
+		case QuerySyncer:
+			return querySyncer(ctx, req, keeper)
 		case QueryDelegator:
 			return queryDelegator(ctx, req, keeper)
 		case QueryCandidate:
@@ -28,9 +28,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func queryPuller(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	puller := keeper.GetPuller(ctx)
-	res, err := codec.MarshalJSONIndent(keeper.cdc, puller)
+func querySyncer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	syncer := keeper.GetSyncer(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, syncer)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 

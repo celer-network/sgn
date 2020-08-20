@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	PullerKey          = []byte{0x01} // key for puller
+	SyncerKey          = []byte{0x01} // key for syncer
 	DelegatorKeyPrefix = []byte{0x03} // Key prefix for delegator
 	CandidateKeyPrefix = []byte{0x04} // Key prefix for candidate
 	RewardKeyPrefix    = []byte{0x05} // Key prefix for reward

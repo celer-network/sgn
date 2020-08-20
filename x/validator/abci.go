@@ -13,24 +13,24 @@ import (
 
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
-	setPuller(ctx, req, keeper)
+	setSyncer(ctx, req, keeper)
 	miningReward := keeper.MiningReward(ctx)
 	keeper.DistributeReward(ctx, miningReward, MiningReward)
 
 	return applyAndReturnValidatorSetUpdates(ctx, keeper)
 }
 
-// Update puller for every pullerDuration
-func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
-	puller := keeper.GetPuller(ctx)
+// Update syncer for every syncerDuration
+func setSyncer(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
+	syncer := keeper.GetSyncer(ctx)
 	validators := keeper.GetValidators(ctx)
-	pullerDuration := keeper.PullerDuration(ctx)
-	vIdx := uint(req.Height) / pullerDuration % uint(len(validators))
+	syncerDuration := keeper.SyncerDuration(ctx)
+	vIdx := uint(req.Height) / syncerDuration % uint(len(validators))
 
-	if puller.ValidatorIdx != vIdx || puller.ValidatorAddr.Empty() {
-		puller = NewPuller(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
-		keeper.SetPuller(ctx, puller)
-		log.Infof("set puller to %s", puller.ValidatorAddr)
+	if syncer.ValidatorIdx != vIdx || syncer.ValidatorAddr.Empty() {
+		syncer = NewSyncer(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
+		keeper.SetSyncer(ctx, syncer)
+		log.Infof("set syncer to %s", syncer.ValidatorAddr)
 	}
 }
 
