@@ -17,7 +17,7 @@ const (
 )
 
 type MsgSetTransactors struct {
-	EthAddress  string           `json:"ethAddress"`
+	EthAddress  string           `json:"eth_address"`
 	Transactors []sdk.AccAddress `json:"transactors"`
 	Sender      sdk.AccAddress   `json:"sender"`
 }
@@ -67,7 +67,7 @@ func (msg MsgSetTransactors) GetSigners() []sdk.AccAddress {
 }
 
 type MsgEditCandidateDescription struct {
-	EthAddress  string              `json:"ethAddress"`
+	EthAddress  string              `json:"eth_address"`
 	Description staking.Description `json:"description"`
 	Sender      sdk.AccAddress      `json:"sender"`
 }
@@ -116,7 +116,7 @@ func (msg MsgEditCandidateDescription) GetSigners() []sdk.AccAddress {
 
 // MsgWithdrawReward defines a SyncValidator message
 type MsgWithdrawReward struct {
-	EthAddress string         `json:"ethAddress"`
+	EthAddress string         `json:"eth_address"`
 	Sender     sdk.AccAddress `json:"sender"`
 }
 
@@ -158,7 +158,7 @@ func (msg MsgWithdrawReward) GetSigners() []sdk.AccAddress {
 
 // MsgSignReward defines a SyncValidator message
 type MsgSignReward struct {
-	EthAddress string         `json:"ethAddress"`
+	EthAddress string         `json:"eth_address"`
 	Sig        []byte         `json:"sig"`
 	Sender     sdk.AccAddress `json:"sender"`
 }

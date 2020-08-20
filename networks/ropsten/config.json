@@ -1,39 +1,39 @@
 {
   "eth": {
-    "chainId": 3,
-    "blockDelay": 5,
-    "checkInterval": {
-      "IntendSettle": 2,
-      "IntendWithdrawChannel": 2,
-      "ConfirmParamProposal": 10,
-      "UpdateCommissionRate": 10
+    "chain_id": 3,
+    "block_delay": 5,
+    "check_interval": {
+      "intend_settle": 2,
+      "intend_withdraw_channel": 2,
+      "confirm_param_proposal": 10,
+      "update_commission_rate": 10
     },
     "contracts": {
-      "celrAddress": "0xb37f671dFc6C7c03462C76313Ec1a35b0c0A76d5",
-      "dposAddress": "0x560D35fC4bf463C00c79AC7CB791E49940606FBb",
-      "ledgerAddress": "0x4ee1DC9868c295e145334709Ce857534e9B962F8",
-      "sgnAddress": "0x7E12974bF7E2E9B7A98dE9D6412712deE1Bde250"
+      "celr_address": "0xb37f671dFc6C7c03462C76313Ec1a35b0c0A76d5",
+      "dpos_address": "0x560D35fC4bf463C00c79AC7CB791E49940606FBb",
+      "ledger_address": "0x4ee1DC9868c295e145334709Ce857534e9B962F8",
+      "sgn_address": "0x7E12974bF7E2E9B7A98dE9D6412712deE1Bde250"
     },
     "gateway": "[ETHEREUM_GATEWAY_URL]",
     "keystore": "[KEYSTORE_PATH]",
     "passphrase": "[KEYSTORE_PASSPHRASE]",
-    "pollInterval": 15,
-    "addGasPriceGwei": 1,
-    "minGasPriceGwei": 10
+    "poll_interval": 15,
+    "add_gas_price_gwei": 1,
+    "min_gas_price_gwei": 10
   },
   "log": {
     "color": false,
     "level": "debug"
   },
   "sgn": {
-    "chainId": "sgnchain",
-    "baseGasPrice": 0,
-    "nodeUri": "tcp://localhost:26657",
+    "chain_id": "sgnchain",
+    "base_gas_price": 0,
+    "node_uri": "tcp://localhost:26657",
     "validator_account": "[VALIDATOR_ACCOUNT_ADDRESS]",
     "passphrase": "[TRANSACTOR_PASSPHRASE]",
     "pubkey": "[VALIDATOR_PUBKEY]",
     "transactors": ["TRANSACTOR_ADDRESS"],
-    "timeoutCommit": 5,
-    "keyringBackend": "file"
+    "timeout_commit": 5,
+    "keyring_backend": "file"
   }
 }

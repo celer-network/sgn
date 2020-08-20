@@ -1,37 +1,37 @@
 {
   "eth": {
-    "chainId": 883,
-    "blockDelay": 0,
-    "checkInterval": {
-      "IntendSettle": 1,
-      "IntendWithdrawChannel": 1,
-      "ConfirmParamProposal": 2
+    "chain_id": 883,
+    "block_delay": 0,
+    "check_interval": {
+      "intend_settle": 1,
+      "intend_withdraw_channel": 1,
+      "confirm_param_proposal": 2
     },
     "contracts": {
-      "celrAddress": "",
-      "dposAddress": "",
-      "ledgerAddress": "",
-      "sgnAddress": ""
+      "celr_address": "",
+      "dpos_address": "",
+      "ledger_address": "",
+      "sgn_address": ""
     },
     "gateway": "http://127.0.0.1:8545",
     "keystore": "./test/keys/ethks0.json",
     "passphrase": "",
-    "pollInterval": 1
+    "poll_interval": 1
   },
   "log": {
     "color": true,
     "level": "debug"
   },
   "sgn": {
-    "chainid": "sgntest",
-    "baseGasPrice": 0,
-    "nodeuri": "tcp://localhost:26657",
+    "chain_id": "sgntest",
+    "base_gas_price": 0,
+    "node_uri": "tcp://localhost:26657",
     "validator_account": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
     "passphrase": "12341234",
     "pubkey": "sgnvalconspub1zcjduepq22mf6x9zcxl7qy4h9e9v2gl4krmfq3002ga5ztmxdne4awn32yuq57794u",
     "transactors": ["sgn15h2geedmud70gvpajdwpcaxfs4qcrw4z92zlqe"],
-    "keyringBackend": "file",
-    "timeoutCommit": 2,
-    "executeSlash": true
+    "keyring_backend": "file",
+    "timeout_commit": 2,
+    "execute_slash": true
   }
 }

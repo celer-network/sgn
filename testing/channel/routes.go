@@ -36,11 +36,11 @@ func (rs *RestServer) registerRoutes() {
 
 type (
 	GuardRequest struct {
-		SeqNum uint64 `json:"seqNum"`
+		SeqNum uint64 `json:"seq_num"`
 	}
 
 	IntendSettleRequest struct {
-		SeqNum uint64 `json:"seqNum"`
+		SeqNum uint64 `json:"seq_num"`
 	}
 )
 

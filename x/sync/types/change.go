@@ -18,7 +18,7 @@ type Change struct {
 	ID            uint64           `json:"id" yaml:"id"` //  ID of the change
 	Type          string           `json:"type" yaml:"type"`
 	Data          []byte           `json:"data" yaml:"data"`
-	BlockNum      uint64           `json:"blockNum" yaml:"blockNum"` // Claimed mainchain block number when the infomation was queried
+	BlockNum      uint64           `json:"block_num" yaml:"block_num"` // Claimed mainchain block number when the infomation was queried
 	Initiator     sdk.AccAddress   `json:"initiator" yaml:"initiator"`
 	Voters        []sdk.ValAddress `json:"voters" yaml:"voters"`
 	Status        ChangeStatus     `json:"change_status" yaml:"change_status"`     // Status of the Change {Pending, Active, Passed, Rejected}

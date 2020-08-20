@@ -10,9 +10,9 @@ import (
 )
 
 type Delegator struct {
-	CandidateAddr  string  `json:"candidateAddr"`
-	DelegatorAddr  string  `json:"delegatorAddr"`
-	DelegatedStake sdk.Int `json:"delegatedStake"`
+	CandidateAddr  string  `json:"candidate_addr"`
+	DelegatorAddr  string  `json:"delegator_addr"`
+	DelegatedStake sdk.Int `json:"delegated_stake"`
 }
 
 func NewDelegator(candidateAddr, delegatorAddr string) Delegator {
@@ -30,13 +30,13 @@ func (d Delegator) String() string {
 
 // valAccount will be used for running validator node, and transactors will be used for running gateway
 type Candidate struct {
-	EthAddress     string              `json:"ethAddress"`
-	ValAccount     sdk.AccAddress      `json:"valAccount"`
+	EthAddress     string              `json:"eth_address"`
+	ValAccount     sdk.AccAddress      `json:"val_account"`
 	Transactors    []sdk.AccAddress    `json:"transactors"`
 	Delegators     []Delegator         `json:"delegators"`
-	StakingPool    sdk.Int             `json:"stakingPool"`
-	CommissionRate sdk.Dec             `json:"commissionRate"`
-	RequestCount   sdk.Int             `json:"requestCount"`
+	StakingPool    sdk.Int             `json:"staking_pool"`
+	CommissionRate sdk.Dec             `json:"commission_rate"`
+	RequestCount   sdk.Int             `json:"request_count"`
 	Description    staking.Description `json:"description"`
 }
 

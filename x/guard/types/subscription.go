@@ -9,7 +9,7 @@ import (
 )
 
 type Subscription struct {
-	EthAddress string  `json:"ethAddress"`
+	EthAddress string  `json:"eth_address"`
 	Deposit    sdk.Int `json:"deposit"`
 	Spend      sdk.Int `json:"spend"`
 }

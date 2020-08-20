@@ -22,9 +22,9 @@ const (
 
 type Reward struct {
 	Receiver         string       `json:"receiver"`
-	MiningReward     sdk.Int      `json:"miningReward"`
-	ServiceReward    sdk.Int      `json:"serviceReward"`
-	RewardProtoBytes []byte       `json:"rewardProtoBytes"` // proto msg for reward snapshot from latest intendWithdraw
+	MiningReward     sdk.Int      `json:"mining_reward"`
+	ServiceReward    sdk.Int      `json:"service_reward"`
+	RewardProtoBytes []byte       `json:"reward_proto_bytes"` // proto msg for reward snapshot from latest intendWithdraw
 	Sigs             []common.Sig `json:"sigs"`
 }
 

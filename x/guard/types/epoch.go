@@ -10,7 +10,7 @@ import (
 type Epoch struct {
 	Id        sdk.Int `json:"id"`
 	Timestamp int64   `json:"timestamp"`
-	TotalFee  sdk.Int `json:"totalFee"`
+	TotalFee  sdk.Int `json:"total_fee"`
 }
 
 func NewEpoch(id sdk.Int, timestamp int64) Epoch {

@@ -11,7 +11,7 @@ import (
 
 type ParamChange struct {
 	Record   sdk.Int `json:"record"`
-	NewValue sdk.Int `json:"newValue"`
+	NewValue sdk.Int `json:"new_value"`
 }
 
 func NewParamChange(record, newValue sdk.Int) ParamChange {

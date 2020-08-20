@@ -8,8 +8,8 @@ import (
 )
 
 type Syncer struct {
-	ValidatorIdx  uint           `json:"validatorIdx"`
-	ValidatorAddr sdk.AccAddress `json:"validatorAddr"`
+	ValidatorIdx  uint           `json:"validator_idx"`
+	ValidatorAddr sdk.AccAddress `json:"validator_addr"`
 }
 
 func NewSyncer(validatorIdx uint, validatorAddr sdk.AccAddress) Syncer {
