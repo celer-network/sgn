@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -33,6 +34,8 @@ func (m *Monitor) processPullerQueue() {
 	iterator.Close()
 	m.lock.RUnlock()
 
+	validators := make(map[mainchain.Addr]bool)
+	delegators := make(map[string]bool)
 	for i, key := range keys {
 		event := NewEventFromBytes(vals[i])
 		logmsg := fmt.Sprintf("Process puller event %s at mainchain block %d", event.Name, event.Log.BlockNumber)
@@ -44,49 +47,53 @@ func (m *Monitor) processPullerQueue() {
 
 		switch e := event.ParseEvent(m.EthClient).(type) {
 		case *mainchain.DPoSValidatorChange:
-			m.syncDPoSValidatorChange(e, logmsg)
+			log.Infof("%s. validator change %x type %d", logmsg, e.EthAddr, e.ChangeType)
+			validators[e.EthAddr] = true
+
 		case *mainchain.DPoSIntendWithdraw:
-			m.syncDPoSIntendWithdraw(e, logmsg)
+			log.Infof("%s. intend withdraw candidate %x delegator %x amount %s", logmsg, e.Candidate, e.Delegator, e.WithdrawAmount)
+			validators[e.Candidate] = true
+			delegators[delegatorKey(e.Candidate, e.Delegator)] = true
+
 		case *mainchain.DPoSCandidateUnbonded:
-			m.syncDPoSCandidateUnbonded(e, logmsg)
-		case *mainchain.DPoSConfirmParamProposal:
-			m.syncConfirmParamProposal(e, logmsg)
+			log.Infof("%s. candidate unbonded %x", logmsg, e.Candidate)
+			validators[e.Candidate] = true
+
 		case *mainchain.DPoSUpdateCommissionRate:
-			m.syncUpdateCommissionRate(e, logmsg)
+			log.Infof("%s. commission update %x, %s", logmsg, e.Candidate, e.NewRate)
+			validators[e.Candidate] = true
+
 		case *mainchain.SGNUpdateSidechainAddr:
 			m.syncUpdateSidechainAddr(e, logmsg)
+
+		case *mainchain.DPoSConfirmParamProposal:
+			m.syncConfirmParamProposal(e, logmsg)
+
 		case *mainchain.SGNAddSubscriptionBalance:
 			m.syncSGNAddSubscriptionBalance(e, logmsg)
+
 		case *mainchain.CelerLedgerIntendSettle:
 			e.Raw = event.Log
 			m.syncIntendSettle(e, logmsg)
+
 		case *mainchain.CelerLedgerIntendWithdraw:
 			e.Raw = event.Log
 			m.syncIntendWithdrawChannel(e, logmsg)
 		}
 	}
+
+	for addr, _ := range validators {
+		m.SyncValidator(addr)
+	}
+	for key, _ := range delegators {
+		candidatorAddr := mainchain.Hex2Addr(strings.Split(key, ":")[0])
+		delegatorAddr := mainchain.Hex2Addr(strings.Split(key, ":")[1])
+		m.SyncDelegator(candidatorAddr, delegatorAddr)
+	}
 }
 
-func (m *Monitor) syncDPoSValidatorChange(validatorChange *mainchain.DPoSValidatorChange, logmsg string) {
-	log.Infof("%s. validator change %x type %d", logmsg, validatorChange.EthAddr, validatorChange.ChangeType)
-	m.SyncValidator(validatorChange.EthAddr)
-}
-
-func (m *Monitor) syncDPoSIntendWithdraw(intendWithdraw *mainchain.DPoSIntendWithdraw, logmsg string) {
-	log.Infof("%s. intend withdraw candidate %x delegator %x amount %s",
-		logmsg, intendWithdraw.Candidate, intendWithdraw.Delegator, intendWithdraw.WithdrawAmount)
-	m.SyncValidator(intendWithdraw.Candidate)
-	m.SyncDelegator(intendWithdraw.Candidate, intendWithdraw.Delegator)
-}
-
-func (m *Monitor) syncDPoSCandidateUnbonded(candidateUnbonded *mainchain.DPoSCandidateUnbonded, logmsg string) {
-	log.Infof("%s. candidate unbonded %x", logmsg, candidateUnbonded.Candidate)
-	m.SyncValidator(candidateUnbonded.Candidate)
-}
-
-func (m *Monitor) syncUpdateCommissionRate(commission *mainchain.DPoSUpdateCommissionRate, logmsg string) {
-	log.Infof("%s. commission update %x, %s", logmsg, commission.Candidate, commission.NewRate)
-	m.SyncValidator(commission.Candidate)
+func delegatorKey(candidate, delegator mainchain.Addr) string {
+	return mainchain.Addr2Hex(candidate) + ":" + mainchain.Addr2Hex(delegator)
 }
 
 func (m *Monitor) syncUpdateSidechainAddr(sidechainAddr *mainchain.SGNUpdateSidechainAddr, logmsg string) {
@@ -101,22 +108,6 @@ func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSC
 	msg := m.Transactor.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.EthClient.Client)
 	log.Infof("%s. submit change tx: confirm param proposal Record %v, NewValue %v", logmsg, confirmParamProposal.Record, confirmParamProposal.NewValue)
 	m.Transactor.AddTxMsg(msg)
-}
-
-func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, logmsg string) {
-	log.Infof("%s. sync IntendSettle %x, tx hash %x", logmsg, intendSettle.ChannelId, intendSettle.Raw.TxHash)
-	requests, seqs := m.getGuardRequests(intendSettle.ChannelId)
-	for i, request := range requests {
-		m.triggerGuard(request, intendSettle.Raw, seqs[i], guard.ChanStatus_Settling)
-	}
-}
-
-func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw, logmsg string) {
-	log.Infof("%s. sync intendWithdrawChannel %x, tx hash %x", logmsg, intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
-	requests, seqs := m.getGuardRequests(intendWithdrawChannel.ChannelId)
-	for i, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
-	}
 }
 
 func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance, logmsg string) {
@@ -138,6 +129,22 @@ func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscript
 	msg := m.Transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.EthClient.Client)
 	log.Infof("%s. submit change tx: subscribe ethAddress %s, amount %s, mainchain tx hash %x", logmsg, consumerEthAddress, amount, event.Raw.TxHash)
 	transactor.AddTxMsg(msg)
+}
+
+func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, logmsg string) {
+	log.Infof("%s. sync IntendSettle %x, tx hash %x", logmsg, intendSettle.ChannelId, intendSettle.Raw.TxHash)
+	requests, seqs := m.getGuardRequests(intendSettle.ChannelId)
+	for i, request := range requests {
+		m.triggerGuard(request, intendSettle.Raw, seqs[i], guard.ChanStatus_Settling)
+	}
+}
+
+func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.CelerLedgerIntendWithdraw, logmsg string) {
+	log.Infof("%s. sync intendWithdrawChannel %x, tx hash %x", logmsg, intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
+	requests, seqs := m.getGuardRequests(intendWithdrawChannel.ChannelId)
+	for i, request := range requests {
+		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
+	}
 }
 
 func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq uint64, guardStatus guard.ChanStatus) {
