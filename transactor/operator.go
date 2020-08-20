@@ -80,11 +80,12 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 	o.Transactor.AddTxMsg(msg)
 }
 
-func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
+// return true if already updated
+func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 	candidate, err := validator.CLIQueryCandidate(o.Transactor.CliCtx, validator.RouterKey, candidateAddr.Hex())
 	if err != nil {
 		log.Errorln("sidechain query candidate err:", err)
-		return
+		return false
 	}
 
 	var selfInit bool
@@ -92,10 +93,10 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	if err != nil {
 		if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
 			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.Operator, err)
-			return
+			return false
 		} else if o.EthClient.Address != candidateAddr {
 			log.Debugf("Candidate %x %s is not a validator on sidechain yet", candidateAddr, candidate.Operator)
-			return
+			return false
 		}
 		selfInit = true
 	}
@@ -103,13 +104,13 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	candidateInfo, err := o.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, candidateAddr)
 	if err != nil {
 		log.Errorln("Failed to query candidate info:", err)
-		return
+		return false
 	}
 
 	commission, err := common.NewCommission(o.EthClient, candidateInfo.CommissionRate)
 	if err != nil {
 		log.Errorln("Failed to create new commission:", err)
-		return
+		return false
 	}
 
 	vt := staking.Validator{
@@ -125,7 +126,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
 			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
 			log.Debugf("validator %x is already updated", candidateAddr)
-			return
+			return true
 		}
 	}
 
@@ -133,7 +134,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 		pk, err := sdk.GetPubKeyFromBech32(sdk.Bech32PubKeyTypeConsPub, viper.GetString(common.FlagSgnPubKey))
 		if err != nil {
 			log.Errorln("GetConsPubKeyBech32 err:", err)
-			return
+			return false
 		}
 
 		vt.ConsPubKey = pk
@@ -144,6 +145,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 	log.Infof("submit change tx: sync validator %x, tokens %s, status %s, Commission %s",
 		candidateAddr, vt.Tokens, vt.Status, vt.Commission.CommissionRates.Rate)
 	o.Transactor.AddTxMsg(msg)
+	return false
 }
 
 func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {

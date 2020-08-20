@@ -260,7 +260,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 				if validatorChange.EthAddr == m.EthClient.Address {
 					log.Infof("%s. Init my own validator.", logmsg)
 					m.setBonded()
-					m.SyncValidator(validatorChange.EthAddr)
+					go m.selfSyncValidator()
 					m.setTransactors()
 				} else {
 					log.Infof("%s, addValidator addr: %x, ", logmsg, validatorChange.EthAddr)
@@ -371,7 +371,7 @@ func (m *Monitor) monitorDPoSDelegate() {
 			}
 			if delegate.Candidate == m.EthClient.Address {
 				if m.isBonded() {
-					m.SyncValidator(delegate.Candidate)
+					go m.selfSyncValidator()
 				} else if m.shouldClaimValidator() {
 					m.claimValidatorOnMainchain()
 				}
@@ -380,6 +380,23 @@ func (m *Monitor) monitorDPoSDelegate() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+const (
+	selfSyncRetryNum         int = 5
+	selfSyncRetryIntervalSec int = 60
+)
+
+func (m *Monitor) selfSyncValidator() {
+	var i int
+	for i = 1; i < selfSyncRetryNum; i++ {
+		updated := m.SyncValidator(m.EthClient.Address)
+		if updated {
+			return
+		}
+		time.Sleep(time.Duration(selfSyncRetryIntervalSec) * time.Second)
+	}
+	log.Warn("self validator not synced yet")
 }
 
 func (m *Monitor) shouldClaimValidator() bool {
