@@ -86,6 +86,7 @@ func validatorTest(t *testing.T) {
 	err = tc.ConfirmUnbondedCandidate(auth, ethAddr)
 	require.NoError(t, err, "failed to confirmUnbondedCandidate")
 	tc.CheckCandidate(t, transactor, ethAddr, tc.SgnOperators[2], big.NewInt(0))
+	//tc.SleepWithLog(5, "waiting node2 to unbond")
 
 	log.Infoln("---------- It should successfully add back validator 2 with enough delegation ----------")
 	err = tc.DelegateStake(auth, ethAddr, amts[2])

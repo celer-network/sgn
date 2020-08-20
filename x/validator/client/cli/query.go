@@ -216,7 +216,7 @@ func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string)
 	}
 
 	if len(res) == 0 {
-		err = fmt.Errorf("No validator found with address %s", addr)
+		err = fmt.Errorf("%w for address %s", common.ErrRecordNotFound, addr)
 		return
 	}
 

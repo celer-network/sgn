@@ -2,6 +2,7 @@ package transactor
 
 import (
 	"math/big"
+	"strings"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -114,6 +115,12 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 			log.Debugf("validator %x is already updated", candidateAddr)
 			return
 		}
+	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+		log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.Operator, err)
+		return
+	} else if o.EthClient.Address != candidateAddr {
+		log.Infof("Validator %x %s not found, it should initiate itself first", candidateAddr, candidate.Operator)
+		return
 	}
 
 	if o.EthClient.Address == candidateAddr {
@@ -128,7 +135,8 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 
 	validatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(vt)
 	msg := o.Transactor.NewMsgSubmitChange(sync.SyncValidator, validatorData, o.EthClient.Client)
-	log.Infof("submit change tx: sync validator %x", candidateAddr)
+	log.Infof("submit change tx: sync validator %x, tokens %s, status %s, Commission %s",
+		candidateAddr, vt.Tokens, vt.Status, vt.Commission.CommissionRates.Rate)
 	o.Transactor.AddTxMsg(msg)
 }
 
