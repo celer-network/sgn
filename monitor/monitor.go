@@ -335,9 +335,10 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
-			err := m.dbSet(GetPullerKey(eLog), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
-			if err != nil {
-				log.Errorln("db Set err", err)
+			event := NewEvent(IntendWithdrawChannel, eLog).MustMarshal()
+			dberr := m.dbSet(GetPullerKey(eLog), event)
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 			m.setGuardEvent(eLog, ChanInfoState_CaughtWithdraw)
 		})
@@ -356,32 +357,28 @@ func (m *Monitor) monitorDPoSDelegate() {
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event Delegate, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
+
+			event := NewEvent(Delegate, eLog).MustMarshal()
+			dberr := m.dbSet(GetPullerKey(eLog), event)
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
+			}
+
 			delegate, perr := m.EthClient.DPoS.ParseDelegate(eLog)
 			if perr != nil {
 				log.Errorln("parse event err", perr)
 				return
 			}
-			m.handleDPoSDelegate(delegate)
+			if delegate.Candidate == m.EthClient.Address {
+				if m.isBonded() {
+					m.SyncValidator(delegate.Candidate)
+				} else if m.shouldClaimValidator() {
+					m.claimValidatorOnMainchain()
+				}
+			}
 		})
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
-	if delegate.Candidate != m.EthClient.Address {
-		log.Tracef("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
-		return
-	}
-
-	log.Infof("Handle new delegate from delegator %x to candidate %x, new stake %s, pool %s",
-		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
-	m.SyncDelegator(delegate.Candidate, delegate.Delegator)
-
-	if m.isBonded() {
-		m.SyncValidator(delegate.Candidate)
-	} else if m.shouldClaimValidator() {
-		m.claimValidatorOnMainchain()
 	}
 }
 
@@ -398,7 +395,7 @@ func (m *Monitor) shouldClaimValidator() bool {
 	}
 
 	if mainchain.IsBonded(candidate) {
-		log.Infoln("Already bonded on mainchain")
+		log.Debug("Already bonded on mainchain")
 		return false
 	}
 

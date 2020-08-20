@@ -81,13 +81,32 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 }
 
 func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
-	ci, err := o.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, candidateAddr)
+	candidate, err := validator.CLIQueryCandidate(o.Transactor.CliCtx, validator.RouterKey, candidateAddr.Hex())
+	if err != nil {
+		log.Errorln("sidechain query candidate err:", err)
+		return
+	}
+
+	var selfInit bool
+	v, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.Operator.String())
+	if err != nil {
+		if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.Operator, err)
+			return
+		} else if o.EthClient.Address != candidateAddr {
+			log.Debugf("Candidate %x %s is not a validator on sidechain yet", candidateAddr, candidate.Operator)
+			return
+		}
+		selfInit = true
+	}
+
+	candidateInfo, err := o.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, candidateAddr)
 	if err != nil {
 		log.Errorln("Failed to query candidate info:", err)
 		return
 	}
 
-	commission, err := common.NewCommission(o.EthClient, ci.CommissionRate)
+	commission, err := common.NewCommission(o.EthClient, candidateInfo.CommissionRate)
 	if err != nil {
 		log.Errorln("Failed to create new commission:", err)
 		return
@@ -97,30 +116,17 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) {
 		Description: staking.Description{
 			Identity: mainchain.Addr2Hex(candidateAddr),
 		},
-		Tokens:     sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec),
-		Status:     mainchain.ParseStatus(ci),
+		Tokens:     sdk.NewIntFromBigInt(candidateInfo.StakingPool).QuoRaw(common.TokenDec),
+		Status:     mainchain.ParseStatus(candidateInfo),
 		Commission: commission,
 	}
 
-	candidate, err := validator.CLIQueryCandidate(o.Transactor.CliCtx, validator.RouterKey, candidateAddr.Hex())
-	if err != nil {
-		log.Errorln("sidechain query candidate err:", err)
-		return
-	}
-	v, err := validator.CLIQueryValidator(
-		o.Transactor.CliCtx, staking.RouterKey, candidate.Operator.String())
-	if err == nil {
+	if !selfInit {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
 			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
 			log.Debugf("validator %x is already updated", candidateAddr)
 			return
 		}
-	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-		log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.Operator, err)
-		return
-	} else if o.EthClient.Address != candidateAddr {
-		log.Infof("Validator %x %s not found, it should initiate itself first", candidateAddr, candidate.Operator)
-		return
 	}
 
 	if o.EthClient.Address == candidateAddr {

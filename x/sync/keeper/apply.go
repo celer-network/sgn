@@ -142,6 +142,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	} else if validator.Status == sdk.Unbonded {
+		log.Infof("remove validator %s %s %x", valAddress, candidate.Operator, mainchain.Hex2Addr(v.Description.Identity))
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	}
 

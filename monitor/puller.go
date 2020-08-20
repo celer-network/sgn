@@ -50,6 +50,10 @@ func (m *Monitor) processPullerQueue() {
 			log.Infof("%s. validator change %x type %d", logmsg, e.EthAddr, e.ChangeType)
 			validators[e.EthAddr] = true
 
+		case *mainchain.DPoSDelegate:
+			log.Infof("%s. delegator %x to candidate %x, stake %s, pool %s", logmsg, e.Delegator, e.Candidate, e.NewStake, e.StakingPool)
+			delegators[delegatorKey(e.Candidate, e.Delegator)] = true
+
 		case *mainchain.DPoSIntendWithdraw:
 			log.Infof("%s. intend withdraw candidate %x delegator %x amount %s", logmsg, e.Candidate, e.Delegator, e.WithdrawAmount)
 			validators[e.Candidate] = true
