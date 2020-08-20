@@ -45,16 +45,6 @@ func (m *Monitor) isPuller() bool {
 	return puller.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
 }
 
-func (m *Monitor) isPusher() bool {
-	pusher, err := validator.CLIQueryPusher(m.Transactor.CliCtx, validator.StoreKey)
-	if err != nil {
-		log.Errorln("Get pusher err", err)
-		return false
-	}
-
-	return pusher.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
-}
-
 // Is the current node the guard to submit state proof
 func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) bool {
 	assignedGuards := request.AssignedGuards

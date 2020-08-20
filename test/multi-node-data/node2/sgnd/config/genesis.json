@@ -45,7 +45,6 @@
     "validator": {
       "params": {
         "puller_duration": "10",
-        "pusher_duration": "10",
         "mining_reward": "10000000000000",
         "puller_reward": "500000000000"
       }

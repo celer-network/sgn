@@ -22,12 +22,6 @@ func (k Keeper) PullerDuration(ctx sdk.Context) (res uint) {
 	return
 }
 
-// PusherDuration - pusher duration
-func (k Keeper) PusherDuration(ctx sdk.Context) (res uint) {
-	k.paramstore.Get(ctx, types.KeyPusherDuration, &res)
-	return
-}
-
 // MiningReward - mining reward
 func (k Keeper) MiningReward(ctx sdk.Context) (res sdk.Int) {
 	k.paramstore.Get(ctx, types.KeyMiningReward, &res)
@@ -44,7 +38,6 @@ func (k Keeper) PullerReward(ctx sdk.Context) (res sdk.Int) {
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.PullerDuration(ctx),
-		k.PusherDuration(ctx),
 		k.MiningReward(ctx),
 		k.PullerReward(ctx),
 	)

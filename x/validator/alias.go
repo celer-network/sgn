@@ -10,7 +10,6 @@ const (
 	RouterKey              = types.RouterKey
 	StoreKey               = types.StoreKey
 	QueryPuller            = types.QueryPuller
-	QueryPusher            = types.QueryPusher
 	QueryDelegator         = types.QueryDelegator
 	QueryCandidate         = types.QueryCandidate
 	QueryReward            = types.QueryReward
@@ -30,19 +29,16 @@ var (
 	ModuleCdc                      = types.ModuleCdc
 	RegisterCodec                  = types.RegisterCodec
 	PullerKey                      = types.PullerKey
-	PusherKey                      = types.PusherKey
 	CandidateKeyPrefix             = types.CandidateKeyPrefix
 	GetDelegatorKey                = types.GetDelegatorKey
 	GetDelegatorsKey               = types.GetDelegatorsKey
 	GetCandidateKey                = types.GetCandidateKey
 	GetRewardKey                   = types.GetRewardKey
 	NewPuller                      = types.NewPuller
-	NewPusher                      = types.NewPusher
 	NewDelegator                   = types.NewDelegator
 	NewCandidate                   = types.NewCandidate
 	NewReward                      = types.NewReward
 	CLIQueryPuller                 = cli.QueryPuller
-	CLIQueryPusher                 = cli.QueryPusher
 	CLIQueryCandidate              = cli.QueryCandidate
 	CLIQueryReward                 = cli.QueryReward
 	CLIQueryDelegator              = cli.QueryDelegator
@@ -54,7 +50,6 @@ var (
 
 type (
 	Puller                      = types.Puller
-	Pusher                      = types.Pusher
 	Params                      = types.Params
 	Delegator                   = types.Delegator
 	Candidate                   = types.Candidate

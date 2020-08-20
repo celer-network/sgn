@@ -71,26 +71,6 @@ func (k Keeper) SetPuller(ctx sdk.Context, puller Puller) {
 	store.Set(PullerKey, k.cdc.MustMarshalBinaryBare(puller))
 }
 
-// Get the entire Pusher metadata
-func (k Keeper) GetPusher(ctx sdk.Context) Pusher {
-	store := ctx.KVStore(k.storeKey)
-
-	if !store.Has(PusherKey) {
-		return Pusher{}
-	}
-
-	value := store.Get(PusherKey)
-	var pusher Pusher
-	k.cdc.MustUnmarshalBinaryBare(value, &pusher)
-	return pusher
-}
-
-// Sets the entire Pusher metadata
-func (k Keeper) SetPusher(ctx sdk.Context, pusher Pusher) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(PusherKey, k.cdc.MustMarshalBinaryBare(pusher))
-}
-
 // Get the entire Delegator metadata for a candidateAddr and delegatorAddr
 func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddr, delegatorAddr string) (delegator Delegator, found bool) {
 	store := ctx.KVStore(k.storeKey)

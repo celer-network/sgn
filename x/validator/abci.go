@@ -14,7 +14,6 @@ import (
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
 	setPuller(ctx, req, keeper)
-	setPusher(ctx, req, keeper)
 	miningReward := keeper.MiningReward(ctx)
 	keeper.DistributeReward(ctx, miningReward, MiningReward)
 
@@ -32,20 +31,6 @@ func setPuller(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
 		puller = NewPuller(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
 		keeper.SetPuller(ctx, puller)
 		log.Infof("set puller to %s", puller.ValidatorAddr)
-	}
-}
-
-// Update pusher for every pusherDuration
-func setPusher(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
-	pusher := keeper.GetPusher(ctx)
-	validators := keeper.GetValidators(ctx)
-	pusherDuration := keeper.PusherDuration(ctx)
-	vIdx := uint(req.Height) / pusherDuration % uint(len(validators))
-
-	if pusher.ValidatorIdx != vIdx || pusher.ValidatorAddr.Empty() {
-		pusher = NewPusher(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))
-		keeper.SetPusher(ctx, pusher)
-		log.Infof("set pusher to %s", pusher.ValidatorAddr)
 	}
 }
 
