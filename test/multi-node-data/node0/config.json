@@ -25,7 +25,7 @@
     "chainid": "sgntest",
     "baseGasPrice": 0,
     "nodeuri": "tcp://localhost:26657",
-    "operator": "sgn1ddvpnk98da5hgzz8lf5y82gnsrhvu3jdc4wlju",
+    "operator": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
     "passphrase": "12341234",
     "pubkey": "sgnvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
     "transactors": [

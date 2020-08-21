@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	FlagCandidate     = "candidator"
+	FlagCandidate     = "candidate"
 	FlagDelegatorAddr = "delegator"
 )
 
@@ -45,7 +45,7 @@ func GetSyncUpdateSidechainAddr(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx submit-change sync-update-sidechain-addr --candidator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ %s tx submit-change sync-update-sidechain-addr --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 `,
 				version.ClientName,
 			),
@@ -76,7 +76,7 @@ func GetCmdSyncValidator(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx submit-change sync-validator --candidator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ %s tx submit-change sync-validator --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 `,
 				version.ClientName,
 			),
@@ -107,7 +107,7 @@ func GetCmdSyncDelegator(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx submit-change sync-delegator --candidator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961" --delegator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ %s tx submit-change sync-delegator --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961" --delegator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 `,
 				version.ClientName,
 			),

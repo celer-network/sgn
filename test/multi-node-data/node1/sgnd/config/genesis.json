@@ -60,7 +60,7 @@
         {
           "type": "cosmos-sdk/Account",
           "value": {
-            "address": "sgn1ddvpnk98da5hgzz8lf5y82gnsrhvu3jdc4wlju",
+            "address": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
             "coins": [
               {
                 "denom": "stake",
@@ -121,7 +121,7 @@
                     "details": ""
                   },
                   "min_self_delegation": "1",
-                  "delegator_address": "sgn1ddvpnk98da5hgzz8lf5y82gnsrhvu3jdc4wlju",
+                  "delegator_address": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
                   "validator_address": "sgnvaloper1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd5vgrdj",
                   "pubkey": "sgnvalconspub1zcjduepq0znzgu7fgf32z7896mlqna6qxk5ft2k3wjwk3my8a0v26u937wsspmnlqd",
                   "value": {

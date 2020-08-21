@@ -1,21 +1,18 @@
 package singlenode
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,18 +49,8 @@ func gatewayTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test gateway ===========================")
 
-	sgnTransactors := viper.GetStringSlice(common.FlagSgnTransactors)
-	assert.Greater(t, len(sgnTransactors), 1, "not enough sgn transactors")
-
 	ctx := context.Background()
-	transactor := tc.NewTransactor(
-		t,
-		CLIHome,
-		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
-		sgnTransactors[0],
-		viper.GetString(common.FlagSgnPassphrase),
-	)
+	cdc := app.MakeCodec()
 	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
 	require.NoError(t, err, "failed to get client 1 private key")
 	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
@@ -78,24 +65,15 @@ func gatewayTest(t *testing.T) {
 	tx, err = tc.SgnContract.Subscribe(tc.Client0.Auth, amt)
 	require.NoError(t, err, "failed to subscribe on mainchain")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
-	tc.SleepWithLog(10, "passing subscribe event block delay")
-
-	msg := map[string]interface{}{
-		"ethAddr": tc.Client0.Address.Hex(),
-		"amount":  "100000000000000000000",
-	}
-	body, _ := json.Marshal(msg)
-	_, err = http.Post("http://127.0.0.1:1317/guard/subscribe", "application/json", bytes.NewBuffer(body))
-	require.NoError(t, err, "failed to post subscribe msg to gateway")
-	tc.SleepWithLog(10, "sgn syncing Subscribe balance from mainchain")
+	tc.SleepWithLog(100000000, "passing subscribe event block delay")
 
 	resp, err := http.Get("http://127.0.0.1:1317/guard/subscription/" + tc.Client0.Address.Hex())
 	require.NoError(t, err, "failed to query subscription from gateway")
 
-	result, err := tc.ParseGatewayQueryResponse(resp, transactor.CliCtx.Codec)
+	result, err := tc.ParseGatewayQueryResponse(resp, cdc)
 	require.NoError(t, err, "failed to parse GatewayQueryResponse")
 	var subscription guard.Subscription
-	err = transactor.CliCtx.Codec.UnmarshalJSON(result, &subscription)
+	err = cdc.UnmarshalJSON(result, &subscription)
 	require.NoError(t, err, "failed to unmarshal subscription JSON from gateway")
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
