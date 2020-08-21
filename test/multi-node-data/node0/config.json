@@ -27,13 +27,10 @@
     "nodeuri": "tcp://localhost:26657",
     "operator": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
     "passphrase": "12341234",
-    "pubkey": "sgnvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
-    "transactors": [
-      "sgn104gnaehlj7a32r9l5za7nhf463yvgnyf6r9vr9",
-      "sgn1sev3nak38elq95lumnh6t2drjtfx7327upp6p2"
-    ],
+    "pubkey": "sgnvalconspub1zcjduepq22mf6x9zcxl7qy4h9e9v2gl4krmfq3002ga5ztmxdne4awn32yuq57794u",
+    "transactors": ["sgn15h2geedmud70gvpajdwpcaxfs4qcrw4z92zlqe"],
     "timeoutCommit": 2,
-    "keyringbackend": "test",
+    "keyringbackend": "file",
     "bootNode": true,
     "executeSlash": true
   }

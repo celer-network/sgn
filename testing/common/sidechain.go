@@ -137,7 +137,7 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 		}
 		time.Sleep(RetryPeriod)
 	}
-	require.NoError(t, err, "failed to queryCandidate")
+	require.NoError(t, err, "failed to queryCandidate", err)
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }
