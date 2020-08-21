@@ -7,7 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// Change message types and routes
+// Sync message types and routes
 const (
 	TypeMsgApprove      = "approve_change"
 	TypeMsgSubmitChange = "submit_change"
