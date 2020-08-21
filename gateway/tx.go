@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -103,52 +104,67 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		signedSimplexStateBytes := mainchain.Hex2Bytes(req.SignedSimplexStateBytes)
 		signedSimplexState, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(signedSimplexStateBytes)
 		if err != nil {
-			log.Errorln("Failed UnmarshalSignedSimplexStateBytes:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Fail UnmarshalSignedSimplexStateBytes")
+			errmsg := fmt.Sprintf("UnmarshalSignedSimplexStateBytes err: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
 
 		simplexReceiver, err := eth.RecoverSigner(signedSimplexStateBytes, simplexReceiverSig)
 		if err != nil {
-			log.Errorln("recover signer err:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "recover signer err")
+			errmsg := fmt.Sprintf("RecoverSigner err: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
+
 		// verify signature
 		simplexSender := mainchain.Bytes2Addr(simplexChannel.PeerFrom)
 		err = guard.VerifySimplexStateSigs(signedSimplexState, simplexSender, simplexReceiver)
 		if err != nil {
-			log.Errorln("Invalid signature:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid signature")
+			errmsg := fmt.Sprintf("Invalid signature: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
 
-		lastReq, err := guard.CLIQueryRequest(
+		// check existing record
+		storedRequest, err := guard.CLIQueryRequest(
 			transactor.CliCtx, guard.RouterKey, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 		if err == nil {
-			if simplexChannel.SeqNum <= lastReq.SeqNum {
-				log.Errorln("Invalid sequence number", simplexChannel.SeqNum, lastReq.SeqNum)
-				rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid sequence number")
+			if simplexChannel.SeqNum <= storedRequest.SeqNum {
+				errmsg := fmt.Sprintf("Invalid sequence number. request: %d, stored: %d", simplexChannel.SeqNum, storedRequest.SeqNum)
+				rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 				return
 			}
-			// TODO: more precheck
+			if mainchain.Hex2Addr(storedRequest.SimplexSender) != mainchain.Bytes2Addr(simplexChannel.PeerFrom) {
+				errmsg := fmt.Sprintf("Sender not match stored request: %s", storedRequest.SimplexSender)
+				rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
+				return
+			}
+			if mainchain.Hex2Addr(storedRequest.SimplexReceiver) != simplexReceiver {
+				errmsg := fmt.Sprintf("Receiver not match stored request: %s", storedRequest.SimplexReceiver)
+				rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
+				return
+			}
+			if storedRequest.Status != guard.ChanStatus_Idle {
+				errmsg := fmt.Sprintf("Guard state is not idle: %d", storedRequest.Status)
+				rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
+				return
+			}
 			msg := guard.NewMsgRequestGuard(signedSimplexStateBytes, simplexReceiverSig, transactor.Key.GetAddress())
 			writeGenerateStdTxResponse(w, transactor, msg)
 			return
 		} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-			log.Errorln("Failed to get request:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Failed to get request")
+			errmsg := fmt.Sprintf("Failed to get request: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
 
-		// initiate first guard request
-		// TODO: merge the verification log with verifier.go
-		// verify addr
+		// Initialize first guard request
+		// verify peer addr
 		cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
 		addrs, seqNums, err := rs.ledgerContract.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 		if err != nil {
-			log.Errorln("Failed to get onchain channel info:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "get onchain channel info")
+			errmsg := fmt.Sprintf("Failed to get mainchain channel info: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
 		seqIndex := 0
@@ -160,22 +176,22 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			seqIndex = 1
 		}
 		if !match {
-			log.Errorln("Addresses not match", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "addrs not match")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "channel peers not match")
 			return
 		}
 
 		// verify seq
 		if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
-			log.Errorln("invalid sequence number")
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "invalid sequence number")
+			errmsg := fmt.Sprintf("invalid sequence number, request: %d, mainchain: %d",
+				simplexChannel.SeqNum, seqNums[seqIndex].Uint64())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
 
 		disputeTimeout, err := rs.ledgerContract.GetDisputeTimeout(&bind.CallOpts{}, cid)
 		if err != nil {
-			log.Errorln("Failed to get dispute timeout:", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "get dispute timeout")
+			errmsg := fmt.Sprintf("Failed to get dispute timeout: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}
 
@@ -183,7 +199,6 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
 		msg := transactor.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.ethClient)
 		writeGenerateStdTxResponse(w, transactor, msg)
-
 	}
 }
 
@@ -243,6 +258,15 @@ func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 		var req WithdrawRewardRequest
 		transactor := rs.transactorPool.GetTransactor()
 		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
+			return
+		}
+		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, req.EthAddr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if !reward.HasNewReward() {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "reward request is already the latest")
 			return
 		}
 
