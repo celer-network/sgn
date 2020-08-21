@@ -12,7 +12,6 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/x/guard"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,10 +50,6 @@ func gatewayTest(t *testing.T) {
 
 	ctx := context.Background()
 	cdc := app.MakeCodec()
-	Client1PrivKey, err := tc.GetEthPrivateKey(tc.ValEthKs[1])
-	require.NoError(t, err, "failed to get client 1 private key")
-	client1Auth := bind.NewKeyedTransactor(Client1PrivKey)
-	client1Auth.GasPrice = big.NewInt(2e9) // 2Gwei
 
 	log.Info("Call subscribe on sgn contract...")
 	amt, _ := new(big.Int).SetString("100000000000000000000", 10) // 100 CELR
@@ -65,16 +60,18 @@ func gatewayTest(t *testing.T) {
 	tx, err = tc.SgnContract.Subscribe(tc.Client0.Auth, amt)
 	require.NoError(t, err, "failed to subscribe on mainchain")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
-	tc.SleepWithLog(100000000, "passing subscribe event block delay")
+	tc.SleepWithLog(10, "passing subscribe event block delay")
 
 	resp, err := http.Get("http://127.0.0.1:1317/guard/subscription/" + tc.Client0.Address.Hex())
 	require.NoError(t, err, "failed to query subscription from gateway")
 
 	result, err := tc.ParseGatewayQueryResponse(resp, cdc)
 	require.NoError(t, err, "failed to parse GatewayQueryResponse")
+
 	var subscription guard.Subscription
 	err = cdc.UnmarshalJSON(result, &subscription)
 	require.NoError(t, err, "failed to unmarshal subscription JSON from gateway")
+
 	log.Infoln("Query sgn about the subscription info:", subscription.String())
 	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))

@@ -33,7 +33,6 @@ func (m *Monitor) verifyActiveChanges() {
 		return
 	}
 	activeChanges, err := sync.CLIQueryActiveChanges(m.Transactor.CliCtx, sync.RouterKey)
-	log.Infoln("Query active changes", activeChanges)
 	if err != nil {
 		log.Errorln("Query active changes error:", err)
 		return

@@ -402,7 +402,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(db dbm.DB) {
-	operator, err := transactor.NewOperator(app.cdc)
+	operator, err := transactor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome))
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
