@@ -1,14 +1,18 @@
 package transactor
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/x/sync"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -131,4 +135,15 @@ $ %s tx submit-change sync-delegator --candidator="0xf75f679d958b7610bad84e3baef
 	cmd.MarkFlagRequired(FlagDelegatorAddr)
 
 	return cmd
+}
+
+func (t *Transactor) NewMsgSubmitChange(changeType string, data []byte, ethClient *ethclient.Client) sync.MsgSubmitChange {
+	var blkNum uint64
+	head, err := ethClient.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		log.Errorln("cannot fetch mainchain block number:", err)
+	} else {
+		blkNum = head.Number.Uint64()
+	}
+	return sync.NewMsgSubmitChange(changeType, data, blkNum, t.Key.GetAddress())
 }

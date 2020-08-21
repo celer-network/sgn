@@ -16,15 +16,9 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// PullerDuration - puller duration
-func (k Keeper) PullerDuration(ctx sdk.Context) (res uint) {
-	k.paramstore.Get(ctx, types.KeyPullerDuration, &res)
-	return
-}
-
-// PusherDuration - pusher duration
-func (k Keeper) PusherDuration(ctx sdk.Context) (res uint) {
-	k.paramstore.Get(ctx, types.KeyPusherDuration, &res)
+// SyncerDuration - syncer duration
+func (k Keeper) SyncerDuration(ctx sdk.Context) (res uint) {
+	k.paramstore.Get(ctx, types.KeySyncerDuration, &res)
 	return
 }
 
@@ -43,8 +37,7 @@ func (k Keeper) PullerReward(ctx sdk.Context) (res sdk.Int) {
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
-		k.PullerDuration(ctx),
-		k.PusherDuration(ctx),
+		k.SyncerDuration(ctx),
 		k.MiningReward(ctx),
 		k.PullerReward(ctx),
 	)

@@ -22,8 +22,9 @@ import (
 
 // Change flags
 const (
-	FlagType = "type"
-	FlagData = "data"
+	FlagType   = "type"
+	FlagData   = "data"
+	FlagBlkNum = "blknum"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -65,7 +66,8 @@ $ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from
 
 			changeType := viper.GetString(FlagType)
 			data := viper.GetString(FlagData)
-			msg := types.NewMsgSubmitChange(changeType, []byte(data), cliCtx.GetFromAddress())
+			blknum := viper.GetUint64(FlagBlkNum)
+			msg := types.NewMsgSubmitChange(changeType, []byte(data), blknum, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -76,6 +78,7 @@ $ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from
 
 	cmd.Flags().String(FlagType, "", "type of change")
 	cmd.Flags().String(FlagData, "", "data of change")
+	cmd.Flags().String(FlagBlkNum, "", "mainchain block number of change")
 
 	return cmd
 }

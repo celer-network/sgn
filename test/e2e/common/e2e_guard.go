@@ -80,7 +80,7 @@ func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *
 	require.NoError(t, err, "failed to sign signedSimplexStateBytes")
 	initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig, tc.DisputeTimeout)
 	syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(initRequest)
-	msgSubmitChange := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
+	msgSubmitChange := transactor.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient)
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")

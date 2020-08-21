@@ -86,7 +86,7 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		subscription.Deposit = deposit
 		subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-		msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, transactor.Key.GetAddress())
+		msg := transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, rs.ethClient)
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
@@ -181,7 +181,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
 		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, transactor.Key.GetAddress())
+		msg := transactor.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.ethClient)
 		writeGenerateStdTxResponse(w, transactor, msg)
 
 	}
@@ -204,7 +204,7 @@ func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		candidate := validator.NewCandidate(req.EthAddr, sdk.AccAddress(sidechainAddr))
 		candidateData := transactor.CliCtx.Codec.MustMarshalBinaryBare(candidate)
-		msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, transactor.Key.GetAddress())
+		msg := transactor.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, rs.ethClient)
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
@@ -227,7 +227,7 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 		delegator := validator.NewDelegator(req.CandidateAddress, req.DelegatorAddress)
 		delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 		delegatorData := transactor.CliCtx.Codec.MustMarshalBinaryBare(delegator)
-		msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, transactor.Key.GetAddress())
+		msg := transactor.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, rs.ethClient)
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }

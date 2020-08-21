@@ -5,8 +5,7 @@ import (
 )
 
 const (
-	QueryPuller    = "puller"
-	QueryPusher    = "pusher"
+	QuerySyncer    = "syncer"
 	QueryDelegator = "delegator"
 	QueryCandidate = "candidate"
 	QueryReward    = "reward"
