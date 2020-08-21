@@ -52,12 +52,12 @@ func (m *Monitor) processPullerQueue() {
 
 		case *mainchain.DPoSDelegate:
 			log.Infof("%s. delegator %x to candidate %x, stake %s, pool %s", logmsg, e.Delegator, e.Candidate, e.NewStake, e.StakingPool)
-			delegators[delegatorKey(e.Candidate, e.Delegator)] = true
+			delegators[getDelegatorKey(e.Candidate, e.Delegator)] = true
 
 		case *mainchain.DPoSIntendWithdraw:
 			log.Infof("%s. intend withdraw candidate %x delegator %x amount %s", logmsg, e.Candidate, e.Delegator, e.WithdrawAmount)
 			validators[e.Candidate] = true
-			delegators[delegatorKey(e.Candidate, e.Delegator)] = true
+			delegators[getDelegatorKey(e.Candidate, e.Delegator)] = true
 
 		case *mainchain.DPoSCandidateUnbonded:
 			log.Infof("%s. candidate unbonded %x", logmsg, e.Candidate)
@@ -86,17 +86,17 @@ func (m *Monitor) processPullerQueue() {
 		}
 	}
 
-	for addr := range validators {
-		m.SyncValidator(addr)
+	for validatorAddr := range validators {
+		m.SyncValidator(validatorAddr)
 	}
-	for key := range delegators {
-		candidatorAddr := mainchain.Hex2Addr(strings.Split(key, ":")[0])
-		delegatorAddr := mainchain.Hex2Addr(strings.Split(key, ":")[1])
+	for delegatorKey := range delegators {
+		candidatorAddr := mainchain.Hex2Addr(strings.Split(delegatorKey, ":")[0])
+		delegatorAddr := mainchain.Hex2Addr(strings.Split(delegatorKey, ":")[1])
 		m.SyncDelegator(candidatorAddr, delegatorAddr)
 	}
 }
 
-func delegatorKey(candidate, delegator mainchain.Addr) string {
+func getDelegatorKey(candidate, delegator mainchain.Addr) string {
 	return mainchain.Addr2Hex(candidate) + ":" + mainchain.Addr2Hex(delegator)
 }
 
