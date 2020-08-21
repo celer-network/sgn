@@ -148,3 +148,15 @@ func (m *Monitor) setUnbonded() {
 	defer m.lock.Unlock()
 	m.bonded = false
 }
+
+func (m *Monitor) isBootstrapped() bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	return m.bootstrapped
+}
+
+func (m *Monitor) setBootstrapped() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.bootstrapped = true
+}
