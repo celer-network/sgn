@@ -36,7 +36,7 @@ type Monitor struct {
 	sidechainAcct   sdk.AccAddress
 	bonded          bool
 	executeSlash    bool
-	bootstrapped    bool
+	bootstrapped    bool // SGN has bootstrapped with at least one bonded validator on the mainchain contract
 	lock            sync.RWMutex
 }
 
