@@ -86,10 +86,10 @@ func (m *Monitor) processPullerQueue() {
 		}
 	}
 
-	for addr, _ := range validators {
+	for addr := range validators {
 		m.SyncValidator(addr)
 	}
-	for key, _ := range delegators {
+	for key := range delegators {
 		candidatorAddr := mainchain.Hex2Addr(strings.Split(key, ":")[0])
 		delegatorAddr := mainchain.Hex2Addr(strings.Split(key, ":")[1])
 		m.SyncDelegator(candidatorAddr, delegatorAddr)
