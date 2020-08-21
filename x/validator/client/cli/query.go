@@ -30,7 +30,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	validatorQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdPuller(storeKey, cdc),
+		GetCmdSyncer(storeKey, cdc),
 		GetCmdDelegator(storeKey, cdc),
 		GetCmdCandidate(storeKey, cdc),
 		GetCmdReward(storeKey, cdc),
@@ -41,65 +41,34 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return validatorQueryCmd
 }
 
-// GetCmdPuller queries puller info
-func GetCmdPuller(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdSyncer queries syncer info
+func GetCmdSyncer(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "puller",
-		Short: "query puller info",
+		Use:   "syncer",
+		Short: "query syncer info",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			puller, err := QueryPuller(cliCtx, queryRoute)
+			syncer, err := QuerySyncer(cliCtx, queryRoute)
 			if err != nil {
 				log.Errorln("query error", err)
 				return err
 			}
 
-			return cliCtx.PrintOutput(puller)
+			return cliCtx.PrintOutput(syncer)
 		},
 	}
 }
 
-// Query puller info
-func QueryPuller(cliCtx context.CLIContext, queryRoute string) (puller types.Puller, err error) {
-	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPuller)
+// Query syncer info
+func QuerySyncer(cliCtx context.CLIContext, queryRoute string) (syncer types.Syncer, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySyncer)
 	res, err := common.RobustQuery(cliCtx, route)
 	if err != nil {
 		return
 	}
 
-	err = cliCtx.Codec.UnmarshalJSON(res, &puller)
-	return
-}
-
-// GetCmdPusher queries pusher info
-func GetCmdPusher(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "pusher",
-		Short: "query pusher info",
-		Args:  cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			pusher, err := QueryPusher(cliCtx, queryRoute)
-			if err != nil {
-				log.Errorln("query error", err)
-				return err
-			}
-
-			return cliCtx.PrintOutput(pusher)
-		},
-	}
-}
-
-// Query pusher info
-func QueryPusher(cliCtx context.CLIContext, queryRoute string) (pusher types.Pusher, err error) {
-	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPusher)
-	res, err := common.RobustQuery(cliCtx, route)
-	if err != nil {
-		return
-	}
-
-	err = cliCtx.Codec.UnmarshalJSON(res, &pusher)
+	err = cliCtx.Codec.UnmarshalJSON(res, &syncer)
 	return
 }
 
@@ -216,7 +185,7 @@ func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string)
 	}
 
 	if len(res) == 0 {
-		err = fmt.Errorf("No validator found with address %s", addr)
+		err = fmt.Errorf("%w for address %s", common.ErrRecordNotFound, addr)
 		return
 	}
 

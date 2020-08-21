@@ -37,14 +37,9 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		}
 
 		if totalVote.GTE(threshold) {
-			log.Infof("Change id: %d, type: %s, total vote: %s, threshold %s", change.ID, change.Type, totalVote, threshold)
-
-			err := keeper.ApplyChange(ctx, change)
-			if err != nil {
-				log.Errorln("Apply change err:", err)
-				change.Status = StatusFailed
-				tagValue = types.AttributeValueChangeFailed
-			} else {
+			log.Infof("Change approved by majority. id: %d, type: %s, total vote: %s, threshold %s", change.ID, change.Type, totalVote, threshold)
+			applied := keeper.ApplyChange(ctx, change)
+			if applied {
 				if change.Rewardable {
 					initiatorEthAddr := validatorsByAddr[sdk.ValAddress(change.Initiator).String()].Description.Identity
 					keeper.AddReward(ctx, initiatorEthAddr, pullerReward, validator.MiningReward)
@@ -52,13 +47,16 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 
 				change.Status = StatusPassed
 				tagValue = types.AttributeValueChangePassed
+			} else {
+				change.Status = StatusFailed
+				tagValue = types.AttributeValueChangeFailed
 			}
 		}
 
 		if ctx.BlockTime().After(change.VotingEndTime) {
 			change.Status = StatusFailed
 			tagValue = types.AttributeValueChangeFailed
-			log.Debugf("Change msg timeout, id: %d, type: %s", change.ID, change.Type)
+			log.Infof("Change msg timeout, id: %d, type: %s", change.ID, change.Type)
 		}
 
 		if change.Status != StatusActive {

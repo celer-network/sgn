@@ -32,6 +32,7 @@ type RestServer struct {
 	dposContract   *mainchain.DPoS
 	sgnContract    *mainchain.SGN
 	ledgerContract *mainchain.CelerLedger
+	ethClient      *ethclient.Client
 }
 
 // NewRestServer creates a new rest server instance
@@ -90,6 +91,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		dposContract:   dposContract,
 		sgnContract:    sgnContract,
 		ledgerContract: ledgerContract,
+		ethClient:      ethClient,
 	}, nil
 }
 

@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/celer-network/goutils/eth"
@@ -15,30 +14,36 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
+	var applied bool
+	var err error
 	switch change.Type {
 	case types.ConfirmParamProposal:
-		return keeper.ConfirmParamProposal(ctx, change)
+		applied, err = keeper.ConfirmParamProposal(ctx, change)
 	case types.UpdateSidechainAddr:
-		return keeper.UpdateSidechainAddr(ctx, change)
+		applied, err = keeper.UpdateSidechainAddr(ctx, change)
 	case types.SyncDelegator:
-		return keeper.SyncDelegator(ctx, change)
+		applied, err = keeper.SyncDelegator(ctx, change)
 	case types.SyncValidator:
-		return keeper.SyncValidator(ctx, change)
+		applied, err = keeper.SyncValidator(ctx, change)
 	case types.Subscribe:
-		return keeper.Subscribe(ctx, change)
+		applied, err = keeper.Subscribe(ctx, change)
 	case types.InitGuardRequest:
-		return keeper.InitGuardRequest(ctx, change)
+		applied, err = keeper.InitGuardRequest(ctx, change)
 	case types.GuardTrigger:
-		return keeper.GuardTrigger(ctx, change)
+		applied, err = keeper.GuardTrigger(ctx, change)
 	case types.GuardProof:
-		return keeper.GuardProof(ctx, change)
+		applied, err = keeper.GuardProof(ctx, change)
 	default:
-		return errors.New("Invalid change type")
+		return false
 	}
+	if err != nil {
+		log.Errorln("Apply change err:", err)
+	}
+	return applied
 }
 
-func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) (bool, error) {
 	var paramChange common.ParamChange
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &paramChange)
 
@@ -47,16 +52,19 @@ func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) 
 	case mainchain.MaxValidatorNum:
 		ss, ok := keeper.paramsKeeper.GetSubspace(staking.DefaultParamspace)
 		if !ok {
-			return fmt.Errorf("Fail to get staking subspace")
+			return false, fmt.Errorf("Fail to get staking subspace")
 		}
 
-		return ss.Update(ctx, staking.KeyMaxValidators, []byte(paramChange.NewValue.String()))
+		err := ss.Update(ctx, staking.KeyMaxValidators, []byte(paramChange.NewValue.String()))
+		if err != nil {
+			return false, err
+		}
 	}
 
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) UpdateSidechainAddr(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) UpdateSidechainAddr(ctx sdk.Context, change types.Change) (bool, error) {
 	var c validator.Candidate
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &c)
 
@@ -70,10 +78,10 @@ func (keeper Keeper) UpdateSidechainAddr(ctx sdk.Context, change types.Change) e
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 	keeper.validatorKeeper.InitAccount(ctx, c.Operator)
 
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) (bool, error) {
 	var d validator.Delegator
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &d)
 
@@ -87,16 +95,16 @@ func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) error {
 	keeper.validatorKeeper.SetDelegator(ctx, delegator)
 	keeper.validatorKeeper.SnapshotCandidate(ctx, d.CandidateAddr)
 
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, error) {
 	var v staking.Validator
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &v)
 
 	candidate, found := keeper.validatorKeeper.GetCandidate(ctx, v.Description.Identity)
 	if !found {
-		return fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
+		return false, fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
 	}
 	valAddress := sdk.ValAddress(candidate.Operator)
 
@@ -105,35 +113,46 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) error {
 
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
-		if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-			return fmt.Errorf("Invalid change initiator %s for validator %s", change.Initiator, candidate.Operator)
-		}
+		if v.Status == sdk.Bonded {
+			if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
+				return false, fmt.Errorf("Bonded validator %s not found, msg sender: %s", candidate.Operator, change.Initiator)
+			}
 
-		validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
-		keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
+			validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
+			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
+		} else if v.Status == sdk.Unbonding {
+			return false, fmt.Errorf("Unbonding validator %s not found, msg sender: %s", candidate.Operator, change.Initiator)
+		} else {
+			log.Infof("Validator %s already unbonded", candidate.Operator)
+			return false, nil
+		}
 	}
 
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
 	validator.Commission = v.Commission
-	validator.Tokens = v.Tokens
 	validator.Status = v.Status
+	if validator.Status == sdk.Unbonded {
+		validator.Tokens = sdk.ZeroInt()
+	} else {
+		validator.Tokens = v.Tokens
+	}
 	validator.DelegatorShares = v.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	} else if validator.Status == sdk.Unbonded {
-		validator.Tokens = sdk.ZeroInt()
+		log.Infof("remove validator %s %s %x", valAddress, candidate.Operator, mainchain.Hex2Addr(v.Description.Identity))
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	}
 
 	candidate.CommissionRate = v.Commission.CommissionRates.Rate
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) (bool, error) {
 	var s guard.Subscription
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &s)
 
@@ -145,32 +164,32 @@ func (keeper Keeper) Subscribe(ctx sdk.Context, change types.Change) error {
 	subscription.Deposit = s.Deposit
 	keeper.guardKeeper.SetSubscription(ctx, subscription)
 
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) (bool, error) {
 	var r guard.InitRequest
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &r)
 
 	_, simplexChannel, err := common.UnmarshalSignedSimplexStateBytes(r.SignedSimplexStateBytes)
 	if err != nil {
-		return fmt.Errorf("unmarshal signedSimplexStateBytes err: %w", err)
+		return false, fmt.Errorf("unmarshal signedSimplexStateBytes err: %w", err)
 	}
 	simplexReceiver, err := eth.RecoverSigner(r.SignedSimplexStateBytes, r.SimplexReceiverSig)
 	if err != nil {
-		return fmt.Errorf("recover signer err: %w", err)
+		return false, fmt.Errorf("recover signer err: %w", err)
 	}
 
 	log.Infof("Apply init request %s, to %x", guard.PrintSimplexChannel(simplexChannel), simplexReceiver)
 
 	_, found := keeper.guardKeeper.GetRequest(ctx, simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if found {
-		return fmt.Errorf("guard request already initiated")
+		return false, fmt.Errorf("guard request already initiated")
 	}
 
 	err = keeper.guardKeeper.ChargeRequestFee(ctx, mainchain.Addr2Hex(simplexReceiver))
 	if err != nil {
-		return fmt.Errorf("Fail to charge request fee: %s", err)
+		return false, fmt.Errorf("Fail to charge request fee: %s", err)
 	}
 
 	request := guard.NewRequest(
@@ -182,20 +201,20 @@ func (keeper Keeper) InitGuardRequest(ctx sdk.Context, change types.Change) erro
 		r.DisputeTimeout)
 	keeper.guardKeeper.SetRequest(ctx, request)
 
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) (bool, error) {
 	var trigger guard.GuardTrigger
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &trigger)
 
 	log.Infoln("Apply guard trigger", trigger)
 	request, found := keeper.guardKeeper.GetRequest(ctx, trigger.ChannelId, trigger.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
+		return false, fmt.Errorf("Fail to get request with channelId %x %s", trigger.ChannelId, trigger.SimplexReceiver)
 	}
 	if request.Status != guard.ChanStatus_Idle {
-		return fmt.Errorf("request channel %x in non-idle status: %s", trigger.ChannelId, request.Status)
+		return false, fmt.Errorf("request channel %x in non-idle status: %s", trigger.ChannelId, request.Status)
 	}
 	request.TriggerTxHash = trigger.TriggerTxHash
 	request.TriggerTxBlkNum = trigger.TriggerTxBlkNum
@@ -204,21 +223,21 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) error {
 		request.Status = trigger.Status
 	}
 	keeper.guardKeeper.SetRequest(ctx, request)
-	return nil
+	return true, nil
 }
 
-func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
+func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) (bool, error) {
 	var proof guard.GuardProof
 	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &proof)
 
 	log.Infoln("Apply guard proof", proof)
 	request, found := keeper.guardKeeper.GetRequest(ctx, proof.ChannelId, proof.SimplexReceiver)
 	if !found {
-		return fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
+		return false, fmt.Errorf("Fail to get request with channelId %x %s", proof.ChannelId, proof.SimplexReceiver)
 	}
 
 	if request.Status != guard.ChanStatus_Withdrawing && request.Status != guard.ChanStatus_Settling {
-		return fmt.Errorf("Request not in guard pending state: %d", request.Status)
+		return false, fmt.Errorf("Request not in guard pending state: %d", request.Status)
 	}
 
 	request.GuardTxHash = proof.GuardTxHash
@@ -250,5 +269,5 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) error {
 	request.AssignedGuards = nil
 	keeper.guardKeeper.SetRequest(ctx, request)
 
-	return nil
+	return true, nil
 }

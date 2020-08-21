@@ -21,9 +21,8 @@ message MsgLog {
     string delegator_addr = 6;
     ChannelInfo chan_info = 7;
     Penalty penalty = 8;
-    uint64 block_num = 9;
-    string deposit = 10;
-    Change change = 11;
+    string deposit = 9;
+    Change change = 10;
 
     string sender = 99;
     double execution_time_ms = 100;
@@ -53,4 +52,5 @@ message Penalty {
 message Change {
     uint64 id = 1;
     string type = 2;
+    uint64 block_num = 9;
 }

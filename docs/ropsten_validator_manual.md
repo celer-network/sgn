@@ -16,6 +16,7 @@ Your actual paths might be different.
 ```shellscript
 git clone https://github.com/celer-network/sgn
 cd sgn
+git checkout master
 WITH_CLEVELDB=yes make install
 make install-ops
 ```
@@ -106,7 +107,7 @@ It will take a while to sync the node.
 15. Initialize the candidate status for your validator node:
 
 ```shellscript
-sgnops init-candidate --commission-rate 1 --min-self-stake 1000 --rate-lock-period 10000
+sgnops init-candidate --commission-rate 500 --min-self-stake 1000 --rate-lock-period 10000
 ```
 
 It will take a while to complete the transactions on Ropsten.
