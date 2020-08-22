@@ -1,9 +1,6 @@
 package common
 
 import (
-	"os"
-	"os/exec"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 )
@@ -34,22 +31,6 @@ func TearDown(tokill []Killable) {
 	for _, p := range tokill {
 		ChkErr(p.Kill(), "kill process error")
 	}
-}
-
-func StartProcess(name string, args ...string) *os.Process {
-	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
-	if err != nil {
-		log.Infoln(err)
-	}
-	return cmd.Process
-}
-
-func KillProcess(p *os.Process) {
-	ChkErr(p.Kill(), "kill process error")
-	ChkErr(p.Release(), "kill release error")
 }
 
 func ChkErr(err error, msg string) {

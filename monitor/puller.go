@@ -71,7 +71,7 @@ func (m *Monitor) processPullerQueue() {
 			m.syncConfirmParamProposal(e, logmsg)
 
 		case *mainchain.SGNAddSubscriptionBalance:
-			m.syncSGNAddSubscriptionBalance(e, logmsg)
+			m.syncSubscriptionBalance(e, logmsg)
 
 		case *mainchain.CelerLedgerIntendSettle:
 			e.Raw = event.Log
@@ -113,25 +113,8 @@ func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSC
 	m.Transactor.AddTxMsg(msg)
 }
 
-func (m *Monitor) syncSGNAddSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance, logmsg string) {
-	transactor := m.Transactor
-	consumer := event.Consumer
-	consumerEthAddress := consumer.Hex()
-	amount := event.Amount
-	amountInt := sdk.NewIntFromBigInt(amount)
-	subscription, err := guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, consumerEthAddress)
-	if err == nil {
-		if subscription.Deposit.Equal(amountInt) {
-			log.Infof("%s. subscription already updated for %s, amount %s", logmsg, consumerEthAddress, amount)
-			return
-		}
-	}
-	subscription = guard.NewSubscription(consumer.Hex())
-	subscription.Deposit = sdk.NewIntFromBigInt(amount)
-	subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-	msg := m.Transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, m.EthClient.Client)
-	log.Infof("%s. submit change tx: subscribe ethAddress %s, amount %s, mainchain tx hash %x", logmsg, consumerEthAddress, amount, event.Raw.TxHash)
-	transactor.AddTxMsg(msg)
+func (m *Monitor) syncSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance, logmsg string) {
+	m.SyncSubscriptionBalance(event.Consumer, event.Amount)
 }
 
 func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, logmsg string) {

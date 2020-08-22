@@ -26,13 +26,10 @@
     "chainid": "sgntest",
     "baseGasPrice": 0,
     "nodeuri": "tcp://localhost:26657",
-    "operator": "cosmos1ddvpnk98da5hgzz8lf5y82gnsrhvu3jd3cukpp",
+    "operator": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
     "passphrase": "12341234",
-    "pubkey": "cosmosvalconspub1zcjduepqmnz2m5asxrqplfl52lm2meq8fq3hc562ljmc6lqawr6kzsmw2g3snvmrdy",
-    "transactors": [
-      "cosmos104gnaehlj7a32r9l5za7nhf463yvgnyfnwh9sc",
-      "cosmos1sev3nak38elq95lumnh6t2drjtfx73274vnnjh"
-    ],
+    "pubkey": "sgnvalconspub1zcjduepq22mf6x9zcxl7qy4h9e9v2gl4krmfq3002ga5ztmxdne4awn32yuq57794u",
+    "transactors": ["sgn15h2geedmud70gvpajdwpcaxfs4qcrw4z92zlqe"],
     "keyringBackend": "file",
     "timeoutCommit": 2,
     "executeSlash": true

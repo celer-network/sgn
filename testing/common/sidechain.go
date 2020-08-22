@@ -41,6 +41,14 @@ type SGNParams struct {
 	StartGateway           bool
 }
 
+func SetupSidechain() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(common.Bech32PrefixAccAddr, common.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(common.Bech32PrefixValAddr, common.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(common.Bech32PrefixConsAddr, common.Bech32PrefixConsPub)
+	config.Seal()
+}
+
 func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase string) *transactor.Transactor {
 	cdc := app.MakeCodec()
 	tr, err := transactor.NewTransactor(
@@ -129,7 +137,7 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 		}
 		time.Sleep(RetryPeriod)
 	}
-	require.NoError(t, err, "failed to queryCandidate")
+	require.NoError(t, err, "failed to queryCandidate", err)
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }

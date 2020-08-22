@@ -26,8 +26,8 @@ func GetSgnopsExecutor() cli.Executor {
 
 	rootCmd.AddCommand(
 		transactor.GetSyncCmd(cdc),
+		transactor.AccountsCommand(),
 		tc.DeployCommand(),
-		tc.AccountsCommand(),
 		channel.ServeCommand(),
 		ops.InitCandidateCommand(),
 		ops.DelegateCommand(),

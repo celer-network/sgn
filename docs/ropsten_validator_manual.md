@@ -139,7 +139,7 @@ sgncli query validator validators
 ```
 
 You should see an entry with `identity` equal to your `<candidate-eth-address>`.
-Make a note of the `consensus_pubkey` - the address prefixed with `cosmosvalconspub`.
+Make a note of the `consensus_pubkey` - the address prefixed with `sgnvalconspub`.
 
 19. Due to a possible issue with Ropsten gas estimation, your validator might fail to claim its
     validator status on mainchain. If your validator doesn't appear in the query, try claiming the

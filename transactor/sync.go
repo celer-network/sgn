@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
@@ -12,14 +13,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const (
-	FlagCandidate     = "candidator"
+	FlagCandidateAddr = "candidate"
 	FlagDelegatorAddr = "delegator"
+	FlagConsumerAddr  = "consumer"
 )
 
 // GetSyncCmd
@@ -36,6 +39,7 @@ func GetSyncCmd(cdc *codec.Codec) *cobra.Command {
 		GetSyncUpdateSidechainAddr(cdc),
 		GetCmdSyncValidator(cdc),
 		GetCmdSyncDelegator(cdc),
+		GetCmdSyncSubscriptionBalance(cdc),
 	)...)
 
 	return cmd
@@ -49,25 +53,25 @@ func GetSyncUpdateSidechainAddr(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx submit-change sync-update-sidechain-addr --candidator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ %s tx submit-change sync-update-sidechain-addr --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := NewOperator(cdc)
+			operator, err := NewOperator(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				return
 			}
 
-			candidate := viper.GetString(FlagCandidate)
+			candidate := viper.GetString(FlagCandidateAddr)
 			operator.SyncUpdateSidechainAddr(mainchain.Hex2Addr(candidate))
 			return
 		},
 	}
 
-	cmd.Flags().String(FlagCandidate, "", "Candidate address")
-	cmd.MarkFlagRequired(FlagCandidate)
+	cmd.Flags().String(FlagCandidateAddr, "", "Candidate address")
+	cmd.MarkFlagRequired(FlagCandidateAddr)
 
 	return cmd
 }
@@ -80,25 +84,25 @@ func GetCmdSyncValidator(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx submit-change sync-validator --candidator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ %s tx submit-change sync-validator --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := NewOperator(cdc)
+			operator, err := NewOperator(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				return
 			}
 
-			candidate := viper.GetString(FlagCandidate)
+			candidate := viper.GetString(FlagCandidateAddr)
 			operator.SyncValidator(mainchain.Hex2Addr(candidate))
 			return
 		},
 	}
 
-	cmd.Flags().String(FlagCandidate, "", "Candidate address")
-	cmd.MarkFlagRequired(FlagCandidate)
+	cmd.Flags().String(FlagCandidateAddr, "", "Candidate address")
+	cmd.MarkFlagRequired(FlagCandidateAddr)
 
 	return cmd
 }
@@ -111,28 +115,67 @@ func GetCmdSyncDelegator(cdc *codec.Codec) *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx submit-change sync-delegator --candidator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961" --delegator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ %s tx submit-change sync-delegator --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961" --delegator="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := NewOperator(cdc)
+			operator, err := NewOperator(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				return
 			}
 
-			candidate := viper.GetString(FlagCandidate)
+			candidate := viper.GetString(FlagCandidateAddr)
 			delegator := viper.GetString(FlagDelegatorAddr)
 			operator.SyncDelegator(mainchain.Hex2Addr(candidate), mainchain.Hex2Addr(delegator))
 			return
 		},
 	}
 
-	cmd.Flags().String(FlagCandidate, "", "Candidate address")
+	cmd.Flags().String(FlagCandidateAddr, "", "Candidate address")
 	cmd.Flags().String(FlagDelegatorAddr, "", "Delegator address")
-	cmd.MarkFlagRequired(FlagCandidate)
+	cmd.MarkFlagRequired(FlagCandidateAddr)
 	cmd.MarkFlagRequired(FlagDelegatorAddr)
+
+	return cmd
+}
+
+// GetCmdSyncSubscriptionBalance
+func GetCmdSyncSubscriptionBalance(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sync-subscription-balance",
+		Short: "Sync subscription balance info from mainchain",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+Example:
+$ %s tx submit-change sync-subscription-balance --consumer="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			operator, err := NewOperator(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				return
+			}
+
+			consumer := viper.GetString(FlagConsumerAddr)
+			consumerAddr := mainchain.Hex2Addr(consumer)
+			deposit, err := operator.EthClient.SGN.SubscriptionDeposits(
+				&bind.CallOpts{}, consumerAddr)
+			if err != nil {
+				return
+			}
+
+			operator.SyncSubscriptionBalance(consumerAddr, deposit)
+			time.Sleep(5 * time.Second)
+			return
+		},
+	}
+
+	cmd.Flags().String(FlagConsumerAddr, "", "Consumer address")
+	cmd.MarkFlagRequired(FlagConsumerAddr)
 
 	return cmd
 }

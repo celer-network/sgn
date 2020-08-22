@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,7 +22,7 @@ type Operator struct {
 	Transactor *Transactor
 }
 
-func NewOperator(cdc *codec.Codec) (operator *Operator, err error) {
+func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err error) {
 	ethClient, err := mainchain.NewEthClient(
 		viper.GetString(common.FlagEthGateway),
 		viper.GetString(common.FlagEthKeystore),
@@ -42,7 +43,7 @@ func NewOperator(cdc *codec.Codec) (operator *Operator, err error) {
 	}
 
 	transactor, err := NewTransactor(
-		viper.GetString(common.FlagCLIHome),
+		cliHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnOperator),
@@ -169,5 +170,24 @@ func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	delegatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(delegator)
 	msg := o.Transactor.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, o.EthClient.Client)
 	log.Infof("submit change tx: sync delegator %x candidate %x stake %s", delegatorAddr, candidatorAddr, delegator.DelegatedStake)
+	o.Transactor.AddTxMsg(msg)
+}
+
+func (o *Operator) SyncSubscriptionBalance(consumerAddr mainchain.Addr, deposit *big.Int) {
+	consumerAddrHex := consumerAddr.Hex()
+	depositInt := sdk.NewIntFromBigInt(deposit)
+	subscription, err := guard.CLIQuerySubscription(o.Transactor.CliCtx, guard.RouterKey, consumerAddrHex)
+	if err == nil {
+		if subscription.Deposit.Equal(depositInt) {
+			log.Infof("Subscription already updated for %s, deposit %s", consumerAddrHex, deposit)
+			return
+		}
+	}
+
+	subscription = guard.NewSubscription(consumerAddrHex)
+	subscription.Deposit = depositInt
+	subscriptionData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
+	msg := o.Transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, o.EthClient.Client)
+	log.Infof("Submit change tx: subscribe ethAddress %s, deposit %s", consumerAddrHex, deposit)
 	o.Transactor.AddTxMsg(msg)
 }

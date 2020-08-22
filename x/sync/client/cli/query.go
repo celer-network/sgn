@@ -104,8 +104,8 @@ func GetCmdQueryChanges(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Query for a all paginated changes that match optional filters:
 
 Example:
-$ %s query sync changes --depositor cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
-$ %s query sync changes --voter cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query sync changes --depositor sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
+$ %s query sync changes --voter sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
 $ %s query sync changes --status (VotingPeriod|Passed|Rejected)
 $ %s query sync changes --page=2 --limit=100
 `,
