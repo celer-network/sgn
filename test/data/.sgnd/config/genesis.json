@@ -12,9 +12,7 @@
       "max_age_duration": "172800000000000"
     },
     "validator": {
-      "pub_key_types": [
-        "ed25519"
-      ]
+      "pub_key_types": ["ed25519"]
     }
   },
   "app_hash": "",
@@ -92,7 +90,7 @@
       "votes": null,
       "proposals": null,
       "deposit_params": {
-        "min_deposit": "10",
+        "min_deposit": "1",
         "max_deposit_period": "172800000000000",
         "muted_duration": "10000000000"
       },
