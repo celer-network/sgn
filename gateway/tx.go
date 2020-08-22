@@ -29,22 +29,20 @@ func (rs *RestServer) registerTxRoutes() {
 		postWithdrawRewardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
-	/*
-		rs.Mux.HandleFunc(
-			"/guard/subscribe",
-			postSubscribeHandlerFn(rs),
-		).Methods(http.MethodPost, http.MethodOptions)
+	rs.Mux.HandleFunc(
+		"/guard/subscribe",
+		postSubscribeHandlerFn(rs),
+	).Methods(http.MethodPost, http.MethodOptions)
 
-		rs.Mux.HandleFunc(
-			"/validator/updateSidechainAddr",
-			postUpdateSidechainAddrHandlerFn(rs),
-		).Methods(http.MethodPost, http.MethodOptions)
+	rs.Mux.HandleFunc(
+		"/validator/updateSidechainAddr",
+		postUpdateSidechainAddrHandlerFn(rs),
+	).Methods(http.MethodPost, http.MethodOptions)
 
-		rs.Mux.HandleFunc(
-			"/validator/syncDelegator",
-			postSyncDelegatorHandlerFn(rs),
-		).Methods(http.MethodPost, http.MethodOptions)
-	*/
+	rs.Mux.HandleFunc(
+		"/validator/syncDelegator",
+		postSyncDelegatorHandlerFn(rs),
+	).Methods(http.MethodPost, http.MethodOptions)
 }
 
 type (
