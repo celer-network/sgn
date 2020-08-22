@@ -4,11 +4,9 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -53,7 +51,7 @@ func delegate() error {
 		amount,
 		candidate.Hex(),
 	)
-	receipt, err := ethClient.Transactor.TransactWaitMined(
+	_, err = ethClient.Transactor.TransactWaitMined(
 		"Delegate",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return ethClient.DPoS.Delegate(opts, candidate, amount)
@@ -62,7 +60,6 @@ func delegate() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Delegate transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 

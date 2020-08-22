@@ -49,7 +49,7 @@ func initCandidate() error {
 			commissionRate,
 			rateLockEndTime,
 		)
-		receipt, initCandidateErr := ethClient.Transactor.TransactWaitMined(
+		_, initCandidateErr := ethClient.Transactor.TransactWaitMined(
 			"InitializeCandidate",
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return dposContract.InitializeCandidate(opts, minSelfStake, commissionRate, rateLockEndTime)
@@ -58,7 +58,6 @@ func initCandidate() error {
 		if initCandidateErr != nil {
 			return initCandidateErr
 		}
-		log.Infof("Initialize candidate transaction %x succeeded", receipt.TxHash)
 	}
 
 	operatorAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
@@ -66,7 +65,7 @@ func initCandidate() error {
 		return err
 	}
 	log.Infof("Calling updateSidechainAddr for %s", operatorAddress)
-	receipt, err := ethClient.Transactor.TransactWaitMined(
+	_, err = ethClient.Transactor.TransactWaitMined(
 		"UpdateSidechainAddr",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return ethClient.SGN.UpdateSidechainAddr(opts, operatorAddress.Bytes())
@@ -75,7 +74,6 @@ func initCandidate() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Update sidechain address transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
