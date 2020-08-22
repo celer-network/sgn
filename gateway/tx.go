@@ -20,29 +20,31 @@ import (
 
 func (rs *RestServer) registerTxRoutes() {
 	rs.Mux.HandleFunc(
-		"/guard/subscribe",
-		postSubscribeHandlerFn(rs),
-	).Methods(http.MethodPost, http.MethodOptions)
-
-	rs.Mux.HandleFunc(
 		"/guard/requestGuard",
 		postRequestGuardHandlerFn(rs),
-	).Methods(http.MethodPost, http.MethodOptions)
-
-	rs.Mux.HandleFunc(
-		"/validator/updateSidechainAddr",
-		postUpdateSidechainAddrHandlerFn(rs),
-	).Methods(http.MethodPost, http.MethodOptions)
-
-	rs.Mux.HandleFunc(
-		"/validator/syncDelegator",
-		postSyncDelegatorHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
 		"/validator/withdrawReward",
 		postWithdrawRewardHandlerFn(rs),
 	).Methods(http.MethodPost, http.MethodOptions)
+
+	/*
+		rs.Mux.HandleFunc(
+			"/guard/subscribe",
+			postSubscribeHandlerFn(rs),
+		).Methods(http.MethodPost, http.MethodOptions)
+
+		rs.Mux.HandleFunc(
+			"/validator/updateSidechainAddr",
+			postUpdateSidechainAddrHandlerFn(rs),
+		).Methods(http.MethodPost, http.MethodOptions)
+
+		rs.Mux.HandleFunc(
+			"/validator/syncDelegator",
+			postSyncDelegatorHandlerFn(rs),
+		).Methods(http.MethodPost, http.MethodOptions)
+	*/
 }
 
 type (
@@ -69,28 +71,6 @@ type (
 		EthAddr string `json:"ethAddr" yaml:"ethAddr"`
 	}
 )
-
-func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req SubscribeRequest
-		transactor := rs.transactorPool.GetTransactor()
-		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
-			return
-		}
-
-		subscription := guard.NewSubscription(req.EthAddr)
-		deposit, ok := sdk.NewIntFromString(req.Amount)
-		if !ok {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid deposit amount")
-			return
-		}
-
-		subscription.Deposit = deposit
-		subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-		msg := transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, rs.ethClient)
-		writeGenerateStdTxResponse(w, transactor, msg)
-	}
-}
 
 func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -202,6 +182,56 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
+func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "content-type")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		var req WithdrawRewardRequest
+		transactor := rs.transactorPool.GetTransactor()
+		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
+			return
+		}
+		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, req.EthAddr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if !reward.HasNewReward() {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "reward request is already the latest")
+			return
+		}
+
+		msg := validator.NewMsgWithdrawReward(req.EthAddr, transactor.CliCtx.GetFromAddress())
+		writeGenerateStdTxResponse(w, transactor, msg)
+	}
+}
+
+func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req SubscribeRequest
+		transactor := rs.transactorPool.GetTransactor()
+		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
+			return
+		}
+
+		subscription := guard.NewSubscription(req.EthAddr)
+		deposit, ok := sdk.NewIntFromString(req.Amount)
+		if !ok {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid deposit amount")
+			return
+		}
+
+		subscription.Deposit = deposit
+		subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
+		msg := transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, rs.ethClient)
+		writeGenerateStdTxResponse(w, transactor, msg)
+	}
+}
+
 func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req UpdateSidechainAddrRequest
@@ -243,34 +273,6 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 		delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 		delegatorData := transactor.CliCtx.Codec.MustMarshalBinaryBare(delegator)
 		msg := transactor.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, rs.ethClient)
-		writeGenerateStdTxResponse(w, transactor, msg)
-	}
-}
-
-func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "content-type")
-		if r.Method == http.MethodOptions {
-			return
-		}
-
-		var req WithdrawRewardRequest
-		transactor := rs.transactorPool.GetTransactor()
-		if !rest.ReadRESTReq(w, r, transactor.CliCtx.Codec, &req) {
-			return
-		}
-		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, req.EthAddr)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		if !reward.HasNewReward() {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "reward request is already the latest")
-			return
-		}
-
-		msg := validator.NewMsgWithdrawReward(req.EthAddr, transactor.CliCtx.GetFromAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
