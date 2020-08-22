@@ -2,10 +2,8 @@ package ops
 
 import (
 	"github.com/celer-network/goutils/log"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +13,7 @@ func updateMinSelfStake() error {
 	amount := calcRawAmount(viper.GetString(amountFlag))
 
 	log.Infof("Update minimal self-delegated stake to %s", amount)
-	receipt, err := ethClient.Transactor.TransactWaitMined(
+	_, err = ethClient.Transactor.TransactWaitMined(
 		"UpdateMinSelfStake",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return ethClient.DPoS.UpdateMinSelfStake(opts, amount)
@@ -24,7 +22,6 @@ func updateMinSelfStake() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("UpdateMinSelfStake transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 

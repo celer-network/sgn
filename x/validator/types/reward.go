@@ -61,11 +61,12 @@ func (r Reward) HasNewReward() bool {
 
 // Initiate the withdraw process
 func (r *Reward) InitateWithdraw() {
-	rewardBytes, _ := proto.Marshal(&sgn.Reward{
-		Receiver:                mainchain.Hex2Bytes(r.Receiver),
-		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
-		CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
-	})
+	rewardBytes, _ := proto.Marshal(
+		&sgn.Reward{
+			Receiver:                mainchain.Hex2Bytes(r.Receiver),
+			CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
+			CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
+		})
 
 	r.RewardProtoBytes = rewardBytes
 	r.Sigs = []common.Sig{}

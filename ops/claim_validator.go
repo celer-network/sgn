@@ -3,11 +3,9 @@ package ops
 import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,7 +21,7 @@ func claimValidator() error {
 		return err
 	}
 	log.Infof("Calling claimValidator for %s", operatorAddress)
-	receipt, err := ethClient.Transactor.TransactWaitMined(
+	_, err = ethClient.Transactor.TransactWaitMined(
 		"ClaimValidator",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return ethClient.DPoS.ClaimValidator(opts)
@@ -32,7 +30,6 @@ func claimValidator() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Claim validator transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
