@@ -29,7 +29,7 @@ const (
 
 var (
 	SgnCLIHomes    = [...]string{"../../../docker-volumes/node0/sgncli", "../../../docker-volumes/node1/sgncli", "../../../docker-volumes/node2/sgncli"}
-	SgnOperators   = [...]string{"sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk", "sgn1egtta7su5jxjahtw56pe07qerz4lwvrlttac6y", "sgn19q9usqmjcmx8vynynfl5tj5n2k22gc5f6wjvd7"}
+	ValAccounts    = [...]string{"sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk", "sgn1egtta7su5jxjahtw56pe07qerz4lwvrlttac6y", "sgn19q9usqmjcmx8vynynfl5tj5n2k22gc5f6wjvd7"}
 	ValEthKs       = [...]string{"../../keys/ethks0.json", "../../keys/ethks1.json", "../../keys/ethks2.json"}
 	ValEthAddrs    = [...]string{"6a6d2a97da1c453a4e099e8054865a0a59728863", "ba756d65a1a03f07d205749f35e2406e4a8522ad", "f25d8b54fad6e976eb9175659ae01481665a2254"}
 	ClientEthKs    = [...]string{"../../keys/ethks3.json", "../../keys/ethks4.json"}

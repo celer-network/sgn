@@ -138,7 +138,7 @@ func getLastValidatorsByAddr(ctx sdk.Context, k staking.Keeper) validatorsByAddr
 }
 
 // given a map of remaining validators to previous bonded power
-// returns the list of validators to be unbonded, sorted by operator address
+// returns the list of validators to be unbonded, sorted by validator account address
 func sortNoLongerBonded(last validatorsByAddr) [][]byte {
 	// sort the map keys for determinism
 	noLongerBonded := make([][]byte, len(last))

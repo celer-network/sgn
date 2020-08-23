@@ -61,7 +61,7 @@ func AssignGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
 		keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
-		assignedGuards = append(assignedGuards, candidate.Operator)
+		assignedGuards = append(assignedGuards, candidate.ValAccount)
 	}
 
 	return assignedGuards

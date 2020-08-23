@@ -42,7 +42,7 @@ func sidechainGovTest(t *testing.T) {
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
-		tc.SgnOperators[0],
+		tc.ValAccounts[0],
 		tc.SgnPassphrase,
 	)
 
@@ -51,7 +51,7 @@ func sidechainGovTest(t *testing.T) {
 		tc.SgnCLIHomes[1],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
-		tc.SgnOperators[1],
+		tc.ValAccounts[1],
 		tc.SgnPassphrase,
 	)
 
@@ -60,7 +60,7 @@ func sidechainGovTest(t *testing.T) {
 		tc.SgnCLIHomes[2],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
-		tc.SgnOperators[2],
+		tc.ValAccounts[2],
 		tc.SgnPassphrase,
 	)
 
@@ -68,7 +68,7 @@ func sidechainGovTest(t *testing.T) {
 	amt2 := big.NewInt(2000000000000000000)
 	amt3 := big.NewInt(2000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
-	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 
 	log.Info("======================== Test change epochlengh rejected due to small quorum ===========================")
 	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
@@ -223,7 +223,7 @@ func mainchainGovTest(t *testing.T) {
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
-		tc.SgnOperators[0],
+		tc.ValAccounts[0],
 		tc.SgnPassphrase,
 	)
 
@@ -231,7 +231,7 @@ func mainchainGovTest(t *testing.T) {
 	amt2 := big.NewInt(2000000000000000000)
 	amt3 := big.NewInt(2000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 
 	_, auth0, err := tc.GetAuth(tc.ValEthKs[0])
 	require.NoError(t, err, "failed to get auth0")

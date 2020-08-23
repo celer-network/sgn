@@ -60,15 +60,15 @@ func initCandidate() error {
 		}
 	}
 
-	operatorAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagValidatorAccount))
 	if err != nil {
 		return err
 	}
-	log.Infof("Calling updateSidechainAddr for %s", operatorAddress)
+	log.Infof("Calling updateSidechainAddr for %s", acctAddress)
 	_, err = ethClient.Transactor.TransactWaitMined(
 		"UpdateSidechainAddr",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return ethClient.SGN.UpdateSidechainAddr(opts, operatorAddress.Bytes())
+			return ethClient.SGN.UpdateSidechainAddr(opts, acctAddress.Bytes())
 		},
 	)
 	if err != nil {

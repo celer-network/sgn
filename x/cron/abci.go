@@ -25,7 +25,7 @@ func resetRateLimit(ctx sdk.Context, keeper Keeper) {
 		totalAccounts := int64(len(candidate.Transactors) + 1)
 		quota := sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, candidate.StakingPool.QuoRaw(common.TokenDec).QuoRaw(totalAccounts)))
 		// NOTE: make sure sendEnable is false
-		err := keeper.bankKeeper.SetCoins(ctx, candidate.Operator, quota)
+		err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, quota)
 		if err != nil {
 			log.Errorln("SetCoins err", err)
 			continue

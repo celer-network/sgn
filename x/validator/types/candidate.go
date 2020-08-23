@@ -28,10 +28,10 @@ func (d Delegator) String() string {
 		d.CandidateAddr, d.DelegatorAddr, d.DelegatedStake))
 }
 
-// operator will be used for running validator node, and transactor will be used for running gateway
+// valAccount will be used for running validator node, and transactors will be used for running gateway
 type Candidate struct {
 	EthAddress     string              `json:"ethAddress"`
-	Operator       sdk.AccAddress      `json:"operator"`
+	ValAccount     sdk.AccAddress      `json:"valAccount"`
 	Transactors    []sdk.AccAddress    `json:"transactors"`
 	Delegators     []Delegator         `json:"delegators"`
 	StakingPool    sdk.Int             `json:"stakingPool"`
@@ -40,14 +40,14 @@ type Candidate struct {
 	Description    staking.Description `json:"description"`
 }
 
-func NewCandidate(ethAddress string, operator sdk.AccAddress) Candidate {
+func NewCandidate(ethAddress string, acctAddress sdk.AccAddress) Candidate {
 	return Candidate{
 		EthAddress: mainchain.FormatAddrHex(ethAddress),
-		Operator:   operator,
+		ValAccount: acctAddress,
 	}
 }
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, EthAddress: %s, StakingPool: %v`, c.Operator, c.EthAddress, c.StakingPool))
+	return strings.TrimSpace(fmt.Sprintf(`ValAccount: %s, EthAddress: %s, StakingPool: %v`, c.ValAccount, c.EthAddress, c.StakingPool))
 }

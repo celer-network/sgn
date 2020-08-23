@@ -212,7 +212,7 @@ func (k Keeper) SetPenalty(ctx sdk.Context, penalty Penalty) {
 	store.Set(GetPenaltyKey(penalty.Nonce), k.cdc.MustMarshalBinaryBare(penalty))
 }
 
-// Stored by *validator* address (not operator address)
+// Stored by *validator consensus* address (not account address)
 func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress) (info slashing.ValidatorSigningInfo, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(slashing.GetValidatorSigningInfoKey(address))
@@ -226,14 +226,14 @@ func (k Keeper) GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress
 	return
 }
 
-// Stored by *validator* address (not operator address)
+// Stored by *validator consensus* address (not account address)
 func (k Keeper) SetValidatorSigningInfo(ctx sdk.Context, info slashing.ValidatorSigningInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(info)
 	store.Set(slashing.GetValidatorSigningInfoKey(info.Address), bz)
 }
 
-// Stored by *validator* address (not operator address)
+// Stored by *validator consensus* address (not account address)
 func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.ConsAddress, index int64) (missed bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(slashing.GetValidatorMissedBlockBitArrayKey(address, index))
@@ -247,14 +247,14 @@ func (k Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.Con
 	return
 }
 
-// Stored by *validator* address (not operator address)
+// Stored by *validator consensus* address (not account address)
 func (k Keeper) SetValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.ConsAddress, index int64, missed bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryLengthPrefixed(missed)
 	store.Set(slashing.GetValidatorMissedBlockBitArrayKey(address, index), bz)
 }
 
-// Stored by *validator* address (not operator address)
+// Stored by *validator consensus* address (not account address)
 func (k Keeper) ClearValidatorMissedBlockBitArray(ctx sdk.Context, address sdk.ConsAddress) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, slashing.GetValidatorMissedBlockBitArrayPrefixKey(address))

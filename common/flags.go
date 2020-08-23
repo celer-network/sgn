@@ -20,7 +20,7 @@ const (
 	FlagEthMinGasPriceGwei = "eth.minGasPriceGwei"
 	FlagEthAddGasPriceGwei = "eth.addGasPriceGwei"
 
-	FlagSgnOperator       = "sgn.operator"
+	FlagValidatorAccount  = "sgn.validator_account"
 	FlagSgnTransactors    = "sgn.transactors"
 	FlagSgnPassphrase     = "sgn.passphrase"
 	FlagSgnPubKey         = "sgn.pubkey"

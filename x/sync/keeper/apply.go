@@ -71,12 +71,12 @@ func (keeper Keeper) UpdateSidechainAddr(ctx sdk.Context, change types.Change) (
 	log.Infoln("Apply new candidate", c)
 	candidate, found := keeper.validatorKeeper.GetCandidate(ctx, c.EthAddress)
 	if found {
-		candidate.Operator = c.Operator
+		candidate.ValAccount = c.ValAccount
 	} else {
 		candidate = c
 	}
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
-	keeper.validatorKeeper.InitAccount(ctx, c.Operator)
+	keeper.validatorKeeper.InitAccount(ctx, c.ValAccount)
 
 	return true, nil
 }
@@ -106,24 +106,24 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	if !found {
 		return false, fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
 	}
-	valAddress := sdk.ValAddress(candidate.Operator)
+	valAddress := sdk.ValAddress(candidate.ValAccount)
 
 	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission rate %s",
-		candidate.Operator, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission.CommissionRates.Rate)
+		candidate.ValAccount, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission.CommissionRates.Rate)
 
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		if v.Status == sdk.Bonded {
 			if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-				return false, fmt.Errorf("Bonded validator %s not found, msg sender: %s", candidate.Operator, change.Initiator)
+				return false, fmt.Errorf("Bonded validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
 			}
 
 			validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 		} else if v.Status == sdk.Unbonding {
-			return false, fmt.Errorf("Unbonding validator %s not found, msg sender: %s", candidate.Operator, change.Initiator)
+			return false, fmt.Errorf("Unbonding validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
 		} else {
-			log.Infof("Validator %s already unbonded", candidate.Operator)
+			log.Infof("Validator %s already unbonded", candidate.ValAccount)
 			return false, nil
 		}
 	}
@@ -142,7 +142,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	} else if validator.Status == sdk.Unbonded {
-		log.Infof("remove validator %s %s %x", valAddress, candidate.Operator, mainchain.Hex2Addr(v.Description.Identity))
+		log.Infof("remove validator %s %s %x", valAddress, candidate.ValAccount, mainchain.Hex2Addr(v.Description.Identity))
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	}
 
@@ -255,7 +255,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) (bool, err
 	} else {
 		rewardCandidate, found := keeper.validatorKeeper.GetCandidate(ctx, request.GuardSender)
 		if found {
-			rewardValidator = rewardCandidate.Operator
+			rewardValidator = rewardCandidate.ValAccount
 		}
 
 		guardIndex = len(assignedGuards)

@@ -41,7 +41,7 @@ func upgradeTest(t *testing.T) {
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnOperator),
+		viper.GetString(common.FlagValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 
