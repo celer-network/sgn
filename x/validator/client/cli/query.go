@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingCli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 )
@@ -30,13 +29,13 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	validatorQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdSyncer(storeKey, cdc),
-		GetCmdDelegator(storeKey, cdc),
 		GetCmdCandidate(storeKey, cdc),
+		GetCmdDelegator(storeKey, cdc),
+		GetCmdValidator(staking.StoreKey, cdc),
+		GetCmdValidators(staking.StoreKey, cdc),
+		GetCmdSyncer(storeKey, cdc),
 		GetCmdReward(storeKey, cdc),
 		GetCmdRewardRequest(storeKey, cdc),
-		stakingCli.GetCmdQueryValidator(staking.StoreKey, cdc),
-		stakingCli.GetCmdQueryValidators(staking.StoreKey, cdc),
 	)...)
 	return validatorQueryCmd
 }
@@ -75,8 +74,8 @@ func QuerySyncer(cliCtx context.CLIContext, queryRoute string) (syncer types.Syn
 // GetCmdDelegator queries request info
 func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "delegator [candidateAddress] [delegatorAddress]",
-		Short: "query delegator info by candidateAddress and delegatorAddress",
+		Use:   "delegator [candidateEthAddr] [delegatorEthAddr]",
+		Short: "query delegator info by candidateEthAddr and delegatorEthAddr",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -110,8 +109,8 @@ func QueryDelegator(cliCtx context.CLIContext, queryRoute, candidateAddress, del
 // GetCmdCandidate queries request info
 func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "candidate [candidateAddress]",
-		Short: "query candidate info by candidateAddress",
+		Use:   "candidate [candidateEthAddr]",
+		Short: "query candidate info by candidateEthAddr",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -140,6 +139,46 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 
 	err = cliCtx.Codec.UnmarshalJSON(res, &candidate)
 	return
+}
+
+// GetCmdValidator queries validator info
+func GetCmdValidator(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "validator [validator account address]",
+		Short: "query a validator by account address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			validator, err := QueryValidator(cliCtx, queryRoute, args[0])
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+			output := getValidatorOutput(&validator)
+			return cliCtx.PrintOutput(output)
+		},
+	}
+}
+
+// GetCmdValidator queries validator info
+func GetCmdValidators(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "validators",
+		Short: "query all validators",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			validators, err := QueryValidators(cliCtx, queryRoute)
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+			var outputs []ValidatorOutput
+			for _, v := range validators {
+				outputs = append(outputs, getValidatorOutput(&v))
+			}
+			return cliCtx.PrintOutput(outputs)
+		},
+	}
 }
 
 // QueryValidators is an interface for convenience to query (all) validators in staking module
@@ -247,4 +286,38 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 
 	err = cliCtx.Codec.UnmarshalJSON(res, &reward)
 	return
+}
+
+type ValidatorOutput struct {
+	AccountAddress  sdk.AccAddress      `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
+	OperatorAddress sdk.ValAddress      `json:"operator_address" yaml:"operator_address"` // address of the validator's operator; bech encoded in JSON
+	ConsPubKey      string              `json:"consensus_pubkey" yaml:"consensus_pubkey"` // the consensus public key of the validator; bech encoded in JSON
+	Status          string              `json:"status" yaml:"status"`                     // validator status (bonded/unbonding/unbonded)
+	Tokens          sdk.Int             `json:"tokens" yaml:"tokens"`                     // delegated tokens (incl. self-delegation)
+	DelegatorShares sdk.Dec             `json:"delegator_shares" yaml:"delegator_shares"` // total shares issued to a validator's delegators
+	CommissionRate  sdk.Dec             `json:"commissionRate"`
+	Description     staking.Description `json:"description" yaml:"description"` // description terms for the validator
+}
+
+func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
+	bechConsPubKey, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, v.ConsPubKey)
+	if err != nil {
+		log.Error(err)
+	}
+	status := sdk.BondStatusUnbonded
+	if v.Status == sdk.Unbonding {
+		status = sdk.BondStatusUnbonding
+	} else if v.Status == sdk.Bonded {
+		status = sdk.BondStatusBonded
+	}
+	return ValidatorOutput{
+		AccountAddress:  sdk.AccAddress(v.OperatorAddress),
+		OperatorAddress: v.OperatorAddress,
+		ConsPubKey:      bechConsPubKey,
+		Status:          status,
+		Tokens:          v.Tokens,
+		DelegatorShares: v.DelegatorShares,
+		CommissionRate:  v.Commission.CommissionRates.Rate,
+		Description:     v.Description,
+	}
 }
