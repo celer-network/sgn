@@ -74,8 +74,8 @@ func QuerySyncer(cliCtx context.CLIContext, queryRoute string) (syncer types.Syn
 // GetCmdDelegator queries request info
 func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "delegator [candidateEthAddr] [delegatorEthAddr]",
-		Short: "query delegator info by candidateEthAddr and delegatorEthAddr",
+		Use:   "delegator [candidate-eth-addr] [delegator-eth-addr]",
+		Short: "query delegator info by candidate and delegator ETH addresses",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -109,8 +109,8 @@ func QueryDelegator(cliCtx context.CLIContext, queryRoute, candidateAddress, del
 // GetCmdCandidate queries request info
 func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "candidate [candidateEthAddr]",
-		Short: "query candidate info by candidateEthAddr",
+		Use:   "candidate [candidate-eth-addr]",
+		Short: "query candidate info by candidate ETH address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -144,7 +144,7 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 // GetCmdValidator queries validator info
 func GetCmdValidator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "validator [validator account address]",
+		Use:   "validator [validator-account-address]",
 		Short: "query a validator by account address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -235,8 +235,8 @@ func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string)
 // GetCmdReward queries reward info
 func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "reward [ethAddress]",
-		Short: "query reward info",
+		Use:   "reward [eth-address]",
+		Short: "query reward info by delegator or validator ETH address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -254,8 +254,8 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // GetCmdRewardRequest queries reward request
 func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "reward-request [ethAddress]",
-		Short: "query reward request",
+		Use:   "reward-request [eth-address]",
+		Short: "query reward request by delegator or validator ETH address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

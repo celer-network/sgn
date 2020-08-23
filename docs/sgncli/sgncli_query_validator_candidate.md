@@ -1,13 +1,13 @@
 ## sgncli query validator candidate
 
-query candidate info by candidateEthAddr
+query candidate info by candidate ETH address
 
 ### Synopsis
 
-query candidate info by candidateEthAddr
+query candidate info by candidate ETH address
 
 ```
-sgncli query validator candidate [candidateEthAddr] [flags]
+sgncli query validator candidate [candidate-eth-addr] [flags]
 ```
 
 ### Options

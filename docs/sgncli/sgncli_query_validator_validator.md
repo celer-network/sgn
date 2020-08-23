@@ -7,7 +7,7 @@ query a validator by account address
 query a validator by account address
 
 ```
-sgncli query validator validator [validator account address] [flags]
+sgncli query validator validator [validator-account-address] [flags]
 ```
 
 ### Options

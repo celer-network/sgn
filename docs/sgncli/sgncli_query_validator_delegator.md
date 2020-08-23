@@ -1,13 +1,13 @@
 ## sgncli query validator delegator
 
-query delegator info by candidateEthAddr and delegatorEthAddr
+query delegator info by candidate and delegator ETH addresses
 
 ### Synopsis
 
-query delegator info by candidateEthAddr and delegatorEthAddr
+query delegator info by candidate and delegator ETH addresses
 
 ```
-sgncli query validator delegator [candidateEthAddr] [delegatorEthAddr] [flags]
+sgncli query validator delegator [candidate-eth-addr] [delegator-eth-addr] [flags]
 ```
 
 ### Options

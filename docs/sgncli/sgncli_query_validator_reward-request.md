@@ -1,13 +1,13 @@
 ## sgncli query validator reward-request
 
-query reward request
+query reward request by delegator or validator ETH address
 
 ### Synopsis
 
-query reward request
+query reward request by delegator or validator ETH address
 
 ```
-sgncli query validator reward-request [ethAddress] [flags]
+sgncli query validator reward-request [eth-address] [flags]
 ```
 
 ### Options
