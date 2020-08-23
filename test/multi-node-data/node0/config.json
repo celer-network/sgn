@@ -26,9 +26,9 @@
     "base_gas_price": 0,
     "node_uri": "tcp://localhost:26657",
     "validator_account": "sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk",
-       "passphrase": "12341234",
-       "pubkey": "sgnvalconspub1zcjduepq22mf6x9zcxl7qy4h9e9v2gl4krmfq3002ga5ztmxdne4awn32yuq57794u",
-       "transactors": ["sgn15h2geedmud70gvpajdwpcaxfs4qcrw4z92zlqe"],
+    "passphrase": "12341234",
+    "pubkey": "sgnvalconspub1zcjduepq22mf6x9zcxl7qy4h9e9v2gl4krmfq3002ga5ztmxdne4awn32yuq57794u",
+    "transactors": ["sgn15h2geedmud70gvpajdwpcaxfs4qcrw4z92zlqe"],
     "timeout_commit": 2,
     "keyring_backend": "file",
     "execute_slash": true
