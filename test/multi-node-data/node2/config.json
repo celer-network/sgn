@@ -30,7 +30,7 @@
     "pubkey": "sgnvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qggrxg9",
     "transactors": ["sgn190xknjnht45ypumxcq7da4plsnuuvf0amyzsv3"],
     "timeout_commit": 2,
-    "keyringbackend": "file",
+    "keyring_backend": "file",
     "execute_slash": true
   }
 }
