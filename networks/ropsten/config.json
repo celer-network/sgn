@@ -29,7 +29,7 @@
     "chainId": "sgnchain",
     "baseGasPrice": 0,
     "nodeUri": "tcp://localhost:26657",
-    "operator": "[OPERATOR_ADDRESS]",
+    "validator_account": "[OPERATOR_ADDRESS]",
     "passphrase": "[TRANSACTOR_PASSPHRASE]",
     "pubkey": "[VALIDATOR_PUBKEY]",
     "transactors": ["TRANSACTOR_ADDRESS"],

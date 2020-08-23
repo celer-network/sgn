@@ -83,7 +83,7 @@ func NewMonitor(operator *transactor.Operator, db dbm.DB) {
 		bootstrapped:    valnum.Uint64() > 0,
 		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
 	}
-	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagValidatorAccount))
 	if err != nil {
 		log.Fatalln("Sidechain acct error")
 	}

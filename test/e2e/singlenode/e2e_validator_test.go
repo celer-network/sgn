@@ -55,6 +55,6 @@ func validatorTest(t *testing.T) {
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
 	log.Infof("my eth address %x", ethAddr)
 	require.NoError(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 	tc.CheckValidatorNum(t, transactor, 1)
 }

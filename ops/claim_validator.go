@@ -16,11 +16,11 @@ func claimValidator() error {
 		return err
 	}
 
-	operatorAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagValidatorAccount))
 	if err != nil {
 		return err
 	}
-	log.Infof("Calling claimValidator for %s", operatorAddress)
+	log.Infof("Calling claimValidator for %s", acctAddress)
 	_, err = ethClient.Transactor.TransactWaitMined(
 		"ClaimValidator",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {

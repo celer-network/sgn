@@ -60,7 +60,7 @@ func guardTest(t *testing.T) {
 	amt3 := big.NewInt(1000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 	_, auth, err := tc.GetAuth(tc.ValEthKs[1])
 	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
 	require.NoError(t, err, "failed to delegate stake")

@@ -46,7 +46,7 @@ func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err erro
 		cliHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnOperator),
+		viper.GetString(common.FlagValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 		cdc,
 		NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
@@ -69,7 +69,7 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 	}
 
 	c, err := validator.CLIQueryCandidate(o.Transactor.CliCtx, validator.RouterKey, mainchain.Addr2Hex(candidateAddr))
-	if err == nil && sdk.AccAddress(sidechainAddr).Equals(c.Operator) {
+	if err == nil && sdk.AccAddress(sidechainAddr).Equals(c.ValAccount) {
 		log.Debugf("sidechain address of candidate %x is already updated", candidateAddr)
 		return
 	}
@@ -77,7 +77,7 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 	candidate := validator.NewCandidate(candidateAddr.Hex(), sdk.AccAddress(sidechainAddr))
 	candidateData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(candidate)
 	msg := o.Transactor.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, o.EthClient.Client)
-	log.Infof("submit change tx: update sidechain addr for candidate %s %s", candidate.EthAddress, candidate.Operator.String())
+	log.Infof("submit change tx: update sidechain addr for candidate %s %s", candidate.EthAddress, candidate.ValAccount.String())
 	o.Transactor.AddTxMsg(msg)
 }
 
@@ -90,13 +90,13 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 	}
 
 	var selfInit bool
-	v, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.Operator.String())
+	v, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
 	if err != nil {
 		if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.Operator, err)
+			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.ValAccount, err)
 			return false
 		} else if o.EthClient.Address != candidateAddr {
-			log.Debugf("Candidate %x %s is not a validator on sidechain yet", candidateAddr, candidate.Operator)
+			log.Debugf("Candidate %x %s is not a validator on sidechain yet", candidateAddr, candidate.ValAccount)
 			return false
 		}
 		selfInit = true

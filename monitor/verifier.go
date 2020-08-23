@@ -114,7 +114,7 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 
 	c, err := validator.CLIQueryCandidate(m.Transactor.CliCtx, validator.RouterKey, candidate.EthAddress)
 	if err == nil {
-		if candidate.Operator.Equals(c.Operator) {
+		if candidate.ValAccount.Equals(c.ValAccount) {
 			log.Infof("%s. sidechain addr already updated", logmsg)
 			return true, false
 		}
@@ -126,12 +126,12 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if !candidate.Operator.Equals(sdk.AccAddress(sidechainAddr)) {
+	if !candidate.ValAccount.Equals(sdk.AccAddress(sidechainAddr)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. operator not match mainchain value: %s", logmsg, sdk.AccAddress(sidechainAddr))
+			log.Errorf("%s. validator account not match mainchain value: %s", logmsg, sdk.AccAddress(sidechainAddr))
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, operator: %s", logmsg, sdk.AccAddress(sidechainAddr))
+		log.Infof("%s. mainchain block not passed, validator account: %s", logmsg, sdk.AccAddress(sidechainAddr))
 		return false, false
 	}
 
@@ -184,11 +184,11 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	logmsg := fmt.Sprintf("verify change id %d, sync validator: Operator: %s, EthAddress %x, Status %s, Token %s, Commission %s",
-		change.ID, candidate.Operator.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission.CommissionRates.Rate)
+	logmsg := fmt.Sprintf("verify change id %d, sync validator: Account %s, EthAddress %x, Status %s, Token %s, Commission %s",
+		change.ID, candidate.ValAccount.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission.CommissionRates.Rate)
 
 	v, err := validator.CLIQueryValidator(
-		m.Transactor.CliCtx, staking.RouterKey, candidate.Operator.String())
+		m.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
 	if err == nil {
 		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
 			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {

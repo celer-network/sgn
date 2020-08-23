@@ -57,7 +57,7 @@ func guardTest(t *testing.T) {
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
 	require.NoError(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.SgnOperators[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
 	e2ecommon.SubscribteTestCommon(t, transactor, amt, "", 1)
 }

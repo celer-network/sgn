@@ -51,7 +51,7 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 		return nil, fmt.Errorf("Candidate does not exist")
 	}
 
-	if !candidate.Operator.Equals(msg.Sender) {
+	if !candidate.ValAccount.Equals(msg.Sender) {
 		return nil, fmt.Errorf("The candidate is not operated by the sender.")
 	}
 
@@ -75,7 +75,7 @@ func handleMsgEditCandidateDescription(ctx sdk.Context, keeper Keeper, msg MsgEd
 		return nil, fmt.Errorf("Candidate does not exist")
 	}
 
-	if !candidate.Operator.Equals(msg.Sender) {
+	if !candidate.ValAccount.Equals(msg.Sender) {
 		return nil, fmt.Errorf("The candidate is not operated by the sender.")
 	}
 
