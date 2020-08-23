@@ -126,12 +126,19 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if !candidate.ValAccount.Equals(sdk.AccAddress(sidechainAddr)) {
+	acctAddr := sdk.AccAddress(sidechainAddr)
+	err = sdk.VerifyAddressFormat(acctAddr)
+	if err != nil {
+		log.Errorf("%s. verify address format err: %s", logmsg, err)
+		return true, false
+	}
+
+	if !candidate.ValAccount.Equals(acctAddr) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. validator account not match mainchain value: %s", logmsg, sdk.AccAddress(sidechainAddr))
+			log.Errorf("%s. validator account not match mainchain value: %s", logmsg, acctAddr)
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, validator account: %s", logmsg, sdk.AccAddress(sidechainAddr))
+		log.Infof("%s. mainchain block not passed, validator account: %s", logmsg, acctAddr)
 		return false, false
 	}
 
