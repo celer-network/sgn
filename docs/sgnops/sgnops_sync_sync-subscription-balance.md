@@ -1,14 +1,14 @@
-## sgnops sync sync-update-sidechain-addr
+## sgnops sync sync-subscription-balance
 
-Sync sidechain address from mainchain
+Sync subscription balance info from mainchain
 
 ### Synopsis
 
 Example:
-$ <appcli> tx submit-change sync-update-sidechain-addr --candidate="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
+$ <appcli> tx submit-change sync-subscription-balance --consumer="0xf75f679d958b7610bad84e3baef2f9fa3e9bd961"
 
 ```
-sgnops sync sync-update-sidechain-addr [flags]
+sgnops sync sync-subscription-balance [flags]
 ```
 
 ### Options
@@ -16,7 +16,7 @@ sgnops sync sync-update-sidechain-addr [flags]
 ```
   -a, --account-number uint      The account number of the signing account (offline mode only)
   -b, --broadcast-mode string    Transaction broadcasting mode (sync|async|block) (default "sync")
-      --candidate string         Candidate address
+      --consumer string          Consumer address
       --dry-run                  ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it
       --fees string              Fees to pay along with transaction; eg: 10uatom
       --from string              Name or address of private key with which to sign
@@ -24,7 +24,7 @@ sgnops sync sync-update-sidechain-addr [flags]
       --gas-adjustment float     adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored  (default 1)
       --gas-prices string        Gas prices to determine the transaction fee (e.g. 10uatom)
       --generate-only            Build an unsigned transaction and write it to STDOUT (when enabled, the local Keybase is not accessible and the node operates offline)
-  -h, --help                     help for sync-update-sidechain-addr
+  -h, --help                     help for sync-subscription-balance
       --indent                   Add indent to JSON response
       --keyring-backend string   Select keyring's backend (os|file|test) (default "os")
       --ledger                   Use a connected Ledger device
