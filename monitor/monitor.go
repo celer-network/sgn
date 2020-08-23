@@ -135,7 +135,7 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 			EventName:     string(UpdateSidechainAddr),
 			Contract:      m.sgnContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(UpdateSidechainAddr),
+			CheckInterval: getEventCheckInterval(UpdateSidechainAddr),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
@@ -167,7 +167,7 @@ func (m *Monitor) monitorSGNAddSubscriptionBalance() {
 			EventName:     string(AddSubscriptionBalance),
 			Contract:      m.sgnContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(AddSubscriptionBalance),
+			CheckInterval: getEventCheckInterval(AddSubscriptionBalance),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event AddSubscriptionBalance, tx hash: %x", eLog.TxHash)
@@ -189,7 +189,7 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 			EventName:     string(CandidateUnbonded),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(CandidateUnbonded),
+			CheckInterval: getEventCheckInterval(CandidateUnbonded),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
@@ -210,7 +210,7 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 			EventName:     string(ConfirmParamProposal),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(ConfirmParamProposal),
+			CheckInterval: getEventCheckInterval(ConfirmParamProposal),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event ConfirmParamProposal, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
@@ -231,7 +231,7 @@ func (m *Monitor) monitorDPoSUpdateCommissionRate() {
 			EventName:     string(UpdateCommissionRate),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(UpdateCommissionRate),
+			CheckInterval: getEventCheckInterval(UpdateCommissionRate),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateCommissionRate, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
@@ -252,7 +252,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 			EventName:     string(ValidatorChange),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(ValidatorChange),
+			CheckInterval: getEventCheckInterval(ValidatorChange),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			logmsg := fmt.Sprintf("Catch event ValidatorChange, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
@@ -296,7 +296,7 @@ func (m *Monitor) monitorDPoSUpdateDelegatedStake() {
 			EventName:     string(UpdateDelegatedStake),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(UpdateDelegatedStake),
+			CheckInterval: getEventCheckInterval(UpdateDelegatedStake),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateDelegatedStake, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
@@ -327,7 +327,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 			EventName:     string(IntendSettle),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendSettle),
+			CheckInterval: getEventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
@@ -348,7 +348,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 			EventName:     string(IntendWithdraw),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
+			CheckInterval: getEventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)

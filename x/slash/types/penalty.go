@@ -46,11 +46,11 @@ func NewAccountFractionPair(account string, fraction sdk.Dec) AccountFractionPai
 
 type Penalty struct {
 	Nonce               uint64                `json:"nonce"`
-	ValidatorAddr       string                `json:"validatorAddr"`
+	ValidatorAddr       string                `json:"validator_addr"`
 	Reason              string                `json:"reason"`
-	PenalizedDelegators []AccountAmtPair      `json:"penalizedDelegators"`
+	PenalizedDelegators []AccountAmtPair      `json:"penalized_delegators"`
 	Beneficiaries       []AccountFractionPair `json:"beneficiaries"`
-	PenaltyProtoBytes   []byte                `json:"penaltyProtoBytes"`
+	PenaltyProtoBytes   []byte                `json:"penalty_proto_bytes"`
 	Sigs                []common.Sig          `json:"sigs"`
 }
 

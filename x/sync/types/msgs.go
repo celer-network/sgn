@@ -24,10 +24,10 @@ const (
 
 // MsgSubmitChange defines a message to create a sync change
 type MsgSubmitChange struct {
-	ChangeType string         `json:"changeType" yaml:"changeType"`
-	Data       []byte         `json:"data" yaml:"data"`         // The serialized information to sync
-	BlockNum   uint64         `json:"blockNum" yaml:"blockNum"` // Claimed mainchain block number when the infomation was queried
-	Sender     sdk.AccAddress `json:"sender" yaml:"sender"`     // Address of the sender
+	ChangeType string         `json:"change_type" yaml:"change_type"`
+	Data       []byte         `json:"data" yaml:"data"`           // The serialized information to sync
+	BlockNum   uint64         `json:"block_num" yaml:"block_num"` // Claimed mainchain block number when the infomation was queried
+	Sender     sdk.AccAddress `json:"sender" yaml:"sender"`       // Address of the sender
 }
 
 // NewMsgSubmitChange creates a new MsgSubmitChange instance

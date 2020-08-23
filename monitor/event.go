@@ -2,11 +2,11 @@ package monitor
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/iancoleman/strcase"
 	"github.com/spf13/viper"
 )
 
@@ -94,19 +94,19 @@ func (e *EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 	return res
 }
 
-func eventCheckInterval(name EventName) uint64 {
+func getEventCheckInterval(name EventName) uint64 {
 	m := viper.GetStringMap(common.FlagEthCheckInterval)
-	if m[string(name)] != nil {
-		return uint64(m[string(name)].(float64))
-	} else if m[strings.ToLower(string(name))] != nil {
-		return uint64(m[strings.ToLower(string(name))].(float64))
+	eventNameInConfig := strcase.ToSnake(string(name))
+	if m[eventNameInConfig] != nil {
+		return uint64(m[eventNameInConfig].(float64))
 	}
+	// If not specified, use the default value of 0
 	return 0
 }
 
 type PenaltyEvent struct {
 	Nonce      uint64 `json:"nonce"`
-	RetryCount uint64 `json:"retryCount"`
+	RetryCount uint64 `json:"retry_count"`
 }
 
 func NewPenaltyEvent(nonce uint64) PenaltyEvent {
