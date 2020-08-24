@@ -59,5 +59,5 @@ func guardTest(t *testing.T) {
 	require.NoError(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
-	e2ecommon.SubscribteTestCommon(t, transactor, amt, "", 1)
+	e2ecommon.GuardTestCommon(t, transactor, amt, "", 1)
 }

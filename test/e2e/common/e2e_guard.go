@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func SubscribteTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.Int, srvReward string, rewardSigLen int) {
+func GuardTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.Int, srvReward string, rewardSigLen int) {
 	ctx := context.Background()
 
 	log.Infoln("Open channel...")

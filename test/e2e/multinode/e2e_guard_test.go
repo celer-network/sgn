@@ -75,7 +75,7 @@ func guardTest(t *testing.T) {
 	// The self delegated stake of validator0 is 2/3 of total stake of validator0,
 	// so validator0 gets (1000000000000000000 - 100000000000000) * 2/3 = 666600000000000000 reward.
 	// The total service reward of validator0 is 666600000000000000 + 100000000000000 = 666700000000000000
-	e2ecommon.SubscribteTestCommon(t, transactor, amt, "666700000000000000", 2)
+	e2ecommon.GuardTestCommon(t, transactor, amt, "666700000000000000", 2)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
