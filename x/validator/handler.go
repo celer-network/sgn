@@ -42,22 +42,29 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 
-	for _, transactor := range msg.Transactors {
-		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
-	}
-
 	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		return nil, fmt.Errorf("Candidate does not exist")
 	}
-
 	if !candidate.ValAccount.Equals(msg.Sender) {
 		return nil, fmt.Errorf("The candidate is not operated by the sender.")
 	}
 
-	candidate.Transactors = msg.Transactors
-	for _, transactor := range candidate.Transactors {
-		keeper.InitAccount(ctx, transactor)
+	dedup := make(map[string]bool)
+	candidate.Transactors = []sdk.AccAddress{}
+	for _, transactor := range msg.Transactors {
+		err := sdk.VerifyAddressFormat(transactor)
+		if err != nil {
+			return nil, fmt.Errorf("%w, %s", err, transactor)
+		}
+		if !transactor.Equals(candidate.ValAccount) {
+			if _, exist := dedup[transactor.String()]; !exist {
+				logEntry.Transactor = append(logEntry.Transactor, transactor.String())
+				candidate.Transactors = append(candidate.Transactors, transactor)
+				dedup[transactor.String()] = true
+				keeper.InitAccount(ctx, transactor)
+			}
+		}
 	}
 
 	keeper.SetCandidate(ctx, candidate)

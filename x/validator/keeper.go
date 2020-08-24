@@ -229,6 +229,11 @@ func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate)
 }
 
 func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
+	err := sdk.VerifyAddressFormat(accAddress)
+	if err != nil {
+		log.Errorf("InitAccount %s err: %s", accAddress, err)
+		return
+	}
 	account := k.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
 		log.Infof("Set new account %s", accAddress)
