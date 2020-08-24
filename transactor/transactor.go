@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gammazero/deque"
@@ -136,18 +137,21 @@ func (t *Transactor) start() {
 		seal.CommitTransactorLog(logEntry)
 
 		// Make sure the transaction has been mined
-		success := false
+		mined := false
+		var txTxResponse sdk.TxResponse
 		for try := 0; try < maxQueryRetry; try++ {
 			time.Sleep(queryRetryDelay)
-			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
-				success = true
+			if txTxResponse, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
+				mined = true
 				break
 			}
 		}
-		if !success {
+		if !mined {
 			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
+		} else if txTxResponse.Code != sdkerrors.SuccessABCICode {
+			log.Errorf("Transaction %s failed with code %d", tx.TxHash, txTxResponse.Code)
 		} else {
-			log.Debugf("Transaction %s has been mined", tx.TxHash)
+			log.Debugf("Transaction %s succeeded", tx.TxHash)
 		}
 	}
 }
