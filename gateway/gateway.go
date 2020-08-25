@@ -141,9 +141,9 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 
 			buf := bufio.NewReader(os.Stdin)
 			if viper.GetString(common.FlagSgnPassphrase) == "" {
-				pass, err := input.GetString("Enter sidechain validator passphrase:", buf)
-				if err != nil {
-					return err
+				pass, err2 := input.GetString("Enter sidechain validator passphrase:", buf)
+				if err2 != nil {
+					return err2
 				}
 
 				viper.Set(common.FlagSgnPassphrase, pass)
