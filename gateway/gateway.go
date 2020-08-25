@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bufio"
 	"net"
 	"os"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -135,6 +137,16 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 			err := viper.MergeInConfig()
 			if err != nil {
 				return err
+			}
+
+			buf := bufio.NewReader(os.Stdin)
+			if viper.GetString(common.FlagSgnPassphrase) == "" {
+				pass, err := input.GetString("Enter sidechain validator passphrase:", buf)
+				if err != nil {
+					return err
+				}
+
+				viper.Set(common.FlagSgnPassphrase, pass)
 			}
 
 			rs, err := NewRestServer(cdc)
