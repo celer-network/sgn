@@ -71,7 +71,7 @@ func ParseTransactorAddrs(ts []string) ([]sdk.AccAddress, error) {
 func SetupUserPassword() error {
 	buf := bufio.NewReader(os.Stdin)
 
-	if viper.GetString(FlagEthPassphrase) == "" {
+	if viper.Get(FlagEthPassphrase) == nil {
 		pass, err := input.GetString("Enter eth keystore passphrase:", buf)
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ func SetupUserPassword() error {
 		viper.Set(FlagEthPassphrase, pass)
 	}
 
-	if viper.GetString(FlagSgnPassphrase) == "" {
+	if viper.Get(FlagSgnPassphrase) == nil {
 		pass, err := input.GetString("Enter sidechain validator passphrase:", buf)
 		if err != nil {
 			return err
