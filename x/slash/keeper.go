@@ -134,7 +134,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	minHeight := signInfo.StartHeight + signedBlocksWindow
 	maxMissed := signedBlocksWindow - k.MinSignedPerWindow(ctx).MulInt64(signedBlocksWindow).RoundInt64()
 
-	// if we are past the minimum height and the validator has missed too many blocks, punish them
+	// if we are past the minimum height and the validator has missed too many blocks, slash them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 		// Downtime confirmed: slash the validator
 		log.Infof("Validator %s past min height of %d and above max miss threshold of %d",

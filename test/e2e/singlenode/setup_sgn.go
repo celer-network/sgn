@@ -20,7 +20,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 			CelrAddr:               tc.E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 			GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-			BlameTimeout:           big.NewInt(50),
+			SlashTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(11),
 			MinStakingPool:         big.NewInt(100),

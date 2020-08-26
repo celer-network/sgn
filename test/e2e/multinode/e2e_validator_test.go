@@ -16,7 +16,7 @@ func setupValidator(maxValidatorNum *big.Int) {
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-		BlameTimeout:           big.NewInt(0),
+		SlashTimeout:           big.NewInt(0),
 		MinValidatorNum:        big.NewInt(1),
 		MaxValidatorNum:        maxValidatorNum,
 		MinStakingPool:         big.NewInt(1),
