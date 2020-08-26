@@ -97,8 +97,7 @@
       "proposals": null,
       "deposit_params": {
         "min_deposit": "10000",
-        "max_deposit_period": "7500000000000",
-        "muted_duration": "3600000000000"
+        "max_deposit_period": "7500000000000"
       },
       "voting_params": {
         "voting_period": "7500000000000"

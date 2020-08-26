@@ -207,7 +207,7 @@ func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes
 	}
 
 	if status != proposal.Status {
-		err = errors.New("Proposal status does not match expectation")
+		err = fmt.Errorf("Proposal status %s does not match expectation", status)
 	}
 
 	return

@@ -1,6 +1,7 @@
 package singlenode
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -43,6 +44,13 @@ func govTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 
+	amt := big.NewInt(5000000000000000000)
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	log.Infof("my eth address %x", ethAddr)
+	require.NoError(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.CheckValidatorNum(t, transactor, 1)
+
 	log.Info("======================== Test change epochlengh passed ===========================")
 	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
 	content := govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
@@ -55,7 +63,7 @@ func govTest(t *testing.T) {
 	assert.Equal(t, content.GetTitle(), proposal.GetTitle(), "The proposal should have same title as submitted proposal")
 	assert.Equal(t, content.GetDescription(), proposal.GetDescription(), "The proposal should have same description as submitted proposal")
 
-	depositMsg := govtypes.NewMsgDeposit(transactor.Key.GetAddress(), proposalID, sdk.NewInt(10))
+	depositMsg := govtypes.NewMsgDeposit(transactor.Key.GetAddress(), proposalID, sdk.NewInt(2))
 	transactor.AddTxMsg(depositMsg)
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
 	require.NoError(t, err, "failed to query proposal 1 with voting status")
@@ -74,7 +82,7 @@ func govTest(t *testing.T) {
 	log.Info("======================== Test change epochlengh rejected ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor.Key.GetAddress())
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(2), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(2)
@@ -91,9 +99,4 @@ func govTest(t *testing.T) {
 	guardParams, err = guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
 	require.NoError(t, err, "failed to query guard params")
 	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should stay 3")
-
-	transactor.AddTxMsg(submitProposalmsg)
-	proposalID = uint64(3)
-	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 }

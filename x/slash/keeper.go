@@ -7,6 +7,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -152,25 +153,30 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 // Slash a validator for an infraction
 // Find the contributing stake and burn the specified slashFactor of it
 func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Validator, slashAmount sdk.Int, beneficiaries []AccountFractionPair) {
-	candidate, found := k.validatorKeeper.GetCandidate(ctx, failedValidator.Description.Identity)
+	identity := failedValidator.Description.Identity
+	candidate, found := k.validatorKeeper.GetCandidate(ctx, identity)
 	if !found {
-		log.Errorln("Cannot find candidate profile for the failed validator", failedValidator.Description.Identity)
+		log.Errorln("Cannot find candidate profile for the failed validator", identity)
 		return
 	}
 
-	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, failedValidator.Description.Identity)
-	for _, delegator := range candidate.Delegators {
-		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-		accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
-		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, identity)
+	if reason == AttributeValueDepositBurn {
+		penalty.PenalizedDelegators = []AccountAmtPair{NewAccountAmtPair(candidate.EthAddress, slashAmount)}
+	} else {
+		for _, delegator := range candidate.Delegators {
+			penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+			accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
+			penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+		}
 	}
 
 	penalty.Beneficiaries = beneficiaries
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
 
-	log.Warnf("Slash validator: %s, amount: %s, reason: %s, nonce: %d",
-		failedValidator.GetOperator(), slashAmount, reason, penalty.Nonce)
+	log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d",
+		candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

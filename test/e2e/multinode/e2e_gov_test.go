@@ -99,11 +99,6 @@ func sidechainGovTest(t *testing.T) {
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 
-	transactor1.AddTxMsg(submitProposalmsg)
-	proposalID = uint64(2)
-	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	assert.Error(t, err, "fail to submit proposal due to muted depositor")
-
 	log.Info("======================== Test change epochlengh passed for reaching quorun ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
@@ -157,11 +152,6 @@ func sidechainGovTest(t *testing.T) {
 	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
-
-	transactor1.AddTxMsg(submitProposalmsg)
-	proposalID = uint64(4)
-	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 
 	log.Info("======================== Test change epochlengh rejected due to 1/2 No ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
