@@ -129,13 +129,18 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 	viper.SetDefault(common.FlagEthPollInterval, 15)
 	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
+	err = common.SetupUserPassword()
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
 	loglevel := viper.GetString(common.FlagLogLevel)
 	log.SetLevelByName(loglevel)
-	if viper.GetBool(common.FlagLogColor) {
-		log.EnableColor()
-	}
 	if loglevel == "debug" || loglevel == "trace" {
 		baseAppOptions = append(baseAppOptions, baseapp.SetTrace(true))
+	}
+	if viper.GetBool(common.FlagLogColor) {
+		log.EnableColor()
 	}
 
 	// First define the top level codec that will be shared by the different modules
