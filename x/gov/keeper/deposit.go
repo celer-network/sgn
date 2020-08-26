@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/gov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -77,22 +78,22 @@ func (keeper Keeper) IterateDeposits(ctx sdk.Context, proposalID uint64, cb func
 	}
 }
 
-// GetDepositor gets the depositor by address
-func (keeper Keeper) GetDepositor(ctx sdk.Context, depositorAddr sdk.AccAddress) (depositor types.Depositor, found bool) {
+// GetAccTotalDeposit gets the AccTotalDeposit by address
+func (keeper Keeper) GetAccTotalDeposit(ctx sdk.Context, depositorAddr sdk.AccAddress) (accTotalDeposit types.AccTotalDeposit, found bool) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := store.Get(types.DepositorKey(depositorAddr))
 	if bz == nil {
-		return depositor, false
+		return accTotalDeposit, false
 	}
 
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &depositor)
-	return depositor, true
+	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &accTotalDeposit)
+	return accTotalDeposit, true
 }
 
-// SetDepositor sets a Depositor to the gov store
-func (keeper Keeper) SetDepositor(ctx sdk.Context, depositorAddr sdk.AccAddress, depositor types.Depositor) {
+// SetAccTotalDeposit sets a AccTotalDeposit to the gov store
+func (keeper Keeper) SetAccTotalDeposit(ctx sdk.Context, depositorAddr sdk.AccAddress, accTotalDeposit types.AccTotalDeposit) {
 	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(depositor)
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(accTotalDeposit)
 	store.Set(types.DepositorKey(depositorAddr), bz)
 }
 
@@ -115,18 +116,24 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 		return false, sdkerrors.Wrapf(types.ErrUnknownProposal, "Invalid depositor addr %s", depositorAddr)
 	}
 
-	depositor, found := keeper.GetDepositor(ctx, depositorAddr)
+	ethAddr := validator.Description.Identity
+	selfDelegator, found := keeper.vk.GetDelegator(ctx, ethAddr, ethAddr)
 	if !found {
-		depositor = types.NewDepositor()
+		return false, sdkerrors.Wrapf(types.ErrUnknownProposal, "Invalid depositor addr %s, %s", depositorAddr, ethAddr)
 	}
 
-	depositor.Amount = depositor.Amount.Add(depositAmount)
-	if depositor.Amount.GT(validator.Tokens) {
+	accTotalDeposit, found := keeper.GetAccTotalDeposit(ctx, depositorAddr)
+	if !found {
+		accTotalDeposit = types.NewAccTotalDeposit()
+	}
+
+	accTotalDeposit.Amount = accTotalDeposit.Amount.Add(depositAmount)
+	if accTotalDeposit.Amount.GT(selfDelegator.DelegatedStake) {
 		return false, sdkerrors.Wrapf(
 			sdkerrors.ErrInvalidRequest,
-			"Depositor does not have enough stake to deposit, need %s, have %s", depositor.Amount, validator.Tokens)
+			"Depositor does not have enough stake to deposit, need %s, have %s", accTotalDeposit.Amount, selfDelegator.DelegatedStake)
 	}
-	keeper.SetDepositor(ctx, depositorAddr, depositor)
+	keeper.SetAccTotalDeposit(ctx, depositorAddr, accTotalDeposit)
 
 	// Update proposal
 	proposal.TotalDeposit = proposal.TotalDeposit.Add(depositAmount)
@@ -164,9 +171,13 @@ func (keeper Keeper) RefundDeposits(ctx sdk.Context, proposalID uint64) {
 	store := ctx.KVStore(keeper.storeKey)
 
 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
-		depositor, _ := keeper.GetDepositor(ctx, deposit.Depositor)
-		depositor.Amount = depositor.Amount.Sub(deposit.Amount)
-		keeper.SetDepositor(ctx, deposit.Depositor, depositor)
+		accTotalDeposit, found := keeper.GetAccTotalDeposit(ctx, deposit.Depositor)
+		if !found {
+			log.Errorf("deposit not found. %s", deposit)
+			return false
+		}
+		accTotalDeposit.Amount = accTotalDeposit.Amount.Sub(deposit.Amount)
+		keeper.SetAccTotalDeposit(ctx, deposit.Depositor, accTotalDeposit)
 
 		store.Delete(types.DepositKey(proposalID, deposit.Depositor))
 		return false
@@ -179,9 +190,13 @@ func (keeper Keeper) DeleteDeposits(ctx sdk.Context, proposalID uint64) {
 
 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
 		// TODO: properly handle delete deposits
-		depositor, _ := keeper.GetDepositor(ctx, deposit.Depositor)
-		depositor.Amount = depositor.Amount.Sub(deposit.Amount)
-		keeper.SetDepositor(ctx, deposit.Depositor, depositor)
+		accTotalDeposit, found := keeper.GetAccTotalDeposit(ctx, deposit.Depositor)
+		if !found {
+			log.Errorf("deposit not found. %s", deposit)
+			return false
+		}
+		accTotalDeposit.Amount = accTotalDeposit.Amount.Sub(deposit.Amount)
+		keeper.SetAccTotalDeposit(ctx, deposit.Depositor, accTotalDeposit)
 		keeper.sk.HandleProposalDepositBurn(ctx, deposit.Depositor, deposit.Amount)
 
 		store.Delete(types.DepositKey(proposalID, deposit.Depositor))

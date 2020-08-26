@@ -47,17 +47,17 @@ func (d Deposit) Empty() bool {
 	return d.Equals(Deposit{})
 }
 
-type Depositor struct {
+type AccTotalDeposit struct {
 	Amount sdk.Int `json:"amount" yaml:"amount"` //  Deposit amount
 }
 
-// NewDepositor creates a new Depositor instance
-func NewDepositor() Depositor {
-	return Depositor{
+// NewAccTotalDeposit creates a new AccTotalDeposit instance
+func NewAccTotalDeposit() AccTotalDeposit {
+	return AccTotalDeposit{
 		Amount: sdk.ZeroInt(),
 	}
 }
 
-func (d Depositor) String() string {
-	return fmt.Sprintf("Amount: %s", d.Amount)
+func (ad AccTotalDeposit) String() string {
+	return fmt.Sprintf("Amount: %s", ad.Amount)
 }

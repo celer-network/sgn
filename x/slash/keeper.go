@@ -161,10 +161,14 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	}
 
 	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, identity)
-	for _, delegator := range candidate.Delegators {
-		penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-		accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
-		penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+	if reason == AttributeValueDepositBurn {
+		penalty.PenalizedDelegators = []AccountAmtPair{NewAccountAmtPair(candidate.EthAddress, slashAmount)}
+	} else {
+		for _, delegator := range candidate.Delegators {
+			penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+			accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
+			penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+		}
 	}
 
 	penalty.Beneficiaries = beneficiaries
