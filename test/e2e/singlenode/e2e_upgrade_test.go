@@ -1,6 +1,7 @@
 package singlenode
 
 import (
+	"math/big"
 	"testing"
 	"time"
 
@@ -45,10 +46,17 @@ func upgradeTest(t *testing.T) {
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 
-	upgradeHeight := int64(30)
+	amt := big.NewInt(5000000000000000000)
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	log.Infof("my eth address %x", ethAddr)
+	require.NoError(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.CheckValidatorNum(t, transactor, 1)
+
+	upgradeHeight := int64(50)
 	plan := upgrade.Plan{Name: "test", Height: upgradeHeight}
 	content := govtypes.NewUpgradeProposal("Upgrade test", "Upgrade test", plan)
-	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor.Key.GetAddress())
+	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(2), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID := uint64(1)
