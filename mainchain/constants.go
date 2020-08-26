@@ -13,7 +13,7 @@ const (
 	// ParamNames
 	ProposalDeposit      = 0
 	GovernVoteTimeout    = 1
-	BlameTimeout         = 2
+	SlashTimeout         = 2
 	MinValidatorNum      = 3
 	MaxValidatorNum      = 4
 	MinStakeInPool       = 5

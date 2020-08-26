@@ -261,7 +261,7 @@ func (keeper Keeper) GuardProof(ctx sdk.Context, change types.Change) (bool, err
 		guardIndex = len(assignedGuards)
 	}
 
-	// punish corresponding guards and reward corresponding validator
+	// slash corresponding guards and reward corresponding validator
 	for i := 0; i < guardIndex; i++ {
 		keeper.slashKeeper.HandleGuardFailure(ctx, rewardValidator, request.AssignedGuards[i])
 	}
