@@ -25,20 +25,20 @@ var (
 
 // get delegators key from candidate address
 func GetDelegatorsKey(candidateAddr string) []byte {
-	return append(DelegatorKeyPrefix, []byte(mainchain.FormatAddrHex(candidateAddr))...)
+	return append(DelegatorKeyPrefix, mainchain.Hex2Addr(candidateAddr).Bytes()...)
 }
 
 // get delegator key from candidate address and delegator address
 func GetDelegatorKey(candidateAddr, delegatorAddr string) []byte {
-	return append(GetDelegatorsKey(candidateAddr), []byte(mainchain.FormatAddrHex(delegatorAddr))...)
+	return append(GetDelegatorsKey(candidateAddr), mainchain.Hex2Addr(delegatorAddr).Bytes()...)
 }
 
 // get candidate key from candidateAddr
 func GetCandidateKey(candidateAddr string) []byte {
-	return append(CandidateKeyPrefix, []byte(mainchain.FormatAddrHex(candidateAddr))...)
+	return append(CandidateKeyPrefix, mainchain.Hex2Addr(candidateAddr).Bytes()...)
 }
 
 // get reward key from ethAddr
 func GetRewardKey(ethAddr string) []byte {
-	return append(RewardKeyPrefix, []byte(mainchain.FormatAddrHex(ethAddr))...)
+	return append(RewardKeyPrefix, mainchain.Hex2Addr(ethAddr).Bytes()...)
 }
