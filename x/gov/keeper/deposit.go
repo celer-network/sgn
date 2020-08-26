@@ -120,13 +120,11 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 		depositor = types.NewDepositor()
 	}
 
-	if ctx.BlockTime().Before(depositor.MutedUntil) {
-		return false, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Depositor is muted")
-	}
-
 	depositor.Amount = depositor.Amount.Add(depositAmount)
 	if depositor.Amount.GT(validator.Tokens) {
-		return false, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Depositor does not have enough stake to deposit")
+		return false, sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidRequest,
+			"Depositor does not have enough stake to deposit, need %s, have %s", depositor.Amount, validator.Tokens)
 	}
 	keeper.SetDepositor(ctx, depositorAddr, depositor)
 
@@ -183,7 +181,6 @@ func (keeper Keeper) DeleteDeposits(ctx sdk.Context, proposalID uint64) {
 		// TODO: properly handle delete deposits
 		depositor, _ := keeper.GetDepositor(ctx, deposit.Depositor)
 		depositor.Amount = depositor.Amount.Sub(deposit.Amount)
-		depositor.MutedUntil = ctx.BlockTime().Add(keeper.GetDepositParams(ctx).MutedDuration)
 		keeper.SetDepositor(ctx, deposit.Depositor, depositor)
 		keeper.sk.HandleProposalDepositBurn(ctx, deposit.Depositor, deposit.Amount)
 

@@ -149,7 +149,7 @@ func (t *Transactor) start() {
 		if !mined {
 			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
 		} else if txTxResponse.Code != sdkerrors.SuccessABCICode {
-			log.Errorf("Transaction %s failed with code %d", tx.TxHash, txTxResponse.Code)
+			log.Errorf("Transaction %s failed with code %d, %s", tx.TxHash, txTxResponse.Code, txTxResponse.RawLog)
 		} else {
 			log.Debugf("Transaction %s succeeded", tx.TxHash)
 		}

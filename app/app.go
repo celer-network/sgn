@@ -16,6 +16,7 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -128,9 +129,13 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 	viper.SetDefault(common.FlagEthPollInterval, 15)
 	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
-	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	loglevel := viper.GetString(common.FlagLogLevel)
+	log.SetLevelByName(loglevel)
 	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
+	}
+	if loglevel == "debug" || loglevel == "trace" {
+		baseAppOptions = append(baseAppOptions, baseapp.SetTrace(true))
 	}
 
 	// First define the top level codec that will be shared by the different modules
