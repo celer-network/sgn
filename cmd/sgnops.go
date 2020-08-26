@@ -20,7 +20,12 @@ func GetSgnopsExecutor() cli.Executor {
 		Short: "sgn ops utility",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			viper.SetConfigFile(viper.GetString(common.FlagConfig))
-			return viper.ReadInConfig()
+			err := viper.ReadInConfig()
+			if err != nil {
+				return err
+			}
+
+			return common.SetupUserPassword()
 		},
 	}
 

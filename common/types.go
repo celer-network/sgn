@@ -2,11 +2,14 @@ package common
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type ParamChange struct {
@@ -63,4 +66,20 @@ func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) ([]Sig, e
 	}
 
 	return append(sigs, NewSig(signerAddr, sig)), nil
+}
+
+func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (staking.Commission, error) {
+	commissionBase, err := ethClient.DPoS.COMMISSIONRATEBASE(&bind.CallOpts{})
+	if err != nil {
+		return staking.Commission{}, err
+	}
+
+	prec := int64(len(commissionBase.String()) - 1)
+	return staking.Commission{
+		CommissionRates: staking.CommissionRates{
+			Rate:          sdk.NewDecFromBigIntWithPrec(commissionRate, prec),
+			MaxRate:       sdk.NewDec(1),
+			MaxChangeRate: sdk.NewDec(1),
+		},
+	}, nil
 }

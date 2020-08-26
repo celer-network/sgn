@@ -1,17 +1,17 @@
 package common
 
 import (
-	"math/big"
+	"bufio"
+	"os"
 	"time"
 
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/golang/protobuf/proto"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -40,22 +40,6 @@ func RobustQueryWithData(cliCtx context.CLIContext, route string, data []byte) (
 	return res, err
 }
 
-func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (staking.Commission, error) {
-	commissionBase, err := ethClient.DPoS.COMMISSIONRATEBASE(&bind.CallOpts{})
-	if err != nil {
-		return staking.Commission{}, err
-	}
-
-	prec := int64(len(commissionBase.String()) - 1)
-	return staking.Commission{
-		CommissionRates: staking.CommissionRates{
-			Rate:          sdk.NewDecFromBigIntWithPrec(commissionRate, prec),
-			MaxRate:       sdk.NewDec(1),
-			MaxChangeRate: sdk.NewDec(1),
-		},
-	}, nil
-}
-
 func UnmarshalSignedSimplexStateBytes(input []byte) (*chain.SignedSimplexState, *entity.SimplexPaymentChannel, error) {
 	var signedSimplexState chain.SignedSimplexState
 	err := proto.Unmarshal(input, &signedSimplexState)
@@ -82,4 +66,28 @@ func ParseTransactorAddrs(ts []string) ([]sdk.AccAddress, error) {
 	}
 
 	return transactors, nil
+}
+
+func SetupUserPassword() error {
+	buf := bufio.NewReader(os.Stdin)
+
+	if viper.Get(FlagEthPassphrase) == nil {
+		pass, err := input.GetString("Enter eth keystore passphrase:", buf)
+		if err != nil {
+			return err
+		}
+
+		viper.Set(FlagEthPassphrase, pass)
+	}
+
+	if viper.Get(FlagSgnPassphrase) == nil {
+		pass, err := input.GetString("Enter sidechain validator passphrase:", buf)
+		if err != nil {
+			return err
+		}
+
+		viper.Set(FlagSgnPassphrase, pass)
+	}
+
+	return nil
 }

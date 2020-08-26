@@ -128,6 +128,11 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 	viper.SetDefault(common.FlagEthPollInterval, 15)
 	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
+	err = common.SetupUserPassword()
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
