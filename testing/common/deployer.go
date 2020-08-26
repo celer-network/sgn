@@ -52,7 +52,7 @@ func DeployDPoSSGNContracts(sgnParams *SGNParams) (*types.Transaction, mainchain
 		sgnParams.CelrAddr,
 		sgnParams.GovernProposalDeposit,
 		sgnParams.GovernVoteTimeout,
-		sgnParams.BlameTimeout,
+		sgnParams.SlashTimeout,
 		sgnParams.MinValidatorNum,
 		sgnParams.MaxValidatorNum,
 		sgnParams.MinStakingPool,
@@ -116,7 +116,7 @@ func DeployCommand() *cobra.Command {
 				CelrAddr:               erc20Addr,
 				GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 				GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-				BlameTimeout:           big.NewInt(5760),
+				SlashTimeout:           big.NewInt(5760),
 				MinValidatorNum:        big.NewInt(3),
 				MaxValidatorNum:        big.NewInt(7),
 				MinStakingPool:         big.NewInt(10000),

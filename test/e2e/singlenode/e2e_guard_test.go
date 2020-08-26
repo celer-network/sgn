@@ -18,7 +18,7 @@ func setupGuard() []tc.Killable {
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-		BlameTimeout:           big.NewInt(10),
+		SlashTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
 		MaxValidatorNum:        big.NewInt(11),
 		MinStakingPool:         big.NewInt(0),

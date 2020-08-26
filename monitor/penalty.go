@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxPunishRetry = 5
+	maxSlashRetry = 5
 )
 
 func (m *Monitor) processPenaltyQueue() {
@@ -68,21 +68,21 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		&eth.TransactionStateHandler{
 			OnMined: func(receipt *ethtypes.Receipt) {
 				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
-					log.Infof("Punish transaction %x succeeded", receipt.TxHash)
+					log.Infof("Slash transaction %x succeeded", receipt.TxHash)
 				} else {
-					log.Errorf("Punish transaction %x failed", receipt.TxHash)
+					log.Errorf("Slash transaction %x failed", receipt.TxHash)
 				}
 			},
 			OnError: func(tx *ethtypes.Transaction, err error) {
-				log.Errorf("Punish transaction %x err: %s", tx.Hash(), err)
+				log.Errorf("Slash transaction %x err: %s", tx.Hash(), err)
 			},
 		},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return m.EthClient.DPoS.Punish(opts, penaltyRequest)
+			return m.EthClient.DPoS.Slash(opts, penaltyRequest)
 		},
 	)
 	if err != nil {
-		if penaltyEvent.RetryCount < maxPunishRetry {
+		if penaltyEvent.RetryCount < maxSlashRetry {
 			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
 			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
 			if err != nil {
@@ -90,8 +90,8 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 			}
 			return
 		}
-		log.Errorln("Punish err", err)
+		log.Errorln("Slash err", err)
 		return
 	}
-	log.Infoln("Punish tx submitted", tx.Hash().Hex())
+	log.Infoln("Slash tx submitted", tx.Hash().Hex())
 }

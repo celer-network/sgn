@@ -31,7 +31,7 @@ type SGNParams struct {
 	CelrAddr              mainchain.Addr
 	GovernProposalDeposit *big.Int
 	GovernVoteTimeout     *big.Int
-	BlameTimeout          *big.Int
+	SlashTimeout          *big.Int
 	MinValidatorNum       *big.Int
 	MaxValidatorNum       *big.Int
 	MinStakingPool        *big.Int

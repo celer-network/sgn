@@ -65,7 +65,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams) {
 			CelrAddr:               E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 			GovernVoteTimeout:      big.NewInt(3), // TODO: use a more practical value
-			BlameTimeout:           big.NewInt(50),
+			SlashTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(7),
 			MinStakingPool:         big.NewInt(100),
