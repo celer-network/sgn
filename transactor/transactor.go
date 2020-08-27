@@ -133,23 +133,22 @@ func (t *Transactor) start() {
 			seal.CommitTransactorLog(logEntry)
 			continue
 		}
-
 		seal.CommitTransactorLog(logEntry)
 
 		// Make sure the transaction has been mined
 		mined := false
-		var txTxResponse sdk.TxResponse
+		var txResponse sdk.TxResponse
 		for try := 0; try < maxQueryRetry; try++ {
 			time.Sleep(queryRetryDelay)
-			if txTxResponse, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
+			if txResponse, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
 				mined = true
 				break
 			}
 		}
 		if !mined {
 			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
-		} else if txTxResponse.Code != sdkerrors.SuccessABCICode {
-			log.Errorf("Transaction %s failed with code %d, %s", tx.TxHash, txTxResponse.Code, txTxResponse.RawLog)
+		} else if txResponse.Code != sdkerrors.SuccessABCICode {
+			log.Errorf("Transaction %s failed with code %d, %s", tx.TxHash, txResponse.Code, txResponse.RawLog)
 		} else {
 			log.Debugf("Transaction %s succeeded", tx.TxHash)
 		}
@@ -174,6 +173,10 @@ func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse,
 		return nil, fmt.Errorf("BroadcastTx err: %s", err)
 	}
 	logEntry.TxHash = tx.TxHash
+
+	if tx.Code != sdkerrors.SuccessABCICode {
+		return &tx, fmt.Errorf("BroadcastTx failed with code %d, %s", tx.Code, tx.RawLog)
+	}
 
 	return &tx, nil
 }
