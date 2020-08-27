@@ -66,6 +66,7 @@ $ %s tx submit-change sync-update-sidechain-addr --candidate="0xf75f679d958b7610
 
 			candidate := viper.GetString(FlagCandidateAddr)
 			operator.SyncUpdateSidechainAddr(mainchain.Hex2Addr(candidate))
+			time.Sleep(5 * time.Second)
 			return
 		},
 	}
@@ -97,6 +98,7 @@ $ %s tx submit-change sync-validator --candidate="0xf75f679d958b7610bad84e3baef2
 
 			candidate := viper.GetString(FlagCandidateAddr)
 			operator.SyncValidator(mainchain.Hex2Addr(candidate))
+			time.Sleep(5 * time.Second)
 			return
 		},
 	}
@@ -129,6 +131,7 @@ $ %s tx submit-change sync-delegator --candidate="0xf75f679d958b7610bad84e3baef2
 			candidate := viper.GetString(FlagCandidateAddr)
 			delegator := viper.GetString(FlagDelegatorAddr)
 			operator.SyncDelegator(mainchain.Hex2Addr(candidate), mainchain.Hex2Addr(delegator))
+			time.Sleep(5 * time.Second)
 			return
 		},
 	}
