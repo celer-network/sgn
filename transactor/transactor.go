@@ -133,12 +133,6 @@ func (t *Transactor) start() {
 			seal.CommitTransactorLog(logEntry)
 			continue
 		}
-		if tx.Code != sdkerrors.SuccessABCICode {
-			errmsg := fmt.Sprintf("tx bcast failed with code %d, %s", tx.Code, tx.RawLog)
-			logEntry.Error = append(logEntry.Error, errmsg)
-			seal.CommitTransactorLog(logEntry)
-			continue
-		}
 		seal.CommitTransactorLog(logEntry)
 
 		// Make sure the transaction has been mined
@@ -179,6 +173,10 @@ func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse,
 		return nil, fmt.Errorf("BroadcastTx err: %s", err)
 	}
 	logEntry.TxHash = tx.TxHash
+
+	if tx.Code != sdkerrors.SuccessABCICode {
+		return &tx, fmt.Errorf("BroadcastTx failed with code %d, %s", tx.Code, tx.RawLog)
+	}
 
 	return &tx, nil
 }
