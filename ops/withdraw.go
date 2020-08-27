@@ -28,6 +28,9 @@ func intendWithdrawCommand() *cobra.Command {
 		Short: "Send a withdrawal intent for the stake delegated to a candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
+			if err != nil {
+				return err
+			}
 			amount := calcRawAmount(viper.GetString(amountFlag))
 			candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
@@ -61,6 +64,9 @@ func confirmWithdrawCommand() *cobra.Command {
 		Short: "Confirm withdrawal intents for the stake delegated to a candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
+			if err != nil {
+				return err
+			}
 			candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 			log.Infof(
@@ -90,6 +96,9 @@ func withdrawFromUnbondedCandidateCommand() *cobra.Command {
 		Short: "Withdraw delegated stake from an unbonded candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := initEthClient()
+			if err != nil {
+				return err
+			}
 			amount := calcRawAmount(viper.GetString(amountFlag))
 			candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 

@@ -11,6 +11,9 @@ import (
 
 func confirmUnbondedCandidate() error {
 	ethClient, err := initEthClient()
+	if err != nil {
+		return err
+	}
 	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
 
 	log.Infof(

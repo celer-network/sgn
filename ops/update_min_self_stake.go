@@ -10,6 +10,9 @@ import (
 
 func updateMinSelfStake() error {
 	ethClient, err := initEthClient()
+	if err != nil {
+		return err
+	}
 	amount := calcRawAmount(viper.GetString(amountFlag))
 
 	log.Infof("Update minimal self-delegated stake to %s", amount)
