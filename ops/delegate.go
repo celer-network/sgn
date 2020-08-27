@@ -14,7 +14,6 @@ import (
 func delegate() error {
 	ethClient, err := initEthClient()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	amount := calcRawAmount(viper.GetString(amountFlag))
