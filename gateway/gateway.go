@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bufio"
+	"errors"
 	"net"
 	"os"
 	"time"
@@ -68,10 +69,15 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		gpe,
 	)
 
+	transactors := viper.GetStringSlice(common.FlagSgnTransactors)
+	if len(transactors) == 0 {
+		return nil, errors.New("No transactor available")
+	}
+
 	err = transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetStringSlice(common.FlagSgnTransactors),
+		transactors,
 	)
 	if err != nil {
 		return nil, err
