@@ -97,16 +97,27 @@ func SetupNewSGNEnv(sgnParams *SGNParams) {
 	log.Infoln("Updating config files of SGN nodes")
 	for i := 0; i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
-		viper.SetConfigFile(configPath)
-		err = viper.ReadInConfig()
+		configFileViper := viper.New()
+		configFileViper.SetConfigFile(configPath)
+		err = configFileViper.ReadInConfig()
 		ChkErr(err, "Failed to read config")
-		viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
-		viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
-		viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
-		viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
-		err = viper.WriteConfig()
+		configFileViper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
+		configFileViper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
+		configFileViper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
+		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
+		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
 	}
+
+	// Update global viper
+	node0ConfigPath := "../../../docker-volumes/node0/config.json"
+	viper.SetConfigFile(node0ConfigPath)
+	err = viper.ReadInConfig()
+	ChkErr(err, "Failed to read config")
+	viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
+	viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
+	viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
+	viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
 
 	err = SetContracts(E2eProfile.DPoSAddr, E2eProfile.SGNAddr, E2eProfile.LedgerAddr)
 	ChkErr(err, "Failed to SetContracts")

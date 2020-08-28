@@ -82,23 +82,29 @@ func DeployCommand() *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploy contracts",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			ethurl := viper.GetString(common.FlagEthGateway)
+			configFileViper := viper.New()
+			configFileViper.SetConfigFile(viper.GetString(common.FlagConfig))
+			err = configFileViper.ReadInConfig()
+			if err != nil {
+				return err
+			}
+			ethurl := configFileViper.GetString(common.FlagEthGateway)
 			var rpcClient *rpc.Client
 			rpcClient, err = rpc.Dial(ethurl)
 			if err != nil {
-				return
+				return err
 			}
 			EthClient = ethclient.NewClient(rpcClient)
 
 			var ksBytes []byte
-			ksBytes, err = ioutil.ReadFile(viper.GetString(common.FlagEthKeystore))
+			ksBytes, err = ioutil.ReadFile(configFileViper.GetString(common.FlagEthKeystore))
 			if err != nil {
-				return
+				return err
 			}
 			EtherBaseAuth, err = bind.NewTransactor(
-				strings.NewReader(string(ksBytes)), viper.GetString(common.FlagEthPassphrase))
+				strings.NewReader(string(ksBytes)), configFileViper.GetString(common.FlagEthPassphrase))
 			if err != nil {
-				return
+				return err
 			}
 
 			if ethurl == LocalGeth {
@@ -109,7 +115,7 @@ func DeployCommand() *cobra.Command {
 			}
 
 			ledgerAddr := DeployLedgerContract()
-			viper.Set(common.FlagEthLedgerAddress, ledgerAddr)
+			configFileViper.Set(common.FlagEthLedgerAddress, ledgerAddr)
 
 			_, erc20Addr, erc20 := DeployERC20Contract()
 			sgnParams := &SGNParams{
@@ -126,9 +132,9 @@ func DeployCommand() *cobra.Command {
 			tx, dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
 			WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "DeployDPoSContracts")
 
-			viper.Set(common.FlagEthDPoSAddress, dposAddr)
-			viper.Set(common.FlagEthSGNAddress, sgnAddr)
-			err = viper.WriteConfig()
+			configFileViper.Set(common.FlagEthDPoSAddress, dposAddr)
+			configFileViper.Set(common.FlagEthSGNAddress, sgnAddr)
+			err = configFileViper.WriteConfig()
 			ChkErr(err, "failed to write config")
 
 			if ethurl == LocalGeth {
