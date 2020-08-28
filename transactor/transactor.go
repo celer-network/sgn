@@ -49,7 +49,7 @@ func NewTransactorWithConfig(cdc *codec.Codec, cliHome string) (*Transactor, err
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
-	kb, err := keys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
+	kb, err := keys.NewKeyringWithPassphrase(appName,
 		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
 	if err != nil {
 		return nil, err

@@ -1,10 +1,33 @@
 # include Makefile.ledger
 
-ifeq ($(WITH_CLEVELDB),yes)
-  build_tags += cleveldb
-endif
+VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+COMMIT := $(shell git log -1 --format='%H')
 
-BUILD_FLAGS := -tags "$(build_tags)"
+ifeq ($(WITH_CLEVELDB),yes)
+  build_tags += gcc cleveldb
+endif
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
+
+whitespace :=
+whitespace += $(whitespace)
+comma := ,
+build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=sgn \
+		  -X github.com/cosmos/cosmos-sdk/version.ServerName=sgnd \
+		  -X github.com/cosmos/cosmos-sdk/version.ClientName=sgncli \
+		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+
+ifeq ($(WITH_CLEVELDB),yes)
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
+endif
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
+
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 .PHONY: all
 all: lint install
