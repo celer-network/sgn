@@ -1,20 +1,19 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/spf13/cobra"
-
+	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/transactor"
 	govutils "github.com/celer-network/sgn/x/gov/client/utils"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // GetCmdSubmitProposal implements a command handler for submitting a parameter
@@ -38,7 +37,7 @@ Proper vetting of a parameter change proposal should prevent this from happening
 regardless.
 
 Example:
-$ %s tx gov submit-proposal param-change <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-proposal param-change <path/to/proposal.json>
 
 Where proposal.json contains:
 
@@ -64,24 +63,30 @@ Where proposal.json contains:
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 
 			proposal, err := govutils.ParseParamChangeProposalJSON(cdc, args[0])
 			if err != nil {
+				log.Error(err)
 				return err
 			}
 
-			from := cliCtx.GetFromAddress()
 			content := govtypes.NewParameterProposal(proposal.Title, proposal.Description, proposal.Changes.ToParamChanges())
 
-			msg := govtypes.NewMsgSubmitProposal(content, proposal.Deposit, from)
+			msg := govtypes.NewMsgSubmitProposal(content, proposal.Deposit, txr.Key.GetAddress())
 			if err := msg.ValidateBasic(); err != nil {
+				log.Error(err)
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.AddTxMsg(msg)
+			time.Sleep(5 * time.Second)
+
+			return nil
 		},
 	}
 

@@ -42,15 +42,7 @@ func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err erro
 		return
 	}
 
-	transactor, err := NewTransactor(
-		cliHome,
-		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagValidatorAccount),
-		viper.GetString(common.FlagSgnPassphrase),
-		cdc,
-		NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
-	)
+	transactor, err := NewTransactorWithConfig(cdc, cliHome)
 	if err != nil {
 		return
 	}

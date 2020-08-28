@@ -31,9 +31,21 @@ type Transactor struct {
 	TxBuilder  types.TxBuilder
 	CliCtx     context.CLIContext
 	Key        keys.Info
-	Passphrase string
+	passphrase string
 	msgQueue   deque.Deque
 	gpe        *GasPriceEstimator
+}
+
+func NewTransactorWithConfig(cdc *codec.Codec, cliHome string) (*Transactor, error) {
+	return NewTransactor(
+		cliHome,
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagValidatorAccount),
+		viper.GetString(common.FlagSgnPassphrase),
+		cdc,
+		NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
+	)
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
@@ -77,20 +89,17 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 	}
 
 	txBldr := types.NewTxBuilder(
-		nil,
+		utils.GetTxEncoder(cdc),
 		viper.GetUint64(flags.FlagAccountNumber),
 		viper.GetUint64(flags.FlagSequence),
 		flags.GasFlagVar.Gas,
 		viper.GetFloat64(flags.FlagGasAdjustment),
 		flags.GasFlagVar.Simulate,
-		viper.GetString(flags.FlagChainID),
+		chainID,
 		viper.GetString(flags.FlagMemo),
 		fees,
 		gasPrices)
-	txBldr = txBldr.
-		WithTxEncoder(utils.GetTxEncoder(cdc)).
-		WithChainID(chainID).
-		WithKeybase(kb)
+	txBldr = txBldr.WithKeybase(kb)
 
 	cliCtx := context.
 		NewCLIContext().
@@ -105,7 +114,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		TxBuilder:  txBldr,
 		CliCtx:     cliCtx,
 		Key:        key,
-		Passphrase: passphrase,
+		passphrase: passphrase,
 		gpe:        gpe,
 	}
 
@@ -192,7 +201,7 @@ func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
 	}
 	var txBytes []byte
 	for try := 0; try < maxSignRetry; try++ {
-		txBytes, err = txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
+		txBytes, err = txBldr.BuildAndSign(t.Key.GetName(), t.passphrase, msgs)
 		if err == nil {
 			return txBytes, nil
 		}

@@ -1,23 +1,23 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
+	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/transactor"
 	govutils "github.com/celer-network/sgn/x/gov/client/utils"
 	"github.com/celer-network/sgn/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 )
 
 // Proposal flags
@@ -63,15 +63,10 @@ func GetTxCmd(storeKey string, cdc *codec.Codec, pcmds []*cobra.Command) *cobra.
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmdSubmitProp := GetCmdSubmitProposal(cdc)
-	for _, pcmd := range pcmds {
-		cmdSubmitProp.AddCommand(flags.PostCommands(pcmd)[0])
-	}
-
 	govTxCmd.AddCommand(flags.PostCommands(
+		GetCmdSubmitProposal(cdc),
 		GetCmdDeposit(cdc),
 		GetCmdVote(cdc),
-		cmdSubmitProp,
 	)...)
 
 	return govTxCmd
@@ -82,60 +77,12 @@ func GetCmdSubmitProposal(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "submit-proposal",
 		Short: "Submit a proposal along with an initial deposit",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Submit a proposal along with an initial deposit.
-Proposal title, description, type and deposit can be given directly or through a proposal JSON file.
-
-Example:
-$ %s tx gov submit-proposal --proposal="path/to/proposal.json" --from mykey
-
-Where proposal.json contains:
-
-{
-  "title": "Test Proposal",
-  "description": "My awesome proposal",
-  "type": "Text",
-  "deposit": "10test"
-}
-
-Which is equivalent to:
-
-$ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome proposal" --type="Text" --deposit="10test" --from mykey
-`,
-				version.ClientName, version.ClientName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
-
-			proposal, err := parseSubmitProposalFlags()
-			if err != nil {
-				return err
-			}
-
-			amount, ok := sdk.NewIntFromString(proposal.Deposit)
-			if !ok {
-				return err
-			}
-
-			content := types.ContentFromProposalType(proposal.Title, proposal.Description, proposal.Type)
-
-			msg := types.NewMsgSubmitProposal(content, amount, cliCtx.GetFromAddress())
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
 	}
 
-	cmd.Flags().String(FlagTitle, "", "title of proposal")
-	cmd.Flags().String(FlagDescription, "", "description of proposal")
-	cmd.Flags().String(flagProposalType, "", "proposalType of proposal, types: text/parameter_change/software_upgrade")
-	cmd.Flags().String(FlagDeposit, "", "deposit of proposal")
-	cmd.Flags().String(FlagProposal, "", "proposal file path (if this path is given, other proposal flags are ignored)")
+	cmd.AddCommand(
+		GetCmdSubmitParamChangeProposal(cdc),
+		GetCmdSubmitUpgradeProposal(cdc),
+	)
 
 	return cmd
 }
@@ -151,15 +98,17 @@ func GetCmdDeposit(cdc *codec.Codec) *cobra.Command {
 find the proposal-id by running "%s query gov proposals".
 
 Example:
-$ %s tx gov deposit 1 10stake --from mykey
+$ %s tx gov deposit 1 10
 `,
 				version.ClientName, version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -167,22 +116,22 @@ $ %s tx gov deposit 1 10stake --from mykey
 				return fmt.Errorf("proposal-id %s not a valid uint, please input a valid proposal-id", args[0])
 			}
 
-			// Get depositor address
-			from := cliCtx.GetFromAddress()
-
 			// Get amount of coins
 			amount, ok := sdk.NewIntFromString(args[1])
 			if !ok {
 				return err
 			}
 
-			msg := types.NewMsgDeposit(from, proposalID, amount)
+			msg := types.NewMsgDeposit(txr.Key.GetAddress(), proposalID, amount)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.AddTxMsg(msg)
+			time.Sleep(5 * time.Second)
+
+			return nil
 		},
 	}
 }
@@ -205,12 +154,11 @@ $ %s tx gov vote 1 yes --from mykey
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
-
-			// Get voting address
-			from := cliCtx.GetFromAddress()
+			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -225,13 +173,16 @@ $ %s tx gov vote 1 yes --from mykey
 			}
 
 			// Build vote message and run basic validation
-			msg := types.NewMsgVote(from, proposalID, byteVoteOption)
+			msg := types.NewMsgVote(txr.Key.GetAddress(), proposalID, byteVoteOption)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.AddTxMsg(msg)
+			time.Sleep(5 * time.Second)
+
+			return nil
 		},
 	}
 }
