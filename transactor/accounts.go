@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	cKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,6 +22,7 @@ const (
 	namePrefixFlag  = "prefix"
 	countFlag       = "count"
 	genesisCoinFlag = "coin"
+	appName         = "sgn"
 )
 
 func AccountsCommand() *cobra.Command {
@@ -72,7 +72,7 @@ func addAccounts() ([]string, error) {
 	passphrase := viper.GetString(passphraseFlag)
 	np := viper.GetString(namePrefixFlag)
 	count := viper.GetInt(countFlag)
-	kb, err := cKeys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
+	kb, err := cKeys.NewKeyringWithPassphrase(appName,
 		viper.GetString(flags.FlagKeyringBackend), viper.GetString(flags.FlagHome), passphrase)
 	if err != nil {
 		return addresses, err
