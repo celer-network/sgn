@@ -147,7 +147,7 @@ find the proposal-id by running "%s query gov proposals".
 
 
 Example:
-$ %s tx gov vote 1 yes --from mykey
+$ %s tx gov vote 1 yes
 `,
 				version.ClientName, version.ClientName,
 			),

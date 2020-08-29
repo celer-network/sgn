@@ -41,8 +41,8 @@ go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinod
 
 #### Test Upgrade
 
-1. `sgncli tx govern submit-proposal software-upgrade test --title "upgrade test" --description "upgrade test" --deposit 10 --upgrade-height 100 --from jack --keyring-backend file`
-2. `sgncli tx govern vote 1 yes --from jack --keyring-backend file`
+1. `sgncli tx govern submit-proposal software-upgrade test --title "upgrade test" --description "upgrade test" --deposit 10 --upgrade-height 100`
+2. `sgncli tx govern vote 1 yes`
 3. Add upgrade handler to app.go, after the chain halts
 
 ```go
