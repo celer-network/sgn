@@ -108,7 +108,7 @@ func (m *Monitor) syncUpdateSidechainAddr(sidechainAddr *mainchain.SGNUpdateSide
 func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal, logmsg string) {
 	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
-	msg := m.Transactor.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.EthClient.Client)
+	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.EthClient.Client, m.Transactor.Key.GetAddress())
 	log.Infof("%s. submit change tx: confirm param proposal Record %v, NewValue %v", logmsg, confirmParamProposal.Record, confirmParamProposal.NewValue)
 	m.Transactor.AddTxMsg(msg)
 }
@@ -146,7 +146,7 @@ func (m *Monitor) triggerGuard(request *guard.Request, rawLog ethtypes.Log, seq 
 		seq,
 		guardStatus)
 	syncData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(trigger)
-	msg := m.Transactor.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.EthClient.Client)
+	msg := sync.NewMsgSubmitChange(sync.GuardTrigger, syncData, m.EthClient.Client, m.Transactor.Key.GetAddress())
 	log.Infof("submit change tx: trigger guard request %s", trigger)
 	m.Transactor.AddTxMsg(msg)
 }

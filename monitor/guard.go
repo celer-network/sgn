@@ -202,7 +202,7 @@ func (m *Monitor) guardTxHandler(
 					m.EthClient.Address,
 					guardState)
 				syncData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
-				msg := m.Transactor.NewMsgSubmitChange(sync.GuardProof, syncData, m.EthClient.Client)
+				msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.EthClient.Client, m.Transactor.Key.GetAddress())
 				log.Infof("submit change tx: guard proof request %s", request)
 				m.Transactor.AddTxMsg(msg)
 				err := m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))

@@ -1,4 +1,4 @@
-package transactor
+package ops
 
 import (
 	"math/big"
@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/sync"
 	"github.com/celer-network/sgn/x/validator"
@@ -19,7 +20,7 @@ import (
 
 type Operator struct {
 	EthClient  *mainchain.EthClient
-	Transactor *Transactor
+	Transactor *transactor.Transactor
 }
 
 func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err error) {
@@ -42,14 +43,22 @@ func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err erro
 		return
 	}
 
-	transactor, err := NewTransactorWithConfig(cdc, cliHome)
+	txr, err := transactor.NewTransactor(
+		cliHome,
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagSgnValidatorAccount),
+		viper.GetString(common.FlagSgnPassphrase),
+		cdc,
+		transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
+	)
 	if err != nil {
 		return
 	}
 
 	return &Operator{
 		EthClient:  ethClient,
-		Transactor: transactor,
+		Transactor: txr,
 	}, nil
 }
 
@@ -68,7 +77,7 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 
 	candidate := validator.NewCandidate(candidateAddr.Hex(), sdk.AccAddress(sidechainAddr))
 	candidateData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(candidate)
-	msg := o.Transactor.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, o.EthClient.Client)
+	msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, o.EthClient.Client, o.Transactor.Key.GetAddress())
 	log.Infof("submit change tx: update sidechain addr for candidate %s %s", candidate.EthAddress, candidate.ValAccount.String())
 	o.Transactor.AddTxMsg(msg)
 }
@@ -134,7 +143,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 	}
 
 	validatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(vt)
-	msg := o.Transactor.NewMsgSubmitChange(sync.SyncValidator, validatorData, o.EthClient.Client)
+	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, o.EthClient.Client, o.Transactor.Key.GetAddress())
 	log.Infof("submit change tx: sync validator %x, tokens %s, status %s, Commission %s",
 		candidateAddr, vt.Tokens, vt.Status, vt.Commission.CommissionRates.Rate)
 	o.Transactor.AddTxMsg(msg)
@@ -160,7 +169,7 @@ func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	delegator := validator.NewDelegator(mainchain.Addr2Hex(candidatorAddr), mainchain.Addr2Hex(delegatorAddr))
 	delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 	delegatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(delegator)
-	msg := o.Transactor.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, o.EthClient.Client)
+	msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, o.EthClient.Client, o.Transactor.Key.GetAddress())
 	log.Infof("submit change tx: sync delegator %x candidate %x stake %s", delegatorAddr, candidatorAddr, delegator.DelegatedStake)
 	o.Transactor.AddTxMsg(msg)
 }
@@ -179,7 +188,7 @@ func (o *Operator) SyncSubscriptionBalance(consumerAddr mainchain.Addr, deposit 
 	subscription = guard.NewSubscription(consumerAddrHex)
 	subscription.Deposit = depositInt
 	subscriptionData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-	msg := o.Transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, o.EthClient.Client)
+	msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, o.EthClient.Client, o.Transactor.Key.GetAddress())
 	log.Infof("Submit change tx: subscribe ethAddress %s, deposit %s", consumerAddrHex, deposit)
 	o.Transactor.AddTxMsg(msg)
 }

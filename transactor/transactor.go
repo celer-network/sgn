@@ -36,18 +36,6 @@ type Transactor struct {
 	gpe        *GasPriceEstimator
 }
 
-func NewTransactorWithConfig(cdc *codec.Codec, cliHome string) (*Transactor, error) {
-	return NewTransactor(
-		cliHome,
-		viper.GetString(common.FlagSgnChainID),
-		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnValidatorAccount),
-		viper.GetString(common.FlagSgnPassphrase),
-		cdc,
-		NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
-	)
-}
-
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
 	kb, err := keys.NewKeyringWithPassphrase(appName,
 		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
@@ -93,7 +81,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		viper.GetUint64(flags.FlagAccountNumber),
 		viper.GetUint64(flags.FlagSequence),
 		flags.GasFlagVar.Gas,
-		viper.GetFloat64(flags.FlagGasAdjustment),
+		flags.DefaultGasAdjustment,
 		flags.GasFlagVar.Simulate,
 		chainID,
 		viper.GetString(flags.FlagMemo),
@@ -120,6 +108,18 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 
 	go transactor.start()
 	return transactor, nil
+}
+
+func NewCliTransactor(cdc *codec.Codec, cliHome string) (*Transactor, error) {
+	return NewTransactor(
+		cliHome,
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagSgnValidatorAccount),
+		viper.GetString(common.FlagSgnPassphrase),
+		cdc,
+		nil,
+	)
 }
 
 // AddTxMsg add msg into a queue before actual broadcast

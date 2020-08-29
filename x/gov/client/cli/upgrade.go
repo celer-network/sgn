@@ -83,7 +83,7 @@ func GetCmdSubmitUpgradeProposal(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				log.Error(err)
 				return err

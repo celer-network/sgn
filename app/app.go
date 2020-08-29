@@ -8,7 +8,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/monitor"
-	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/ops"
 	"github.com/celer-network/sgn/x/cron"
 	"github.com/celer-network/sgn/x/gov"
 	govclient "github.com/celer-network/sgn/x/gov/client"
@@ -412,7 +412,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *sgnApp) startMonitor(db dbm.DB) {
-	operator, err := transactor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome))
+	operator, err := ops.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome))
 	if err != nil {
 		tmos.Exit(err.Error())
 	}

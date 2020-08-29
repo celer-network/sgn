@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
 	govutils "github.com/celer-network/sgn/x/gov/client/utils"
 	"github.com/celer-network/sgn/x/gov/types"
@@ -63,8 +64,8 @@ func GetTxCmd(storeKey string, cdc *codec.Codec, pcmds []*cobra.Command) *cobra.
 		RunE:                       client.ValidateCmd,
 	}
 
-	govTxCmd.AddCommand(flags.PostCommands(
-		GetCmdSubmitProposal(cdc),
+	govTxCmd.AddCommand(GetCmdSubmitProposal(cdc))
+	govTxCmd.AddCommand(common.PostCommands(
 		GetCmdDeposit(cdc),
 		GetCmdVote(cdc),
 	)...)
@@ -79,10 +80,10 @@ func GetCmdSubmitProposal(cdc *codec.Codec) *cobra.Command {
 		Short: "Submit a proposal along with an initial deposit",
 	}
 
-	cmd.AddCommand(
+	cmd.AddCommand(common.PostCommands(
 		GetCmdSubmitParamChangeProposal(cdc),
 		GetCmdSubmitUpgradeProposal(cdc),
-	)
+	)...)
 
 	return cmd
 }
@@ -104,7 +105,7 @@ $ %s tx gov deposit 1 10
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				log.Error(err)
 				return err
@@ -154,7 +155,7 @@ $ %s tx gov vote 1 yes --from mykey
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				log.Error(err)
 				return err

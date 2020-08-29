@@ -30,7 +30,7 @@ objects, only non-empty fields will be updated.
 
 IMPORTANT: Currently parameter changes are evaluated but not validated, so it is
 very important that any "value" change is valid (ie. correct type and within bounds)
-for its respective parameter, eg. "MaxValidators" should be an integer and not a decimal.
+for its respective parameter.
 
 Proper vetting of a parameter change proposal should prevent this from happening
 (no deposits should occur during the governance process), but it should be noted
@@ -42,28 +42,23 @@ $ %s tx gov submit-proposal param-change <path/to/proposal.json>
 Where proposal.json contains:
 
 {
-  "title": "Staking Param Change",
-  "description": "Update max validators",
+  "title": "Guard Param Change",
+  "description": "Update guard request cost",
   "changes": [
     {
-      "subspace": "staking",
-      "key": "MaxValidators",
-      "value": 105
+      "subspace": "guard",
+      "key": "RequestCost",
+      "value": "5000000000000"
     }
   ],
-  "deposit": [
-    {
-      "denom": "stake",
-      "amount": "10000"
-    }
-  ]
+  "deposit": "10"
 }
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			txr, err := transactor.NewTransactorWithConfig(cdc, viper.GetString(flags.FlagHome))
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
 				log.Error(err)
 				return err
