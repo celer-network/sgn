@@ -35,7 +35,7 @@ func govTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test gov ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),

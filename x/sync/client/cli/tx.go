@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -73,8 +72,7 @@ $ %s tx sync submit-change --type="sync_block" --data="My awesome change"
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},
@@ -123,8 +121,7 @@ $ %s tx sync approve 1
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},

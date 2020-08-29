@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/gateway"
@@ -127,5 +128,9 @@ func initConfig(cmd *cobra.Command) error {
 	if err := viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag)); err != nil {
 		return err
 	}
+
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	log.EnableColor()
+
 	return viper.BindPFlag(cli.OutputFlag, cmd.PersistentFlags().Lookup(cli.OutputFlag))
 }

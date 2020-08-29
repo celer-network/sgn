@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -129,8 +128,7 @@ $ %s tx gov deposit 1 10
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},
@@ -180,8 +178,7 @@ $ %s tx gov vote 1 yes --from mykey
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},

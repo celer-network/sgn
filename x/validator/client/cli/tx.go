@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"time"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
@@ -67,8 +65,7 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},
@@ -105,8 +102,7 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},
@@ -140,8 +136,7 @@ func GetCmdWithdrawReward(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},

@@ -42,7 +42,7 @@ func validatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),

@@ -106,7 +106,6 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		gpe:        gpe,
 	}
 
-	go transactor.start()
 	return transactor, nil
 }
 
@@ -122,9 +121,34 @@ func NewCliTransactor(cdc *codec.Codec, cliHome string) (*Transactor, error) {
 	)
 }
 
+func (t *Transactor) Run() {
+	go t.start()
+}
+
 // AddTxMsg add msg into a queue before actual broadcast
 func (t *Transactor) AddTxMsg(msg sdk.Msg) {
 	t.msgQueue.PushBack(msg)
+}
+
+func (t *Transactor) SendTxMsg(msg sdk.Msg) (*sdk.TxResponse, error) {
+	return t.SendTxMsgs([]sdk.Msg{msg})
+}
+
+func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
+	txBytes, err := t.signTx(msgs)
+	if err != nil {
+		return nil, fmt.Errorf("signTx err: %s", err)
+	}
+	txResponse, err := t.CliCtx.BroadcastTx(txBytes)
+	if err != nil {
+		return nil, fmt.Errorf("BroadcastTx err: %s", err)
+	}
+
+	if txResponse.Code != sdkerrors.SuccessABCICode {
+		return &txResponse, fmt.Errorf("BroadcastTx failed with code %d, %s", txResponse.Code, txResponse.RawLog)
+	}
+
+	return &txResponse, nil
 }
 
 // Poll tx queue and send msgs in batch
@@ -136,7 +160,7 @@ func (t *Transactor) start() {
 		}
 
 		logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
-		tx, err := t.broadcastTx(logEntry)
+		txResponse, err := t.bcastTxMsgQueue(logEntry)
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
 			seal.CommitTransactorLog(logEntry)
@@ -145,26 +169,32 @@ func (t *Transactor) start() {
 		seal.CommitTransactorLog(logEntry)
 
 		// Make sure the transaction has been mined
-		mined := false
-		var txResponse sdk.TxResponse
-		for try := 0; try < maxQueryRetry; try++ {
-			time.Sleep(queryRetryDelay)
-			if txResponse, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
-				mined = true
-				break
-			}
-		}
-		if !mined {
-			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
-		} else if txResponse.Code != sdkerrors.SuccessABCICode {
-			log.Errorf("Transaction %s failed with code %d, %s", tx.TxHash, txResponse.Code, txResponse.RawLog)
-		} else {
-			log.Debugf("Transaction %s succeeded", tx.TxHash)
-		}
+		t.WaitMined(txResponse.TxHash)
 	}
 }
 
-func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
+func (t *Transactor) WaitMined(txHash string) (*sdk.TxResponse, error) {
+	var err error
+	mined := false
+	var txResponse sdk.TxResponse
+	for try := 0; try < maxQueryRetry; try++ {
+		time.Sleep(queryRetryDelay)
+		if txResponse, err = utils.QueryTx(t.CliCtx, txHash); err == nil {
+			mined = true
+			break
+		}
+	}
+	if !mined {
+		log.Errorf("Transaction %s not mined within %d retry, err %s", txHash, maxQueryRetry, err)
+	} else if txResponse.Code != sdkerrors.SuccessABCICode {
+		log.Errorf("Transaction %s failed with code %d, %s", txHash, txResponse.Code, txResponse.RawLog)
+	} else {
+		log.Debugf("Transaction %s succeeded", txHash)
+	}
+	return &txResponse, err
+}
+
+func (t *Transactor) bcastTxMsgQueue(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
 	logEntry.MsgNum = uint32(t.msgQueue.Len())
 	var msgs []sdk.Msg
 	for t.msgQueue.Len() != 0 {
@@ -172,22 +202,10 @@ func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse,
 		logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 		msgs = append(msgs, msg)
 	}
+	txResponse, err := t.SendTxMsgs(msgs)
+	logEntry.TxHash = txResponse.TxHash
 
-	txBytes, err := t.signTx(msgs)
-	if err != nil {
-		return nil, fmt.Errorf("signTx err: %s", err)
-	}
-	tx, err := t.CliCtx.BroadcastTx(txBytes)
-	if err != nil {
-		return nil, fmt.Errorf("BroadcastTx err: %s", err)
-	}
-	logEntry.TxHash = tx.TxHash
-
-	if tx.Code != sdkerrors.SuccessABCICode {
-		return &tx, fmt.Errorf("BroadcastTx failed with code %d, %s", tx.Code, tx.RawLog)
-	}
-
-	return &tx, nil
+	return txResponse, err
 }
 
 func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
@@ -214,4 +232,19 @@ func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
 		}
 	}
 	return nil, fmt.Errorf("BuildAndSign err: %s", err)
+}
+
+func (t *Transactor) CliSendTxMsgWaitMined(msg sdk.Msg) {
+	t.CliSendTxMsgsWaitMined([]sdk.Msg{msg})
+}
+
+func (t *Transactor) CliSendTxMsgsWaitMined(msgs []sdk.Msg) {
+	txResponse, err := t.SendTxMsgs(msgs)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Infof("Transaction %s sent", txResponse.TxHash)
+	res, err := t.WaitMined(txResponse.TxHash)
+	t.CliCtx.PrintOutput(res)
 }

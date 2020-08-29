@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ops"
@@ -28,6 +29,9 @@ func GetSgnopsExecutor() cli.Executor {
 			return common.SetupUserPassword()
 		},
 	}
+
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	log.EnableColor()
 
 	rootCmd.AddCommand(
 		transactor.AccountsCommand(),

@@ -55,6 +55,7 @@ func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err erro
 	if err != nil {
 		return
 	}
+	txr.Run()
 
 	return &Operator{
 		EthClient:  ethClient,

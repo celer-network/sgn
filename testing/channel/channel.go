@@ -70,6 +70,7 @@ func NewRestServer() (rs *RestServer, err error) {
 		if err != nil {
 			return
 		}
+		ts.Run()
 	}
 
 	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthGateway))

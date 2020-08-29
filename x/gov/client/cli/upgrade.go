@@ -99,8 +99,7 @@ func GetCmdSubmitUpgradeProposal(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},

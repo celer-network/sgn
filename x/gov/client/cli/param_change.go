@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/transactor"
@@ -78,8 +77,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			txr.AddTxMsg(msg)
-			time.Sleep(5 * time.Second)
+			txr.CliSendTxMsgWaitMined(msg)
 
 			return nil
 		},

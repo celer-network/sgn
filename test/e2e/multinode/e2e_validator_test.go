@@ -39,7 +39,7 @@ func validatorTest(t *testing.T) {
 	log.Info("======================== Test validator ===========================")
 	setupValidator(big.NewInt(11))
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
@@ -102,7 +102,7 @@ func replaceValidatorTest(t *testing.T) {
 	log.Info("========================  Test replacing validator ===========================")
 	setupValidator(big.NewInt(2))
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,

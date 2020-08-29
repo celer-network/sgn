@@ -35,7 +35,7 @@ func upgradeTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test upgrade ===========================")
 
-	transactor0 := tc.NewTransactor(
+	transactor0 := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
