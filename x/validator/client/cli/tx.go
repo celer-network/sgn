@@ -48,8 +48,8 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdSetTransactors is the CLI command for sending a SetTransactors transaction
 func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-transasctors [eth-addr]",
-		Short: "set transasctors for the eth address",
+		Use:   "set-transactors [eth-addr]",
+		Short: "set transactors for the eth address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Info(viper.GetStringSlice(flagTransactors))

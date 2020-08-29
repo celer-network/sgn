@@ -60,7 +60,7 @@ func initCandidate() error {
 		}
 	}
 
-	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagValidatorAccount))
+	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
 		return err
 	}
