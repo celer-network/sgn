@@ -1,4 +1,4 @@
-package ops
+package monitor
 
 import (
 	"math/big"
