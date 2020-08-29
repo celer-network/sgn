@@ -13,7 +13,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/transactor"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -26,7 +25,7 @@ const (
 )
 
 type Monitor struct {
-	*transactor.Operator
+	*Operator
 	db              dbm.DB
 	ethMonitor      *monitor.Service
 	dposContract    monitor.Contract
@@ -40,7 +39,7 @@ type Monitor struct {
 	lock            sync.RWMutex
 }
 
-func NewMonitor(operator *transactor.Operator, db dbm.DB) {
+func NewMonitor(operator *Operator, db dbm.DB) {
 	monitorDb := dbm.NewPrefixDB(db, []byte(prefixMonitor))
 	dal := newWatcherDAL(monitorDb)
 	watchService := watcher.NewWatchService(operator.EthClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
@@ -83,7 +82,7 @@ func NewMonitor(operator *transactor.Operator, db dbm.DB) {
 		bootstrapped:    valnum.Uint64() > 0,
 		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
 	}
-	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagValidatorAccount))
+	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
 		log.Fatalln("Sidechain acct error")
 	}

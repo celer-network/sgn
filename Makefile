@@ -70,7 +70,6 @@ update-test-data: remove-test-data copy-test-data
 
 copy-test-config:
 	cp test/data/.sgnd/config/genesis.json ~/.sgnd/config/genesis.json
-	cp test/data/.sgncli/config/config.toml ~/.sgncli/config/config.toml
 
 ################################ Docker related ################################
 .PHONY: build

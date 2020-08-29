@@ -16,7 +16,7 @@ func claimValidator() error {
 		return err
 	}
 
-	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagValidatorAccount))
+	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
 		return err
 	}

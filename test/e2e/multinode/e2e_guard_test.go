@@ -46,7 +46,7 @@ func guardTest(t *testing.T) {
 	log.Infoln("===================================================================")
 	log.Infoln("======================== Test guard ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,

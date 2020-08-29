@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"os"
-	"path"
-
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/gateway"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -29,8 +28,7 @@ func GetSgncliExecutor() cli.Executor {
 		Short: "SGN Client",
 	}
 
-	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}
@@ -121,24 +119,18 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 }
 
 func initConfig(cmd *cobra.Command) error {
-	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)
+	viper.SetConfigFile(viper.GetString(common.FlagConfig))
+	err := viper.ReadInConfig()
 	if err != nil {
 		return err
 	}
 
-	cfgFile := path.Join(home, "config", "config.toml")
-	if _, err := os.Stat(cfgFile); err == nil {
-		viper.SetConfigFile(cfgFile)
-
-		if err := viper.ReadInConfig(); err != nil {
-			return err
-		}
-	}
-	if err := viper.BindPFlag(flags.FlagChainID, cmd.PersistentFlags().Lookup(flags.FlagChainID)); err != nil {
-		return err
-	}
 	if err := viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag)); err != nil {
 		return err
 	}
+
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	log.EnableColor()
+
 	return viper.BindPFlag(cli.OutputFlag, cmd.PersistentFlags().Lookup(cli.OutputFlag))
 }

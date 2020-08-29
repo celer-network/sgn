@@ -1,18 +1,18 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"time"
 
+	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/transactor"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -83,21 +83,25 @@ func GetCmdSubmitUpgradeProposal(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
-			from := cliCtx.GetFromAddress()
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 
 			deposit, err := cmd.Flags().GetUint64(FlagDeposit)
 			if err != nil {
 				return err
 			}
 
-			msg := govtypes.NewMsgSubmitProposal(content, sdk.NewIntFromUint64(deposit), from)
+			msg := govtypes.NewMsgSubmitProposal(content, sdk.NewIntFromUint64(deposit), txr.Key.GetAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+
+			txr.CliSendTxMsgWaitMined(msg)
+
+			return nil
 		},
 	}
 

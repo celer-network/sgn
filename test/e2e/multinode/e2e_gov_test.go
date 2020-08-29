@@ -37,7 +37,7 @@ func sidechainGovTest(t *testing.T) {
 
 	setupGov()
 
-	transactor0 := tc.NewTransactor(
+	transactor0 := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
@@ -46,7 +46,7 @@ func sidechainGovTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	transactor1 := tc.NewTransactor(
+	transactor1 := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[1],
 		tc.SgnChainID,
@@ -55,7 +55,7 @@ func sidechainGovTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	transactor2 := tc.NewTransactor(
+	transactor2 := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[2],
 		tc.SgnChainID,
@@ -208,7 +208,7 @@ func mainchainGovTest(t *testing.T) {
 
 	setupGov()
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,

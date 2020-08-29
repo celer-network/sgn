@@ -80,7 +80,7 @@ func GuardTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.I
 	require.NoError(t, err, "failed to sign signedSimplexStateBytes")
 	initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig, tc.DisputeTimeout)
 	syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(initRequest)
-	msgSubmitChange := transactor.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient)
+	msgSubmitChange := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")

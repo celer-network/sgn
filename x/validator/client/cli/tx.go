@@ -1,18 +1,13 @@
 package cli
 
 import (
-	"bufio"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,13 +25,13 @@ const (
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	validatorTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Bridge transaction subcommands",
+		Short:                      "Validator transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	validatorTxCmd.AddCommand(flags.PostCommands(
+	validatorTxCmd.AddCommand(common.PostCommands(
 		GetCmdSetTransactors(cdc),
 		GetCmdEditCandidateDescription(cdc),
 		GetCmdWithdrawReward(cdc),
@@ -48,8 +43,8 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdSetTransactors is the CLI command for sending a SetTransactors transaction
 func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-transasctors [eth-addr]",
-		Short: "set transasctors for the eth address",
+		Use:   "set-transactors [eth-addr]",
+		Short: "set transactors for the eth address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Info(viper.GetStringSlice(flagTransactors))
@@ -58,15 +53,21 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgSetTransactors(args[0], transactors, cliCtx.GetFromAddress())
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+
+			msg := types.NewMsgSetTransactors(args[0], transactors, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.CliSendTxMsgWaitMined(msg)
+
+			return nil
 		},
 	}
 
@@ -89,15 +90,21 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 			details, _ := cmd.Flags().GetString(flagDetails)
 			description := staking.NewDescription(moniker, identity, website, security, details)
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgEditCandidateDescription(args[0], description, cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+
+			msg := types.NewMsgEditCandidateDescription(args[0], description, txr.Key.GetAddress())
+			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.CliSendTxMsgWaitMined(msg)
+
+			return nil
 		},
 	}
 
@@ -117,15 +124,21 @@ func GetCmdWithdrawReward(cdc *codec.Codec) *cobra.Command {
 		Short: "withdraw reward for the eth address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			txBldr := auth.NewTxBuilderFromCLI(bufio.NewReader(cmd.InOrStdin())).WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgWithdrawReward(args[0], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+
+			msg := types.NewMsgWithdrawReward(args[0], txr.Key.GetAddress())
+			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.CliSendTxMsgWaitMined(msg)
+
+			return nil
 		},
 	}
 }

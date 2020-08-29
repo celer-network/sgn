@@ -49,18 +49,19 @@ func SetupSidechain() {
 	config.Seal()
 }
 
-func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase string) *transactor.Transactor {
+func NewTestTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnValAcct, sgnPassphrase string) *transactor.Transactor {
 	cdc := app.MakeCodec()
 	tr, err := transactor.NewTransactor(
 		sgnCLIHome,
 		sgnChainID,
 		sgnNodeURI,
-		sgnTransactor,
+		sgnValAcct,
 		sgnPassphrase,
 		cdc,
 		nil,
 	)
 	require.NoError(t, err, "Failed to create new transactor.")
+	tr.Run()
 
 	return tr
 }

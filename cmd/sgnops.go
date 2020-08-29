@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/ops"
@@ -29,8 +30,10 @@ func GetSgnopsExecutor() cli.Executor {
 		},
 	}
 
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	log.EnableColor()
+
 	rootCmd.AddCommand(
-		transactor.GetSyncCmd(cdc),
 		transactor.AccountsCommand(),
 		tc.DeployCommand(),
 		channel.ServeCommand(),
@@ -43,6 +46,7 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.UpdateCommissionRateCommand(),
 		ops.GetCandidateInfoCommand(),
 		ops.GetDelegatorInfoCommand(),
+		ops.GetSyncCmd(cdc),
 	)
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 

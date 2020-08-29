@@ -175,7 +175,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
 		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-		msg := transactor.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.ethClient)
+		msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.ethClient, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
@@ -203,7 +203,7 @@ func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		msg := validator.NewMsgWithdrawReward(req.EthAddr, transactor.CliCtx.GetFromAddress())
+		msg := validator.NewMsgWithdrawReward(req.EthAddr, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
@@ -225,7 +225,7 @@ func postSubscribeHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		subscription.Deposit = deposit
 		subscriptionData := transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-		msg := transactor.NewMsgSubmitChange(sync.Subscribe, subscriptionData, rs.ethClient)
+		msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, rs.ethClient, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
@@ -247,7 +247,7 @@ func postUpdateSidechainAddrHandlerFn(rs *RestServer) http.HandlerFunc {
 
 		candidate := validator.NewCandidate(req.EthAddr, sdk.AccAddress(sidechainAddr))
 		candidateData := transactor.CliCtx.Codec.MustMarshalBinaryBare(candidate)
-		msg := transactor.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, rs.ethClient)
+		msg := sync.NewMsgSubmitChange(sync.UpdateSidechainAddr, candidateData, rs.ethClient, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }
@@ -270,7 +270,7 @@ func postSyncDelegatorHandlerFn(rs *RestServer) http.HandlerFunc {
 		delegator := validator.NewDelegator(req.CandidateAddress, req.DelegatorAddress)
 		delegator.DelegatedStake = sdk.NewIntFromBigInt(di.DelegatedStake)
 		delegatorData := transactor.CliCtx.Codec.MustMarshalBinaryBare(delegator)
-		msg := transactor.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, rs.ethClient)
+		msg := sync.NewMsgSubmitChange(sync.SyncDelegator, delegatorData, rs.ethClient, transactor.Key.GetAddress())
 		writeGenerateStdTxResponse(w, transactor, msg)
 	}
 }

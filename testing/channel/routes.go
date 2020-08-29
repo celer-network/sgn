@@ -76,7 +76,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			}
 			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
 			syncData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-			msg := rs.transactor.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient)
+			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{

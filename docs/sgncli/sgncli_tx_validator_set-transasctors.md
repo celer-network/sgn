@@ -1,13 +1,13 @@
-## sgncli tx validator set-transasctors
+## sgncli tx validator set-transactors
 
-set transasctors for the eth address
+set transactors for the eth address
 
 ### Synopsis
 
-set transasctors for the eth address
+set transactors for the eth address
 
 ```
-sgncli tx validator set-transasctors [eth-addr] [flags]
+sgncli tx validator set-transactors [eth-addr] [flags]
 ```
 
 ### Options
@@ -22,7 +22,7 @@ sgncli tx validator set-transasctors [eth-addr] [flags]
       --gas-adjustment float     adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored  (default 1)
       --gas-prices string        Gas prices to determine the transaction fee (e.g. 10uatom)
       --generate-only            Build an unsigned transaction and write it to STDOUT (when enabled, the local Keybase is not accessible and the node operates offline)
-  -h, --help                     help for set-transasctors
+  -h, --help                     help for set-transactors
       --indent                   Add indent to JSON response
       --keyring-backend string   Select keyring's backend (os|file|test) (default "os")
       --ledger                   Use a connected Ledger device

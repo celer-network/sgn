@@ -37,12 +37,12 @@ func upgradeTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test upgrade ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagValidatorAccount),
+		viper.GetString(common.FlagSgnValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 

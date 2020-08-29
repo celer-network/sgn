@@ -44,7 +44,7 @@ func slashTest(t *testing.T) {
 	log.Infoln("===================================================================")
 	log.Infoln("======================== Test slash ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
