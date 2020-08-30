@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/testing/channel"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -26,12 +27,14 @@ func GetSgnopsExecutor() cli.Executor {
 				return err
 			}
 
+			log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+			if viper.GetBool(common.FlagLogColor) {
+				log.EnableColor()
+			}
+
 			return common.SetupUserPassword()
 		},
 	}
-
-	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
-	log.EnableColor()
 
 	rootCmd.AddCommand(
 		transactor.AccountsCommand(),
@@ -47,6 +50,7 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.GetCandidateInfoCommand(),
 		ops.GetDelegatorInfoCommand(),
 		ops.GetSyncCmd(cdc),
+		version.Cmd,
 	)
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 

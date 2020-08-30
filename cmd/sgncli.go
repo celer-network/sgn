@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -44,6 +45,7 @@ func GetSgncliExecutor() cli.Executor {
 		flags.LineBreak,
 		keys.Commands(),
 		flags.LineBreak,
+		version.Cmd,
 	)
 
 	return cli.PrepareMainCmd(rootCmd, "SGN", app.DefaultCLIHome)
@@ -130,7 +132,9 @@ func initConfig(cmd *cobra.Command) error {
 	}
 
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
-	log.EnableColor()
+	if viper.GetBool(common.FlagLogColor) {
+		log.EnableColor()
+	}
 
 	return viper.BindPFlag(cli.OutputFlag, cmd.PersistentFlags().Lookup(cli.OutputFlag))
 }
