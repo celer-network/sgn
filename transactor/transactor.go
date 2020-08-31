@@ -135,7 +135,7 @@ func (t *Transactor) SendTxMsg(msg sdk.Msg) (*sdk.TxResponse, error) {
 }
 
 func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
-	txBytes, err := t.signTx(msgs)
+	txBytes, stdSignMsg, err := t.signTx(msgs)
 	if err != nil {
 		return nil, fmt.Errorf("signTx err: %s", err)
 	}
@@ -145,7 +145,8 @@ func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
 	}
 
 	if txResponse.Code != sdkerrors.SuccessABCICode {
-		return &txResponse, fmt.Errorf("BroadcastTx failed with code %d, %s", txResponse.Code, txResponse.RawLog)
+		return &txResponse, fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg: %s acct %s accnum %d seq %d",
+			txResponse.Code, txResponse.RawLog, t.Key.GetAddress(), stdSignMsg.ChainID, stdSignMsg.AccountNumber, stdSignMsg.Sequence)
 	}
 
 	return &txResponse, nil
@@ -208,20 +209,24 @@ func (t *Transactor) bcastTxMsgQueue(logEntry *seal.TransactorLog) (*sdk.TxRespo
 	return txResponse, err
 }
 
-func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
+func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, error) {
 	if t.gpe != nil {
 		t.TxBuilder = t.TxBuilder.WithGasPrices(t.gpe.GetGasPrice())
 	}
 
 	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
+		return nil, nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
 	}
 	var txBytes []byte
 	for try := 0; try < maxSignRetry; try++ {
-		txBytes, err = txBldr.BuildAndSign(t.Key.GetName(), t.passphrase, msgs)
+		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
+		if err != nil {
+			return nil, nil, err
+		}
+		txBytes, err = txBldr.Sign(t.Key.GetName(), t.passphrase, stdSignMsg)
 		if err == nil {
-			return txBytes, nil
+			return txBytes, &stdSignMsg, nil
 		}
 		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
 			break
@@ -231,7 +236,7 @@ func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
 			time.Sleep(signRetryDelay)
 		}
 	}
-	return nil, fmt.Errorf("BuildAndSign err: %s", err)
+	return nil, nil, fmt.Errorf("BuildAndSign err: %s", err)
 }
 
 func (t *Transactor) CliSendTxMsgWaitMined(msg sdk.Msg) {
