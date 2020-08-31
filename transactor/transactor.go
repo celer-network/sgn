@@ -219,8 +219,9 @@ func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, error) {
 		return nil, nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
 	}
 	var txBytes []byte
+	var stdSignMsg types.StdSignMsg
 	for try := 0; try < maxSignRetry; try++ {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
+		stdSignMsg, err = txBldr.BuildSignMsg(msgs)
 		if err != nil {
 			return nil, nil, err
 		}
