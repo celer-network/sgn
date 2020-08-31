@@ -58,7 +58,7 @@ func SetupMainchain() {
 	ChkErr(err, "fund each validator ERC20")
 }
 
-func SetupNewSGNEnv(sgnParams *SGNParams) {
+func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	log.Infoln("Deploy DPoS and SGN contracts")
 	if sgnParams == nil {
 		sgnParams = &SGNParams{
@@ -107,6 +107,17 @@ func SetupNewSGNEnv(sgnParams *SGNParams) {
 		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
 		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
+
+		if manual {
+			genesisPath := fmt.Sprintf("../../../docker-volumes/node%d/sgnd/config/genesis.json", i)
+			genesisViper := viper.New()
+			genesisViper.SetConfigFile(genesisPath)
+			err = genesisViper.ReadInConfig()
+			ChkErr(err, "Failed to read genesis")
+			genesisViper.Set("app_state.govern.voting_params.voting_period", "120000000000")
+			err = genesisViper.WriteConfig()
+			ChkErr(err, "Failed to write genesis")
+		}
 	}
 
 	// Update global viper

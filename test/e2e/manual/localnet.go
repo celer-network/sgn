@@ -22,16 +22,16 @@ func main() {
 		tc.SetupMainchain()
 		p := &tc.SGNParams{
 			CelrAddr:               tc.E2eProfile.CelrAddr,
-			GovernProposalDeposit:  big.NewInt(1),
-			GovernVoteTimeout:      big.NewInt(1),
-			SlashTimeout:           big.NewInt(0),
+			GovernProposalDeposit:  big.NewInt(1000000000000000000),
+			GovernVoteTimeout:      big.NewInt(30),
+			SlashTimeout:           big.NewInt(15),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(5),
-			MinStakingPool:         big.NewInt(1000),
-			IncreaseRateWaitTime:   big.NewInt(1),
+			MinStakingPool:         big.NewInt(5000000000000000000), // 5 CELR
+			IncreaseRateWaitTime:   big.NewInt(30),
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
-		tc.SetupNewSGNEnv(p)
+		tc.SetupNewSGNEnv(p, true)
 	} else if *down {
 		repoRoot, _ := filepath.Abs("../../..")
 		log.Infoln("Tearing down all containers...")
