@@ -1,0 +1,12 @@
+{
+    "title": "Guard Param Change",
+    "description": "Update guard request cost",
+    "changes": [
+      {
+        "subspace": "guard",
+        "key": "RequestCost",
+        "value": "500000000000"
+      }
+    ],
+    "deposit": "10"
+  }

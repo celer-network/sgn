@@ -129,6 +129,11 @@ prepare-sgn-data:
 	mkdir -p ./docker-volumes
 	cp -r ./test/multi-node-data/node* ./docker-volumes/
 
+.PHONY: copy-manual-test-data
+copy-manual-test-data:
+	rm -rf ./test/e2e/manual/data/node*
+	cp -r ./docker-volumes/node* ./test/e2e/manual/data/
+
 # Clean test data
 .PHONY: clean-test
 clean-test:
