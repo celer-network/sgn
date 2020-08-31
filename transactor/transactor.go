@@ -204,6 +204,9 @@ func (t *Transactor) bcastTxMsgQueue(logEntry *seal.TransactorLog) (*sdk.TxRespo
 		msgs = append(msgs, msg)
 	}
 	txResponse, err := t.SendTxMsgs(msgs)
+	if err != nil {
+		return nil, err
+	}
 	logEntry.TxHash = txResponse.TxHash
 
 	return txResponse, err

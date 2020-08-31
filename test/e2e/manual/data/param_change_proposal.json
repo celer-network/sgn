@@ -1,11 +1,11 @@
 {
-    "title": "Guard Param Change",
-    "description": "Update guard request cost",
+    "title": "Reward Param Change",
+    "description": "Update block mining reward",
     "changes": [
       {
-        "subspace": "guard",
-        "key": "RequestCost",
-        "value": "500000000000"
+        "subspace": "validator",
+        "key": "MiningReward",
+        "value": "20000000000000"
       }
     ],
     "deposit": "10"

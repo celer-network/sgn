@@ -7,15 +7,24 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
+	"github.com/celer-network/sgn/transactor"
+	sgnval "github.com/celer-network/sgn/x/validator"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/viper"
 )
 
 var (
 	up   = flag.Bool("up", false, "start local testnet")
+	auto = flag.Bool("auto", false, "auto-add all validators")
 	down = flag.Bool("down", false, "shutdown local testnet")
 )
 
@@ -24,6 +33,7 @@ func main() {
 	repoRoot, _ := filepath.Abs("../../..")
 	if *up {
 		tc.SetupMainchain()
+		tc.SetupSidechain()
 		p := &tc.SGNParams{
 			CelrAddr:               tc.E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1000000000000000000),
@@ -72,6 +82,10 @@ func main() {
 			}
 		}
 
+		if *auto {
+			addValidators()
+		}
+
 	} else if *down {
 		log.Infoln("Tearing down all containers...")
 		cmd := exec.Command("make", "localnet-down")
@@ -80,5 +94,88 @@ func main() {
 			log.Error(err)
 		}
 		os.Exit(0)
+	}
+}
+
+func addValidators() {
+	cdc := app.MakeCodec()
+	txr, err := transactor.NewTransactor(
+		tc.SgnCLIHomes[0],
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+		cdc, nil,
+	)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	amts := []*big.Int{
+		new(big.Int).Mul(big.NewInt(10000), big.NewInt(common.TokenDec)),
+		new(big.Int).Mul(big.NewInt(20000), big.NewInt(common.TokenDec)),
+		new(big.Int).Mul(big.NewInt(10000), big.NewInt(common.TokenDec)),
+	}
+	minAmts := []*big.Int{
+		new(big.Int).Mul(big.NewInt(1000), big.NewInt(common.TokenDec)),
+		new(big.Int).Mul(big.NewInt(2000), big.NewInt(common.TokenDec)),
+		new(big.Int).Mul(big.NewInt(3000), big.NewInt(common.TokenDec)),
+	}
+	commissions := []*big.Int{big.NewInt(150), big.NewInt(200), big.NewInt(120)}
+
+	for i := 0; i < 3; i++ {
+		log.Infoln("Adding validator", i)
+		ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[i])
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		addCandidateWithStake(txr, ethAddr, auth, tc.ValAccounts[i], amts[i], minAmts[i], commissions[i], big.NewInt(300))
+	}
+}
+
+func addCandidateWithStake(
+	txr *transactor.Transactor,
+	ethAddr mainchain.Addr,
+	auth *bind.TransactOpts,
+	valacct string,
+	amt *big.Int, minAmt *big.Int,
+	commissionRate *big.Int,
+	rateLockEndTime *big.Int) {
+
+	// get sgnAddr
+	sgnAddr, err := sdk.AccAddressFromBech32(valacct)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	// add candidate
+	err = tc.InitializeCandidate(auth, sgnAddr, minAmt, commissionRate, rateLockEndTime)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for retry := 0; retry < 10; retry++ {
+		_, err := sgnval.CLIQueryCandidate(txr.CliCtx, sgnval.RouterKey, ethAddr.Hex())
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
+	// self delegate stake
+	err = tc.DelegateStake(auth, ethAddr, amt)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for retry := 0; retry < 10; retry++ {
+		_, err := sgnval.CLIQueryValidator(txr.CliCtx, staking.RouterKey, valacct)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
 	}
 }
