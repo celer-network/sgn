@@ -3,10 +3,10 @@ FROM golang:1.14-alpine as builder
 RUN apk add --no-cache g++ musl-dev linux-headers leveldb-dev
 
 WORKDIR /sgn
+ADD . /sgn
 ADD go.mod go.sum /sgn/
 RUN go mod download
 
-ADD . /sgn
 RUN go build -tags "cleveldb" -o /sgn/bin/sgnd ./cmd/sgnd
 
 FROM alpine:latest
