@@ -1,17 +1,15 @@
 # Run Local Manual Tests
 
-Follow instructions below to easily start a local testnet and play with three validator nodes on your local machine.
+Follow instructions below to start a local testnet with three validator nodes on your local machine.
 
 #### Table of contents
-- [Start local testnet](#start-local-testnet)
+
 - [Add validators](#add-validators)
-- [Test governance](#test-governance)
-
-## Start local testnet.
-
-Run `go run localnet.go -up`. This would set up the docker test environment, including one geth instance for mainchain and three sgn nodes for sidechain. This script also prepares local testnet accounts with testnet tokens.
+- [Update param through governance](#update-param-through-governance)
 
 ## Add validators
+
+Run `go run localnet.go -up` to set up the docker test environment with three sgn nodes.
 
 ### Add node0 to become a validator
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
@@ -43,7 +41,7 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 - `sgncli query validator validators`
 - `sgncli query tendermint-validator-set --trust-node`
 
-## Test governance
+## Update param through governance
 
 Update block block reward through governance. 
 
