@@ -1,12 +1,12 @@
 {
-    "title": "Reward Param Change",
-    "description": "Update block mining reward",
-    "changes": [
-      {
-        "subspace": "validator",
-        "key": "MiningReward",
-        "value": "20000000000000"
-      }
-    ],
-    "deposit": "10"
-  }
+  "title": "Reward Param Change",
+  "description": "Update block mining reward",
+  "changes": [
+    {
+      "subspace": "validator",
+      "key": "MiningReward",
+      "value": "20000000000000"
+    }
+  ],
+  "deposit": "10"
+}

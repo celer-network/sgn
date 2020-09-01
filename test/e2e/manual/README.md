@@ -48,3 +48,17 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 Update block block reward through governance
 
 #### Query current block mining reward
+- `sgncli query validator params --config data/node0/config.json --home data/node0/sgncli`
+
+#### Node0 submit change proposal
+- `sgncli tx govern submit-proposal param-change data/param_change_proposal.json --config data/node0/config.json --home data/node0/sgncli`
+- `sgncli query govern proposals --config data/node0/config.json --home data/node0/sgncli`
+
+#### All nodes vote yes
+- `sgncli tx govern vote 1 yes --config data/node0/config.json --home data/node0/sgncli`
+- `sgncli tx govern vote 1 yes --config data/node1/config.json --home data/node1/sgncli`
+- `sgncli tx govern vote 1 yes --config data/node2/config.json --home data/node2/sgncli`
+- `sgncli query govern proposal 1 --config data/node0/config.json --home data/node0/sgncli`
+
+#### Query updated block mining reward after voting timeout (2 mins)
+- `sgncli query validator params --config data/node0/config.json --home data/node0/sgncli`

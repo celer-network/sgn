@@ -36,6 +36,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdSyncer(storeKey, cdc),
 		GetCmdReward(storeKey, cdc),
 		GetCmdRewardRequest(storeKey, cdc),
+		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return validatorQueryCmd
 }
@@ -286,6 +287,28 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 
 	err = cliCtx.Codec.UnmarshalJSON(res, &reward)
 	return
+}
+
+// GetCmdQueryParams implements the params query command.
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "Query the current validator parameters information",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
+			res, err := common.RobustQuery(cliCtx, route)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			cdc.MustUnmarshalJSON(res, &params)
+			return cliCtx.PrintOutput(params)
+		},
+	}
 }
 
 type ValidatorOutput struct {

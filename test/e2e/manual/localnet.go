@@ -75,7 +75,7 @@ func main() {
 			ksPath, _ := filepath.Abs(fmt.Sprintf("./data/node%d/keys/ethks%d.json", i, i))
 			configFileViper.Set(common.FlagEthKeystore, ksPath)
 			configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
-			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodesURI[i])
+			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodeURI)
 
 			if err := configFileViper.WriteConfig(); err != nil {
 				log.Error(err)
@@ -158,7 +158,7 @@ func addCandidateWithStake(
 		return
 	}
 	for retry := 0; retry < 10; retry++ {
-		_, err := sgnval.CLIQueryCandidate(txr.CliCtx, sgnval.RouterKey, ethAddr.Hex())
+		_, err = sgnval.CLIQueryCandidate(txr.CliCtx, sgnval.RouterKey, ethAddr.Hex())
 		if err == nil {
 			break
 		}
@@ -172,7 +172,7 @@ func addCandidateWithStake(
 		return
 	}
 	for retry := 0; retry < 10; retry++ {
-		_, err := sgnval.CLIQueryValidator(txr.CliCtx, staking.RouterKey, valacct)
+		_, err = sgnval.CLIQueryValidator(txr.CliCtx, staking.RouterKey, valacct)
 		if err == nil {
 			break
 		}
