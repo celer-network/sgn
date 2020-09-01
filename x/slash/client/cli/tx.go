@@ -12,7 +12,6 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	slashTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Slash transaction subcommands",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}

@@ -23,7 +23,6 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	guardQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the guard module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}

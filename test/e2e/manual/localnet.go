@@ -47,8 +47,8 @@ func main() {
 		}
 		tc.SetupNewSGNEnv(p, true)
 
-		log.Infoln("install sgnd, sgncli, sgnops")
-		cmd := exec.Command("make", "install-all")
+		log.Infoln("install sgncli and sgnops in host machine")
+		cmd := exec.Command("make", "install-tools")
 		cmd.Dir = repoRoot
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, "WITH_CLEVELDB=yes")

@@ -26,7 +26,7 @@ func GetSgncliExecutor() cli.Executor {
 	cdc := app.MakeCodec()
 	rootCmd := &cobra.Command{
 		Use:   "sgncli",
-		Short: "SGN Client",
+		Short: "SGN node command line interface",
 	}
 
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")

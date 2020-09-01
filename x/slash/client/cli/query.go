@@ -18,7 +18,6 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	slashQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the slash module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}

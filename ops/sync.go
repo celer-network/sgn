@@ -28,7 +28,6 @@ func GetSyncCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "sync",
 		Short:                      "Sync a change from mainchain to sidechain",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}

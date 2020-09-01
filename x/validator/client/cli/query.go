@@ -24,7 +24,6 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	validatorQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the validator module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
