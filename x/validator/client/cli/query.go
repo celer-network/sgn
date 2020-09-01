@@ -8,7 +8,6 @@ import (
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -27,7 +26,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	validatorQueryCmd.AddCommand(flags.GetCommands(
+	validatorQueryCmd.AddCommand(common.GetCommands(
 		GetCmdCandidate(storeKey, cdc),
 		GetCmdDelegator(storeKey, cdc),
 		GetCmdValidator(staking.StoreKey, cdc),
@@ -47,7 +46,7 @@ func GetCmdSyncer(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query syncer info",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			syncer, err := QuerySyncer(cliCtx, queryRoute)
 			if err != nil {
 				log.Errorln("query error", err)
@@ -78,7 +77,7 @@ func GetCmdDelegator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query delegator info by candidate and delegator ETH addresses",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			delegator, err := QueryDelegator(cliCtx, queryRoute, args[0], args[1])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -113,7 +112,7 @@ func GetCmdCandidate(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query candidate info by candidate ETH address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			candidate, err := QueryCandidate(cliCtx, queryRoute, args[0])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -148,7 +147,7 @@ func GetCmdValidator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query a validator by account address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			validator, err := QueryValidator(cliCtx, queryRoute, args[0])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -166,7 +165,7 @@ func GetCmdValidators(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Use:   "validators",
 		Short: "query all validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			validators, err := QueryValidators(cliCtx, queryRoute)
 			if err != nil {
 				log.Errorln("query error", err)
@@ -239,7 +238,7 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query reward info by delegator or validator ETH address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -258,7 +257,7 @@ func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query reward request by delegator or validator ETH address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -295,7 +294,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Query the current validator parameters information",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
 			res, err := common.RobustQuery(cliCtx, route)
