@@ -45,7 +45,9 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 
 ## Test governance
 
-Update block block reward through governance. Run `go run localnet.go -up -auto` to start testnet and auto config all nodes as validators.
+Update block block reward through governance. 
+
+Run `go run localnet.go -up -auto` to start testnet and auto config all nodes as validators.
 
 #### Query current block mining reward and submit change proposal
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
