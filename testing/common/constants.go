@@ -36,5 +36,5 @@ var (
 	ClientEthAddrs = [...]string{"cb409caa43e385288d6bff2c3a0635688c7b3294", "75e912af38888643829380fa9f2c4019f5710ff5"}
 
 	// used by local manual tests
-	SgnNodesURI = [...]string{"tcp://localhost:26657", "tcp://localhost:26660", "tcp://localhost:26662"}
+	SgnNodeURIs = [...]string{"tcp://localhost:26657", "tcp://localhost:26660", "tcp://localhost:26662"}
 )

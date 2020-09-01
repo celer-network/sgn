@@ -75,7 +75,7 @@ func main() {
 			ksPath, _ := filepath.Abs(fmt.Sprintf("./data/node%d/keys/ethks%d.json", i, i))
 			configFileViper.Set(common.FlagEthKeystore, ksPath)
 			configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
-			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodeURI)
+			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodeURIs[i])
 
 			if err := configFileViper.WriteConfig(); err != nil {
 				log.Error(err)
