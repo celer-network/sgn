@@ -22,7 +22,7 @@ const (
 )
 
 func initCandidate() error {
-	ethClient, err := initEthClient()
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
@@ -44,7 +45,7 @@ func announceIncreaseCommissionRate() *cobra.Command {
 		Use:   "announce-increase-rate",
 		Short: "Announce increase commission rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}
@@ -93,7 +94,7 @@ func confirmIncreaseCommissionRate() *cobra.Command {
 		Use:   "confirm-increase-rate",
 		Short: "Confirm increase commission rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}
@@ -118,7 +119,7 @@ func decreaseCommissionRate() *cobra.Command {
 		Use:   "decrease-rate",
 		Short: "Decrease commission rate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}
@@ -167,7 +168,7 @@ func extendCommissionRateLockTime() *cobra.Command {
 		Use:   "extend-lock",
 		Short: "Extend commission rate lock end time",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}

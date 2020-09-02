@@ -42,7 +42,7 @@ func main() {
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(5),
 			MinStakingPool:         big.NewInt(5000000000000000000), // 5 CELR
-			IncreaseRateWaitTime:   big.NewInt(30),
+			AdvanceNoticePeriod:    big.NewInt(30),
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 		tc.SetupNewSGNEnv(p, true)

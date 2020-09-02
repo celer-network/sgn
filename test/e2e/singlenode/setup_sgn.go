@@ -24,7 +24,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(11),
 			MinStakingPool:         big.NewInt(100),
-			IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+			AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}

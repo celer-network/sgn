@@ -20,7 +20,7 @@ func setupValidator(maxValidatorNum *big.Int) {
 		MinValidatorNum:        big.NewInt(1),
 		MaxValidatorNum:        maxValidatorNum,
 		MinStakingPool:         big.NewInt(1),
-		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	tc.SetupNewSGNEnv(p, false)

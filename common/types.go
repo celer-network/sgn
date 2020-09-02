@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/spf13/viper"
 )
 
 type ParamChange struct {
@@ -82,4 +83,22 @@ func NewCommission(ethClient *mainchain.EthClient, commissionRate *big.Int) (sta
 			MaxChangeRate: sdk.NewDec(1),
 		},
 	}, nil
+}
+
+func NewEthClientFromConfig() (*mainchain.EthClient, error) {
+	return mainchain.NewEthClient(
+		viper.GetString(FlagEthGateway),
+		viper.GetString(FlagEthKeystore),
+		viper.GetString(FlagEthPassphrase),
+		&mainchain.TransactorConfig{
+			BlockDelay:           viper.GetUint64(FlagEthBlockDelay),
+			BlockPollingInterval: viper.GetUint64(FlagEthPollInterval),
+			ChainId:              big.NewInt(viper.GetInt64(FlagEthChainID)),
+			AddGasPriceGwei:      viper.GetUint64(FlagEthAddGasPriceGwei),
+			MinGasPriceGwei:      viper.GetUint64(FlagEthMinGasPriceGwei),
+		},
+		viper.GetString(FlagEthDPoSAddress),
+		viper.GetString(FlagEthSGNAddress),
+		viper.GetString(FlagEthLedgerAddress),
+	)
 }

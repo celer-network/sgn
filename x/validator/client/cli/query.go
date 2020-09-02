@@ -2,9 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/sgn"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -12,11 +15,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 )
 
 const (
-	flagSeq = "seq"
+	flagCheckMainchain = "check-mainchain"
 )
 
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
@@ -33,7 +37,6 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdValidators(staking.StoreKey, cdc),
 		GetCmdSyncer(storeKey, cdc),
 		GetCmdReward(storeKey, cdc),
-		GetCmdRewardRequest(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return validatorQueryCmd
@@ -233,7 +236,7 @@ func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string)
 
 // GetCmdReward queries reward info
 func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "reward [eth-address]",
 		Short: "query reward info by delegator or validator ETH address",
 		Args:  cobra.ExactArgs(1),
@@ -241,33 +244,70 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := common.NewQueryCLIContext(cdc)
 			reward, err := QueryReward(cliCtx, queryRoute, args[0])
 			if err != nil {
-				log.Errorln("query error", err)
+				log.Errorln("query reward error", err)
 				return err
 			}
 
-			return cliCtx.PrintOutput(reward)
-		},
-	}
-}
+			type SigndReward struct {
+				MiningReward  *big.Int `json:"mining_reward"`
+				ServiceReward *big.Int `json:"service_reward"`
+			}
 
-// GetCmdRewardRequest queries reward request
-func GetCmdRewardRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "reward-request [eth-address]",
-		Short: "query reward request by delegator or validator ETH address",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := common.NewQueryCLIContext(cdc)
-			reward, err := QueryReward(cliCtx, queryRoute, args[0])
+			type RewardOutput struct {
+				Receiver      string      `json:"receiver"`
+				MiningReward  sdk.Int     `json:"mining_reward"`
+				ServiceReward sdk.Int     `json:"service_reward"`
+				SignedReward  SigndReward `json:"signed_msg"`
+				Signers       []string    `json:"signers"`
+			}
+
+			rewardOutput := RewardOutput{
+				Receiver:      reward.Receiver,
+				MiningReward:  reward.MiningReward,
+				ServiceReward: reward.ServiceReward,
+			}
+
+			var signers []mainchain.Addr
+			for _, sigs := range reward.Sigs {
+				rewardOutput.Signers = append(rewardOutput.Signers, sigs.Signer)
+				signers = append(signers, mainchain.Hex2Addr(sigs.Signer))
+			}
+
+			if len(reward.RewardProtoBytes) != 0 {
+				var pbReward sgn.Reward
+				err = proto.Unmarshal(reward.RewardProtoBytes, &pbReward)
+				if err != nil {
+					log.Errorln("proto umarshal err", err, reward.RewardProtoBytes)
+				} else {
+					rewardOutput.SignedReward.MiningReward = new(big.Int).SetBytes(pbReward.CumulativeMiningReward)
+					rewardOutput.SignedReward.ServiceReward = new(big.Int).SetBytes(pbReward.CumulativeServiceReward)
+				}
+			}
+
+			err = cliCtx.PrintOutput(rewardOutput)
 			if err != nil {
-				log.Errorln("query error", err)
-				return err
+				log.Error(err)
 			}
 
-			log.Info(string(reward.GetRewardRequest()))
+			checkMainchain, _ := cmd.Flags().GetBool(flagCheckMainchain)
+			if checkMainchain {
+				ethClient, err2 := common.NewEthClientFromConfig()
+				if err != nil {
+					return err2
+				}
+				signerStakes, totalStakes, quorumStakes, err2 := ethClient.CheckVotingPower(signers)
+				fmt.Println("signer voting power based on mainchain info:")
+				fmt.Println("- signer stakes:", signerStakes)
+				fmt.Println("- total stakes:", totalStakes)
+				fmt.Println("- quorum stakes:", quorumStakes)
+			}
+
 			return nil
 		},
 	}
+	cmd.Flags().Bool(flagCheckMainchain, false, "Check info on mainchain")
+
+	return cmd
 }
 
 // Query reward info

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ const (
 )
 
 func getDelegatorInfo() error {
-	ethClient, err := initEthClient()
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
 		return err
 	}

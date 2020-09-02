@@ -56,7 +56,7 @@ func DeployDPoSSGNContracts(sgnParams *SGNParams) (*types.Transaction, mainchain
 		sgnParams.MinValidatorNum,
 		sgnParams.MaxValidatorNum,
 		sgnParams.MinStakingPool,
-		sgnParams.IncreaseRateWaitTime,
+		sgnParams.AdvanceNoticePeriod,
 		sgnParams.SidechainGoLiveTimeout)
 	ChkErr(err, "failed to deploy DPoS contract")
 
@@ -126,7 +126,7 @@ func DeployCommand() *cobra.Command {
 				MinValidatorNum:        big.NewInt(3),
 				MaxValidatorNum:        big.NewInt(7),
 				MinStakingPool:         big.NewInt(10000),
-				IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+				AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
 				SidechainGoLiveTimeout: big.NewInt(5760),
 			}
 			tx, dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
