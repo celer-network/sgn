@@ -49,6 +49,7 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.UpdateCommissionRateCommand(),
 		ops.GetCandidateInfoCommand(),
 		ops.GetDelegatorInfoCommand(),
+		ops.GetAllValidatorsCommand(),
 		ops.GetSyncCmd(cdc),
 		version.Cmd,
 	)
