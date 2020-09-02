@@ -34,4 +34,7 @@ var (
 	ValEthAddrs    = [...]string{"6a6d2a97da1c453a4e099e8054865a0a59728863", "ba756d65a1a03f07d205749f35e2406e4a8522ad", "f25d8b54fad6e976eb9175659ae01481665a2254"}
 	ClientEthKs    = [...]string{"../../keys/ethks3.json", "../../keys/ethks4.json"}
 	ClientEthAddrs = [...]string{"cb409caa43e385288d6bff2c3a0635688c7b3294", "75e912af38888643829380fa9f2c4019f5710ff5"}
+
+	// used by local manual tests
+	SgnNodeURIs = [...]string{"tcp://localhost:26657", "tcp://localhost:26660", "tcp://localhost:26662"}
 )

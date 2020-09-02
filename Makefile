@@ -34,15 +34,23 @@ all: lint install
 
 .PHONY: install
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/sgnd
-		go install $(BUILD_FLAGS) ./cmd/sgncli
+	go install $(BUILD_FLAGS) ./cmd/sgnd
+	go install $(BUILD_FLAGS) ./cmd/sgncli
+
+install-cli: go.sum
+	go install $(BUILD_FLAGS) ./cmd/sgncli
 
 install-ops: go.sum
 	go install $(BUILD_FLAGS) ./cmd/sgnops
 
+install-tools: go.sum
+	go install $(BUILD_FLAGS) ./cmd/sgncli
+	go install $(BUILD_FLAGS) ./cmd/sgnops
+
 install-all: go.sum
-	make install
-	make install-ops
+	go install $(BUILD_FLAGS) ./cmd/sgnd
+	go install $(BUILD_FLAGS) ./cmd/sgncli
+	go install $(BUILD_FLAGS) ./cmd/sgnops
 
 generate-docs: go.sum
 	go run ./cmd/gendocs ./docs
@@ -50,8 +58,8 @@ generate-docs: go.sum
 	find ./docs -type f | xargs sed -i '' 's|'"$$HOSTNAME"'|\$$HOSTNAME|g'
 
 go.sum: go.mod
-		@echo "--> Ensure dependencies have not been modified"
-		GO111MODULE=on go mod verify
+	@echo "--> Ensure dependencies have not been modified"
+	GO111MODULE=on go mod verify
 
 lint:
 	golangci-lint run
@@ -128,6 +136,13 @@ prepare-sgn-data:
 	rm -rf ./docker-volumes/node*
 	mkdir -p ./docker-volumes
 	cp -r ./test/multi-node-data/node* ./docker-volumes/
+
+# Make a copy of config files for local manual test
+.PHONY: copy-manual-test-data
+copy-manual-test-data:
+	rm -rf ./test/e2e/manual/data/node*
+	cp -r ./docker-volumes/node* ./test/e2e/manual/data/
+	rm -rf ./test/e2e/manual/data/node*/sgnd
 
 # Clean test data
 .PHONY: clean-test

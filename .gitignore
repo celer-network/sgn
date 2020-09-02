@@ -16,4 +16,5 @@ build
 
 # Test
 docker-volumes
-/config.json
+config.json
+test/e2e/manual/data/node*

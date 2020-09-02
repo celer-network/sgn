@@ -12,7 +12,6 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	guardTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Guard transaction subcommands",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}

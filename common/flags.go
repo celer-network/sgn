@@ -38,7 +38,6 @@ const (
 	FlagSgnTimeoutCommit    = "sgn.timeout_commit"
 	FlagSgnKeyringBackend   = "sgn.keyring_backend"
 	FlagSgnExecuteSlash     = "sgn.execute_slash"
-	FlagSgnTrustNode        = "sgn.trust_node"
 
 	FlagLogLevel = "log.level"
 	FlagLogColor = "log.color"
@@ -55,6 +54,19 @@ func PostCommands(cmds ...*cobra.Command) []*cobra.Command {
 			"gas limit to set per-transaction; set to %q to calculate required gas automatically (default %d)",
 			flags.GasFlagAuto, flags.DefaultGasLimit,
 		))
+		viper.BindPFlag(flags.FlagTrustNode, c.Flags().Lookup(flags.FlagTrustNode))
+
+		c.SetErr(c.ErrOrStderr())
+	}
+	return cmds
+}
+
+func GetCommands(cmds ...*cobra.Command) []*cobra.Command {
+	for _, c := range cmds {
+		c.Flags().Bool(flags.FlagIndentResponse, false, "Add indent to JSON response")
+		c.Flags().Bool(flags.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
+		c.Flags().Int64(flags.FlagHeight, 0, "Use a specific height to query state at (this can error if the node is pruning state)")
+
 		viper.BindPFlag(flags.FlagTrustNode, c.Flags().Lookup(flags.FlagTrustNode))
 
 		c.SetErr(c.ErrOrStderr())

@@ -27,7 +27,7 @@ func setupSlash() {
 		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	tc.SetupNewSGNEnv(p)
+	tc.SetupNewSGNEnv(p, false)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 

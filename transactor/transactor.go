@@ -89,13 +89,13 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		gasPrices)
 	txBldr = txBldr.WithKeybase(kb)
 
-	cliCtx := context.
-		NewCLIContext().
+	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(key.GetAddress()).
 		WithFromName(key.GetName()).
 		WithNodeURI(nodeURI).
 		WithTrustNode(true).
+		WithChainID(chainID).
 		WithBroadcastMode(flags.BroadcastSync)
 
 	transactor := &Transactor{
@@ -204,6 +204,9 @@ func (t *Transactor) bcastTxMsgQueue(logEntry *seal.TransactorLog) (*sdk.TxRespo
 		msgs = append(msgs, msg)
 	}
 	txResponse, err := t.SendTxMsgs(msgs)
+	if err != nil {
+		return nil, err
+	}
 	logEntry.TxHash = txResponse.TxHash
 
 	return txResponse, err

@@ -13,6 +13,7 @@ const (
 	QueryDelegator         = types.QueryDelegator
 	QueryCandidate         = types.QueryCandidate
 	QueryReward            = types.QueryReward
+	QueryParameters        = types.QueryParameters
 	TypeMsgWithdrawReward  = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress = types.AttributeKeyEthAddress
 	ActionInitiateWithdraw = types.ActionInitiateWithdraw
