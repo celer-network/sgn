@@ -2,6 +2,7 @@ package ops
 
 import (
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -10,7 +11,7 @@ import (
 )
 
 func confirmUnbondedCandidate() error {
-	ethClient, err := initEthClient()
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
 		return err
 	}

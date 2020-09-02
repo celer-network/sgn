@@ -2,6 +2,7 @@ package ops
 
 import (
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -27,7 +28,7 @@ func intendWithdrawCommand() *cobra.Command {
 		Use:   "intend",
 		Short: "Send a withdrawal intent for the stake delegated to a candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}
@@ -63,7 +64,7 @@ func confirmWithdrawCommand() *cobra.Command {
 		Use:   "confirm",
 		Short: "Confirm withdrawal intents for the stake delegated to a candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}
@@ -95,7 +96,7 @@ func withdrawFromUnbondedCandidateCommand() *cobra.Command {
 		Use:   "unbonded-candidate",
 		Short: "Withdraw delegated stake from an unbonded candidate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ethClient, err := initEthClient()
+			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}

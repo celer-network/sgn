@@ -24,21 +24,7 @@ type Operator struct {
 }
 
 func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err error) {
-	ethClient, err := mainchain.NewEthClient(
-		viper.GetString(common.FlagEthGateway),
-		viper.GetString(common.FlagEthKeystore),
-		viper.GetString(common.FlagEthPassphrase),
-		&mainchain.TransactorConfig{
-			BlockDelay:           viper.GetUint64(common.FlagEthBlockDelay),
-			BlockPollingInterval: viper.GetUint64(common.FlagEthPollInterval),
-			ChainId:              big.NewInt(viper.GetInt64(common.FlagEthChainID)),
-			AddGasPriceGwei:      viper.GetUint64(common.FlagEthAddGasPriceGwei),
-			MinGasPriceGwei:      viper.GetUint64(common.FlagEthMinGasPriceGwei),
-		},
-		viper.GetString(common.FlagEthDPoSAddress),
-		viper.GetString(common.FlagEthSGNAddress),
-		viper.GetString(common.FlagEthLedgerAddress),
-	)
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
 		return
 	}

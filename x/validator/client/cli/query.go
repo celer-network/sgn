@@ -6,6 +6,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/sgn"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	flagSeq = "seq"
+	flagCheckMainchain = "check-mainchain"
 )
 
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
@@ -235,7 +236,7 @@ func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string)
 
 // GetCmdReward queries reward info
 func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "reward [eth-address]",
 		Short: "query reward info by delegator or validator ETH address",
 		Args:  cobra.ExactArgs(1),
@@ -265,8 +266,11 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				MiningReward:  reward.MiningReward,
 				ServiceReward: reward.ServiceReward,
 			}
+
+			var signers []mainchain.Addr
 			for _, sigs := range reward.Sigs {
 				rewardOutput.Signers = append(rewardOutput.Signers, sigs.Signer)
+				signers = append(signers, mainchain.Hex2Addr(sigs.Signer))
 			}
 
 			if len(reward.RewardProtoBytes) != 0 {
@@ -280,9 +284,30 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				}
 			}
 
-			return cliCtx.PrintOutput(rewardOutput)
+			err = cliCtx.PrintOutput(rewardOutput)
+			if err != nil {
+				log.Error(err)
+			}
+
+			checkMainchain, _ := cmd.Flags().GetBool(flagCheckMainchain)
+			if checkMainchain {
+				ethClient, err2 := common.NewEthClientFromConfig()
+				if err != nil {
+					return err2
+				}
+				signerStakes, totalStakes, quorumStakes, err2 := ethClient.CheckVotingPower(signers)
+				fmt.Println("signer voting power based on mainchain info:")
+				fmt.Println("- signer stakes:", signerStakes)
+				fmt.Println("- total stakes:", totalStakes)
+				fmt.Println("- quorum stakes:", quorumStakes)
+			}
+
+			return nil
 		},
 	}
+	cmd.Flags().Bool(flagCheckMainchain, false, "Check info on mainchain")
+
+	return cmd
 }
 
 // Query reward info
