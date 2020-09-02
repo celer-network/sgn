@@ -275,7 +275,7 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 			if len(reward.RewardProtoBytes) != 0 {
 				var pbReward sgn.Reward
-				err := proto.Unmarshal(reward.RewardProtoBytes, &pbReward)
+				err = proto.Unmarshal(reward.RewardProtoBytes, &pbReward)
 				if err != nil {
 					log.Errorln("proto umarshal err", err, reward.RewardProtoBytes)
 				} else {
