@@ -373,7 +373,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// ----------------------- CLI print-frienly output --------------------
+// ----------------------- CLI print-friendly output --------------------
 
 type ValidatorOutput struct {
 	AccountAddress  sdk.AccAddress      `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
