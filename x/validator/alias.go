@@ -6,19 +6,20 @@ import (
 )
 
 const (
-	ModuleName             = types.ModuleName
-	RouterKey              = types.RouterKey
-	StoreKey               = types.StoreKey
-	QuerySyncer            = types.QuerySyncer
-	QueryDelegator         = types.QueryDelegator
-	QueryCandidate         = types.QueryCandidate
-	QueryReward            = types.QueryReward
-	QueryParameters        = types.QueryParameters
-	TypeMsgWithdrawReward  = types.TypeMsgWithdrawReward
-	AttributeKeyEthAddress = types.AttributeKeyEthAddress
-	ActionInitiateWithdraw = types.ActionInitiateWithdraw
-	ServiceReward          = types.ServiceReward
-	MiningReward           = types.MiningReward
+	ModuleName               = types.ModuleName
+	RouterKey                = types.RouterKey
+	StoreKey                 = types.StoreKey
+	QuerySyncer              = types.QuerySyncer
+	QueryDelegator           = types.QueryDelegator
+	QueryCandidate           = types.QueryCandidate
+	QueryCandidateDelegators = types.QueryCandidateDelegators
+	QueryReward              = types.QueryReward
+	QueryParameters          = types.QueryParameters
+	TypeMsgWithdrawReward    = types.TypeMsgWithdrawReward
+	AttributeKeyEthAddress   = types.AttributeKeyEthAddress
+	ActionInitiateWithdraw   = types.ActionInitiateWithdraw
+	ServiceReward            = types.ServiceReward
+	MiningReward             = types.MiningReward
 )
 
 var (

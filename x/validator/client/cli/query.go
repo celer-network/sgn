@@ -33,6 +33,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	validatorQueryCmd.AddCommand(common.GetCommands(
 		GetCmdCandidate(storeKey, cdc),
 		GetCmdDelegator(storeKey, cdc),
+		GetCmdCandidateDelegators(storeKey, cdc),
 		GetCmdValidator(staking.StoreKey, cdc),
 		GetCmdValidators(staking.StoreKey, cdc),
 		GetCmdSyncer(storeKey, cdc),
@@ -143,6 +144,42 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	return
 }
 
+// GetCmdCandidateDelegators queries request info
+// TODO: support pagination
+func GetCmdCandidateDelegators(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "candidate-delegators [candidate-eth-addr]",
+		Short: "query candidate delegators by candidate ETH address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			delegators, err := QueryCandidateDelegators(cliCtx, queryRoute, args[0])
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+
+			return cliCtx.PrintOutput(getCandidateDelegatorsOutput(delegators))
+		},
+	}
+}
+
+func QueryCandidateDelegators(cliCtx context.CLIContext, queryRoute, ethAddress string) (delegators []types.Delegator, err error) {
+	data, err := cliCtx.Codec.MarshalJSON(types.NewQueryCandidateParams(ethAddress))
+	if err != nil {
+		return
+	}
+
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidateDelegators)
+	res, err := common.RobustQueryWithData(cliCtx, route, data)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &delegators)
+	return
+}
+
 // GetCmdValidator queries validator info
 func GetCmdValidator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
@@ -248,19 +285,6 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			type SigndReward struct {
-				MiningReward  *big.Int `json:"mining_reward"`
-				ServiceReward *big.Int `json:"service_reward"`
-			}
-
-			type RewardOutput struct {
-				Receiver      string      `json:"receiver"`
-				MiningReward  sdk.Int     `json:"mining_reward"`
-				ServiceReward sdk.Int     `json:"service_reward"`
-				SignedReward  SigndReward `json:"signed_msg"`
-				Signers       []string    `json:"signers"`
-			}
-
 			rewardOutput := RewardOutput{
 				Receiver:      reward.Receiver,
 				MiningReward:  reward.MiningReward,
@@ -349,6 +373,8 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
+// ----------------------- CLI print-frienly output --------------------
+
 type ValidatorOutput struct {
 	AccountAddress  sdk.AccAddress      `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
 	OperatorAddress sdk.ValAddress      `json:"operator_address" yaml:"operator_address"` // address of the validator's operator; bech encoded in JSON
@@ -381,4 +407,41 @@ func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
 		CommissionRate:  v.Commission.Rate,
 		Description:     v.Description,
 	}
+}
+
+type SigndReward struct {
+	MiningReward  *big.Int `json:"mining_reward"`
+	ServiceReward *big.Int `json:"service_reward"`
+}
+
+type RewardOutput struct {
+	Receiver      string      `json:"receiver"`
+	MiningReward  sdk.Int     `json:"mining_reward"`
+	ServiceReward sdk.Int     `json:"service_reward"`
+	SignedReward  SigndReward `json:"signed_msg"`
+	Signers       []string    `json:"signers"`
+}
+
+type DelegatorOutput struct {
+	Delegator string  `json:"delegator"`
+	Stake     sdk.Int `json:"stake"`
+}
+
+type CandidateDelegatorsOutput struct {
+	Candidate  string            `json:"candidate"`
+	Delegators []DelegatorOutput `json:"delegators"`
+}
+
+func getCandidateDelegatorsOutput(delegators []types.Delegator) CandidateDelegatorsOutput {
+	var output CandidateDelegatorsOutput
+	for _, delegator := range delegators {
+		output.Candidate = delegator.CandidateAddr
+		output.Delegators = append(
+			output.Delegators,
+			DelegatorOutput{
+				Delegator: delegator.DelegatorAddr,
+				Stake:     delegator.DelegatedStake,
+			})
+	}
+	return output
 }

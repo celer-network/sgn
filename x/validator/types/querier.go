@@ -5,11 +5,12 @@ import (
 )
 
 const (
-	QuerySyncer     = "syncer"
-	QueryDelegator  = "delegator"
-	QueryCandidate  = "candidate"
-	QueryReward     = "reward"
-	QueryParameters = "parameters"
+	QuerySyncer              = "syncer"
+	QueryDelegator           = "delegator"
+	QueryCandidate           = "candidate"
+	QueryCandidateDelegators = "candidate-delegators"
+	QueryReward              = "reward"
+	QueryParameters          = "parameters"
 )
 
 type QueryDelegatorParams struct {
