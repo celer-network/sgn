@@ -77,15 +77,15 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 		return false
 	}
 
-	var selfInit bool
-	v, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
+	var selfInit, candidateOnly bool
+	storedVal, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
 	if err != nil {
 		if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
 			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.ValAccount, err)
 			return false
 		} else if o.EthClient.Address != candidateAddr {
-			log.Debugf("Candidate %x %s is not a validator on sidechain yet", candidateAddr, candidate.ValAccount)
-			return false
+			log.Debugf("Candidate %x %s is not a validator on sidechain yet, sync candidate only", candidateAddr, candidate.ValAccount)
+			candidateOnly = true
 		}
 		selfInit = true
 	}
@@ -102,19 +102,28 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 		return false
 	}
 
-	vt := staking.Validator{
+	newVal := staking.Validator{
 		Description: staking.Description{
 			Identity: mainchain.Addr2Hex(candidateAddr),
 		},
-		Tokens:     sdk.NewIntFromBigInt(candidateInfo.StakingPool).QuoRaw(common.TokenDec),
+		Tokens:     sdk.NewIntFromBigInt(candidateInfo.StakingPool), // not QuoRaw(common.TokenDec) yet
 		Status:     mainchain.ParseStatus(candidateInfo),
 		Commission: commission,
 	}
 
-	if !selfInit {
-		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
-			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
+	if !(selfInit || candidateOnly) {
+		if newVal.Status.Equal(storedVal.Status) &&
+			newVal.Tokens.QuoRaw(common.TokenDec).Equal(storedVal.Tokens) &&
+			newVal.Tokens.Equal(candidate.StakingPool) &&
+			newVal.Commission.Rate.Equal(storedVal.Commission.Rate) {
 			log.Debugf("validator %x is already updated", candidateAddr)
+			return true
+		}
+	}
+
+	if candidateOnly {
+		if newVal.Tokens.Equal(candidate.StakingPool) && newVal.Commission.Rate.Equal(candidate.CommissionRate) {
+			log.Debugf("candidate %x is already updated", candidateAddr)
 			return true
 		}
 	}
@@ -126,13 +135,13 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 			return false
 		}
 
-		vt.ConsPubKey = pk
+		newVal.ConsPubKey = pk
 	}
 
-	validatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(vt)
+	validatorData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(newVal)
 	msg := sync.NewMsgSubmitChange(sync.SyncValidator, validatorData, o.EthClient.Client, o.Transactor.Key.GetAddress())
 	log.Infof("submit change tx: sync validator %x, tokens %s, status %s, Commission %s",
-		candidateAddr, vt.Tokens, vt.Status, vt.Commission.CommissionRates.Rate)
+		candidateAddr, newVal.Tokens, newVal.Status, newVal.Commission.Rate)
 	o.Transactor.AddTxMsg(msg)
 	return false
 }

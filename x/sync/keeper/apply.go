@@ -93,61 +93,61 @@ func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) (bool, 
 		delegator = d
 	}
 	keeper.validatorKeeper.SetDelegator(ctx, delegator)
-	keeper.validatorKeeper.SnapshotCandidate(ctx, d.CandidateAddr)
 
 	return true, nil
 }
 
 func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, error) {
-	var v staking.Validator
-	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &v)
+	var newVal staking.Validator
+	keeper.cdc.MustUnmarshalBinaryBare(change.Data, &newVal)
 
-	candidate, found := keeper.validatorKeeper.GetCandidate(ctx, v.Description.Identity)
+	candidate, found := keeper.validatorKeeper.GetCandidate(ctx, newVal.Description.Identity)
 	if !found {
-		return false, fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
+		return false, fmt.Errorf("Fail to get candidate for: %s", newVal.Description.Identity)
 	}
-	valAddress := sdk.ValAddress(candidate.ValAccount)
+	candidate.StakingPool = newVal.Tokens
+	candidate.CommissionRate = newVal.Commission.Rate
+	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
+	newVal.Tokens = newVal.Tokens.QuoRaw(common.TokenDec)
 	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission rate %s",
-		candidate.ValAccount, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission.CommissionRates.Rate)
+		candidate.ValAccount, mainchain.Hex2Addr(newVal.Description.Identity), newVal.Status, newVal.Tokens, newVal.Commission.Rate)
 
+	valAddress := sdk.ValAddress(candidate.ValAccount)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
-		if v.Status == sdk.Bonded {
+		if newVal.Status == sdk.Bonded {
 			if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
 				return false, fmt.Errorf("Bonded validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
 			}
 
-			validator = staking.NewValidator(valAddress, v.ConsPubKey, v.Description)
+			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
-		} else if v.Status == sdk.Unbonding {
+		} else if newVal.Status == sdk.Unbonding {
 			return false, fmt.Errorf("Unbonding validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
 		} else {
-			log.Infof("Validator %s already unbonded", candidate.ValAccount)
+			log.Infof("Candidate %s not unbonded", candidate.ValAccount)
 			return false, nil
 		}
 	}
 
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator.Commission = v.Commission
-	validator.Status = v.Status
+	validator.Commission = newVal.Commission
+	validator.Status = newVal.Status
 	if validator.Status == sdk.Unbonded {
 		validator.Tokens = sdk.ZeroInt()
 	} else {
-		validator.Tokens = v.Tokens
+		validator.Tokens = newVal.Tokens
 	}
-	validator.DelegatorShares = v.Tokens.ToDec()
+	validator.DelegatorShares = newVal.Tokens.ToDec()
 	keeper.stakingKeeper.SetValidator(ctx, validator)
 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	} else if validator.Status == sdk.Unbonded {
-		log.Infof("remove validator %s %s %x", valAddress, candidate.ValAccount, mainchain.Hex2Addr(v.Description.Identity))
+		log.Infof("remove validator %s %s %x", valAddress, candidate.ValAccount, mainchain.Hex2Addr(newVal.Description.Identity))
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	}
-
-	candidate.CommissionRate = v.Commission.CommissionRates.Rate
-	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
 	return true, nil
 }

@@ -180,10 +180,10 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 }
 
 func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
-	var vt staking.Validator
-	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &vt)
+	var newVal staking.Validator
+	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &newVal)
 
-	candidateEthAddr := vt.Description.Identity
+	candidateEthAddr := newVal.Description.Identity
 	candidate, err := validator.CLIQueryCandidate(
 		m.Transactor.CliCtx, validator.RouterKey, candidateEthAddr)
 	if err != nil {
@@ -192,25 +192,25 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 	}
 
 	logmsg := fmt.Sprintf("verify change id %d, sync validator: Account %s, EthAddress %x, Status %s, Token %s, Commission %s",
-		change.ID, candidate.ValAccount.String(), mainchain.Hex2Addr(candidateEthAddr), vt.Status, vt.Tokens, vt.Commission.CommissionRates.Rate)
+		change.ID, candidate.ValAccount, mainchain.Hex2Addr(candidateEthAddr), newVal.Status, newVal.Tokens, newVal.Commission.Rate)
 
-	v, err := validator.CLIQueryValidator(
+	storedVal, err := validator.CLIQueryValidator(
 		m.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
 	if err == nil {
-		if vt.Status.Equal(v.Status) && vt.Tokens.Equal(v.Tokens) &&
-			vt.Commission.CommissionRates.Rate.Equal(v.Commission.CommissionRates.Rate) {
+		if newVal.Status.Equal(storedVal.Status) && newVal.Tokens.Equal(candidate.StakingPool) &&
+			newVal.Commission.Rate.Equal(storedVal.Commission.Rate) {
 			log.Infof("%s. validator already updated", logmsg)
 			return true, false
 		}
 	}
 
-	ci, err := m.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(vt.Description.Identity))
+	ci, err := m.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(newVal.Description.Identity))
 	if err != nil {
 		log.Errorf("%s. query candidate info err: %s", logmsg, err)
 		return false, false
 	}
 
-	if !vt.Status.Equal(mainchain.ParseStatus(ci)) {
+	if !newVal.Status.Equal(mainchain.ParseStatus(ci)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
 			log.Errorf("%s. status not match mainchain value: %s", logmsg, mainchain.ParseStatus(ci))
 			return true, false
@@ -219,13 +219,12 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	mtk := sdk.NewIntFromBigInt(ci.StakingPool).QuoRaw(common.TokenDec)
-	if !vt.Tokens.Equal(mtk) {
+	if !newVal.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. tokens not match mainchain value: %s", logmsg, mtk)
+			log.Errorf("%s. staking pool not match mainchain value: %s", logmsg, ci.StakingPool)
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, token: %s", logmsg, mtk)
+		log.Infof("%s. mainchain block not passed, token: %s", logmsg, ci.StakingPool)
 		return false, false
 	}
 
@@ -235,12 +234,12 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if !vt.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
+	if !newVal.Commission.Rate.Equal(commission.Rate) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. commission not match mainchain value: %s", logmsg, commission.CommissionRates.Rate)
+			log.Errorf("%s. commission not match mainchain value: %s", logmsg, commission.Rate)
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, commission: %s", logmsg, commission.CommissionRates.Rate)
+		log.Infof("%s. mainchain block not passed, commission: %s", logmsg, commission.Rate)
 		return false, false
 	}
 

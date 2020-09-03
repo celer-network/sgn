@@ -84,7 +84,7 @@ func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddr, delegatorAddr strin
 	return delegator, true
 }
 
-// Get the set of all delegators with no limits
+// Get the list of all delegators
 func (k Keeper) GetAllDelegators(ctx sdk.Context, candidateAddr string) (delegators []Delegator) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, GetDelegatorsKey(candidateAddr))
@@ -118,7 +118,7 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddr string) (candidate C
 	return candidate, true
 }
 
-// Get the set of all candidates with no limits
+// Get the list of all candidates
 func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, CandidateKeyPrefix)
@@ -137,20 +137,6 @@ func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)
 	candidateKey := GetCandidateKey(candidate.EthAddress)
 	store.Set(candidateKey, k.cdc.MustMarshalBinaryBare(candidate))
-}
-
-// Take a snapshot of candidate
-func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
-	candidate, _ := k.GetCandidate(ctx, candidateAddr)
-	candidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
-
-	totalStake := sdk.ZeroInt()
-	for _, delegator := range candidate.Delegators {
-		totalStake = totalStake.Add(delegator.DelegatedStake)
-	}
-	candidate.StakingPool = totalStake
-
-	k.SetCandidate(ctx, candidate)
 }
 
 // Get the entire Reward metadata for ethAddress
@@ -200,8 +186,9 @@ func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardTyp
 		commission := candidate.CommissionRate.MulInt(candidateReward).RoundInt()
 		k.AddReward(ctx, candidate.EthAddress, commission, rewardType)
 
+		delegators := k.GetAllDelegators(ctx, candidate.EthAddress)
 		delegatorsReward := candidateReward.Sub(commission)
-		for _, delegator := range candidate.Delegators {
+		for _, delegator := range delegators {
 			rewardAmt := delegatorsReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
 			k.AddReward(ctx, delegator.DelegatorAddr, rewardAmt, rewardType)
 		}
