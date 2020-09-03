@@ -158,7 +158,7 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, valacct str
 		time.Sleep(RetryPeriod)
 	}
 	require.NoError(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
+	//log.Infoln("Query sgn about the validator:\n", validator)
 	expToken := sdk.NewIntFromBigInt(expAmt).QuoRaw(common.TokenDec).String()
 	assert.Equal(t, expToken, validator.Tokens.String(), "validator token should be "+expToken)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
@@ -175,7 +175,7 @@ func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, valac
 		time.Sleep(RetryPeriod)
 	}
 	require.NoError(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
+	//log.Infoln("Query sgn about the validator:\n", validator)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
@@ -190,7 +190,7 @@ func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum i
 		time.Sleep(RetryPeriod)
 	}
 	require.NoError(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
+	//log.Infoln("Query sgn about the validators:\n", validators)
 	assert.Equal(t, expNum, len(validators), "The length of validators should be: "+strconv.Itoa(expNum))
 }
 
