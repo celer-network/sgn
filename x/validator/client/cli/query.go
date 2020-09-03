@@ -378,7 +378,7 @@ func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
 		Status:          status,
 		Tokens:          v.Tokens,
 		DelegatorShares: v.DelegatorShares,
-		CommissionRate:  v.Commission.CommissionRates.Rate,
+		CommissionRate:  v.Commission.Rate,
 		Description:     v.Description,
 	}
 }

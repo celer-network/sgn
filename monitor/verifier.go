@@ -192,13 +192,13 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 	}
 
 	logmsg := fmt.Sprintf("verify change id %d, sync validator: Account %s, EthAddress %x, Status %s, Token %s, Commission %s",
-		change.ID, candidate.ValAccount, mainchain.Hex2Addr(candidateEthAddr), newVal.Status, newVal.Tokens, newVal.Commission.CommissionRates.Rate)
+		change.ID, candidate.ValAccount, mainchain.Hex2Addr(candidateEthAddr), newVal.Status, newVal.Tokens, newVal.Commission.Rate)
 
 	storedVal, err := validator.CLIQueryValidator(
 		m.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
 	if err == nil {
 		if newVal.Status.Equal(storedVal.Status) && newVal.Tokens.Equal(candidate.StakingPool) &&
-			newVal.Commission.CommissionRates.Rate.Equal(storedVal.Commission.CommissionRates.Rate) {
+			newVal.Commission.Rate.Equal(storedVal.Commission.Rate) {
 			log.Infof("%s. validator already updated", logmsg)
 			return true, false
 		}
@@ -234,12 +234,12 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 		return false, false
 	}
 
-	if !newVal.Commission.CommissionRates.Rate.Equal(commission.CommissionRates.Rate) {
+	if !newVal.Commission.Rate.Equal(commission.Rate) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. commission not match mainchain value: %s", logmsg, commission.CommissionRates.Rate)
+			log.Errorf("%s. commission not match mainchain value: %s", logmsg, commission.Rate)
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, commission: %s", logmsg, commission.CommissionRates.Rate)
+		log.Infof("%s. mainchain block not passed, commission: %s", logmsg, commission.Rate)
 		return false, false
 	}
 

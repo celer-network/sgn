@@ -35,7 +35,7 @@ type SGNParams struct {
 	MinValidatorNum       *big.Int
 	MaxValidatorNum       *big.Int
 	MinStakingPool        *big.Int
-	AdvanceNoticePeriod  *big.Int
+	AdvanceNoticePeriod   *big.Int
 	// TODO: rename to DposGoLiveTimeout
 	SidechainGoLiveTimeout *big.Int
 	StartGateway           bool
