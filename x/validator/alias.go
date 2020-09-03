@@ -42,6 +42,7 @@ var (
 	NewReward                      = types.NewReward
 	CLIQuerySyncer                 = cli.QuerySyncer
 	CLIQueryCandidate              = cli.QueryCandidate
+	CLIQueryCandidateDelegators    = cli.QueryCandidateDelegators
 	CLIQueryReward                 = cli.QueryReward
 	CLIQueryDelegator              = cli.QueryDelegator
 	CLIQueryValidator              = cli.QueryValidator
