@@ -249,7 +249,7 @@ func QueryBondedValidators(cliCtx context.CLIContext, storeName string) (validat
 	return
 }
 
-// addrStr should be bech32 cosmos account address with prefix cosmos
+// addrStr should be bech32 sgn account address with prefix sgn
 func QueryValidator(cliCtx context.CLIContext, storeName string, addrStr string) (validator stakingTypes.Validator, err error) {
 	addr, err := sdk.AccAddressFromBech32(addrStr)
 	if err != nil {
