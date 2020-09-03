@@ -93,7 +93,6 @@ func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) (bool, 
 		delegator = d
 	}
 	keeper.validatorKeeper.SetDelegator(ctx, delegator)
-	keeper.validatorKeeper.SnapshotCandidate(ctx, d.CandidateAddr)
 
 	return true, nil
 }
@@ -106,11 +105,15 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	if !found {
 		return false, fmt.Errorf("Fail to get candidate for: %s", v.Description.Identity)
 	}
-	valAddress := sdk.ValAddress(candidate.ValAccount)
+	candidate.StakingPool = v.Tokens
+	candidate.CommissionRate = v.Commission.CommissionRates.Rate
+	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
+	v.Tokens = v.Tokens.QuoRaw(common.TokenDec)
 	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission rate %s",
 		candidate.ValAccount, mainchain.Hex2Addr(v.Description.Identity), v.Status, v.Tokens, v.Commission.CommissionRates.Rate)
 
+	valAddress := sdk.ValAddress(candidate.ValAccount)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		if v.Status == sdk.Bonded {
@@ -145,9 +148,6 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 		log.Infof("remove validator %s %s %x", valAddress, candidate.ValAccount, mainchain.Hex2Addr(v.Description.Identity))
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	}
-
-	candidate.CommissionRate = v.Commission.CommissionRates.Rate
-	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
 	return true, nil
 }

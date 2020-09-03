@@ -106,7 +106,7 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 		Description: staking.Description{
 			Identity: mainchain.Addr2Hex(candidateAddr),
 		},
-		Tokens:     sdk.NewIntFromBigInt(candidateInfo.StakingPool).QuoRaw(common.TokenDec),
+		Tokens:     sdk.NewIntFromBigInt(candidateInfo.StakingPool),
 		Status:     mainchain.ParseStatus(candidateInfo),
 		Commission: commission,
 	}

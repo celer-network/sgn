@@ -33,7 +33,6 @@ type Candidate struct {
 	EthAddress     string              `json:"eth_address"`
 	ValAccount     sdk.AccAddress      `json:"val_account"`
 	Transactors    []sdk.AccAddress    `json:"transactors"`
-	Delegators     []Delegator         `json:"delegators"`
 	StakingPool    sdk.Int             `json:"staking_pool"`
 	CommissionRate sdk.Dec             `json:"commission_rate"`
 	RequestCount   sdk.Int             `json:"request_count"`
