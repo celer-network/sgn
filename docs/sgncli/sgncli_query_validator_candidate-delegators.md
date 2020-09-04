@@ -1,20 +1,20 @@
-## sgncli query validator candidate
+## sgncli query validator candidate-delegators
 
-query candidate info by candidate ETH address
+query candidate delegators by candidate ETH address
 
 ### Synopsis
 
-query candidate info by candidate ETH address
+query candidate delegators by candidate ETH address
 
 ```
-sgncli query validator candidate [candidate-eth-addr] [flags]
+sgncli query validator candidate-delegators [candidate-eth-addr] [flags]
 ```
 
 ### Options
 
 ```
       --height int   Use a specific height to query state at (this can error if the node is pruning state)
-  -h, --help         help for candidate
+  -h, --help         help for candidate-delegators
       --indent       Add indent to JSON response
       --trust-node   Trust connected full node (don't verify proofs for responses)
 ```

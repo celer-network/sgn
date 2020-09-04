@@ -1,20 +1,19 @@
-## sgnops get-candidate-info
+## sgnops get-all-validators
 
-Get candidate info
+Get all validators info
 
 ### Synopsis
 
-Get candidate info
+Get all validators info
 
 ```
-sgnops get-candidate-info [flags]
+sgnops get-all-validators [flags]
 ```
 
 ### Options
 
 ```
-      --candidate string   Candidate ETH address
-  -h, --help               help for get-candidate-info
+  -h, --help   help for get-all-validators
 ```
 
 ### Options inherited from parent commands
