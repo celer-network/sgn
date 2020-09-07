@@ -4,10 +4,10 @@ go 1.14
 
 require (
 	github.com/allegro/bigcache v1.2.1
-	github.com/celer-network/goutils v0.1.14
+	github.com/celer-network/goutils v0.1.16
 	github.com/cosmos/cosmos-sdk v0.39.1
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
-	github.com/ethereum/go-ethereum v1.9.18
+	github.com/ethereum/go-ethereum v1.9.20
 	github.com/gammazero/deque v0.0.0-20200721202602-07291166fe33
 	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.1 // indirect

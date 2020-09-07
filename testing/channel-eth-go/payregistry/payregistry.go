@@ -190,7 +190,7 @@ func (_PayRegistry *PayRegistryTransactorRaw) Transact(opts *bind.TransactOpts, 
 
 // CalculatePayId is a free data retrieval call binding the contract method 0x96efe573.
 //
-// Solidity: function calculatePayId(bytes32 _payHash, address _setter) constant returns(bytes32)
+// Solidity: function calculatePayId(bytes32 _payHash, address _setter) pure returns(bytes32)
 func (_PayRegistry *PayRegistryCaller) CalculatePayId(opts *bind.CallOpts, _payHash [32]byte, _setter common.Address) ([32]byte, error) {
 	var (
 		ret0 = new([32]byte)
@@ -202,21 +202,21 @@ func (_PayRegistry *PayRegistryCaller) CalculatePayId(opts *bind.CallOpts, _payH
 
 // CalculatePayId is a free data retrieval call binding the contract method 0x96efe573.
 //
-// Solidity: function calculatePayId(bytes32 _payHash, address _setter) constant returns(bytes32)
+// Solidity: function calculatePayId(bytes32 _payHash, address _setter) pure returns(bytes32)
 func (_PayRegistry *PayRegistrySession) CalculatePayId(_payHash [32]byte, _setter common.Address) ([32]byte, error) {
 	return _PayRegistry.Contract.CalculatePayId(&_PayRegistry.CallOpts, _payHash, _setter)
 }
 
 // CalculatePayId is a free data retrieval call binding the contract method 0x96efe573.
 //
-// Solidity: function calculatePayId(bytes32 _payHash, address _setter) constant returns(bytes32)
+// Solidity: function calculatePayId(bytes32 _payHash, address _setter) pure returns(bytes32)
 func (_PayRegistry *PayRegistryCallerSession) CalculatePayId(_payHash [32]byte, _setter common.Address) ([32]byte, error) {
 	return _PayRegistry.Contract.CalculatePayId(&_PayRegistry.CallOpts, _payHash, _setter)
 }
 
 // GetPayAmounts is a free data retrieval call binding the contract method 0x7cac39cf.
 //
-// Solidity: function getPayAmounts(bytes32[] _payIds, uint256 _lastPayResolveDeadline) constant returns(uint256[])
+// Solidity: function getPayAmounts(bytes32[] _payIds, uint256 _lastPayResolveDeadline) view returns(uint256[])
 func (_PayRegistry *PayRegistryCaller) GetPayAmounts(opts *bind.CallOpts, _payIds [][32]byte, _lastPayResolveDeadline *big.Int) ([]*big.Int, error) {
 	var (
 		ret0 = new([]*big.Int)
@@ -228,21 +228,21 @@ func (_PayRegistry *PayRegistryCaller) GetPayAmounts(opts *bind.CallOpts, _payId
 
 // GetPayAmounts is a free data retrieval call binding the contract method 0x7cac39cf.
 //
-// Solidity: function getPayAmounts(bytes32[] _payIds, uint256 _lastPayResolveDeadline) constant returns(uint256[])
+// Solidity: function getPayAmounts(bytes32[] _payIds, uint256 _lastPayResolveDeadline) view returns(uint256[])
 func (_PayRegistry *PayRegistrySession) GetPayAmounts(_payIds [][32]byte, _lastPayResolveDeadline *big.Int) ([]*big.Int, error) {
 	return _PayRegistry.Contract.GetPayAmounts(&_PayRegistry.CallOpts, _payIds, _lastPayResolveDeadline)
 }
 
 // GetPayAmounts is a free data retrieval call binding the contract method 0x7cac39cf.
 //
-// Solidity: function getPayAmounts(bytes32[] _payIds, uint256 _lastPayResolveDeadline) constant returns(uint256[])
+// Solidity: function getPayAmounts(bytes32[] _payIds, uint256 _lastPayResolveDeadline) view returns(uint256[])
 func (_PayRegistry *PayRegistryCallerSession) GetPayAmounts(_payIds [][32]byte, _lastPayResolveDeadline *big.Int) ([]*big.Int, error) {
 	return _PayRegistry.Contract.GetPayAmounts(&_PayRegistry.CallOpts, _payIds, _lastPayResolveDeadline)
 }
 
 // GetPayInfo is a free data retrieval call binding the contract method 0x27b0e058.
 //
-// Solidity: function getPayInfo(bytes32 _payId) constant returns(uint256, uint256)
+// Solidity: function getPayInfo(bytes32 _payId) view returns(uint256, uint256)
 func (_PayRegistry *PayRegistryCaller) GetPayInfo(opts *bind.CallOpts, _payId [32]byte) (*big.Int, *big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -258,21 +258,21 @@ func (_PayRegistry *PayRegistryCaller) GetPayInfo(opts *bind.CallOpts, _payId [3
 
 // GetPayInfo is a free data retrieval call binding the contract method 0x27b0e058.
 //
-// Solidity: function getPayInfo(bytes32 _payId) constant returns(uint256, uint256)
+// Solidity: function getPayInfo(bytes32 _payId) view returns(uint256, uint256)
 func (_PayRegistry *PayRegistrySession) GetPayInfo(_payId [32]byte) (*big.Int, *big.Int, error) {
 	return _PayRegistry.Contract.GetPayInfo(&_PayRegistry.CallOpts, _payId)
 }
 
 // GetPayInfo is a free data retrieval call binding the contract method 0x27b0e058.
 //
-// Solidity: function getPayInfo(bytes32 _payId) constant returns(uint256, uint256)
+// Solidity: function getPayInfo(bytes32 _payId) view returns(uint256, uint256)
 func (_PayRegistry *PayRegistryCallerSession) GetPayInfo(_payId [32]byte) (*big.Int, *big.Int, error) {
 	return _PayRegistry.Contract.GetPayInfo(&_PayRegistry.CallOpts, _payId)
 }
 
 // PayInfoMap is a free data retrieval call binding the contract method 0x8f13b2f5.
 //
-// Solidity: function payInfoMap(bytes32 ) constant returns(uint256 amount, uint256 resolveDeadline)
+// Solidity: function payInfoMap(bytes32 ) view returns(uint256 amount, uint256 resolveDeadline)
 func (_PayRegistry *PayRegistryCaller) PayInfoMap(opts *bind.CallOpts, arg0 [32]byte) (struct {
 	Amount          *big.Int
 	ResolveDeadline *big.Int
@@ -288,7 +288,7 @@ func (_PayRegistry *PayRegistryCaller) PayInfoMap(opts *bind.CallOpts, arg0 [32]
 
 // PayInfoMap is a free data retrieval call binding the contract method 0x8f13b2f5.
 //
-// Solidity: function payInfoMap(bytes32 ) constant returns(uint256 amount, uint256 resolveDeadline)
+// Solidity: function payInfoMap(bytes32 ) view returns(uint256 amount, uint256 resolveDeadline)
 func (_PayRegistry *PayRegistrySession) PayInfoMap(arg0 [32]byte) (struct {
 	Amount          *big.Int
 	ResolveDeadline *big.Int
@@ -298,7 +298,7 @@ func (_PayRegistry *PayRegistrySession) PayInfoMap(arg0 [32]byte) (struct {
 
 // PayInfoMap is a free data retrieval call binding the contract method 0x8f13b2f5.
 //
-// Solidity: function payInfoMap(bytes32 ) constant returns(uint256 amount, uint256 resolveDeadline)
+// Solidity: function payInfoMap(bytes32 ) view returns(uint256 amount, uint256 resolveDeadline)
 func (_PayRegistry *PayRegistryCallerSession) PayInfoMap(arg0 [32]byte) (struct {
 	Amount          *big.Int
 	ResolveDeadline *big.Int

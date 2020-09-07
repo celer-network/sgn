@@ -190,7 +190,7 @@ func (_RouterRegistry *RouterRegistryTransactorRaw) Transact(opts *bind.Transact
 
 // RouterInfo is a free data retrieval call binding the contract method 0x78809456.
 //
-// Solidity: function routerInfo(address ) constant returns(uint256)
+// Solidity: function routerInfo(address ) view returns(uint256)
 func (_RouterRegistry *RouterRegistryCaller) RouterInfo(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -202,14 +202,14 @@ func (_RouterRegistry *RouterRegistryCaller) RouterInfo(opts *bind.CallOpts, arg
 
 // RouterInfo is a free data retrieval call binding the contract method 0x78809456.
 //
-// Solidity: function routerInfo(address ) constant returns(uint256)
+// Solidity: function routerInfo(address ) view returns(uint256)
 func (_RouterRegistry *RouterRegistrySession) RouterInfo(arg0 common.Address) (*big.Int, error) {
 	return _RouterRegistry.Contract.RouterInfo(&_RouterRegistry.CallOpts, arg0)
 }
 
 // RouterInfo is a free data retrieval call binding the contract method 0x78809456.
 //
-// Solidity: function routerInfo(address ) constant returns(uint256)
+// Solidity: function routerInfo(address ) view returns(uint256)
 func (_RouterRegistry *RouterRegistryCallerSession) RouterInfo(arg0 common.Address) (*big.Int, error) {
 	return _RouterRegistry.Contract.RouterInfo(&_RouterRegistry.CallOpts, arg0)
 }

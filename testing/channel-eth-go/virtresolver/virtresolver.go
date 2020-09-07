@@ -190,7 +190,7 @@ func (_VirtContractResolver *VirtContractResolverTransactorRaw) Transact(opts *b
 
 // Resolve is a free data retrieval call binding the contract method 0x5c23bdf5.
 //
-// Solidity: function resolve(bytes32 _virtAddr) constant returns(address)
+// Solidity: function resolve(bytes32 _virtAddr) view returns(address)
 func (_VirtContractResolver *VirtContractResolverCaller) Resolve(opts *bind.CallOpts, _virtAddr [32]byte) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -202,14 +202,14 @@ func (_VirtContractResolver *VirtContractResolverCaller) Resolve(opts *bind.Call
 
 // Resolve is a free data retrieval call binding the contract method 0x5c23bdf5.
 //
-// Solidity: function resolve(bytes32 _virtAddr) constant returns(address)
+// Solidity: function resolve(bytes32 _virtAddr) view returns(address)
 func (_VirtContractResolver *VirtContractResolverSession) Resolve(_virtAddr [32]byte) (common.Address, error) {
 	return _VirtContractResolver.Contract.Resolve(&_VirtContractResolver.CallOpts, _virtAddr)
 }
 
 // Resolve is a free data retrieval call binding the contract method 0x5c23bdf5.
 //
-// Solidity: function resolve(bytes32 _virtAddr) constant returns(address)
+// Solidity: function resolve(bytes32 _virtAddr) view returns(address)
 func (_VirtContractResolver *VirtContractResolverCallerSession) Resolve(_virtAddr [32]byte) (common.Address, error) {
 	return _VirtContractResolver.Contract.Resolve(&_VirtContractResolver.CallOpts, _virtAddr)
 }

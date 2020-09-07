@@ -69,7 +69,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(7),
 			MinStakingPool:         big.NewInt(100),
-			AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
+			AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
