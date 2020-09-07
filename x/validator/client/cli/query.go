@@ -359,18 +359,27 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "Query the current validator parameters information",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := common.NewQueryCLIContext(cdc)
-
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
-			res, err := common.RobustQuery(cliCtx, route)
+			params, err := QueryParams(cliCtx, queryRoute)
 			if err != nil {
+				log.Errorln("query error", err)
 				return err
 			}
 
-			var params types.Params
-			cdc.MustUnmarshalJSON(res, &params)
 			return cliCtx.PrintOutput(params)
 		},
 	}
+}
+
+// Query params info
+func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Params, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
+	res, err := common.RobustQuery(cliCtx, route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &params)
+	return
 }
 
 // ----------------------- CLI print-friendly output --------------------
