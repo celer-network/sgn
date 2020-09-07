@@ -168,6 +168,7 @@ func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, miningReward, serv
 	k.SetReward(ctx, reward)
 }
 
+// Distribute epoch rewards to all validators and delegators
 func (k Keeper) DistributeReward(ctx sdk.Context) {
 	epoch := k.GetRewardEpoch(ctx)
 	if ctx.BlockHeight()-epoch.StartHeight < int64(k.EpochLength(ctx)) {

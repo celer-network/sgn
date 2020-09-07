@@ -20,7 +20,7 @@
     "validator": {
       "params": {
         "syncer_duration": "5",
-        "epoch_length": "3",
+        "epoch_length": "10",
         "mining_reward": "100000000000000000",
         "puller_reward": "1000000000000000"
       }
