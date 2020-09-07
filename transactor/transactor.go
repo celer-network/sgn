@@ -1,7 +1,6 @@
 package transactor
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -136,6 +135,7 @@ func (t *Transactor) SendTxMsg(msg sdk.Msg) (*sdk.TxResponse, error) {
 }
 
 func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
+	var txResponseErr error
 	for try := 0; try < maxTxRetry; try++ {
 		txBytes, stdSignMsg, err := t.signTx(msgs)
 		if err != nil {
@@ -150,16 +150,16 @@ func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
 			return &txResponse, nil
 		}
 
-		err = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
+		txResponseErr = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
 			txResponse.Code, txResponse.RawLog, stdSignMsg.ChainID, t.Key.GetAddress(), stdSignMsg.AccountNumber, stdSignMsg.Sequence)
 		if txResponse.Code == sdkerrors.ErrUnauthorized.ABCICode() {
-			log.Warnln(err.Error(), "retrying")
+			log.Warnln(txResponseErr.Error(), "retrying")
 			time.Sleep(txRetryDelay)
 		} else {
-			return &txResponse, err
+			return &txResponse, txResponseErr
 		}
 	}
-	return nil, errors.New("Maximum tx retries reached")
+	return nil, txResponseErr
 }
 
 // Poll tx queue and send msgs in batch
