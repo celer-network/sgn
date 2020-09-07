@@ -14,9 +14,6 @@ const (
 	// Default number of guards for guarding request
 	DefaultRequestGuardCount uint64 = 3
 
-	// Default epoch length based on seconds
-	DefaultEpochLength uint64 = 60
-
 	// Default minimal channel dispute timeout in mainchain blocks
 	DefaultMinDisputeTimeout uint64 = 80000
 )
@@ -29,7 +26,6 @@ var (
 // nolint - Keys for parameter access
 var (
 	KeyRequestGuardCount = []byte("RequestGuardCount")
-	KeyEpochLength       = []byte("EpochLength")
 	KeyRequestCost       = []byte("RequestCost")
 	KeyMinDisputeTimeout = []byte("MinDisputeTimeout")
 )
@@ -39,18 +35,16 @@ var _ params.ParamSet = (*Params)(nil)
 // Params defines the high level settings for guard
 type Params struct {
 	RequestGuardCount uint64  `json:"request_guard_count" yaml:"request_guard_count"` // request guard count
-	EpochLength       uint64  `json:"epoch_length" yaml:"epoch_length"`               // epoch length based on seconds
 	RequestCost       sdk.Int `json:"request_cost" yaml:"request_cost"`               // request cost
 	MinDisputeTimeout uint64  `json:"min_dispute_timeout" yaml:"min_dispute_timeout"` // minimal channel dispute timeout in mainchain blocks
 
 }
 
 // NewParams creates a new Params instance
-func NewParams(requestGuardCount, epochLength uint64, requestCost sdk.Int, minDisputeTimeout uint64) Params {
+func NewParams(requestGuardCount uint64, requestCost sdk.Int, minDisputeTimeout uint64) Params {
 
 	return Params{
 		RequestGuardCount: requestGuardCount,
-		EpochLength:       epochLength,
 		RequestCost:       requestCost,
 		MinDisputeTimeout: minDisputeTimeout,
 	}
@@ -60,7 +54,6 @@ func NewParams(requestGuardCount, epochLength uint64, requestCost sdk.Int, minDi
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		params.NewParamSetPair(KeyRequestGuardCount, &p.RequestGuardCount, validateRequestGuardCount),
-		params.NewParamSetPair(KeyEpochLength, &p.EpochLength, validateEpochLength),
 		params.NewParamSetPair(KeyRequestCost, &p.RequestCost, validateRequestCost),
 		params.NewParamSetPair(KeyMinDisputeTimeout, &p.MinDisputeTimeout, validateMinDisputeTimeout),
 	}
@@ -75,16 +68,15 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultRequestGuardCount, DefaultEpochLength, DefaultRequestCost, DefaultMinDisputeTimeout)
+	return NewParams(DefaultRequestGuardCount, DefaultRequestCost, DefaultMinDisputeTimeout)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   RequestGuardCount: %d,
-  EpochLength:       %d
   RequestCost:       %s
-  MinDisputeTimeout: %d`, p.RequestGuardCount, p.EpochLength, p.RequestCost, p.MinDisputeTimeout)
+  MinDisputeTimeout: %d`, p.RequestGuardCount, p.RequestCost, p.MinDisputeTimeout)
 }
 
 // unmarshal the current guard params value from store key or panic
@@ -108,10 +100,6 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 // validate a set of params
 func (p Params) Validate() error {
 	if err := validateRequestGuardCount(p.RequestGuardCount); err != nil {
-		return err
-	}
-
-	if err := validateEpochLength(p.EpochLength); err != nil {
 		return err
 	}
 

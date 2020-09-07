@@ -5,7 +5,6 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/sync/types"
-	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -42,7 +41,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 			if applied {
 				if change.Rewardable {
 					initiatorEthAddr := validatorsByAddr[sdk.ValAddress(change.Initiator).String()].Description.Identity
-					keeper.AddReward(ctx, initiatorEthAddr, pullerReward, validator.MiningReward)
+					keeper.AddPullerReward(ctx, initiatorEthAddr, pullerReward)
 				}
 
 				change.Status = StatusPassed

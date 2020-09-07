@@ -161,38 +161,55 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 }
 
 // AddReward add reward to a specific ethAddress
-func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, amount sdk.Int, rewardType RewardType) {
+func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, miningReward, serviceReward sdk.Int) {
 	reward, _ := k.GetReward(ctx, ethAddress)
-	switch rewardType {
-	case ServiceReward:
-		reward.ServiceReward = reward.ServiceReward.Add(amount)
-	case MiningReward:
-		reward.MiningReward = reward.MiningReward.Add(amount)
-	}
+	reward.MiningReward = reward.MiningReward.Add(miningReward)
+	reward.ServiceReward = reward.ServiceReward.Add(serviceReward)
 	k.SetReward(ctx, reward)
 }
 
-// DistributeServiceReward distributes rewards to candidates and their delegators
-func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardType RewardType) {
+// Distribute epoch rewards to all validators and delegators
+func (k Keeper) DistributeReward(ctx sdk.Context) {
+	epoch := k.GetRewardEpoch(ctx)
+	if ctx.BlockHeight()-epoch.StartHeight < int64(k.EpochLength(ctx)) {
+		return
+	}
+
 	candidates := k.GetValidatorCandidates(ctx)
 	totalStake := sdk.ZeroInt()
 
 	for _, candidate := range candidates {
+		if !candidate.StakingPool.IsPositive() {
+			log.Errorln("invalid candidate staking pool", candidate.EthAddress)
+			return
+		}
 		totalStake = totalStake.Add(candidate.StakingPool)
 	}
 
 	for _, candidate := range candidates {
-		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
-		commission := candidate.CommissionRate.MulInt(candidateReward).RoundInt()
-		k.AddReward(ctx, candidate.EthAddress, commission, rewardType)
+		candidateMiningReward := epoch.MiningReward.Mul(candidate.StakingPool).Quo(totalStake)
+		miningCommission := candidate.CommissionRate.MulInt(candidateMiningReward).RoundInt()
+
+		candidateServiceReward := sdk.ZeroInt()
+		serviceCommission := sdk.ZeroInt()
+		if epoch.ServiceReward.IsPositive() {
+			candidateServiceReward = epoch.ServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
+			serviceCommission = candidate.CommissionRate.MulInt(candidateServiceReward).RoundInt()
+		}
+
+		k.AddReward(ctx, candidate.EthAddress, miningCommission, serviceCommission)
 
 		delegators := k.GetAllDelegators(ctx, candidate.EthAddress)
-		delegatorsReward := candidateReward.Sub(commission)
+		delegatorsMiningReward := candidateMiningReward.Sub(miningCommission)
+		delegatorsServiceReward := candidateServiceReward.Sub(serviceCommission)
 		for _, delegator := range delegators {
-			rewardAmt := delegatorsReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-			k.AddReward(ctx, delegator.DelegatorAddr, rewardAmt, rewardType)
+			k.AddReward(ctx, delegator.DelegatorAddr,
+				delegatorsMiningReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool),
+				delegatorsServiceReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool))
 		}
 	}
+
+	k.ResetRewardEpoch(ctx)
 }
 
 // GetValidatorCandidates get candidates info for current validators
@@ -227,4 +244,39 @@ func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
 		account = k.accountKeeper.NewAccountWithAddress(ctx, accAddress)
 		k.accountKeeper.SetAccount(ctx, account)
 	}
+}
+
+func (k Keeper) GetRewardEpoch(ctx sdk.Context) (epoch RewardEpoch) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetRewardEpochKey()) {
+		epoch = NewRewardEpoch(ctx.BlockHeight())
+		k.SetRewardEpoch(ctx, epoch)
+		return
+	}
+
+	value := store.Get(GetRewardEpochKey())
+	k.cdc.MustUnmarshalBinaryBare(value, &epoch)
+	return
+}
+
+func (k Keeper) SetRewardEpoch(ctx sdk.Context, epoch RewardEpoch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetRewardEpochKey(), k.cdc.MustMarshalBinaryBare(epoch))
+}
+
+func (k Keeper) ResetRewardEpoch(ctx sdk.Context) {
+	k.SetRewardEpoch(ctx, NewRewardEpoch(ctx.BlockHeight()))
+}
+
+func (k Keeper) AddEpochMiningReward(ctx sdk.Context, amount sdk.Int) {
+	epoch := k.GetRewardEpoch(ctx)
+	epoch.MiningReward = epoch.MiningReward.Add(amount)
+	k.SetRewardEpoch(ctx, epoch)
+}
+
+func (k Keeper) AddEpochServiceReward(ctx sdk.Context, amount sdk.Int) {
+	epoch := k.GetRewardEpoch(ctx)
+	epoch.ServiceReward = epoch.ServiceReward.Add(amount)
+	k.SetRewardEpoch(ctx, epoch)
 }

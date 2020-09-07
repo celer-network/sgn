@@ -29,14 +29,11 @@ var (
 	NewInitRequest             = types.NewInitRequest
 	NewGuardTrigger            = types.NewGuardTrigger
 	NewGuardProof              = types.NewGuardProof
-	NewEpoch                   = types.NewEpoch
 	NewQuerySubscriptionParams = types.NewQuerySubscriptionParams
 	NewQueryRequestParams      = types.NewQueryRequestParams
 	NewQueryEpochParams        = types.NewQueryEpochParams
 	GetSubscriptionKey         = types.GetSubscriptionKey
 	GetRequestKey              = types.GetRequestKey
-	GetEpochKey                = types.GetEpochKey
-	GetLatestEpochKey          = types.GetLatestEpochKey
 	SubscriptionKeyPrefix      = types.SubscriptionKeyPrefix
 	CLIQuerySubscription       = cli.QuerySubscription
 	CLIQueryRequest            = cli.QueryRequest
@@ -52,7 +49,6 @@ type (
 	GuardProof              = types.GuardProof
 	Request                 = types.Request
 	ChanStatus              = types.ChanStatus
-	Epoch                   = types.Epoch
 	Params                  = types.Params
 	QuerySubscriptionParams = types.QuerySubscriptionParams
 	QueryRequestParams      = types.QueryRequestParams

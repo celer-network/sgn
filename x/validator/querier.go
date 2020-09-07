@@ -25,6 +25,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryCandidateDelegators(ctx, req, keeper)
 		case QueryReward:
 			return queryReward(ctx, req, keeper)
+		case QueryRewardEpoch:
+			return queryRewardEpoch(ctx, req, keeper)
 		case QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
@@ -120,6 +122,16 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 
+	}
+
+	return res, nil
+}
+
+func queryRewardEpoch(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	epoch := keeper.GetRewardEpoch(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, epoch)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return res, nil

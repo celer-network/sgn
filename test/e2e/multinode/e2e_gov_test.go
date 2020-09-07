@@ -11,7 +11,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
-	"github.com/celer-network/sgn/x/guard"
+	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +71,7 @@ func sidechainGovTest(t *testing.T) {
 	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 
 	log.Info("======================== Test change epochlengh rejected due to small quorum ===========================")
-	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
+	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"2\"")}
 	content := govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor1.Key.GetAddress())
 	transactor1.AddTxMsg(submitProposalmsg)
@@ -87,9 +87,9 @@ func sidechainGovTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor1.CliCtx, proposalID, govtypes.StatusRejected)
 	require.NoError(t, err, "failed to query proposal 1 with rejected status")
 
-	guardParams, err := guard.CLIQueryParams(transactor1.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(1), guardParams.EpochLength, "EpochLength params should stay 1")
+	validatorParams, err := validator.CLIQueryParams(transactor1.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(3), validatorParams.EpochLength, "EpochLength params should stay 3")
 
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
@@ -100,7 +100,7 @@ func sidechainGovTest(t *testing.T) {
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 
 	log.Info("======================== Test change epochlengh passed for reaching quorun ===========================")
-	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
+	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"2\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor0.Key.GetAddress())
 	transactor0.AddTxMsg(submitProposalmsg)
@@ -116,12 +116,12 @@ func sidechainGovTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusPassed)
 	require.NoError(t, err, "failed to query proposal 2 with passed status")
 
-	guardParams, err = guard.CLIQueryParams(transactor0.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should change to 3")
+	validatorParams, err = validator.CLIQueryParams(transactor0.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(2), validatorParams.EpochLength, "EpochLength params should change to 2")
 
 	log.Info("======================== Test change epochlengh rejected due to 1/3 veto ===========================")
-	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
+	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor1.Key.GetAddress())
 	transactor1.AddTxMsg(submitProposalmsg)
@@ -142,9 +142,9 @@ func sidechainGovTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusRejected)
 	require.NoError(t, err, "failed to query proposal 3 with rejected status")
 
-	guardParams, err = guard.CLIQueryParams(transactor0.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should stay 3")
+	validatorParams, err = validator.CLIQueryParams(transactor0.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(2), validatorParams.EpochLength, "EpochLength params should stay 2")
 
 	nonce = uint64(1)
 	penalty, err = tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
@@ -154,7 +154,7 @@ func sidechainGovTest(t *testing.T) {
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 
 	log.Info("======================== Test change epochlengh rejected due to 1/2 No ===========================")
-	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
+	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor2.Key.GetAddress())
 	transactor2.AddTxMsg(submitProposalmsg)
@@ -173,12 +173,12 @@ func sidechainGovTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusRejected)
 	require.NoError(t, err, "failed to query proposal 4 with rejected status")
 
-	guardParams, err = guard.CLIQueryParams(transactor0.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should stay 3")
+	validatorParams, err = validator.CLIQueryParams(transactor0.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(2), validatorParams.EpochLength, "EpochLength params should stay 2")
 
 	log.Info("======================== Test change epochlengh passed for over 1/2 yes ===========================")
-	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
+	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Gubscribe Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor2.Key.GetAddress())
 	transactor2.AddTxMsg(submitProposalmsg)
@@ -197,9 +197,9 @@ func sidechainGovTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor0.CliCtx, proposalID, govtypes.StatusPassed)
 	require.NoError(t, err, "failed to query proposal 5 with passed status")
 
-	guardParams, err = guard.CLIQueryParams(transactor0.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(5), guardParams.EpochLength, "EpochLength params should stay 5")
+	validatorParams, err = validator.CLIQueryParams(transactor0.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(5), validatorParams.EpochLength, "EpochLength params should change to 5")
 }
 
 func mainchainGovTest(t *testing.T) {

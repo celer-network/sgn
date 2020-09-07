@@ -22,6 +22,12 @@ func (k Keeper) SyncerDuration(ctx sdk.Context) (res uint) {
 	return
 }
 
+// EpochLength - epoch length
+func (k Keeper) EpochLength(ctx sdk.Context) (res uint) {
+	k.paramstore.Get(ctx, types.KeyEpochLength, &res)
+	return
+}
+
 // MiningReward - mining reward
 func (k Keeper) MiningReward(ctx sdk.Context) (res sdk.Int) {
 	k.paramstore.Get(ctx, types.KeyMiningReward, &res)
@@ -38,6 +44,7 @@ func (k Keeper) PullerReward(ctx sdk.Context) (res sdk.Int) {
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.SyncerDuration(ctx),
+		k.EpochLength(ctx),
 		k.MiningReward(ctx),
 		k.PullerReward(ctx),
 	)
