@@ -14,6 +14,7 @@ const (
 	QueryCandidate           = types.QueryCandidate
 	QueryCandidateDelegators = types.QueryCandidateDelegators
 	QueryReward              = types.QueryReward
+	QueryRewardEpoch         = types.QueryRewardEpoch
 	QueryParameters          = types.QueryParameters
 	TypeMsgWithdrawReward    = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress   = types.AttributeKeyEthAddress
@@ -48,6 +49,7 @@ var (
 	CLIQueryValidator              = cli.QueryValidator
 	CLIQueryValidators             = cli.QueryValidators
 	CLIQueryBondedValidators       = cli.QueryBondedValidators
+	CLIQueryParams                 = cli.QueryParams
 	DefaultParams                  = types.DefaultParams
 )
 

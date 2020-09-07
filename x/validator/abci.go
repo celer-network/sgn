@@ -12,21 +12,21 @@ import (
 )
 
 // EndBlocker called every block, update validator set, distribute rewards
-func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
-	setSyncer(ctx, req, keeper)
+func EndBlocker(ctx sdk.Context, keeper Keeper) (updates []abci.ValidatorUpdate) {
+	setSyncer(ctx, keeper)
 	miningReward := keeper.MiningReward(ctx)
 	keeper.AddEpochMiningReward(ctx, miningReward)
-	keeper.DistributeRewards(ctx)
+	keeper.DistributeReward(ctx)
 
 	return applyAndReturnValidatorSetUpdates(ctx, keeper)
 }
 
 // Update syncer for every syncerDuration
-func setSyncer(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) {
+func setSyncer(ctx sdk.Context, keeper Keeper) {
 	syncer := keeper.GetSyncer(ctx)
 	validators := keeper.GetValidators(ctx)
 	syncerDuration := keeper.SyncerDuration(ctx)
-	vIdx := uint(req.Height) / syncerDuration % uint(len(validators))
+	vIdx := uint(ctx.BlockHeight()) / syncerDuration % uint(len(validators))
 
 	if syncer.ValidatorIdx != vIdx || syncer.ValidatorAddr.Empty() {
 		syncer = NewSyncer(vIdx, sdk.AccAddress(validators[vIdx].OperatorAddress))

@@ -20,7 +20,7 @@
     "validator": {
       "params": {
         "syncer_duration": "5",
-        "epoch_length": "5",
+        "epoch_length": "3",
         "mining_reward": "100000000000000000",
         "puller_reward": "1000000000000000"
       }
@@ -136,7 +136,6 @@
     "guard": {
       "params": {
         "request_guard_count": "3",
-        "epoch_length": "60",
         "request_cost": "10000000000000000",
         "min_dispute_timeout": "80000"
       }

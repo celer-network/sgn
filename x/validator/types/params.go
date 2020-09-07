@@ -75,8 +75,8 @@ func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   SyncerDuration:    %d,
      EpochLength:    %d,
-	MiningReward:    %s,
-	PullerReward:    %s`,
+    MiningReward:    %s,
+    PullerReward:    %s`,
 		p.SyncerDuration, p.EpochLength, p.MiningReward, p.PullerReward)
 }
 

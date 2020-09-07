@@ -101,7 +101,7 @@ type RewardEpoch struct {
 func NewRewardEpoch(height int64) RewardEpoch {
 	return RewardEpoch{
 		StartHeight:   height,
-		MiningReward:  sdk.NewInt(0),
-		ServiceReward: sdk.NewInt(0),
+		MiningReward:  sdk.ZeroInt(),
+		ServiceReward: sdk.ZeroInt(),
 	}
 }

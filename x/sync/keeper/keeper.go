@@ -66,5 +66,5 @@ func (keeper Keeper) PullerReward(ctx sdk.Context) sdk.Int {
 }
 
 func (keeper Keeper) AddPullerReward(ctx sdk.Context, ethAddress string, amount sdk.Int) {
-	keeper.validatorKeeper.AddRewards(ctx, ethAddress, amount, sdk.NewInt(0))
+	keeper.validatorKeeper.AddReward(ctx, ethAddress, amount, sdk.ZeroInt())
 }

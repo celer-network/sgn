@@ -161,37 +161,48 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 }
 
 // AddReward add reward to a specific ethAddress
-func (k Keeper) AddRewards(ctx sdk.Context, ethAddress string, miningReward, serviceReward sdk.Int) {
+func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, miningReward, serviceReward sdk.Int) {
 	reward, _ := k.GetReward(ctx, ethAddress)
 	reward.MiningReward = reward.MiningReward.Add(miningReward)
 	reward.ServiceReward = reward.ServiceReward.Add(serviceReward)
 	k.SetReward(ctx, reward)
 }
 
-func (k Keeper) DistributeRewards(ctx sdk.Context) {
+func (k Keeper) DistributeReward(ctx sdk.Context) {
 	epoch := k.GetRewardEpoch(ctx)
+	if ctx.BlockHeight()-epoch.StartHeight < int64(k.EpochLength(ctx)) {
+		return
+	}
 
 	candidates := k.GetValidatorCandidates(ctx)
 	totalStake := sdk.ZeroInt()
 
 	for _, candidate := range candidates {
+		if !candidate.StakingPool.IsPositive() {
+			log.Errorln("invalid candidate staking pool", candidate.EthAddress)
+			return
+		}
 		totalStake = totalStake.Add(candidate.StakingPool)
 	}
 
 	for _, candidate := range candidates {
 		candidateMiningReward := epoch.MiningReward.Mul(candidate.StakingPool).Quo(totalStake)
-		candidateServiceReward := epoch.ServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
-
 		miningCommission := candidate.CommissionRate.MulInt(candidateMiningReward).RoundInt()
-		serviceCommission := candidate.CommissionRate.MulInt(candidateServiceReward).RoundInt()
 
-		k.AddRewards(ctx, candidate.EthAddress, miningCommission, serviceCommission)
+		candidateServiceReward := sdk.ZeroInt()
+		serviceCommission := sdk.ZeroInt()
+		if epoch.ServiceReward.IsPositive() {
+			candidateServiceReward = epoch.ServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
+			serviceCommission = candidate.CommissionRate.MulInt(candidateServiceReward).RoundInt()
+		}
+
+		k.AddReward(ctx, candidate.EthAddress, miningCommission, serviceCommission)
 
 		delegators := k.GetAllDelegators(ctx, candidate.EthAddress)
 		delegatorsMiningReward := candidateMiningReward.Sub(miningCommission)
 		delegatorsServiceReward := candidateServiceReward.Sub(serviceCommission)
 		for _, delegator := range delegators {
-			k.AddRewards(ctx, delegator.DelegatorAddr,
+			k.AddReward(ctx, delegator.DelegatorAddr,
 				delegatorsMiningReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool),
 				delegatorsServiceReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool))
 		}
