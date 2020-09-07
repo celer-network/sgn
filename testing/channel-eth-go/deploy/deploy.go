@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/testing/channel-eth-go/balancelimit"
 	"github.com/celer-network/sgn/testing/channel-eth-go/channel"
 	"github.com/celer-network/sgn/testing/channel-eth-go/ethpool"
@@ -21,7 +22,6 @@ import (
 	"github.com/celer-network/sgn/testing/channel-eth-go/routerregistry"
 	"github.com/celer-network/sgn/testing/channel-eth-go/virtresolver"
 	"github.com/celer-network/sgn/testing/channel-eth-go/wallet"
-	"github.com/celer-network/goutils/log"
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -77,11 +77,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy VirtContractResolver contract: %v", err)
 	}
-	receipt, err := WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined VirtContractResolver: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed VirtContractResolver contract at 0x%x\n", virtresolverAddr)
 
 	// Deploy EthPool contract
@@ -90,11 +85,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy EthPool contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined EthPool: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed EthPool contract at 0x%x\n", ethPoolAddr)
 
 	// Deploy PayRegistry contract
@@ -103,11 +93,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy PayRegistry contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined PayRegistry: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed PayRegistry contract at 0x%x\n", payRegistryAddr)
 
 	// Deploy PayResolver contract
@@ -116,11 +101,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy PayResolver contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined PayResolver: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed PayResolver contract at 0x%x\n", payResolverAddr)
 
 	// Deploy CelerWallet contract
@@ -129,11 +109,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy CelerWallet contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined CelerWallet: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed CelerWallet contract at 0x%x\n", walletAddr)
 
 	// Deploy LedgerStruct contract
@@ -142,11 +117,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerStruct contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerStruct: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed LedgerStruct contract at 0x%x\n", ledgerstructAddr)
 
 	/********** contracts with need of linking **********/
@@ -162,11 +132,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerChannel contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerChannel: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed LedgerChannel contract at 0x%x\n", channelAddr)
 
 	// Deploy LedgerBalanceLimit contract
@@ -181,11 +146,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerBalanceLimit contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerBalanceLimit: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed LedgerBalanceLimit contract at 0x%x\n", balancelimitAddr)
 
 	// Deploy LedgerOperation contract
@@ -200,11 +160,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerOperation contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerOperation: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed LedgerOperation contract at 0x%x\n", operationAddr)
 
 	// Deploy LedgerMigrate contract
@@ -223,11 +178,6 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy LedgerMigrate contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
-	if err != nil {
-		log.Fatalf("Failed to WaitMined LedgerMigrate: %v", err)
-	}
-	log.Infof("Transaction status: %x", receipt.Status)
 	log.Infof("Deployed LedgerMigrate contract at 0x%x\n", migrateAddr)
 
 	// Deploy CelerLedger contract
@@ -251,7 +201,7 @@ func DeployAll(
 	if err != nil {
 		log.Fatalf("Failed to deploy CelerLedger contract: %v", err)
 	}
-	receipt, err = WaitMined(ctx, conn, tx, blockDelay)
+	receipt, err := WaitMined(ctx, conn, tx, blockDelay)
 	if err != nil {
 		log.Fatalf("Failed to WaitMined CelerLedger: %v", err)
 	}
