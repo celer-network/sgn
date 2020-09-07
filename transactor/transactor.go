@@ -21,10 +21,10 @@ import (
 )
 
 const (
-	maxQueryRetry   = 15
-	queryRetryDelay = 1 * time.Second
-	maxSignRetry    = 10
-	signRetryDelay  = 100 * time.Millisecond
+	maxTxRetry     = 15
+	txRetryDelay   = 1 * time.Second
+	maxSignRetry   = 10
+	signRetryDelay = 100 * time.Millisecond
 )
 
 type Transactor struct {
@@ -135,21 +135,31 @@ func (t *Transactor) SendTxMsg(msg sdk.Msg) (*sdk.TxResponse, error) {
 }
 
 func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
-	txBytes, stdSignMsg, err := t.signTx(msgs)
-	if err != nil {
-		return nil, fmt.Errorf("signTx err: %s", err)
-	}
-	txResponse, err := t.CliCtx.BroadcastTx(txBytes)
-	if err != nil {
-		return nil, fmt.Errorf("BroadcastTx err: %s", err)
-	}
+	var txResponseErr error
+	for try := 0; try < maxTxRetry; try++ {
+		txBytes, stdSignMsg, err := t.signTx(msgs)
+		if err != nil {
+			return nil, fmt.Errorf("signTx err: %s", err)
+		}
+		txResponse, err := t.CliCtx.BroadcastTx(txBytes)
+		if err != nil {
+			return nil, fmt.Errorf("BroadcastTx err: %s", err)
+		}
 
-	if txResponse.Code != sdkerrors.SuccessABCICode {
-		return &txResponse, fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg: %s acct %s accnum %d seq %d",
-			txResponse.Code, txResponse.RawLog, t.Key.GetAddress(), stdSignMsg.ChainID, stdSignMsg.AccountNumber, stdSignMsg.Sequence)
-	}
+		if txResponse.Code == sdkerrors.SuccessABCICode {
+			return &txResponse, nil
+		}
 
-	return &txResponse, nil
+		txResponseErr = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
+			txResponse.Code, txResponse.RawLog, stdSignMsg.ChainID, t.Key.GetAddress(), stdSignMsg.AccountNumber, stdSignMsg.Sequence)
+		if txResponse.Code == sdkerrors.ErrUnauthorized.ABCICode() {
+			log.Warnln(txResponseErr.Error(), "retrying")
+			time.Sleep(txRetryDelay)
+		} else {
+			return &txResponse, txResponseErr
+		}
+	}
+	return nil, txResponseErr
 }
 
 // Poll tx queue and send msgs in batch
@@ -178,15 +188,15 @@ func (t *Transactor) WaitMined(txHash string) (*sdk.TxResponse, error) {
 	var err error
 	mined := false
 	var txResponse sdk.TxResponse
-	for try := 0; try < maxQueryRetry; try++ {
-		time.Sleep(queryRetryDelay)
+	for try := 0; try < maxTxRetry; try++ {
+		time.Sleep(txRetryDelay)
 		if txResponse, err = utils.QueryTx(t.CliCtx, txHash); err == nil {
 			mined = true
 			break
 		}
 	}
 	if !mined {
-		log.Errorf("Transaction %s not mined within %d retry, err %s", txHash, maxQueryRetry, err)
+		log.Errorf("Transaction %s not mined within %d retry, err %s", txHash, maxTxRetry, err)
 	} else if txResponse.Code != sdkerrors.SuccessABCICode {
 		log.Errorf("Transaction %s failed with code %d, %s", txHash, txResponse.Code, txResponse.RawLog)
 	} else {
