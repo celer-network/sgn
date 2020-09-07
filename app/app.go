@@ -135,7 +135,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 
 	loglevel := viper.GetString(common.FlagLogLevel)
 	log.SetLevelByName(loglevel)
-	if loglevel == "debug" || loglevel == "trace" {
+	if loglevel == "trace" {
 		baseAppOptions = append(baseAppOptions, baseapp.SetTrace(true))
 	}
 	if viper.GetBool(common.FlagLogColor) {
