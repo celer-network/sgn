@@ -21,6 +21,7 @@ var (
 	DelegatorKeyPrefix = []byte{0x03} // Key prefix for delegator
 	CandidateKeyPrefix = []byte{0x04} // Key prefix for candidate
 	RewardKeyPrefix    = []byte{0x05} // Key prefix for reward
+	RewardEpochKey     = []byte{0x06} // Key for reward epoch
 )
 
 // get delegators key from candidate address
@@ -41,4 +42,9 @@ func GetCandidateKey(candidateAddr string) []byte {
 // get reward key from ethAddr
 func GetRewardKey(ethAddr string) []byte {
 	return append(RewardKeyPrefix, mainchain.Hex2Addr(ethAddr).Bytes()...)
+}
+
+// get reward epoch key
+func GetRewardEpochKey() []byte {
+	return RewardEpochKey
 }

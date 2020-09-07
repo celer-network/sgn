@@ -13,13 +13,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type RewardType int
-
-const (
-	ServiceReward = iota
-	MiningReward
-)
-
 type Reward struct {
 	Receiver         string       `json:"receiver"`
 	MiningReward     sdk.Int      `json:"mining_reward"`
@@ -97,4 +90,18 @@ func (r Reward) GetRewardRequest() []byte {
 	})
 
 	return rewardRequestBytes
+}
+
+type RewardEpoch struct {
+	StartHeight   int64   `json:"start_height"`
+	MiningReward  sdk.Int `json:"mining_reward"`
+	ServiceReward sdk.Int `json:"service_reward"`
+}
+
+func NewRewardEpoch(height int64) RewardEpoch {
+	return RewardEpoch{
+		StartHeight:   height,
+		MiningReward:  sdk.NewInt(0),
+		ServiceReward: sdk.NewInt(0),
+	}
 }

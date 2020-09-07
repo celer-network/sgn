@@ -18,8 +18,6 @@ const (
 	TypeMsgWithdrawReward    = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress   = types.AttributeKeyEthAddress
 	ActionInitiateWithdraw   = types.ActionInitiateWithdraw
-	ServiceReward            = types.ServiceReward
-	MiningReward             = types.MiningReward
 )
 
 var (
@@ -36,10 +34,12 @@ var (
 	GetDelegatorsKey               = types.GetDelegatorsKey
 	GetCandidateKey                = types.GetCandidateKey
 	GetRewardKey                   = types.GetRewardKey
+	GetRewardEpochKey              = types.GetRewardEpochKey
 	NewSyncer                      = types.NewSyncer
 	NewDelegator                   = types.NewDelegator
 	NewCandidate                   = types.NewCandidate
 	NewReward                      = types.NewReward
+	NewRewardEpoch                 = types.NewRewardEpoch
 	CLIQuerySyncer                 = cli.QuerySyncer
 	CLIQueryCandidate              = cli.QueryCandidate
 	CLIQueryCandidateDelegators    = cli.QueryCandidateDelegators
@@ -57,7 +57,7 @@ type (
 	Delegator                   = types.Delegator
 	Candidate                   = types.Candidate
 	Reward                      = types.Reward
-	RewardType                  = types.RewardType
+	RewardEpoch                 = types.RewardEpoch
 	QueryDelegatorParams        = types.QueryDelegatorParams
 	QueryCandidateParams        = types.QueryCandidateParams
 	QueryRewardParams           = types.QueryRewardParams

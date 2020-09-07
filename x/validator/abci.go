@@ -11,11 +11,12 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// EndBlocker called every block, process inflation, update validator set.
+// EndBlocker called every block, update validator set, distribute rewards
 func EndBlocker(ctx sdk.Context, req abci.RequestEndBlock, keeper Keeper) (updates []abci.ValidatorUpdate) {
 	setSyncer(ctx, req, keeper)
 	miningReward := keeper.MiningReward(ctx)
-	keeper.DistributeReward(ctx, miningReward, MiningReward)
+	keeper.AddEpochMiningReward(ctx, miningReward)
+	keeper.DistributeRewards(ctx)
 
 	return applyAndReturnValidatorSetUpdates(ctx, keeper)
 }
