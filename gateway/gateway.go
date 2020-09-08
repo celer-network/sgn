@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"bufio"
+	"errors"
 	"net"
 	"os"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/celer-network/sgn/transactor"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -19,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tlog "github.com/tendermint/tendermint/libs/log"
-	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
+	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 )
 
 // RestServer represents the Light Client Rest server
@@ -32,6 +35,7 @@ type RestServer struct {
 	dposContract   *mainchain.DPoS
 	sgnContract    *mainchain.SGN
 	ledgerContract *mainchain.CelerLedger
+	ethClient      *ethclient.Client
 }
 
 // NewRestServer creates a new rest server instance
@@ -65,10 +69,15 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		gpe,
 	)
 
+	transactors := viper.GetStringSlice(common.FlagSgnTransactors)
+	if len(transactors) == 0 {
+		return nil, errors.New("No transactor available")
+	}
+
 	err = transactorPool.AddTransactors(
 		viper.GetString(common.FlagSgnNodeURI),
 		viper.GetString(common.FlagSgnPassphrase),
-		viper.GetStringSlice(common.FlagSgnTransactors),
+		transactors,
 	)
 	if err != nil {
 		return nil, err
@@ -90,6 +99,7 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		dposContract:   dposContract,
 		sgnContract:    sgnContract,
 		ledgerContract: ledgerContract,
+		ethClient:      ethClient,
 	}, nil
 }
 
@@ -112,7 +122,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	}
 	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 
-	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.logger, cfg)
+	return rpcserver.Serve(rs.listener, rs.Mux, rs.logger, cfg)
 }
 
 func (rs *RestServer) registerRoutes() {
@@ -133,6 +143,16 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 			err := viper.MergeInConfig()
 			if err != nil {
 				return err
+			}
+
+			buf := bufio.NewReader(os.Stdin)
+			if viper.Get(common.FlagSgnPassphrase) == nil {
+				pass, err2 := input.GetString("Enter sidechain validator passphrase:", buf)
+				if err2 != nil {
+					return err2
+				}
+
+				viper.Set(common.FlagSgnPassphrase, pass)
 			}
 
 			rs, err := NewRestServer(cdc)

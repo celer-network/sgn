@@ -1,6 +1,7 @@
 package singlenode
 
 import (
+	"math/big"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setUpUpgrade() []tc.Killable {
@@ -35,19 +37,26 @@ func upgradeTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test upgrade ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnOperator),
+		viper.GetString(common.FlagSgnValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 	)
 
-	upgradeHeight := int64(30)
+	amt := big.NewInt(5000000000000000000)
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	log.Infof("my eth address %x", ethAddr)
+	require.NoError(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.CheckValidatorNum(t, transactor, 1)
+
+	upgradeHeight := int64(50)
 	plan := upgrade.Plan{Name: "test", Height: upgradeHeight}
 	content := govtypes.NewUpgradeProposal("Upgrade test", "Upgrade test", plan)
-	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor.Key.GetAddress())
+	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(2), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID := uint64(1)
@@ -66,6 +75,6 @@ func upgradeTest(t *testing.T) {
 		}
 	}
 
-	tc.ChkTestErr(t, err, "failed to query block height")
-	assert.Equal(t, height, upgradeHeight-1, "The chain should stop at upgrade height")
+	require.NoError(t, err, "failed to query block height")
+	assert.Equal(t, height, upgradeHeight, "The chain should stop at upgrade height")
 }

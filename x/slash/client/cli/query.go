@@ -18,11 +18,10 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	slashQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the slash module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	slashQueryCmd.AddCommand(flags.GetCommands(
+	slashQueryCmd.AddCommand(common.GetCommands(
 		GetCmdPenalty(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
@@ -41,7 +40,7 @@ func GetCmdPenalty(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			penalty, err := QueryPenalty(cliCtx, queryRoute, nonce)
 			if err != nil {
 				log.Errorln("query error", err)
@@ -82,7 +81,7 @@ func GetCmdPenaltyRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			penaltyRequest, err := QueryPenaltyRequest(cliCtx, queryRoute, nonce)
 			if err != nil {
 				return err
@@ -112,7 +111,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Query the current slash parameters information",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
 			res, err := common.RobustQuery(cliCtx, route)

@@ -34,19 +34,19 @@ func (status ChanStatus) String() string {
 }
 
 type Request struct {
-	ChannelId               []byte           `json:"channelId"`
-	SeqNum                  uint64           `json:"seqNum"`
-	SimplexSender           string           `json:"simplexSender"`
-	SimplexReceiver         string           `json:"simplexReceiver"`
-	SignedSimplexStateBytes []byte           `json:"signedSimplexStateBytes"`
-	DisputeTimeout          uint64           `json:"disputeTimeout"`
+	ChannelId               []byte           `json:"channel_id"`
+	SeqNum                  uint64           `json:"seq_num"`
+	SimplexSender           string           `json:"simplex_sender"`
+	SimplexReceiver         string           `json:"simplex_receiver"`
+	SignedSimplexStateBytes []byte           `json:"signed_simplex_state_bytes"`
+	DisputeTimeout          uint64           `json:"dispute_timeout"`
 	Status                  ChanStatus       `json:"status"`
-	AssignedGuards          []sdk.AccAddress `json:"assignedGuards"`
-	TriggerTxHash           string           `json:"triggerTxHash"`
-	TriggerTxBlkNum         uint64           `json:"triggerTxBlkNum"`
-	GuardTxHash             string           `json:"guardTxHash"`
-	GuardTxBlkNum           uint64           `json:"guardTxBlkNum"`
-	GuardSender             string           `json:"guardSender"`
+	AssignedGuards          []sdk.AccAddress `json:"assigned_guards"`
+	TriggerTxHash           string           `json:"trigger_tx_hash"`
+	TriggerTxBlkNum         uint64           `json:"trigger_tx_blk_num"`
+	GuardTxHash             string           `json:"guard_tx_hash"`
+	GuardTxBlkNum           uint64           `json:"guard_tx_blk_num"`
+	GuardSender             string           `json:"guard_sender"`
 }
 
 func NewRequest(
@@ -65,8 +65,8 @@ func NewRequest(
 }
 
 func (r Request) String() string {
-	out := fmt.Sprintf(`SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: %s`,
-		r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout, r.Status)
+	out := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: %s`,
+		r.ChannelId, r.SeqNum, r.SimplexSender, r.SimplexReceiver, r.DisputeTimeout, r.Status)
 	if r.TriggerTxHash != "" {
 		out += fmt.Sprintf(`, TriggerTxHash: %s, TriggerTxBlkNum: %d`,
 			r.TriggerTxHash, r.TriggerTxBlkNum)
@@ -79,9 +79,9 @@ func (r Request) String() string {
 }
 
 type InitRequest struct {
-	SignedSimplexStateBytes []byte `json:"signedSimplexStateBytes"`
-	SimplexReceiverSig      []byte `json:"simplexReceiverSig"`
-	DisputeTimeout          uint64 `json:"disputeTimeout"`
+	SignedSimplexStateBytes []byte `json:"signed_simplex_state_bytes"`
+	SimplexReceiverSig      []byte `json:"simplex_receiver_sig"`
+	DisputeTimeout          uint64 `json:"dispute_timeout"`
 }
 
 func NewInitRequest(signedSimplexStateBytes, simplexReceiverSig []byte, disputeTimeout uint64) *InitRequest {
@@ -93,11 +93,11 @@ func NewInitRequest(signedSimplexStateBytes, simplexReceiverSig []byte, disputeT
 }
 
 type GuardTrigger struct {
-	ChannelId       []byte     `json:"channelId"`
-	SimplexReceiver string     `json:"simplexReceiver"`
-	TriggerTxHash   string     `json:"triggerTxHash"`
-	TriggerTxBlkNum uint64     `json:"triggerTxBlkNum"`
-	TriggerSeqNum   uint64     `json:"triggerSeqNum"`
+	ChannelId       []byte     `json:"channel_id"`
+	SimplexReceiver string     `json:"simplex_receiver"`
+	TriggerTxHash   string     `json:"trigger_tx_hash"`
+	TriggerTxBlkNum uint64     `json:"trigger_tx_blk_num"`
+	TriggerSeqNum   uint64     `json:"trigger_seq_num"`
 	Status          ChanStatus `json:"status"`
 }
 
@@ -124,11 +124,11 @@ func NewGuardTrigger(
 }
 
 type GuardProof struct {
-	ChannelId       []byte     `json:"channelId"`
-	SimplexReceiver string     `json:"simplexReceiver"`
-	GuardTxHash     string     `json:"guardTxHash"`
-	GuardTxBlkNum   uint64     `json:"guardTxBlkNum"`
-	GuardSender     string     `json:"guardSender"`
+	ChannelId       []byte     `json:"channel_id"`
+	SimplexReceiver string     `json:"simplex_receiver"`
+	GuardTxHash     string     `json:"guard_tx_hash"`
+	GuardTxBlkNum   uint64     `json:"guard_tx_blk_num"`
+	GuardSender     string     `json:"guard_sender"`
 	Status          ChanStatus `json:"status"`
 }
 

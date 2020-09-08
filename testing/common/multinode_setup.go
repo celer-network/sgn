@@ -58,18 +58,18 @@ func SetupMainchain() {
 	ChkErr(err, "fund each validator ERC20")
 }
 
-func SetupNewSGNEnv(sgnParams *SGNParams) {
+func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	log.Infoln("Deploy DPoS and SGN contracts")
 	if sgnParams == nil {
 		sgnParams = &SGNParams{
 			CelrAddr:               E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 			GovernVoteTimeout:      big.NewInt(3), // TODO: use a more practical value
-			BlameTimeout:           big.NewInt(50),
+			SlashTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(7),
 			MinStakingPool:         big.NewInt(100),
-			IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+			AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
@@ -97,16 +97,38 @@ func SetupNewSGNEnv(sgnParams *SGNParams) {
 	log.Infoln("Updating config files of SGN nodes")
 	for i := 0; i < 3; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", i)
-		viper.SetConfigFile(configPath)
-		err = viper.ReadInConfig()
+		configFileViper := viper.New()
+		configFileViper.SetConfigFile(configPath)
+		err = configFileViper.ReadInConfig()
 		ChkErr(err, "Failed to read config")
-		viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
-		viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
-		viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
-		viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
-		err = viper.WriteConfig()
+		configFileViper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
+		configFileViper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
+		configFileViper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
+		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
+		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
+
+		if manual {
+			genesisPath := fmt.Sprintf("../../../docker-volumes/node%d/sgnd/config/genesis.json", i)
+			genesisViper := viper.New()
+			genesisViper.SetConfigFile(genesisPath)
+			err = genesisViper.ReadInConfig()
+			ChkErr(err, "Failed to read genesis")
+			genesisViper.Set("app_state.govern.voting_params.voting_period", "120000000000")
+			err = genesisViper.WriteConfig()
+			ChkErr(err, "Failed to write genesis")
+		}
 	}
+
+	// Update global viper
+	node0ConfigPath := "../../../docker-volumes/node0/config.json"
+	viper.SetConfigFile(node0ConfigPath)
+	err = viper.ReadInConfig()
+	ChkErr(err, "Failed to read config")
+	viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr)
+	viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr)
+	viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr)
+	viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr)
 
 	err = SetContracts(E2eProfile.DPoSAddr, E2eProfile.SGNAddr, E2eProfile.LedgerAddr)
 	ChkErr(err, "Failed to SetContracts")

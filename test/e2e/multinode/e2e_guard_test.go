@@ -14,6 +14,7 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupGuard() {
@@ -22,14 +23,14 @@ func setupGuard() {
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-		BlameTimeout:           big.NewInt(10),
+		SlashTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
 		MaxValidatorNum:        big.NewInt(11),
 		MinStakingPool:         big.NewInt(0),
-		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	tc.SetupNewSGNEnv(p)
+	tc.SetupNewSGNEnv(p, false)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
@@ -45,7 +46,7 @@ func guardTest(t *testing.T) {
 	log.Infoln("===================================================================")
 	log.Infoln("======================== Test guard ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
@@ -59,10 +60,10 @@ func guardTest(t *testing.T) {
 	amt3 := big.NewInt(1000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
 	log.Infoln("Add validators...")
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 	_, auth, err := tc.GetAuth(tc.ValEthKs[1])
 	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
-	tc.ChkTestErr(t, err, "failed to delegate stake")
+	require.NoError(t, err, "failed to delegate stake")
 
 	turnOffMonitor(2)
 
@@ -74,12 +75,12 @@ func guardTest(t *testing.T) {
 	// The self delegated stake of validator0 is 2/3 of total stake of validator0,
 	// so validator0 gets (1000000000000000000 - 100000000000000) * 2/3 = 666600000000000000 reward.
 	// The total service reward of validator0 is 666600000000000000 + 100000000000000 = 666700000000000000
-	e2ecommon.SubscribteTestCommon(t, transactor, amt, "666700000000000000", 2)
+	e2ecommon.GuardTestCommon(t, transactor, amt, "666700000000000000", 2)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
-	tc.ChkTestErr(t, err, "failed to query penalty")
+	require.NoError(t, err, "failed to query penalty")
 	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[2])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])

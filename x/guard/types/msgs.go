@@ -8,8 +8,8 @@ import (
 const RouterKey = ModuleName // this was defined in your key.go file
 
 type MsgRequestGuard struct {
-	SignedSimplexStateBytes []byte         `json:"signedSimplexStateBytes"`
-	SimplexReceiverSig      []byte         `json:"simplexReceiverSig"`
+	SignedSimplexStateBytes []byte         `json:"signed_simplex_state_bytes"`
+	SimplexReceiverSig      []byte         `json:"simplex_receiver_sig"`
 	Sender                  sdk.AccAddress `json:"sender"`
 }
 

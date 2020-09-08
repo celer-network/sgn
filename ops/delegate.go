@@ -4,19 +4,16 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func delegate() error {
-	ethClient, err := initEthClient()
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	amount := calcRawAmount(viper.GetString(amountFlag))
@@ -53,7 +50,7 @@ func delegate() error {
 		amount,
 		candidate.Hex(),
 	)
-	receipt, err := ethClient.Transactor.TransactWaitMined(
+	_, err = ethClient.Transactor.TransactWaitMined(
 		"Delegate",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 			return ethClient.DPoS.Delegate(opts, candidate, amount)
@@ -62,7 +59,6 @@ func delegate() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Delegate transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
@@ -73,27 +69,10 @@ func DelegateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return delegate()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(amountFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(candidateFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(amountFlag, cmd.Flags().Lookup(amountFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(candidateFlag, cmd.Flags().Lookup(candidateFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(amountFlag, "", "Stake amount")
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
+	cmd.MarkFlagRequired(amountFlag)
+	cmd.MarkFlagRequired(candidateFlag)
 	return cmd
 }

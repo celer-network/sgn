@@ -16,8 +16,8 @@ type watcherDAL struct {
 }
 
 type monitorBlockInfo struct {
-	BlockNum uint64 `json:"blockNum"`
-	BlockIdx int64  `json:"blockIdx"`
+	BlockNum uint64 `json:"block_num"`
+	BlockIdx int64  `json:"block_idx"`
 	Restart  bool   `json:"restart"`
 }
 

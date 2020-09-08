@@ -23,11 +23,10 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	guardQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the guard module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	guardQueryCmd.AddCommand(flags.GetCommands(
+	guardQueryCmd.AddCommand(common.GetCommands(
 		GetCmdSubscription(storeKey, cdc),
 		GetCmdRequest(storeKey, cdc),
 		GetCmdEpoch(storeKey, cdc),
@@ -43,7 +42,7 @@ func GetCmdSubscription(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query subscription info associated with the eth address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			subscription, err := QuerySubscription(cliCtx, queryRoute, args[0])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -79,7 +78,7 @@ func GetCmdRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "query request info associated with the channelId",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			request, err := QueryRequest(cliCtx, queryRoute, mainchain.Hex2Bytes(args[0]), args[1])
 			if err != nil {
 				log.Errorln("query error", err)
@@ -115,7 +114,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Query the current guard parameters information",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			params, err := QueryParams(cliCtx, queryRoute)
 			if err != nil {
 				log.Errorln("query error", err)
@@ -140,7 +139,7 @@ func GetCmdEpoch(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryEpoch)
 			bz, _, err := cliCtx.QueryWithData(route, data)
 			if err != nil {

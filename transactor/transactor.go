@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gammazero/deque"
@@ -20,23 +21,23 @@ import (
 )
 
 const (
-	maxQueryRetry   = 15
-	queryRetryDelay = 1 * time.Second
-	maxSignRetry    = 10
-	signRetryDelay  = 100 * time.Millisecond
+	maxTxRetry     = 15
+	txRetryDelay   = 1 * time.Second
+	maxSignRetry   = 10
+	signRetryDelay = 100 * time.Millisecond
 )
 
 type Transactor struct {
 	TxBuilder  types.TxBuilder
 	CliCtx     context.CLIContext
 	Key        keys.Info
-	Passphrase string
+	passphrase string
 	msgQueue   deque.Deque
 	gpe        *GasPriceEstimator
 }
 
 func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
-	kb, err := keys.NewKeyringWithPassphrase(sdk.KeyringServiceName(),
+	kb, err := keys.NewKeyringWithPassphrase(appName,
 		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
 	if err != nil {
 		return nil, err
@@ -65,35 +66,100 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		}
 	}
 
-	txBldr := NewTxBuilder().
-		WithTxEncoder(utils.GetTxEncoder(cdc)).
-		WithChainID(chainID).
-		WithKeybase(kb)
+	fees, err := sdk.ParseCoins(viper.GetString(flags.FlagFees))
+	if err != nil {
+		panic(err)
+	}
 
-	cliCtx := context.
-		NewCLIContext().
+	gasPrices, err := sdk.ParseDecCoins(viper.GetString(flags.FlagGasPrices))
+	if err != nil {
+		panic(err)
+	}
+
+	txBldr := types.NewTxBuilder(
+		utils.GetTxEncoder(cdc),
+		viper.GetUint64(flags.FlagAccountNumber),
+		viper.GetUint64(flags.FlagSequence),
+		flags.GasFlagVar.Gas,
+		flags.DefaultGasAdjustment,
+		flags.GasFlagVar.Simulate,
+		chainID,
+		viper.GetString(flags.FlagMemo),
+		fees,
+		gasPrices)
+	txBldr = txBldr.WithKeybase(kb)
+
+	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(key.GetAddress()).
 		WithFromName(key.GetName()).
 		WithNodeURI(nodeURI).
 		WithTrustNode(true).
+		WithChainID(chainID).
 		WithBroadcastMode(flags.BroadcastSync)
 
 	transactor := &Transactor{
 		TxBuilder:  txBldr,
 		CliCtx:     cliCtx,
 		Key:        key,
-		Passphrase: passphrase,
+		passphrase: passphrase,
 		gpe:        gpe,
 	}
 
-	go transactor.start()
 	return transactor, nil
+}
+
+func NewCliTransactor(cdc *codec.Codec, cliHome string) (*Transactor, error) {
+	return NewTransactor(
+		cliHome,
+		viper.GetString(common.FlagSgnChainID),
+		viper.GetString(common.FlagSgnNodeURI),
+		viper.GetString(common.FlagSgnValidatorAccount),
+		viper.GetString(common.FlagSgnPassphrase),
+		cdc,
+		nil,
+	)
+}
+
+func (t *Transactor) Run() {
+	go t.start()
 }
 
 // AddTxMsg add msg into a queue before actual broadcast
 func (t *Transactor) AddTxMsg(msg sdk.Msg) {
 	t.msgQueue.PushBack(msg)
+}
+
+func (t *Transactor) SendTxMsg(msg sdk.Msg) (*sdk.TxResponse, error) {
+	return t.SendTxMsgs([]sdk.Msg{msg})
+}
+
+func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
+	var txResponseErr error
+	for try := 0; try < maxTxRetry; try++ {
+		txBytes, stdSignMsg, err := t.signTx(msgs)
+		if err != nil {
+			return nil, fmt.Errorf("signTx err: %s", err)
+		}
+		txResponse, err := t.CliCtx.BroadcastTx(txBytes)
+		if err != nil {
+			return nil, fmt.Errorf("BroadcastTx err: %s", err)
+		}
+
+		if txResponse.Code == sdkerrors.SuccessABCICode {
+			return &txResponse, nil
+		}
+
+		txResponseErr = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
+			txResponse.Code, txResponse.RawLog, stdSignMsg.ChainID, t.Key.GetAddress(), stdSignMsg.AccountNumber, stdSignMsg.Sequence)
+		if txResponse.Code == sdkerrors.ErrUnauthorized.ABCICode() {
+			log.Warnln(txResponseErr.Error(), "retrying")
+			time.Sleep(txRetryDelay)
+		} else {
+			return &txResponse, txResponseErr
+		}
+	}
+	return nil, txResponseErr
 }
 
 // Poll tx queue and send msgs in batch
@@ -105,33 +171,41 @@ func (t *Transactor) start() {
 		}
 
 		logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
-		tx, err := t.broadcastTx(logEntry)
+		txResponse, err := t.bcastTxMsgQueue(logEntry)
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
 			seal.CommitTransactorLog(logEntry)
 			continue
 		}
-
 		seal.CommitTransactorLog(logEntry)
 
 		// Make sure the transaction has been mined
-		success := false
-		for try := 0; try < maxQueryRetry; try++ {
-			time.Sleep(queryRetryDelay)
-			if _, err = utils.QueryTx(t.CliCtx, tx.TxHash); err == nil {
-				success = true
-				break
-			}
-		}
-		if !success {
-			log.Errorf("Transaction %s not mined within %d retry, err %s", tx.TxHash, maxQueryRetry, err)
-		} else {
-			log.Debugf("Transaction %s has been mined", tx.TxHash)
-		}
+		t.WaitMined(txResponse.TxHash)
 	}
 }
 
-func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
+func (t *Transactor) WaitMined(txHash string) (*sdk.TxResponse, error) {
+	var err error
+	mined := false
+	var txResponse sdk.TxResponse
+	for try := 0; try < maxTxRetry; try++ {
+		time.Sleep(txRetryDelay)
+		if txResponse, err = utils.QueryTx(t.CliCtx, txHash); err == nil {
+			mined = true
+			break
+		}
+	}
+	if !mined {
+		log.Errorf("Transaction %s not mined within %d retry, err %s", txHash, maxTxRetry, err)
+	} else if txResponse.Code != sdkerrors.SuccessABCICode {
+		log.Errorf("Transaction %s failed with code %d, %s", txHash, txResponse.Code, txResponse.RawLog)
+	} else {
+		log.Debugf("Transaction %s succeeded", txHash)
+	}
+	return &txResponse, err
+}
+
+func (t *Transactor) bcastTxMsgQueue(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
 	logEntry.MsgNum = uint32(t.msgQueue.Len())
 	var msgs []sdk.Msg
 	for t.msgQueue.Len() != 0 {
@@ -139,34 +213,34 @@ func (t *Transactor) broadcastTx(logEntry *seal.TransactorLog) (*sdk.TxResponse,
 		logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 		msgs = append(msgs, msg)
 	}
-
-	txBytes, err := t.signTx(msgs)
+	txResponse, err := t.SendTxMsgs(msgs)
 	if err != nil {
-		return nil, fmt.Errorf("signTx err: %s", err)
+		return nil, err
 	}
-	tx, err := t.CliCtx.BroadcastTx(txBytes)
-	if err != nil {
-		return nil, fmt.Errorf("BroadcastTx err: %s", err)
-	}
-	logEntry.TxHash = tx.TxHash
+	logEntry.TxHash = txResponse.TxHash
 
-	return &tx, nil
+	return txResponse, err
 }
 
-func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
+func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, error) {
 	if t.gpe != nil {
 		t.TxBuilder = t.TxBuilder.WithGasPrices(t.gpe.GetGasPrice())
 	}
 
 	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
+		return nil, nil, fmt.Errorf("PrepareTxBuilder err: %s", err)
 	}
 	var txBytes []byte
+	var stdSignMsg types.StdSignMsg
 	for try := 0; try < maxSignRetry; try++ {
-		txBytes, err = txBldr.BuildAndSign(t.Key.GetName(), t.Passphrase, msgs)
+		stdSignMsg, err = txBldr.BuildSignMsg(msgs)
+		if err != nil {
+			return nil, nil, err
+		}
+		txBytes, err = txBldr.Sign(t.Key.GetName(), t.passphrase, stdSignMsg)
 		if err == nil {
-			return txBytes, nil
+			return txBytes, &stdSignMsg, nil
 		}
 		if !strings.Contains(err.Error(), "resource temporarily unavailable") {
 			break
@@ -176,5 +250,20 @@ func (t *Transactor) signTx(msgs []sdk.Msg) ([]byte, error) {
 			time.Sleep(signRetryDelay)
 		}
 	}
-	return nil, fmt.Errorf("BuildAndSign err: %s", err)
+	return nil, nil, fmt.Errorf("BuildAndSign err: %s", err)
+}
+
+func (t *Transactor) CliSendTxMsgWaitMined(msg sdk.Msg) {
+	t.CliSendTxMsgsWaitMined([]sdk.Msg{msg})
+}
+
+func (t *Transactor) CliSendTxMsgsWaitMined(msgs []sdk.Msg) {
+	txResponse, err := t.SendTxMsgs(msgs)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Infof("Transaction %s sent", txResponse.TxHash)
+	res, err := t.WaitMined(txResponse.TxHash)
+	t.CliCtx.PrintOutput(res)
 }

@@ -33,6 +33,11 @@ func (rs *RestServer) registerQueryRoutes() {
 	).Methods(http.MethodGet, http.MethodOptions)
 
 	rs.Mux.HandleFunc(
+		"/validator/candidate-delegators/{ethAddr}",
+		candidateDelegatorsHandlerFn(rs),
+	).Methods(http.MethodGet, http.MethodOptions)
+
+	rs.Mux.HandleFunc(
 		"/validator/reward/{ethAddr}",
 		rewardHandlerFn(rs),
 	).Methods(http.MethodGet, http.MethodOptions)
@@ -89,6 +94,22 @@ func candidateHandlerFn(rs *RestServer) http.HandlerFunc {
 		transactor := rs.transactorPool.GetTransactor()
 		candidate, err := validator.CLIQueryCandidate(transactor.CliCtx, validator.RouterKey, ethAddr)
 		postProcessResponse(w, transactor.CliCtx, candidate, err)
+	}
+}
+
+// http request handler to query candidate delegators
+func candidateDelegatorsHandlerFn(rs *RestServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		vars := mux.Vars(r)
+		ethAddr := vars["ethAddr"]
+		transactor := rs.transactorPool.GetTransactor()
+		delegators, err := validator.CLIQueryCandidateDelegators(transactor.CliCtx, validator.RouterKey, ethAddr)
+		postProcessResponse(w, transactor.CliCtx, delegators, err)
 	}
 }
 

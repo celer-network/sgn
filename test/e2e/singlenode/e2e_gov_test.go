@@ -1,6 +1,7 @@
 package singlenode
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/celer-network/goutils/log"
@@ -11,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupGov() []tc.Killable {
@@ -33,14 +35,21 @@ func govTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test gov ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		CLIHome,
 		viper.GetString(common.FlagSgnChainID),
 		viper.GetString(common.FlagSgnNodeURI),
-		viper.GetString(common.FlagSgnOperator),
+		viper.GetString(common.FlagSgnValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 	)
+
+	amt := big.NewInt(5000000000000000000)
+	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	log.Infof("my eth address %x", ethAddr)
+	require.NoError(t, err, "failed to get auth")
+	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.CheckValidatorNum(t, transactor, 1)
 
 	log.Info("======================== Test change epochlengh passed ===========================")
 	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
@@ -50,49 +59,44 @@ func govTest(t *testing.T) {
 
 	proposalID := uint64(1)
 	proposal, err := tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusDepositPeriod)
-	tc.ChkTestErr(t, err, "failed to query proposal 1 with deposit status")
+	require.NoError(t, err, "failed to query proposal 1 with deposit status")
 	assert.Equal(t, content.GetTitle(), proposal.GetTitle(), "The proposal should have same title as submitted proposal")
 	assert.Equal(t, content.GetDescription(), proposal.GetDescription(), "The proposal should have same description as submitted proposal")
 
-	depositMsg := govtypes.NewMsgDeposit(transactor.Key.GetAddress(), proposalID, sdk.NewInt(10))
+	depositMsg := govtypes.NewMsgDeposit(transactor.Key.GetAddress(), proposalID, sdk.NewInt(2))
 	transactor.AddTxMsg(depositMsg)
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	tc.ChkTestErr(t, err, "failed to query proposal 1 with voting status")
+	require.NoError(t, err, "failed to query proposal 1 with voting status")
 
 	byteVoteOption, _ := govtypes.VoteOptionFromString("Yes")
 	voteMsg := govtypes.NewMsgVote(transactor.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor.AddTxMsg(voteMsg)
 
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusPassed)
-	tc.ChkTestErr(t, err, "failed to query proposal 1 with passed status")
+	require.NoError(t, err, "failed to query proposal 1 with passed status")
 
 	guardParams, err := guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
-	tc.ChkTestErr(t, err, "failed to query guard params")
+	require.NoError(t, err, "failed to query guard params")
 	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should be updated to 3")
 
 	log.Info("======================== Test change epochlengh rejected ===========================")
 	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(10), transactor.Key.GetAddress())
+	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(2), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID = uint64(2)
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	tc.ChkTestErr(t, err, "failed to query proposal 2 with voting status")
+	require.NoError(t, err, "failed to query proposal 2 with voting status")
 
 	byteVoteOption, _ = govtypes.VoteOptionFromString("NoWithVeto")
 	voteMsg = govtypes.NewMsgVote(transactor.Key.GetAddress(), proposal.ProposalID, byteVoteOption)
 	transactor.AddTxMsg(voteMsg)
 
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusRejected)
-	tc.ChkTestErr(t, err, "failed to query proposal 2 with rejected status")
+	require.NoError(t, err, "failed to query proposal 2 with rejected status")
 
 	guardParams, err = guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
-	tc.ChkTestErr(t, err, "failed to query guard params")
+	require.NoError(t, err, "failed to query guard params")
 	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should stay 3")
-
-	transactor.AddTxMsg(submitProposalmsg)
-	proposalID = uint64(3)
-	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusVotingPeriod)
-	assert.Error(t, err, "fail to submit proposal due to muted depositor")
 }

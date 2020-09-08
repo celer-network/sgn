@@ -1,15 +1,15 @@
 package cmd
 
 import (
-	"os"
-	"path"
-
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/gateway"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -26,11 +26,10 @@ func GetSgncliExecutor() cli.Executor {
 	cdc := app.MakeCodec()
 	rootCmd := &cobra.Command{
 		Use:   "sgncli",
-		Short: "SGN Client",
+		Short: "SGN node command line interface",
 	}
 
-	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}
@@ -46,6 +45,7 @@ func GetSgncliExecutor() cli.Executor {
 		flags.LineBreak,
 		keys.Commands(),
 		flags.LineBreak,
+		version.Cmd,
 	)
 
 	return cli.PrepareMainCmd(rootCmd, "SGN", app.DefaultCLIHome)
@@ -121,24 +121,20 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 }
 
 func initConfig(cmd *cobra.Command) error {
-	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)
+	viper.SetConfigFile(viper.GetString(common.FlagConfig))
+	err := viper.ReadInConfig()
 	if err != nil {
 		return err
 	}
 
-	cfgFile := path.Join(home, "config", "config.toml")
-	if _, err := os.Stat(cfgFile); err == nil {
-		viper.SetConfigFile(cfgFile)
-
-		if err := viper.ReadInConfig(); err != nil {
-			return err
-		}
-	}
-	if err := viper.BindPFlag(flags.FlagChainID, cmd.PersistentFlags().Lookup(flags.FlagChainID)); err != nil {
-		return err
-	}
 	if err := viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag)); err != nil {
 		return err
 	}
+
+	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
+	if viper.GetBool(common.FlagLogColor) {
+		log.EnableColor()
+	}
+
 	return viper.BindPFlag(cli.OutputFlag, cmd.PersistentFlags().Lookup(cli.OutputFlag))
 }

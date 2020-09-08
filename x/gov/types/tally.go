@@ -8,7 +8,7 @@ import (
 
 // ValidatorGovInfo used for tallying
 type ValidatorGovInfo struct {
-	Address      sdk.ValAddress // address of the validator operator
+	Address      sdk.ValAddress // address of the validator account
 	BondedTokens sdk.Int        // Power of a Validator
 	Vote         VoteOption     // Vote of the validator
 }

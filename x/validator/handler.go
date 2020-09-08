@@ -17,6 +17,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgSetTransactors:
 			res, err = handleMsgSetTransactors(ctx, keeper, msg, logEntry)
+		case MsgEditCandidateDescription:
+			res, err = handleMsgEditCandidateDescription(ctx, keeper, msg, logEntry)
 		case MsgWithdrawReward:
 			res, err = handleMsgWithdrawReward(ctx, keeper, msg, logEntry)
 		case MsgSignReward:
@@ -40,24 +42,56 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 	logEntry.Sender = msg.Sender.String()
 	logEntry.EthAddress = msg.EthAddress
 
-	for _, transactor := range msg.Transactors {
-		logEntry.Transactor = append(logEntry.Transactor, transactor.String())
+	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	if !found {
+		return nil, fmt.Errorf("Candidate does not exist")
 	}
+	if !candidate.ValAccount.Equals(msg.Sender) {
+		return nil, fmt.Errorf("The candidate is not operated by the sender.")
+	}
+
+	dedup := make(map[string]bool)
+	candidate.Transactors = []sdk.AccAddress{}
+	for _, transactor := range msg.Transactors {
+		err := sdk.VerifyAddressFormat(transactor)
+		if err != nil {
+			return nil, fmt.Errorf("%w, %s", err, transactor)
+		}
+		if !transactor.Equals(candidate.ValAccount) {
+			if _, exist := dedup[transactor.String()]; !exist {
+				logEntry.Transactor = append(logEntry.Transactor, transactor.String())
+				candidate.Transactors = append(candidate.Transactors, transactor)
+				dedup[transactor.String()] = true
+				keeper.InitAccount(ctx, transactor)
+			}
+		}
+	}
+
+	keeper.SetCandidate(ctx, candidate)
+	return &sdk.Result{}, nil
+}
+
+// Handle a message to edit candidate description
+func handleMsgEditCandidateDescription(ctx sdk.Context, keeper Keeper, msg MsgEditCandidateDescription, logEntry *seal.MsgLog) (*sdk.Result, error) {
+	logEntry.Type = msg.Type()
+	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
 
 	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		return nil, fmt.Errorf("Candidate does not exist")
 	}
 
-	if !candidate.Operator.Equals(msg.Sender) {
+	if !candidate.ValAccount.Equals(msg.Sender) {
 		return nil, fmt.Errorf("The candidate is not operated by the sender.")
 	}
 
-	candidate.Transactors = msg.Transactors
-	for _, transactor := range candidate.Transactors {
-		keeper.InitAccount(ctx, transactor)
+	description, err := candidate.Description.UpdateDescription(msg.Description)
+	if err != nil {
+		return nil, err
 	}
 
+	candidate.Description = description
 	keeper.SetCandidate(ctx, candidate)
 	return &sdk.Result{}, nil
 }

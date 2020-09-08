@@ -27,12 +27,11 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	syncQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the sync module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	syncQueryCmd.AddCommand(flags.GetCommands(
+	syncQueryCmd.AddCommand(common.GetCommands(
 		GetCmdQueryChange(queryRoute, cdc),
 		GetCmdQueryChanges(queryRoute, cdc),
 		GetCmdQueryParam(queryRoute, cdc),
@@ -59,7 +58,7 @@ $ %s query sync change 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the change id is a uint
 			changeID, err := strconv.ParseUint(args[0], 10, 64)
@@ -104,8 +103,8 @@ func GetCmdQueryChanges(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Query for a all paginated changes that match optional filters:
 
 Example:
-$ %s query sync changes --depositor cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
-$ %s query sync changes --voter cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query sync changes --depositor sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
+$ %s query sync changes --voter sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
 $ %s query sync changes --status (VotingPeriod|Passed|Rejected)
 $ %s query sync changes --page=2 --limit=100
 `,
@@ -117,7 +116,7 @@ $ %s query sync changes --page=2 --limit=100
 			page := viper.GetInt(flags.FlagPage)
 			limit := viper.GetInt(flags.FlagLimit)
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			matchingChanges, err := QueryChanges(cliCtx, queryRoute, page, limit, strChangeStatus)
 			if err != nil {
 				return err
@@ -193,7 +192,7 @@ $ %s query sync params
 		),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			tp, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/params/tallying", queryRoute), nil)
 			if err != nil {
 				return err
@@ -230,7 +229,7 @@ $ %s query sync param tallying
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// Query store
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/params/%s", queryRoute, args[0]), nil)

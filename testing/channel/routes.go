@@ -36,11 +36,11 @@ func (rs *RestServer) registerRoutes() {
 
 type (
 	GuardRequest struct {
-		SeqNum uint64 `json:"seqNum"`
+		SeqNum uint64 `json:"seq_num"`
 	}
 
 	IntendSettleRequest struct {
-		SeqNum uint64 `json:"seqNum"`
+		SeqNum uint64 `json:"seq_num"`
 	}
 )
 
@@ -76,7 +76,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			}
 			request := guard.NewInitRequest(signedSimplexStateBytes, simplexReceiverSig, disputeTimeout.Uint64())
 			syncData := rs.transactor.CliCtx.Codec.MustMarshalBinaryBare(request)
-			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, rs.transactor.Key.GetAddress())
+			msg := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient, rs.transactor.Key.GetAddress())
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{

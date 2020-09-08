@@ -18,6 +18,7 @@ type Change struct {
 	ID            uint64           `json:"id" yaml:"id"` //  ID of the change
 	Type          string           `json:"type" yaml:"type"`
 	Data          []byte           `json:"data" yaml:"data"`
+	BlockNum      uint64           `json:"block_num" yaml:"block_num"` // Claimed mainchain block number when the infomation was queried
 	Initiator     sdk.AccAddress   `json:"initiator" yaml:"initiator"`
 	Voters        []sdk.ValAddress `json:"voters" yaml:"voters"`
 	Status        ChangeStatus     `json:"change_status" yaml:"change_status"`     // Status of the Change {Pending, Active, Passed, Rejected}
@@ -27,11 +28,12 @@ type Change struct {
 }
 
 // NewChange creates a new Change instance
-func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndTime time.Time, initiatorAddr sdk.AccAddress) Change {
+func NewChange(id uint64, changeType string, data []byte, blockNum uint64, submitTime, votingEndTime time.Time, initiatorAddr sdk.AccAddress) Change {
 	return Change{
 		ID:            id,
 		Type:          changeType,
 		Data:          data,
+		BlockNum:      blockNum,
 		Initiator:     initiatorAddr,
 		Status:        StatusActive,
 		SubmitTime:    submitTime,
@@ -41,16 +43,8 @@ func NewChange(id uint64, changeType string, data []byte, submitTime, votingEndT
 
 // String implements stringer interface
 func (c Change) String() string {
-	return fmt.Sprintf(`
-	Change: 						%d
-  Type:               %s
-  Initiator:          %s
-  Rewardable:         %t
-  Status:             %s
-  Submit Time:        %s
-  Voting End Time:    %s`,
-		c.ID, c.Type, c.Initiator, c.Rewardable,
-		c.Status, c.SubmitTime, c.VotingEndTime,
+	return fmt.Sprintf(`Change: %d, Type: %s, BlockNum: %d Initiator: %s, Rewardable: %t, Status: %s, Submit Time: %s, Voting End Time: %s.`,
+		c.ID, c.Type, c.BlockNum, c.Initiator, c.Rewardable, c.Status, c.SubmitTime, c.VotingEndTime,
 	)
 }
 

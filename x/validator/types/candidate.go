@@ -6,12 +6,13 @@ import (
 
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	staking "github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 type Delegator struct {
-	CandidateAddr  string  `json:"candidateAddr"`
-	DelegatorAddr  string  `json:"delegatorAddr"`
-	DelegatedStake sdk.Int `json:"delegatedStake"`
+	CandidateAddr  string  `json:"candidate_addr"`
+	DelegatorAddr  string  `json:"delegator_addr"`
+	DelegatedStake sdk.Int `json:"delegated_stake"`
 }
 
 func NewDelegator(candidateAddr, delegatorAddr string) Delegator {
@@ -27,25 +28,25 @@ func (d Delegator) String() string {
 		d.CandidateAddr, d.DelegatorAddr, d.DelegatedStake))
 }
 
-// operator will be used for running validator node, and transactor will be used for running gateway
+// valAccount will be used for running validator node, and transactors will be used for running gateway
 type Candidate struct {
-	EthAddress     string           `json:"ethAddress"`
-	Operator       sdk.AccAddress   `json:"operator"`
-	Transactors    []sdk.AccAddress `json:"transactors"`
-	Delegators     []Delegator      `json:"delegators"`
-	StakingPool    sdk.Int          `json:"stakingPool"`
-	CommissionRate sdk.Dec          `json:"commissionRate"`
-	RequestCount   sdk.Int          `json:"requestCount"`
+	EthAddress     string              `json:"eth_address"`
+	ValAccount     sdk.AccAddress      `json:"val_account"`
+	Transactors    []sdk.AccAddress    `json:"transactors"`
+	StakingPool    sdk.Int             `json:"staking_pool"`
+	CommissionRate sdk.Dec             `json:"commission_rate"`
+	RequestCount   sdk.Int             `json:"request_count"`
+	Description    staking.Description `json:"description"`
 }
 
-func NewCandidate(ethAddress string, operator sdk.AccAddress) Candidate {
+func NewCandidate(ethAddress string, acctAddress sdk.AccAddress) Candidate {
 	return Candidate{
 		EthAddress: mainchain.FormatAddrHex(ethAddress),
-		Operator:   operator,
+		ValAccount: acctAddress,
 	}
 }
 
 // implement fmt.Stringer
 func (c Candidate) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Operator: %s, EthAddress: %s, StakingPool: %v`, c.Operator, c.EthAddress, c.StakingPool))
+	return strings.TrimSpace(fmt.Sprintf(`ValAccount: %s, EthAddress: %s, StakingPool: %v`, c.ValAccount, c.EthAddress, c.StakingPool))
 }

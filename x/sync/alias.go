@@ -55,7 +55,6 @@ var (
 	GetChangeIDFromBytes    = types.GetChangeIDFromBytes
 	ChangeKey               = types.ChangeKey
 	ActiveChangeQueueKey    = types.ActiveChangeQueueKey
-	NewMsgSubmitChange      = types.NewMsgSubmitChange
 	NewMsgApprove           = types.NewMsgApprove
 	ParamKeyTable           = types.ParamKeyTable
 	NewTallyParams          = types.NewTallyParams

@@ -22,9 +22,9 @@ const (
 
 type Reward struct {
 	Receiver         string       `json:"receiver"`
-	MiningReward     sdk.Int      `json:"miningReward"`
-	ServiceReward    sdk.Int      `json:"serviceReward"`
-	RewardProtoBytes []byte       `json:"rewardProtoBytes"` // proto msg for reward snapshot from latest intendWithdraw
+	MiningReward     sdk.Int      `json:"mining_reward"`
+	ServiceReward    sdk.Int      `json:"service_reward"`
+	RewardProtoBytes []byte       `json:"reward_proto_bytes"` // proto msg for reward snapshot from latest intendWithdraw
 	Sigs             []common.Sig `json:"sigs"`
 }
 
@@ -61,11 +61,12 @@ func (r Reward) HasNewReward() bool {
 
 // Initiate the withdraw process
 func (r *Reward) InitateWithdraw() {
-	rewardBytes, _ := proto.Marshal(&sgn.Reward{
-		Receiver:                mainchain.Hex2Bytes(r.Receiver),
-		CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
-		CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
-	})
+	rewardBytes, _ := proto.Marshal(
+		&sgn.Reward{
+			Receiver:                mainchain.Hex2Bytes(r.Receiver),
+			CumulativeMiningReward:  r.MiningReward.BigInt().Bytes(),
+			CumulativeServiceReward: r.ServiceReward.BigInt().Bytes(),
+		})
 
 	r.RewardProtoBytes = rewardBytes
 	r.Sigs = []common.Sig{}

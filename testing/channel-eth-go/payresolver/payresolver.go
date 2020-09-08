@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -191,7 +190,7 @@ func (_PayResolver *PayResolverTransactorRaw) Transact(opts *bind.TransactOpts, 
 
 // PayRegistry is a free data retrieval call binding the contract method 0x53fc513f.
 //
-// Solidity: function payRegistry() constant returns(address)
+// Solidity: function payRegistry() view returns(address)
 func (_PayResolver *PayResolverCaller) PayRegistry(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -203,21 +202,21 @@ func (_PayResolver *PayResolverCaller) PayRegistry(opts *bind.CallOpts) (common.
 
 // PayRegistry is a free data retrieval call binding the contract method 0x53fc513f.
 //
-// Solidity: function payRegistry() constant returns(address)
+// Solidity: function payRegistry() view returns(address)
 func (_PayResolver *PayResolverSession) PayRegistry() (common.Address, error) {
 	return _PayResolver.Contract.PayRegistry(&_PayResolver.CallOpts)
 }
 
 // PayRegistry is a free data retrieval call binding the contract method 0x53fc513f.
 //
-// Solidity: function payRegistry() constant returns(address)
+// Solidity: function payRegistry() view returns(address)
 func (_PayResolver *PayResolverCallerSession) PayRegistry() (common.Address, error) {
 	return _PayResolver.Contract.PayRegistry(&_PayResolver.CallOpts)
 }
 
 // VirtResolver is a free data retrieval call binding the contract method 0xead54c1b.
 //
-// Solidity: function virtResolver() constant returns(address)
+// Solidity: function virtResolver() view returns(address)
 func (_PayResolver *PayResolverCaller) VirtResolver(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
@@ -229,14 +228,14 @@ func (_PayResolver *PayResolverCaller) VirtResolver(opts *bind.CallOpts) (common
 
 // VirtResolver is a free data retrieval call binding the contract method 0xead54c1b.
 //
-// Solidity: function virtResolver() constant returns(address)
+// Solidity: function virtResolver() view returns(address)
 func (_PayResolver *PayResolverSession) VirtResolver() (common.Address, error) {
 	return _PayResolver.Contract.VirtResolver(&_PayResolver.CallOpts)
 }
 
 // VirtResolver is a free data retrieval call binding the contract method 0xead54c1b.
 //
-// Solidity: function virtResolver() constant returns(address)
+// Solidity: function virtResolver() view returns(address)
 func (_PayResolver *PayResolverCallerSession) VirtResolver() (common.Address, error) {
 	return _PayResolver.Contract.VirtResolver(&_PayResolver.CallOpts)
 }

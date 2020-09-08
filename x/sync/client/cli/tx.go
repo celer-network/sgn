@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,21 +8,21 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 )
 
 // Change flags
 const (
-	FlagType = "type"
-	FlagData = "data"
+	FlagType   = "type"
+	FlagData   = "data"
+	FlagBlkNum = "blknum"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -31,12 +30,11 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	syncTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Sync transactions subcommands",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	syncTxCmd.AddCommand(flags.PostCommands(
+	syncTxCmd.AddCommand(common.PostCommands(
 		GetCmdSubmitChange(cdc),
 		GetCmdVote(cdc),
 	)...)
@@ -53,29 +51,35 @@ func GetCmdSubmitChange(cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Submit a change along with type and data.
 
 Example:
-$ %s tx sync submit-change --type="sync_block" --data="My awesome change" --from mykey
+$ %s tx sync submit-change --type="sync_block" --data="My awesome change"
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 
 			changeType := viper.GetString(FlagType)
 			data := viper.GetString(FlagData)
-			msg := types.NewMsgSubmitChange(changeType, []byte(data), cliCtx.GetFromAddress())
+			blknum := viper.GetUint64(FlagBlkNum)
+			msg := types.NewMsgSubmitChange(changeType, []byte(data), blknum, txr.Key.GetAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.CliSendTxMsgWaitMined(msg)
+
+			return nil
 		},
 	}
 
 	cmd.Flags().String(FlagType, "", "type of change")
 	cmd.Flags().String(FlagData, "", "data of change")
+	cmd.Flags().String(FlagBlkNum, "", "mainchain block number of change")
 
 	return cmd
 }
@@ -90,17 +94,18 @@ func GetCmdVote(cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Submit a approve for an active change. You can
 find the change-id by running "%s query sync changes".
 
-
 Example:
-$ %s tx sync approve 1 --from mykey
+$ %s tx sync approve 1
 `,
 				version.ClientName, version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 
 			// validate that the change id is a uint
 			changeID, err := strconv.ParseUint(args[0], 10, 64)
@@ -109,13 +114,15 @@ $ %s tx sync approve 1 --from mykey
 			}
 
 			// Build approve message and run basic validation
-			msg := types.NewMsgApprove(changeID, cliCtx.GetFromAddress())
+			msg := types.NewMsgApprove(changeID, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			txr.CliSendTxMsgWaitMined(msg)
+
+			return nil
 		},
 	}
 }
