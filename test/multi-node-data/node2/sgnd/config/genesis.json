@@ -153,7 +153,7 @@
     "cron": {},
     "upgrade": {},
     "bank": {
-      "send_enabled": true
+      "send_enabled": false
     },
     "staking": {
       "params": {

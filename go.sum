@@ -94,8 +94,8 @@ github.com/btcsuite/snappy-go v0.0.0-20151229074030-0bdef8d06723/go.mod h1:8woku
 github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792/go.mod h1:ghJtEyQwv5/p4Mg4C0fgbePVuGr935/5ddU9Z3TmDRY=
 github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46fmI40EZs=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
-github.com/celer-network/cosmos-sdk v0.39.2-celer.2 h1:WlSAkL48kAyhp0hRmsCgYQAGxAVkyC/kp10k7RYdhHU=
-github.com/celer-network/cosmos-sdk v0.39.2-celer.2/go.mod h1:ry2ROl5n+f2/QXpKJo3rdWNJwll00z7KhIVcxNcl16M=
+github.com/celer-network/cosmos-sdk v0.39.2-celer.3 h1:ueIyWj84J7QfhsNK8rWjZvAokBlox/lcX5ke0DRLSSQ=
+github.com/celer-network/cosmos-sdk v0.39.2-celer.3/go.mod h1:ry2ROl5n+f2/QXpKJo3rdWNJwll00z7KhIVcxNcl16M=
 github.com/celer-network/goutils v0.1.16 h1:dt2A8JX3lKPi4w18eQN5cLlM7dY2rhKhrz3d7gdbwCo=
 github.com/celer-network/goutils v0.1.16/go.mod h1:DD2usTn3Ks2/dN6iiW2SAHBquu+dtJsQiOMbuM6rs80=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=

@@ -22,6 +22,6 @@ require (
 	github.com/tendermint/tm-db v0.5.1
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.39.2-celer.2
+replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.39.2-celer.3
 
 // replace github.com/cosmos/cosmos-sdk => ../cosmos-sdk
