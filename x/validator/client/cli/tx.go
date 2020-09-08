@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"bufio"
-
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"

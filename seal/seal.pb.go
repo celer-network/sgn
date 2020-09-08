@@ -214,13 +214,6 @@ func (m *MsgLog) GetChange() *Change {
 	return nil
 }
 
-func (m *MsgLog) GetChange() *Change {
-	if m != nil {
-		return m.Change
-	}
-	return nil
-}
-
 func (m *MsgLog) GetSender() string {
 	if m != nil {
 		return m.Sender

@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
