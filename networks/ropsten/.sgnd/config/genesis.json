@@ -70,7 +70,7 @@
       ]
     },
     "bank": {
-      "send_enabled": true
+      "send_enabled": false
     },
     "cron": {},
     "staking": {
