@@ -22,7 +22,7 @@ const (
 )
 
 func initCandidate() error {
-	ethClient, err := initEthClient()
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
 		return err
 	}
@@ -44,12 +44,12 @@ func initCandidate() error {
 		}
 		rateLockEndTime := new(big.Int).Add(header.Number, rateLockPeriod)
 		log.Infof(
-			"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s, rateLockEndTime: %s",
+			"Sending initialize candidate transaction with minSelfStake: %s, commissionRate: %s (in unit of 0.01%%), rateLockEndTime: %s",
 			minSelfStake,
 			commissionRate,
 			rateLockEndTime,
 		)
-		receipt, initCandidateErr := ethClient.Transactor.TransactWaitMined(
+		_, initCandidateErr := ethClient.Transactor.TransactWaitMined(
 			"InitializeCandidate",
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
 				return dposContract.InitializeCandidate(opts, minSelfStake, commissionRate, rateLockEndTime)
@@ -58,24 +58,22 @@ func initCandidate() error {
 		if initCandidateErr != nil {
 			return initCandidateErr
 		}
-		log.Infof("Initialize candidate transaction %x succeeded", receipt.TxHash)
 	}
 
-	operatorAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	acctAddress, err := sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
 		return err
 	}
-	log.Infof("Calling updateSidechainAddr for %s", operatorAddress)
-	receipt, err := ethClient.Transactor.TransactWaitMined(
+	log.Infof("Calling updateSidechainAddr for %s", acctAddress)
+	_, err = ethClient.Transactor.TransactWaitMined(
 		"UpdateSidechainAddr",
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return ethClient.SGN.UpdateSidechainAddr(opts, operatorAddress.Bytes())
+			return ethClient.SGN.UpdateSidechainAddr(opts, acctAddress.Bytes())
 		},
 	)
 	if err != nil {
 		return err
 	}
-	log.Infof("Update sidechain address transaction %x succeeded", receipt.TxHash)
 	return nil
 }
 
@@ -86,36 +84,12 @@ func InitCandidateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return initCandidate()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(minSelfStakeFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(commissionRateFlag)
-			if err != nil {
-				return err
-			}
-			err = cmd.MarkFlagRequired(rateLockPeriodFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(minSelfStakeFlag, cmd.Flags().Lookup(minSelfStakeFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(commissionRateFlag, cmd.Flags().Lookup(commissionRateFlag))
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(rateLockPeriodFlag, cmd.Flags().Lookup(rateLockPeriodFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
-	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self stake")
-	cmd.Flags().String(commissionRateFlag, "", "Commission rate")
-	cmd.Flags().String(rateLockPeriodFlag, "", "Rate lock period")
+	cmd.Flags().String(minSelfStakeFlag, "", "Minimum self-delegated stake")
+	cmd.Flags().String(commissionRateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
+	cmd.Flags().String(rateLockPeriodFlag, "", "Rate lock period in unit of ETH block number")
+	cmd.MarkFlagRequired(minSelfStakeFlag)
+	cmd.MarkFlagRequired(commissionRateFlag)
+	cmd.MarkFlagRequired(rateLockPeriodFlag)
 	return cmd
 }

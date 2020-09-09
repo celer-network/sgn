@@ -13,7 +13,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/celer-network/sgn/transactor"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -26,8 +25,7 @@ const (
 )
 
 type Monitor struct {
-	ethClient       *mainchain.EthClient
-	operator        *transactor.Transactor
+	*Operator
 	db              dbm.DB
 	ethMonitor      *monitor.Service
 	dposContract    monitor.Contract
@@ -37,13 +35,14 @@ type Monitor struct {
 	sidechainAcct   sdk.AccAddress
 	bonded          bool
 	executeSlash    bool
+	bootstrapped    bool // SGN has bootstrapped with at least one bonded validator on the mainchain contract
 	lock            sync.RWMutex
 }
 
-func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor, db dbm.DB) {
+func NewMonitor(operator *Operator, db dbm.DB) {
 	monitorDb := dbm.NewPrefixDB(db, []byte(prefixMonitor))
 	dal := newWatcherDAL(monitorDb)
-	watchService := watcher.NewWatchService(ethClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
+	watchService := watcher.NewWatchService(operator.EthClient.Client, dal, viper.GetUint64(common.FlagEthPollInterval))
 	if watchService == nil {
 		log.Fatalln("Cannot create watch service")
 	}
@@ -52,14 +51,19 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	ethMonitor := monitor.NewService(watchService, blkDelay, true /* enabled */)
 	ethMonitor.Init()
 
-	dposCandidateInfo, err := ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, ethClient.Address)
+	dposCandidateInfo, err := operator.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, operator.EthClient.Address)
 	if err != nil {
 		log.Fatalln("GetCandidateInfo err", err)
 	}
 
-	dposContract := NewMonitorContractInfo(ethClient.DPoSAddress, mainchain.DPoSABI)
-	sgnContract := NewMonitorContractInfo(ethClient.SGNAddress, mainchain.SGNABI)
-	ledgerContract := NewMonitorContractInfo(ethClient.LedgerAddress, mainchain.CelerLedgerABI)
+	valnum, err := operator.EthClient.DPoS.GetValidatorNum(&bind.CallOpts{})
+	if err != nil {
+		log.Fatalln("GetValidatorNum err", err)
+	}
+
+	dposContract := NewMonitorContractInfo(operator.EthClient.DPoSAddress, mainchain.DPoSABI)
+	sgnContract := NewMonitorContractInfo(operator.EthClient.SGNAddress, mainchain.SGNABI)
+	ledgerContract := NewMonitorContractInfo(operator.EthClient.LedgerAddress, mainchain.CelerLedgerABI)
 
 	verifiedChanges, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
 	if err != nil {
@@ -67,8 +71,7 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 	}
 
 	m := Monitor{
-		ethClient:       ethClient,
-		operator:        operator,
+		Operator:        operator,
 		db:              db,
 		ethMonitor:      ethMonitor,
 		dposContract:    dposContract,
@@ -76,21 +79,23 @@ func NewMonitor(ethClient *mainchain.EthClient, operator *transactor.Transactor,
 		ledgerContract:  ledgerContract,
 		verifiedChanges: verifiedChanges,
 		bonded:          mainchain.IsBonded(dposCandidateInfo),
+		bootstrapped:    valnum.Uint64() > 0,
 		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
 	}
-	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnOperator))
+	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
 		log.Fatalln("Sidechain acct error")
 	}
 
 	go m.processQueues()
 
-	go m.monitorDPoSDelegate()
 	go m.monitorDPoSValidatorChange()
-	go m.monitorDPoSIntendWithdraw()
+	go m.monitorDPoSUpdateDelegatedStake()
 	go m.monitorDPoSCandidateUnbonded()
 	go m.monitorDPoSConfirmParamProposal()
+	go m.monitorDPoSUpdateCommissionRate()
 	go m.monitorSGNUpdateSidechainAddr()
+	go m.monitorSGNAddSubscriptionBalance()
 	go m.monitorCelerLedgerIntendSettle()
 	go m.monitorCelerLedgerIntendWithdraw()
 
@@ -129,24 +134,46 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 			EventName:     string(UpdateSidechainAddr),
 			Contract:      m.sgnContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(UpdateSidechainAddr),
+			CheckInterval: getEventCheckInterval(UpdateSidechainAddr),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event UpdateSidechainAddr, tx hash: %x", eLog.TxHash)
 			event := NewEvent(UpdateSidechainAddr, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
 			if !m.isBonded() {
-				e, perr := m.ethClient.SGN.ParseUpdateSidechainAddr(eLog)
+				e, perr := m.EthClient.SGN.ParseUpdateSidechainAddr(eLog)
 				if perr != nil {
 					log.Errorln("parse event err", perr)
 					return
 				}
-				if e.Candidate == m.ethClient.Address && m.shouldClaimValidator() {
+				if e.Candidate == m.EthClient.Address && m.shouldClaimValidator() {
 					m.claimValidatorOnMainchain()
 				}
+			}
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorSGNAddSubscriptionBalance() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:     string(AddSubscriptionBalance),
+			Contract:      m.sgnContract,
+			StartBlock:    m.getCurrentBlockNumber(),
+			CheckInterval: getEventCheckInterval(AddSubscriptionBalance),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event AddSubscriptionBalance, tx hash: %x", eLog.TxHash)
+			event := NewEvent(AddSubscriptionBalance, eLog)
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 		},
 	)
@@ -161,12 +188,12 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 			EventName:     string(CandidateUnbonded),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(CandidateUnbonded),
+			CheckInterval: getEventCheckInterval(CandidateUnbonded),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event CandidateUnbonded, tx hash: %x", eLog.TxHash)
 			event := NewEvent(CandidateUnbonded, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -182,12 +209,33 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 			EventName:     string(ConfirmParamProposal),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(ConfirmParamProposal),
+			CheckInterval: getEventCheckInterval(ConfirmParamProposal),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event ConfirmParamProposal, tx hash: %x", eLog.TxHash)
+			log.Infof("Catch event ConfirmParamProposal, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(ConfirmParamProposal, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
+			}
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *Monitor) monitorDPoSUpdateCommissionRate() {
+	_, err := m.ethMonitor.Monitor(
+		&monitor.Config{
+			EventName:     string(UpdateCommissionRate),
+			Contract:      m.dposContract,
+			StartBlock:    m.getCurrentBlockNumber(),
+			CheckInterval: getEventCheckInterval(UpdateCommissionRate),
+		},
+		func(cb monitor.CallbackID, eLog ethtypes.Log) {
+			log.Infof("Catch event UpdateCommissionRate, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
+			event := NewEvent(UpdateCommissionRate, eLog)
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
 			}
@@ -203,31 +251,34 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 			EventName:     string(ValidatorChange),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(ValidatorChange),
+			CheckInterval: getEventCheckInterval(ValidatorChange),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			logmsg := fmt.Sprintf("Catch event ValidatorChange, tx hash: %x", eLog.TxHash)
-			validatorChange, perr := m.ethClient.DPoS.ParseValidatorChange(eLog)
+			logmsg := fmt.Sprintf("Catch event ValidatorChange, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
+			validatorChange, perr := m.EthClient.DPoS.ParseValidatorChange(eLog)
 			if perr != nil {
 				log.Errorf("%s. parse event err: %s", logmsg, perr)
 				return
 			}
 			if validatorChange.ChangeType == mainchain.AddValidator {
+				m.setBootstrapped()
 				// self init sync if add validator
-				if validatorChange.EthAddr == m.ethClient.Address {
+				if validatorChange.EthAddr == m.EthClient.Address {
 					log.Infof("%s. Init my own validator.", logmsg)
 					m.setBonded()
-					m.syncValidator(validatorChange.EthAddr)
+					go m.selfSyncValidator()
 					m.setTransactors()
+				} else {
+					log.Infof("%s, addValidator addr: %x, ", logmsg, validatorChange.EthAddr)
 				}
 			} else {
 				// self only put removal event to puller queue
-				log.Infof("%s, eth addr: %x", logmsg, validatorChange.EthAddr)
-				if validatorChange.EthAddr == m.ethClient.Address {
+				log.Infof("%s, removeValidator addr: %x, ", logmsg, validatorChange.EthAddr)
+				if validatorChange.EthAddr == m.EthClient.Address {
 					m.setUnbonded()
 				}
 				event := NewEvent(ValidatorChange, eLog)
-				dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+				dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 				if dberr != nil {
 					log.Errorln("db Set err", dberr)
 				}
@@ -238,20 +289,30 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 	}
 }
 
-func (m *Monitor) monitorDPoSIntendWithdraw() {
+func (m *Monitor) monitorDPoSUpdateDelegatedStake() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
-			EventName:     string(IntendWithdraw),
+			EventName:     string(UpdateDelegatedStake),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdrawDpos),
+			CheckInterval: getEventCheckInterval(UpdateDelegatedStake),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawDpos, tx hash: %x", eLog.TxHash)
-			event := NewEvent(IntendWithdrawDpos, eLog)
-			dberr := m.dbSet(GetPullerKey(eLog.TxHash), event.MustMarshal())
+			log.Infof("Catch event UpdateDelegatedStake, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
+			event := NewEvent(UpdateDelegatedStake, eLog)
+			dberr := m.dbSet(GetPullerKey(eLog), event.MustMarshal())
 			if dberr != nil {
 				log.Errorln("db Set err", dberr)
+			}
+			if !m.isBonded() {
+				e, perr := m.EthClient.DPoS.ParseUpdateDelegatedStake(eLog)
+				if perr != nil {
+					log.Errorln("parse event err", perr)
+					return
+				}
+				if e.Candidate == m.EthClient.Address && m.shouldClaimValidator() {
+					m.claimValidatorOnMainchain()
+				}
 			}
 		})
 	if err != nil {
@@ -265,11 +326,11 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 			EventName:     string(IntendSettle),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendSettle),
+			CheckInterval: getEventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendSettle, tx hash: %x", eLog.TxHash)
-			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendSettle, eLog).MustMarshal())
+			log.Infof("Catch event IntendSettle, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
+			err := m.dbSet(GetPullerKey(eLog), NewEvent(IntendSettle, eLog).MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}
@@ -286,13 +347,14 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 			EventName:     string(IntendWithdraw),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(IntendWithdrawChannel),
+			CheckInterval: getEventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x", eLog.TxHash)
-			err := m.dbSet(GetPullerKey(eLog.TxHash), NewEvent(IntendWithdrawChannel, eLog).MustMarshal())
-			if err != nil {
-				log.Errorln("db Set err", err)
+			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
+			event := NewEvent(IntendWithdrawChannel, eLog).MustMarshal()
+			dberr := m.dbSet(GetPullerKey(eLog), event)
+			if dberr != nil {
+				log.Errorln("db Set err", dberr)
 			}
 			m.setGuardEvent(eLog, ChanInfoState_CaughtWithdraw)
 		})
@@ -301,47 +363,25 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 	}
 }
 
-func (m *Monitor) monitorDPoSDelegate() {
-	_, err := m.ethMonitor.Monitor(
-		&monitor.Config{
-			EventName:     string(Delegate),
-			Contract:      m.dposContract,
-			StartBlock:    m.getCurrentBlockNumber(),
-			CheckInterval: eventCheckInterval(Delegate),
-		},
-		func(cb monitor.CallbackID, eLog ethtypes.Log) {
-			log.Infof("Catch event Delegate, tx hash: %x", eLog.TxHash)
-			delegate, perr := m.ethClient.DPoS.ParseDelegate(eLog)
-			if perr != nil {
-				log.Errorln("parse event err", perr)
-				return
-			}
-			m.handleDPoSDelegate(delegate)
-		})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+const (
+	selfSyncRetryNum         int = 5
+	selfSyncRetryIntervalSec int = 60
+)
 
-func (m *Monitor) handleDPoSDelegate(delegate *mainchain.DPoSDelegate) {
-	if delegate.Candidate != m.ethClient.Address {
-		log.Tracef("Ignore delegate from delegator %x to candidate %x", delegate.Delegator, delegate.Candidate)
-		return
+func (m *Monitor) selfSyncValidator() {
+	var i int
+	for i = 1; i < selfSyncRetryNum; i++ {
+		updated := m.SyncValidator(m.EthClient.Address)
+		if updated {
+			return
+		}
+		time.Sleep(time.Duration(selfSyncRetryIntervalSec) * time.Second)
 	}
-
-	log.Infof("Handle new delegate from delegator %x to candidate %x, new stake %s, pool %s",
-		delegate.Delegator, delegate.Candidate, delegate.NewStake.String(), delegate.StakingPool.String())
-	m.syncDelegator(delegate.Candidate, delegate.Delegator)
-
-	if m.isBonded() {
-		m.syncValidator(delegate.Candidate)
-	} else if m.shouldClaimValidator() {
-		m.claimValidatorOnMainchain()
-	}
+	log.Warn("self validator not synced yet")
 }
 
 func (m *Monitor) shouldClaimValidator() bool {
-	candidate, err := m.ethClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.ethClient.Address)
+	candidate, err := m.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, m.EthClient.Address)
 	if err != nil {
 		log.Errorln("GetCandidateInfo err", err)
 		return false
@@ -353,11 +393,11 @@ func (m *Monitor) shouldClaimValidator() bool {
 	}
 
 	if mainchain.IsBonded(candidate) {
-		log.Infoln("Already bonded on mainchain")
+		log.Debug("Already bonded on mainchain")
 		return false
 	}
 
-	minStake, err := m.ethClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
+	minStake, err := m.EthClient.DPoS.GetMinStakingPool(&bind.CallOpts{})
 	if err != nil {
 		log.Errorln("GetMinStakingPool err", err)
 		return false
@@ -367,7 +407,7 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 
-	delegator, err := m.ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, m.ethClient.Address, m.ethClient.Address)
+	delegator, err := m.EthClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, m.EthClient.Address, m.EthClient.Address)
 	if err != nil {
 		log.Errorln("GetDelegatorInfo err", err)
 		return false
@@ -377,7 +417,7 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 
-	minStakeInPool, err := m.ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(mainchain.MinStakeInPool))
+	minStakeInPool, err := m.EthClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(mainchain.MinStakeInPool))
 	if err != nil {
 		log.Errorln("Get MinStakeInPool param err", err)
 		return false
@@ -387,7 +427,7 @@ func (m *Monitor) shouldClaimValidator() bool {
 		return false
 	}
 
-	sidechainAddr, err := m.ethClient.SGN.SidechainAddrMap(&bind.CallOpts{}, m.ethClient.Address)
+	sidechainAddr, err := m.EthClient.SGN.SidechainAddrMap(&bind.CallOpts{}, m.EthClient.Address)
 	if err != nil {
 		log.Errorln("Query sidechain address error:", err)
 		return false
@@ -401,7 +441,7 @@ func (m *Monitor) shouldClaimValidator() bool {
 }
 
 func (m *Monitor) claimValidatorOnMainchain() {
-	_, err := m.ethClient.Transactor.Transact(
+	_, err := m.EthClient.Transactor.Transact(
 		&eth.TransactionStateHandler{
 			OnMined: func(receipt *ethtypes.Receipt) {
 				if receipt.Status == ethtypes.ReceiptStatusSuccessful {
@@ -415,12 +455,12 @@ func (m *Monitor) claimValidatorOnMainchain() {
 			},
 		},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return m.ethClient.DPoS.ClaimValidator(opts)
+			return m.EthClient.DPoS.ClaimValidator(opts)
 		},
 	)
 	if err != nil {
 		log.Errorln("ClaimValidator tx err", err)
 		return
 	}
-	log.Infof("Claimed validator %x on mainchain", m.ethClient.Address)
+	log.Infof("Claimed validator %x on mainchain", m.EthClient.Address)
 }

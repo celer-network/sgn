@@ -1,12 +1,9 @@
 package channel
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"math/big"
 	"net"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -17,12 +14,9 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/guard"
-	"github.com/celer-network/sgn/x/sync"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -30,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tlog "github.com/tendermint/tendermint/libs/log"
-	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
+	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 )
 
 // RestServer represents the Light Client Rest server
@@ -68,7 +62,7 @@ func NewRestServer() (rs *RestServer, err error) {
 			viper.GetString(sdkFlags.FlagHome),
 			viper.GetString(common.FlagSgnChainID),
 			viper.GetString(common.FlagSgnNodeURI),
-			viper.GetString(common.FlagSgnOperator),
+			viper.GetString(common.FlagSgnValidatorAccount),
 			viper.GetString(common.FlagSgnPassphrase),
 			cdc,
 			nil,
@@ -76,6 +70,7 @@ func NewRestServer() (rs *RestServer, err error) {
 		if err != nil {
 			return
 		}
+		ts.Run()
 	}
 
 	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthGateway))
@@ -134,27 +129,6 @@ func NewRestServer() (rs *RestServer, err error) {
 		"Subscribe on SGN contract",
 	)
 
-	if gateway == "" {
-		subscription := guard.NewSubscription(peer1.Address.Hex())
-		subscription.Deposit = sdk.NewIntFromBigInt(amt)
-		subscriptionData := ts.CliCtx.Codec.MustMarshalBinaryBare(subscription)
-		msgSubmitChange := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, ts.Key.GetAddress())
-		ts.AddTxMsg(msgSubmitChange)
-	} else {
-		reqBody, err2 := json.Marshal(map[string]string{
-			"ethAddr": peer1.Address.Hex(),
-			"amount":  amt.String(),
-		})
-		if err2 != nil {
-			return nil, err2
-		}
-		_, err2 = http.Post(gateway+"/guard/subscribe",
-			"application/json", bytes.NewBuffer(reqBody))
-		if err2 != nil {
-			return nil, err2
-		}
-	}
-
 	channelID, err := tc.OpenChannel(peer1, peer2)
 	if err != nil {
 		return
@@ -191,7 +165,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	}
 	log.Infof("Starting application REST service (chain-id: %s)...", viper.GetString(sdkFlags.FlagChainID))
 
-	return rpcserver.StartHTTPServer(rs.listener, rs.Mux, rs.logger, cfg)
+	return rpcserver.Serve(rs.listener, rs.Mux, rs.logger, cfg)
 }
 
 // ServeCommand will start the application REST service as a blocking process. It

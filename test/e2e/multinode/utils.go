@@ -26,13 +26,13 @@ func turnOffMonitor(node uint) {
 	log.Infoln("Turn off node monitor", node)
 
 	configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", node)
-	viper.SetConfigFile(configPath)
-	err := viper.ReadInConfig()
+	configFileViper := viper.New()
+	configFileViper.SetConfigFile(configPath)
+	err := configFileViper.ReadInConfig()
 	tc.ChkErr(err, "Failed to read config")
-	viper.Set(common.FlagStartMonitor, false)
-	err = viper.WriteConfig()
+	configFileViper.Set(common.FlagStartMonitor, false)
+	err = configFileViper.WriteConfig()
 	tc.ChkErr(err, "Failed to write config")
-	viper.Set(common.FlagStartMonitor, true)
 
 	cmd := exec.Command("docker-compose", "restart", fmt.Sprintf("sgnnode%d", node))
 	cmd.Stdout = os.Stdout

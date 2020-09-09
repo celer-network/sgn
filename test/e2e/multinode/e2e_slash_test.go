@@ -11,6 +11,7 @@ import (
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupSlash() {
@@ -19,14 +20,14 @@ func setupSlash() {
 		CelrAddr:               tc.E2eProfile.CelrAddr,
 		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-		BlameTimeout:           big.NewInt(10),
+		SlashTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(0),
 		MaxValidatorNum:        big.NewInt(11),
 		MinStakingPool:         big.NewInt(0),
-		IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+		AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
-	tc.SetupNewSGNEnv(p)
+	tc.SetupNewSGNEnv(p, false)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
@@ -43,7 +44,7 @@ func slashTest(t *testing.T) {
 	log.Infoln("===================================================================")
 	log.Infoln("======================== Test slash ===========================")
 
-	transactor := tc.NewTransactor(
+	transactor := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
@@ -53,13 +54,13 @@ func slashTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(2000000000000000000), big.NewInt(1000000000000000000)}
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 	shutdownNode(2)
 
 	log.Infoln("Query sgn about penalty info...")
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 2)
-	tc.ChkTestErr(t, err, "failed to query penalty")
+	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
 	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
 	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])

@@ -1,36 +1,36 @@
 {
   "eth": {
-    "chainId": 883,
-    "blockDelay": 1,
-    "checkInterval": {
-      "IntendSettle": 1,
-      "IntendWithdrawChannel": 1,
-      "ConfirmParamProposal": 2
+    "chain_id": 883,
+    "block_delay": 1,
+    "check_interval": {
+      "intend_settle": 1,
+      "intend_withdraw_channel": 1,
+      "confirm_param_proposal": 2
     },
     "contracts": {
-      "celrAddress": "",
-      "dposAddress": "",
-      "ledgerAddress": "",
-      "sgnAddress": ""
+      "celr_address": "",
+      "dpos_address": "",
+      "ledger_address": "",
+      "sgn_address": ""
     },
     "gateway": "http://192.168.10.1:8545",
     "keystore": "./keys/ethks2.json",
     "passphrase": "",
-    "pollInterval": 1
+    "poll_interval": 1
   },
   "log": {
     "level": "debug"
   },
   "sgn": {
-    "chainid": "sgnchain",
-    "baseGasPrice": 0,
-    "nodeuri": "tcp://localhost:26657",
-    "operator": "cosmos122w97t8vsa3538fr3ylvz3hvuqxrgpnax8es8f",
+    "chain_id": "sgntest",
+    "base_gas_price": 0,
+    "node_uri": "tcp://localhost:26657",
+    "validator_account": "sgn19q9usqmjcmx8vynynfl5tj5n2k22gc5f6wjvd7",
     "passphrase": "12341234",
-    "pubkey": "cosmosvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qhu3vf7",
-    "transactors": ["cosmos190xknjnht45ypumxcq7da4plsnuuvf0ajfselv"],
-    "timeoutCommit": 2,
-    "keyringbackend": "test",
-    "executeSlash": true
+    "pubkey": "sgnvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qggrxg9",
+    "transactors": ["sgn190xknjnht45ypumxcq7da4plsnuuvf0amyzsv3"],
+    "timeout_commit": 2,
+    "keyring_backend": "file",
+    "execute_slash": true
   }
 }

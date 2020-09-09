@@ -14,11 +14,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setUpUpgrade() {
 	log.Infoln("Set up new sgn env")
-	tc.SetupNewSGNEnv(nil)
+	tc.SetupNewSGNEnv(nil, false)
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
@@ -34,12 +35,12 @@ func upgradeTest(t *testing.T) {
 	log.Info("=====================================================================")
 	log.Info("======================== Test upgrade ===========================")
 
-	transactor0 := tc.NewTransactor(
+	transactor0 := tc.NewTestTransactor(
 		t,
 		tc.SgnCLIHomes[0],
 		tc.SgnChainID,
 		tc.SgnNodeURI,
-		tc.SgnOperators[0],
+		tc.ValAccounts[0],
 		tc.SgnPassphrase,
 	)
 
@@ -47,7 +48,7 @@ func upgradeTest(t *testing.T) {
 	amt2 := big.NewInt(2000000000000000000)
 	amt3 := big.NewInt(2000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
-	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.SgnOperators[:], amts)
+	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.ValAccounts[:], amts)
 
 	upgradeHeight := int64(100)
 	plan := upgrade.Plan{Name: "test", Height: upgradeHeight}
@@ -71,6 +72,6 @@ func upgradeTest(t *testing.T) {
 		}
 	}
 
-	tc.ChkTestErr(t, err, "failed to query block height")
-	assert.Equal(t, height, upgradeHeight-1, "The chain should stop at upgrade height")
+	require.NoError(t, err, "failed to query block height")
+	assert.Equal(t, height, upgradeHeight, "The chain should stop at upgrade height")
 }

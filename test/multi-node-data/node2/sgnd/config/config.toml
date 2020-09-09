@@ -13,7 +13,7 @@
 proxy_app = "tcp://127.0.0.1:26658"
 
 # A custom human readable name for this node
-moniker = "node3"
+moniker = "validator2"
 
 # If this node is many blocks behind the tip of the chain, FastSync
 # allows them to catchup quickly by downloading blocks in parallel
@@ -81,7 +81,7 @@ filter_peers = false
 [rpc]
 
 # TCP or UNIX socket address for the RPC server to listen on
-laddr = "tcp://127.0.0.1:26657"
+laddr = "tcp://0.0.0.0:26657"
 
 # A list of origins a cross-domain request can be executed from
 # Default value '[]' disables cors support
@@ -172,7 +172,7 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "9b70230e6243339a3222887385857f73bf60997d@sgnnode0:26656"
+persistent_peers = "1f5a2d70a373d8508870fc4bbd61de578fe260d4@sgnnode0:26656"
 
 # UPNP port forwarding
 upnp = false

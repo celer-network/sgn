@@ -51,44 +51,24 @@ func (k Keeper) IterateBondedValidatorsByPower(ctx sdk.Context, fn func(index in
 	k.stakingKeeper.IterateBondedValidatorsByPower(ctx, fn)
 }
 
-// Get the entire Puller metadata
-func (k Keeper) GetPuller(ctx sdk.Context) Puller {
+// Get the entire Syncer metadata
+func (k Keeper) GetSyncer(ctx sdk.Context) Syncer {
 	store := ctx.KVStore(k.storeKey)
 
-	if !store.Has(PullerKey) {
-		return Puller{}
+	if !store.Has(SyncerKey) {
+		return Syncer{}
 	}
 
-	value := store.Get(PullerKey)
-	var puller Puller
-	k.cdc.MustUnmarshalBinaryBare(value, &puller)
-	return puller
+	value := store.Get(SyncerKey)
+	var syncer Syncer
+	k.cdc.MustUnmarshalBinaryBare(value, &syncer)
+	return syncer
 }
 
-// Sets the entire Puller metadata
-func (k Keeper) SetPuller(ctx sdk.Context, puller Puller) {
+// Sets the entire Syncer metadata
+func (k Keeper) SetSyncer(ctx sdk.Context, syncer Syncer) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(PullerKey, k.cdc.MustMarshalBinaryBare(puller))
-}
-
-// Get the entire Pusher metadata
-func (k Keeper) GetPusher(ctx sdk.Context) Pusher {
-	store := ctx.KVStore(k.storeKey)
-
-	if !store.Has(PusherKey) {
-		return Pusher{}
-	}
-
-	value := store.Get(PusherKey)
-	var pusher Pusher
-	k.cdc.MustUnmarshalBinaryBare(value, &pusher)
-	return pusher
-}
-
-// Sets the entire Pusher metadata
-func (k Keeper) SetPusher(ctx sdk.Context, pusher Pusher) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(PusherKey, k.cdc.MustMarshalBinaryBare(pusher))
+	store.Set(SyncerKey, k.cdc.MustMarshalBinaryBare(syncer))
 }
 
 // Get the entire Delegator metadata for a candidateAddr and delegatorAddr
@@ -104,7 +84,7 @@ func (k Keeper) GetDelegator(ctx sdk.Context, candidateAddr, delegatorAddr strin
 	return delegator, true
 }
 
-// Get the set of all delegators with no limits
+// Get the list of all delegators
 func (k Keeper) GetAllDelegators(ctx sdk.Context, candidateAddr string) (delegators []Delegator) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, GetDelegatorsKey(candidateAddr))
@@ -138,7 +118,7 @@ func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddr string) (candidate C
 	return candidate, true
 }
 
-// Get the set of all candidates with no limits
+// Get the list of all candidates
 func (k Keeper) GetAllCandidates(ctx sdk.Context) (candidates []Candidate) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, CandidateKeyPrefix)
@@ -157,20 +137,6 @@ func (k Keeper) SetCandidate(ctx sdk.Context, candidate Candidate) {
 	store := ctx.KVStore(k.storeKey)
 	candidateKey := GetCandidateKey(candidate.EthAddress)
 	store.Set(candidateKey, k.cdc.MustMarshalBinaryBare(candidate))
-}
-
-// Take a snapshot of candidate
-func (k Keeper) SnapshotCandidate(ctx sdk.Context, candidateAddr string) {
-	candidate, _ := k.GetCandidate(ctx, candidateAddr)
-	candidate.Delegators = k.GetAllDelegators(ctx, candidateAddr)
-
-	totalStake := sdk.ZeroInt()
-	for _, delegator := range candidate.Delegators {
-		totalStake = totalStake.Add(delegator.DelegatedStake)
-	}
-	candidate.StakingPool = totalStake
-
-	k.SetCandidate(ctx, candidate)
 }
 
 // Get the entire Reward metadata for ethAddress
@@ -220,8 +186,9 @@ func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardTyp
 		commission := candidate.CommissionRate.MulInt(candidateReward).RoundInt()
 		k.AddReward(ctx, candidate.EthAddress, commission, rewardType)
 
+		delegators := k.GetAllDelegators(ctx, candidate.EthAddress)
 		delegatorsReward := candidateReward.Sub(commission)
-		for _, delegator := range candidate.Delegators {
+		for _, delegator := range delegators {
 			rewardAmt := delegatorsReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
 			k.AddReward(ctx, delegator.DelegatorAddr, rewardAmt, rewardType)
 		}
@@ -249,6 +216,11 @@ func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate)
 }
 
 func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
+	err := sdk.VerifyAddressFormat(accAddress)
+	if err != nil {
+		log.Errorf("InitAccount %s err: %s", accAddress, err)
+		return
+	}
 	account := k.accountKeeper.GetAccount(ctx, accAddress)
 	if account == nil {
 		log.Infof("Set new account %s", accAddress)

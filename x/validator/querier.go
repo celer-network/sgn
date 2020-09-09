@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,36 +15,27 @@ import (
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
-		case QueryPuller:
-			return queryPuller(ctx, req, keeper)
-		case QueryPusher:
-			return queryPusher(ctx, req, keeper)
+		case QuerySyncer:
+			return querySyncer(ctx, req, keeper)
 		case QueryDelegator:
 			return queryDelegator(ctx, req, keeper)
 		case QueryCandidate:
 			return queryCandidate(ctx, req, keeper)
+		case QueryCandidateDelegators:
+			return queryCandidateDelegators(ctx, req, keeper)
 		case QueryReward:
 			return queryReward(ctx, req, keeper)
+		case QueryParameters:
+			return queryParameters(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Unknown validator query endpoint")
 		}
 	}
 }
 
-func queryPuller(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	puller := keeper.GetPuller(ctx)
-	res, err := codec.MarshalJSONIndent(keeper.cdc, puller)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-
-	}
-
-	return res, nil
-}
-
-func queryPusher(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	pusher := keeper.GetPusher(ctx)
-	res, err := codec.MarshalJSONIndent(keeper.cdc, pusher)
+func querySyncer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	syncer := keeper.GetSyncer(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, syncer)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 
@@ -94,6 +86,24 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 	return res, nil
 }
 
+func queryCandidateDelegators(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	var params QueryCandidateParams
+	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	delegators := keeper.GetAllDelegators(ctx, params.CandidateAddress)
+
+	res, err := codec.MarshalJSONIndent(keeper.cdc, delegators)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+
+	}
+
+	return res, nil
+}
+
 func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params QueryRewardParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
@@ -110,6 +120,17 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 
+	}
+
+	return res, nil
+}
+
+func queryParameters(ctx sdk.Context, k Keeper) ([]byte, error) {
+	params := k.GetParams(ctx)
+
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
 	return res, nil

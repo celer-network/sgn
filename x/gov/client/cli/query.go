@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/celer-network/sgn/common"
 	gcutils "github.com/celer-network/sgn/x/gov/client/utils"
 	"github.com/celer-network/sgn/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,12 +25,11 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	govQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the governance module",
-		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	govQueryCmd.AddCommand(flags.GetCommands(
+	govQueryCmd.AddCommand(common.GetCommands(
 		GetCmdQueryProposal(queryRoute, cdc),
 		GetCmdQueryProposals(queryRoute, cdc),
 		GetCmdQueryVote(queryRoute, cdc),
@@ -61,7 +61,7 @@ $ %s query gov proposal 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -100,8 +100,8 @@ func GetCmdQueryProposals(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Query for a all paginated proposals that match optional filters:
 
 Example:
-$ %s query gov proposals --depositor cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
-$ %s query gov proposals --voter cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query gov proposals --depositor sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
+$ %s query gov proposals --voter sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
 $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 $ %s query gov proposals --page=2 --limit=100
 `,
@@ -115,7 +115,7 @@ $ %s query gov proposals --page=2 --limit=100
 			page := viper.GetInt(flags.FlagPage)
 			limit := viper.GetInt(flags.FlagLimit)
 
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			matchingProposals, err := QueryProposals(cliCtx, queryRoute, page, limit, bechDepositorAddr, bechVoterAddr, strProposalStatus)
 			if err != nil {
 				return err
@@ -198,13 +198,13 @@ func GetCmdQueryVote(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Query details for a single vote on a proposal given its identifier.
 
 Example:
-$ %s query gov vote 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query gov vote 1 sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -274,7 +274,7 @@ $ %[1]s query gov votes 1 --page=2 --limit=100
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -332,13 +332,13 @@ func GetCmdQueryDeposit(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Sprintf(`Query details for a single proposal deposit on a proposal by its identifier.
 
 Example:
-$ %s query gov deposit 1 cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk
+$ %s query gov deposit 1 sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
 `,
 				version.ClientName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -401,7 +401,7 @@ $ %s query gov deposits 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -459,7 +459,7 @@ $ %s query gov tally 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposal id is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
@@ -509,7 +509,7 @@ $ %s query gov params
 		),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 			tp, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/params/tallying", queryRoute), nil)
 			if err != nil {
 				return err
@@ -553,7 +553,7 @@ $ %s query gov param deposit
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// Query store
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/params/%s", queryRoute, args[0]), nil)
@@ -599,7 +599,7 @@ $ %s query gov proposer 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := common.NewQueryCLIContext(cdc)
 
 			// validate that the proposalID is a uint
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)

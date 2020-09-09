@@ -24,76 +24,86 @@ import (
 	stypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type SGNParams struct {
 	CelrAddr              mainchain.Addr
 	GovernProposalDeposit *big.Int
 	GovernVoteTimeout     *big.Int
-	BlameTimeout          *big.Int
+	SlashTimeout          *big.Int
 	MinValidatorNum       *big.Int
 	MaxValidatorNum       *big.Int
 	MinStakingPool        *big.Int
-	IncreaseRateWaitTime  *big.Int
+	AdvanceNoticePeriod   *big.Int
 	// TODO: rename to DposGoLiveTimeout
 	SidechainGoLiveTimeout *big.Int
 	StartGateway           bool
 }
 
-func NewTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnTransactor, sgnPassphrase string) *transactor.Transactor {
+func SetupSidechain() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(common.Bech32PrefixAccAddr, common.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(common.Bech32PrefixValAddr, common.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(common.Bech32PrefixConsAddr, common.Bech32PrefixConsPub)
+	config.Seal()
+}
+
+func NewTestTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnValAcct, sgnPassphrase string) *transactor.Transactor {
 	cdc := app.MakeCodec()
 	tr, err := transactor.NewTransactor(
 		sgnCLIHome,
 		sgnChainID,
 		sgnNodeURI,
-		sgnTransactor,
+		sgnValAcct,
 		sgnPassphrase,
 		cdc,
 		nil,
 	)
-	ChkTestErr(t, err, "Failed to create new transactor.")
+	require.NoError(t, err, "Failed to create new transactor.")
+	tr.Run()
 
 	return tr
 }
 
-func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, sgnops []string, amts []*big.Int) {
+func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, valaccts []string, amts []*big.Int) {
 	for i := 0; i < len(ethkss); i++ {
 		log.Infoln("Adding validator", i)
 		ethAddr, auth, err := GetAuth(ethkss[i])
-		ChkTestErr(t, err, "failed to get auth")
-		AddCandidateWithStake(t, transactor, ethAddr, auth, sgnops[i], amts[i], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+		require.NoError(t, err, "failed to get auth")
+		AddCandidateWithStake(t, transactor, ethAddr, auth, valaccts[i], amts[i], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 	}
 }
 
 func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ethAddr mainchain.Addr, auth *bind.TransactOpts,
-	sgnop string, amt *big.Int, minAmt *big.Int, commissionRate *big.Int,
+	valacct string, amt *big.Int, minAmt *big.Int, commissionRate *big.Int,
 	rateLockEndTime *big.Int, isValidator bool) {
 
 	// get sgnAddr
-	sgnAddr, err := sdk.AccAddressFromBech32(sgnop)
-	ChkTestErr(t, err, "failed to parse sgn address")
+	sgnAddr, err := sdk.AccAddressFromBech32(valacct)
+	require.NoError(t, err, "failed to parse sgn address")
 
 	// add candidate
 	err = InitializeCandidate(auth, sgnAddr, minAmt, commissionRate, rateLockEndTime)
-	ChkTestErr(t, err, "failed to initialize candidate")
+	require.NoError(t, err, "failed to initialize candidate")
 
 	log.Infof("Query sgn about the validator candidate %s ...", ethAddr.Hex())
-	CheckCandidate(t, transactor, ethAddr, sgnop, big.NewInt(0))
+	CheckCandidate(t, transactor, ethAddr, valacct, big.NewInt(0))
 
 	// self delegate stake
 	err = DelegateStake(auth, ethAddr, amt)
-	ChkTestErr(t, err, "failed to delegate stake")
+	require.NoError(t, err, "failed to delegate stake")
 
 	log.Info("Query sgn about the delegator to check if it has correct stakes...")
 	CheckDelegator(t, transactor, ethAddr, ethAddr, amt)
 
 	log.Info("Query sgn about the candidate to check if it has correct stakes...")
-	CheckCandidate(t, transactor, ethAddr, sgnop, amt)
+	CheckCandidate(t, transactor, ethAddr, valacct, amt)
 
 	if isValidator {
-		log.Infof("Query sgn about the validator %s to check if it has correct stakes...", sgnop)
-		CheckValidator(t, transactor, sgnop, amt, sdk.Bonded)
+		log.Infof("Query sgn about the validator %s to check if it has correct stakes...", valacct)
+		CheckValidator(t, transactor, valacct, amt, sdk.Bonded)
 	}
 }
 
@@ -109,15 +119,15 @@ func CheckDelegator(t *testing.T, transactor *transactor.Transactor, validatorAd
 		}
 		time.Sleep(RetryPeriod)
 	}
-	ChkTestErr(t, err, "failed to queryDelegator")
+	require.NoError(t, err, "failed to queryDelegator")
 	log.Infoln("Query sgn about the validator's delegator:", delegator)
 	assert.Equal(t, expectedRes, delegator.String(), "The expected result should be: "+expectedRes)
 }
 
-func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, sgnop string, expAmt *big.Int) {
+func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mainchain.Addr, valacct string, expAmt *big.Int) {
 	var candidate vtypes.Candidate
 	var err error
-	expectedRes := fmt.Sprintf(`Operator: %s, EthAddress: %x, StakingPool: %s`, sgnop, ethAddr, expAmt) // defined in Candidate.String()
+	expectedRes := fmt.Sprintf(`ValAccount: %s, EthAddress: %x, StakingPool: %s`, valacct, ethAddr, expAmt) // defined in Candidate.String()
 	for retry := 0; retry < RetryLimit; retry++ {
 		candidate, err = sgnval.CLIQueryCandidate(transactor.CliCtx, sgnval.RouterKey, ethAddr.Hex())
 		if err != nil {
@@ -128,16 +138,16 @@ func CheckCandidate(t *testing.T, transactor *transactor.Transactor, ethAddr mai
 		}
 		time.Sleep(RetryPeriod)
 	}
-	ChkTestErr(t, err, "failed to queryCandidate")
+	require.NoError(t, err, "failed to queryCandidate", err)
 	log.Infoln("Query sgn about the validator candidate:", candidate)
 	assert.Equal(t, expectedRes, candidate.String(), "The expected result should be: "+expectedRes)
 }
 
-func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop string, expAmt *big.Int, expStatus sdk.BondStatus) {
+func CheckValidator(t *testing.T, transactor *transactor.Transactor, valacct string, expAmt *big.Int, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < RetryLimit; retry++ {
-		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnop)
+		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, valacct)
 		if err == nil &&
 			validator.Status == expStatus {
 			expToken := sdk.NewIntFromBigInt(expAmt).QuoRaw(common.TokenDec).String()
@@ -147,25 +157,23 @@ func CheckValidator(t *testing.T, transactor *transactor.Transactor, sgnop strin
 		}
 		time.Sleep(RetryPeriod)
 	}
-	ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
+	require.NoError(t, err, "failed to queryValidator")
 	expToken := sdk.NewIntFromBigInt(expAmt).QuoRaw(common.TokenDec).String()
 	assert.Equal(t, expToken, validator.Tokens.String(), "validator token should be "+expToken)
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
-func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, sgnop string, expStatus sdk.BondStatus) {
+func CheckValidatorStatus(t *testing.T, transactor *transactor.Transactor, valacct string, expStatus sdk.BondStatus) {
 	var validator stypes.Validator
 	var err error
 	for retry := 0; retry < RetryLimit; retry++ {
-		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, sgnop)
+		validator, err = sgnval.CLIQueryValidator(transactor.CliCtx, staking.RouterKey, valacct)
 		if err == nil && validator.Status == expStatus {
 			break
 		}
 		time.Sleep(RetryPeriod)
 	}
-	ChkTestErr(t, err, "failed to queryValidator")
-	log.Infoln("Query sgn about the validator:\n", validator)
+	require.NoError(t, err, "failed to queryValidator")
 	assert.Equal(t, expStatus, validator.Status, "validator should be "+sdkStatusName(validator.Status))
 }
 
@@ -179,8 +187,7 @@ func CheckValidatorNum(t *testing.T, transactor *transactor.Transactor, expNum i
 		}
 		time.Sleep(RetryPeriod)
 	}
-	ChkTestErr(t, err, "failed to queryValidators")
-	log.Infoln("Query sgn about the validators:\n", validators)
+	require.NoError(t, err, "failed to queryValidators")
 	assert.Equal(t, expNum, len(validators), "The length of validators should be: "+strconv.Itoa(expNum))
 }
 
@@ -198,7 +205,7 @@ func QueryProposal(cliCtx context.CLIContext, proposalID uint64, status govtypes
 	}
 
 	if status != proposal.Status {
-		err = errors.New("Proposal status does not match expectation")
+		err = fmt.Errorf("Proposal status %s does not match expectation", status)
 	}
 
 	return

@@ -61,6 +61,7 @@ func TestMain(m *testing.M) {
 	err = installSgn()
 	tc.ChkErr(err, "installing sgn and sgncli")
 
+	tc.SetupSidechain()
 	// run all e2e tests
 	ret := m.Run()
 
@@ -70,7 +71,7 @@ func TestMain(m *testing.M) {
 		os.RemoveAll(outRootDir)
 		os.Exit(0)
 	} else {
-		log.Errorln("Tests failed. 🚧🚧🚧 Geth still running for debug. 🚧🚧🚧", "Run kill", ethProc.Pid, "to stop it")
+		log.Errorln("Tests failed. 🔥🔥🔥")
 		os.Exit(ret)
 	}
 }

@@ -39,6 +39,7 @@ func (tp *TransactorPool) AddTransactors(nodeURI, passphrase string, ts []string
 		if err != nil {
 			return err
 		}
+		transactor.Run()
 
 		transactors = append(transactors, transactor)
 	}

@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -191,7 +190,7 @@ func (_EthPool *EthPoolTransactorRaw) Transact(opts *bind.TransactOpts, method s
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address _owner, address _spender) constant returns(uint256)
+// Solidity: function allowance(address _owner, address _spender) view returns(uint256)
 func (_EthPool *EthPoolCaller) Allowance(opts *bind.CallOpts, _owner common.Address, _spender common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -203,21 +202,21 @@ func (_EthPool *EthPoolCaller) Allowance(opts *bind.CallOpts, _owner common.Addr
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address _owner, address _spender) constant returns(uint256)
+// Solidity: function allowance(address _owner, address _spender) view returns(uint256)
 func (_EthPool *EthPoolSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
 	return _EthPool.Contract.Allowance(&_EthPool.CallOpts, _owner, _spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address _owner, address _spender) constant returns(uint256)
+// Solidity: function allowance(address _owner, address _spender) view returns(uint256)
 func (_EthPool *EthPoolCallerSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
 	return _EthPool.Contract.Allowance(&_EthPool.CallOpts, _owner, _spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _owner) constant returns(uint256)
+// Solidity: function balanceOf(address _owner) view returns(uint256)
 func (_EthPool *EthPoolCaller) BalanceOf(opts *bind.CallOpts, _owner common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
@@ -229,21 +228,21 @@ func (_EthPool *EthPoolCaller) BalanceOf(opts *bind.CallOpts, _owner common.Addr
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _owner) constant returns(uint256)
+// Solidity: function balanceOf(address _owner) view returns(uint256)
 func (_EthPool *EthPoolSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _EthPool.Contract.BalanceOf(&_EthPool.CallOpts, _owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _owner) constant returns(uint256)
+// Solidity: function balanceOf(address _owner) view returns(uint256)
 func (_EthPool *EthPoolCallerSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _EthPool.Contract.BalanceOf(&_EthPool.CallOpts, _owner)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_EthPool *EthPoolCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
 	var (
 		ret0 = new(uint8)
@@ -255,21 +254,21 @@ func (_EthPool *EthPoolCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_EthPool *EthPoolSession) Decimals() (uint8, error) {
 	return _EthPool.Contract.Decimals(&_EthPool.CallOpts)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_EthPool *EthPoolCallerSession) Decimals() (uint8, error) {
 	return _EthPool.Contract.Decimals(&_EthPool.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_EthPool *EthPoolCaller) Name(opts *bind.CallOpts) (string, error) {
 	var (
 		ret0 = new(string)
@@ -281,21 +280,21 @@ func (_EthPool *EthPoolCaller) Name(opts *bind.CallOpts) (string, error) {
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_EthPool *EthPoolSession) Name() (string, error) {
 	return _EthPool.Contract.Name(&_EthPool.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_EthPool *EthPoolCallerSession) Name() (string, error) {
 	return _EthPool.Contract.Name(&_EthPool.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_EthPool *EthPoolCaller) Symbol(opts *bind.CallOpts) (string, error) {
 	var (
 		ret0 = new(string)
@@ -307,14 +306,14 @@ func (_EthPool *EthPoolCaller) Symbol(opts *bind.CallOpts) (string, error) {
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_EthPool *EthPoolSession) Symbol() (string, error) {
 	return _EthPool.Contract.Symbol(&_EthPool.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_EthPool *EthPoolCallerSession) Symbol() (string, error) {
 	return _EthPool.Contract.Symbol(&_EthPool.CallOpts)
 }
@@ -363,21 +362,21 @@ func (_EthPool *EthPoolTransactorSession) DecreaseAllowance(_spender common.Addr
 
 // Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
 //
-// Solidity: function deposit(address _receiver) returns()
+// Solidity: function deposit(address _receiver) payable returns()
 func (_EthPool *EthPoolTransactor) Deposit(opts *bind.TransactOpts, _receiver common.Address) (*types.Transaction, error) {
 	return _EthPool.contract.Transact(opts, "deposit", _receiver)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
 //
-// Solidity: function deposit(address _receiver) returns()
+// Solidity: function deposit(address _receiver) payable returns()
 func (_EthPool *EthPoolSession) Deposit(_receiver common.Address) (*types.Transaction, error) {
 	return _EthPool.Contract.Deposit(&_EthPool.TransactOpts, _receiver)
 }
 
 // Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
 //
-// Solidity: function deposit(address _receiver) returns()
+// Solidity: function deposit(address _receiver) payable returns()
 func (_EthPool *EthPoolTransactorSession) Deposit(_receiver common.Address) (*types.Transaction, error) {
 	return _EthPool.Contract.Deposit(&_EthPool.TransactOpts, _receiver)
 }

@@ -20,11 +20,11 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 			CelrAddr:               tc.E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
 			GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-			BlameTimeout:           big.NewInt(50),
+			SlashTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(11),
 			MinStakingPool:         big.NewInt(100),
-			IncreaseRateWaitTime:   big.NewInt(1), // TODO: use a more practical value
+			AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
@@ -51,19 +51,26 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 func updateSGNConfig() {
 	log.Infoln("Updating SGN's config.json")
 
-	viper.SetConfigFile("../../../config.json")
-	err := viper.ReadInConfig()
+	configFilePath := "../../../config.json"
+	configFileViper := viper.New()
+	configFileViper.SetConfigFile(configFilePath)
+	err := configFileViper.ReadInConfig()
 	tc.ChkErr(err, "failed to read config")
 
 	clientKeystore, err := filepath.Abs("../../keys/ethks0.json")
 	tc.ChkErr(err, "get client keystore path")
 
-	viper.Set(common.FlagEthGateway, tc.LocalGeth)
-	viper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
-	viper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
-	viper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
-	viper.Set(common.FlagEthKeystore, clientKeystore)
-	viper.WriteConfig()
+	configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
+	configFileViper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
+	configFileViper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
+	configFileViper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
+	configFileViper.Set(common.FlagEthKeystore, clientKeystore)
+	err = configFileViper.WriteConfig()
+	tc.ChkErr(err, "failed to write config")
+	// Update global viper
+	viper.SetConfigFile(configFilePath)
+	err = viper.ReadInConfig()
+	tc.ChkErr(err, "failed to read config")
 }
 
 func installSgn() error {

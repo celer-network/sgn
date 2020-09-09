@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ import (
 )
 
 func getCandidateInfo() error {
-	ethClient, err := initEthClient()
+	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
 		return err
 	}
@@ -38,18 +39,8 @@ func GetCandidateInfoCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getCandidateInfo()
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := cmd.MarkFlagRequired(candidateFlag)
-			if err != nil {
-				return err
-			}
-			err = viper.BindPFlag(candidateFlag, cmd.Flags().Lookup(candidateFlag))
-			if err != nil {
-				return err
-			}
-			return nil
-		},
 	}
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
+	cmd.MarkFlagRequired(candidateFlag)
 	return cmd
 }
