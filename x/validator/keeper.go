@@ -104,6 +104,11 @@ func (k Keeper) SetDelegator(ctx sdk.Context, delegator Delegator) {
 	store.Set(GetDelegatorKey(delegator.CandidateAddr, delegator.DelegatorAddr), k.cdc.MustMarshalBinaryBare(delegator))
 }
 
+func (k Keeper) RemoveDelegator(ctx sdk.Context, delegator Delegator) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetDelegatorKey(delegator.CandidateAddr, delegator.DelegatorAddr))
+}
+
 // Get the entire Candidate metadata
 func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddr string) (candidate Candidate, found bool) {
 	store := ctx.KVStore(k.storeKey)

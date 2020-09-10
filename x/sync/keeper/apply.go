@@ -88,6 +88,10 @@ func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) (bool, 
 	log.Infoln("Apply sync delegator", d)
 	delegator, found := keeper.validatorKeeper.GetDelegator(ctx, d.CandidateAddr, d.DelegatorAddr)
 	if found {
+		if d.DelegatedStake.IsZero() {
+			keeper.validatorKeeper.RemoveDelegator(ctx, delegator)
+			return true, nil
+		}
 		delegator.DelegatedStake = d.DelegatedStake
 	} else {
 		delegator = d
