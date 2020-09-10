@@ -212,10 +212,10 @@ func (k Keeper) distributeCandidateReward(ctx sdk.Context) {
 		idx = uint(ctx.BlockHeight()) / skip % uint(len(validators))
 	}
 	ethAddr := mainchain.FormatAddrHex(validators[idx].Description.Identity)
-	k.distributeCandidatePendingReward(ctx, ethAddr)
+	k.DistributeCandidatePendingReward(ctx, ethAddr)
 }
 
-func (k Keeper) distributeCandidatePendingReward(ctx sdk.Context, ethAddress string) {
+func (k Keeper) DistributeCandidatePendingReward(ctx sdk.Context, ethAddress string) {
 	candidate, found := k.GetCandidate(ctx, ethAddress)
 	if !found {
 		log.Debugf("candidate %s not found", ethAddress)
