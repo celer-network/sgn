@@ -57,8 +57,8 @@ func NewKeeper(
 	}
 }
 
-func (keeper Keeper) GetValidators(ctx sdk.Context) []staking.Validator {
-	return keeper.validatorKeeper.GetValidators(ctx)
+func (keeper Keeper) GetBondedValidators(ctx sdk.Context) []staking.Validator {
+	return keeper.validatorKeeper.GetBondedValidators(ctx)
 }
 
 func (keeper Keeper) PullerReward(ctx sdk.Context) sdk.Int {

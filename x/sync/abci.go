@@ -12,7 +12,7 @@ import (
 // EndBlocker called every block, process inflation, update validator set.
 func EndBlocker(ctx sdk.Context, keeper Keeper) {
 	var tagValue string
-	validators := keeper.GetValidators(ctx)
+	validators := keeper.GetBondedValidators(ctx)
 	totalToken := sdk.ZeroInt()
 	validatorsByAddr := map[string]staking.Validator{}
 
