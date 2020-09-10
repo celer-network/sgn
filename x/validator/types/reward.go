@@ -105,3 +105,21 @@ func NewRewardEpoch(height int64) RewardEpoch {
 		ServiceReward: sdk.ZeroInt(),
 	}
 }
+
+type PendingReward struct {
+	CandidateAddr string  `json:"candidate_addr"`
+	MiningReward  sdk.Int `json:"mining_reward"`
+	ServiceReward sdk.Int `json:"service_reward"`
+}
+
+func NewPendingReward(ethAddress string) PendingReward {
+	return PendingReward{
+		CandidateAddr: ethAddress,
+		MiningReward:  sdk.ZeroInt(),
+		ServiceReward: sdk.ZeroInt(),
+	}
+}
+
+func (pr PendingReward) IsZero() bool {
+	return pr.MiningReward.IsZero() && pr.ServiceReward.IsZero()
+}

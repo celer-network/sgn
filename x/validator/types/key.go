@@ -17,16 +17,17 @@ const (
 )
 
 var (
-	SyncerKey          = []byte{0x01} // key for syncer
-	DelegatorKeyPrefix = []byte{0x03} // Key prefix for delegator
-	CandidateKeyPrefix = []byte{0x04} // Key prefix for candidate
-	RewardKeyPrefix    = []byte{0x05} // Key prefix for reward
-	RewardEpochKey     = []byte{0x06} // Key for reward epoch
+	SyncerKey              = []byte{0x01} // key for syncer
+	DelegatorsKeyPrefix    = []byte{0x03} // Key prefix for delegator
+	CandidateKeyPrefix     = []byte{0x04} // Key prefix for candidate
+	RewardKeyPrefix        = []byte{0x05} // Key prefix for reward
+	RewardEpochKey         = []byte{0x06} // Key for reward epoch
+	PendingRewardKeyPrefix = []byte{0x07} // Key for pending reward
 )
 
 // get delegators key from candidate address
 func GetDelegatorsKey(candidateAddr string) []byte {
-	return append(DelegatorKeyPrefix, mainchain.Hex2Addr(candidateAddr).Bytes()...)
+	return append(DelegatorsKeyPrefix, mainchain.Hex2Addr(candidateAddr).Bytes()...)
 }
 
 // get delegator key from candidate address and delegator address
@@ -44,7 +45,6 @@ func GetRewardKey(ethAddr string) []byte {
 	return append(RewardKeyPrefix, mainchain.Hex2Addr(ethAddr).Bytes()...)
 }
 
-// get reward epoch key
-func GetRewardEpochKey() []byte {
-	return RewardEpochKey
+func GetPendingRewardKey(candidateAddr string) []byte {
+	return append(PendingRewardKeyPrefix, mainchain.Hex2Addr(candidateAddr).Bytes()...)
 }

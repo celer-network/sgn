@@ -35,12 +35,14 @@ var (
 	GetDelegatorsKey               = types.GetDelegatorsKey
 	GetCandidateKey                = types.GetCandidateKey
 	GetRewardKey                   = types.GetRewardKey
-	GetRewardEpochKey              = types.GetRewardEpochKey
+	GetPendingRewardKey            = types.GetPendingRewardKey
+	RewardEpochKey                 = types.RewardEpochKey
 	NewSyncer                      = types.NewSyncer
 	NewDelegator                   = types.NewDelegator
 	NewCandidate                   = types.NewCandidate
 	NewReward                      = types.NewReward
 	NewRewardEpoch                 = types.NewRewardEpoch
+	NewPendingReward               = types.NewPendingReward
 	CLIQuerySyncer                 = cli.QuerySyncer
 	CLIQueryCandidate              = cli.QueryCandidate
 	CLIQueryCandidateDelegators    = cli.QueryCandidateDelegators
@@ -60,6 +62,7 @@ type (
 	Candidate                   = types.Candidate
 	Reward                      = types.Reward
 	RewardEpoch                 = types.RewardEpoch
+	PendingReward               = types.PendingReward
 	QueryDelegatorParams        = types.QueryDelegatorParams
 	QueryCandidateParams        = types.QueryCandidateParams
 	QueryRewardParams           = types.QueryRewardParams
