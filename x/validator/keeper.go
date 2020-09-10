@@ -184,6 +184,9 @@ func (k Keeper) distributeEpochReward(ctx sdk.Context) {
 		}
 		totalStake = totalStake.Add(candidate.StakingPool)
 	}
+	if totalStake.IsZero() {
+		return
+	}
 
 	for _, candidate := range candidates {
 		candidateMiningReward := epoch.MiningReward.Mul(candidate.StakingPool).Quo(totalStake)
@@ -226,6 +229,12 @@ func (k Keeper) DistributeCandidatePendingReward(ctx sdk.Context, ethAddress str
 		log.Debugf("candidate %s has no pending reward", ethAddress)
 		return
 	}
+	if !candidate.StakingPool.IsPositive() {
+		log.Debugln("candidate staking pool is empty", candidate.EthAddress)
+		k.ResetPendingReward(ctx, ethAddress)
+		return
+	}
+
 	miningCommission := sdk.ZeroInt()
 	serviceCommission := sdk.ZeroInt()
 	if pendingReward.MiningReward.IsPositive() {
