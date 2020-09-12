@@ -23,15 +23,17 @@ import (
 )
 
 var (
-	up   = flag.Bool("up", false, "start local testnet")
-	auto = flag.Bool("auto", false, "auto-add all validators")
-	down = flag.Bool("down", false, "shutdown local testnet")
+	start = flag.Bool("start", false, "start local testnet")
+	auto  = flag.Bool("auto", false, "auto-add all validators")
+	down  = flag.Bool("down", false, "shutdown local testnet")
+	up    = flag.Int("up", -1, "start a testnet node")
+	stop  = flag.Int("stop", -1, "stop a testnet node")
 )
 
 func main() {
 	flag.Parse()
 	repoRoot, _ := filepath.Abs("../../..")
-	if *up {
+	if *start {
 		tc.SetupMainchain()
 		tc.SetupSidechain()
 		p := &tc.SGNParams{
@@ -94,6 +96,22 @@ func main() {
 			log.Error(err)
 		}
 		os.Exit(0)
+	} else if *up != -1 {
+		log.Infoln("Start node", *up)
+		cmd := exec.Command("docker-compose", "up", "-d", fmt.Sprintf("sgnnode%d", *up))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+	} else if *stop != -1 {
+		log.Infoln("Stop node", *stop)
+		cmd := exec.Command("docker-compose", "stop", fmt.Sprintf("sgnnode%d", *stop))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
 	}
 }
 

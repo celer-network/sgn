@@ -9,7 +9,7 @@ Follow instructions below to start a local testnet with three validator nodes on
 
 ## Add validators
 
-Run `go run localnet.go -up` to set up the docker test environment with three sgn nodes.
+Run `go run localnet.go -start` to set up the docker test environment with three sgn nodes.
 
 ### Add node0 to become a validator
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
@@ -45,7 +45,7 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 
 Update block block reward through governance. 
 
-Run `go run localnet.go -up -auto` to start testnet and auto config all nodes as validators.
+Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
 
 #### Query current block mining reward and submit change proposal
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
