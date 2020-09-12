@@ -302,7 +302,7 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
-	log.Infof("Call updateSidechainAddr on sgn contract using the validator eth address, sgnAddr: %x", sgnAddr.Bytes())
+	log.Infof("Call updateSidechainAddr on sgn contract using the validator eth address, sgnAddr: %s", sgnAddr)
 	auth.GasLimit = 8000000
 	tx, err := sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
 	auth.GasLimit = 0

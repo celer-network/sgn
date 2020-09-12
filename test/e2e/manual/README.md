@@ -43,7 +43,7 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 
 ## Update param through governance
 
-Update block block reward through governance. 
+Update block reward through governance.
 
 Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
 
