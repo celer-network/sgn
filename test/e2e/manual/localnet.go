@@ -78,7 +78,6 @@ func main() {
 			configFileViper.Set(common.FlagEthKeystore, ksPath)
 			configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
 			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodeURIs[i])
-			configFileViper.Set(common.FlagSgnExecuteSlash, false)
 			if err := configFileViper.WriteConfig(); err != nil {
 				log.Error(err)
 			}
