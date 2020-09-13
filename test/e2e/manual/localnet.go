@@ -72,7 +72,7 @@ func main() {
 			if err := configFileViper.ReadInConfig(); err != nil {
 				log.Error(err)
 			}
-			ksPath, _ := filepath.Abs(fmt.Sprintf("./data/node%d/keys/ethks%d.json", i, i))
+			ksPath, _ := filepath.Abs(fmt.Sprintf("./data/node%d/keys/vethks%d.json", i, i))
 			configFileViper.Set(common.FlagEthKeystore, ksPath)
 			configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
 			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodeURIs[i])
