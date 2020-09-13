@@ -75,7 +75,7 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 - `sgncli query block --trust-node`
 - `sgncli tx govern submit-proposal software-upgrade test --title "upgrade test" --description "upgrade test" --deposit 10 --upgrade-height [sidechain block height after more than 2 mins]`
 
-#### All nodes vote yes, same as above
+#### All nodes vote yes, same as [above](#all-nodes-vote-yes)
 
 #### Query proposal status after voting timeout (2 mins)
 - `sgncli query govern proposal 1 --config data/node0/config.json --home data/node0/sgncli`
