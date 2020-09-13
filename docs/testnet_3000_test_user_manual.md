@@ -55,7 +55,7 @@ curl http://sgntest.celer.network:1317/guard/subscription/<peer1-address>
 If not, you can run:
 
 ```shellscript
-curl -X POST http://sgntest.celer.network:1317/guard/subscribe -d '{ "ethAddr": "<peer1-address>", "amount": "1000000000000000000" }'
+curl -X POST http://sgntest.celer.network:1317/guard/subscribe -d '{ "eth_addr": "<peer1-address>", "amount": "1000000000000000000" }'
 ```
 
 to retry manually.
