@@ -86,6 +86,7 @@ func main() {
 			}
 		}
 		if *auto {
+			time.Sleep(10 * time.Second)
 			addValidators()
 		}
 	} else if *down {
@@ -200,8 +201,9 @@ func addCandidateWithStake(
 		return
 	}
 	for retry := 0; retry < 10; retry++ {
-		_, err = sgnval.CLIQueryCandidate(txr.CliCtx, sgnval.RouterKey, ethAddr.Hex())
-		if err == nil {
+		c, err2 := sgnval.CLIQueryCandidate(txr.CliCtx, sgnval.RouterKey, ethAddr.Hex())
+		if err2 == nil {
+			log.Infof("query candidate success: %s", c)
 			break
 		}
 		time.Sleep(time.Second)
@@ -216,6 +218,7 @@ func addCandidateWithStake(
 	for retry := 0; retry < 10; retry++ {
 		_, err = sgnval.CLIQueryValidator(txr.CliCtx, staking.RouterKey, valacct)
 		if err == nil {
+			log.Infof("query validator success: %s", valacct)
 			break
 		}
 		time.Sleep(time.Second)
