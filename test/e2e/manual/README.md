@@ -92,4 +92,5 @@ app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.P
 })
 ```
 3. Rebuild images: `go run localnet.go -rebuild`
-4. Start new containers: `go run localnet.go -upall`
+4. Update `config.json` and `genesis.json` if needed. 
+5. Start new containers: `go run localnet.go -upall`
