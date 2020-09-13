@@ -23,15 +23,20 @@ import (
 )
 
 var (
-	up   = flag.Bool("up", false, "start local testnet")
-	auto = flag.Bool("auto", false, "auto-add all validators")
-	down = flag.Bool("down", false, "shutdown local testnet")
+	start   = flag.Bool("start", false, "start local testnet")
+	auto    = flag.Bool("auto", false, "auto-add all validators")
+	down    = flag.Bool("down", false, "shutdown local testnet")
+	up      = flag.Int("up", -1, "start a testnet node")
+	stop    = flag.Int("stop", -1, "stop a testnet node")
+	upall   = flag.Bool("upall", false, "start all nodes")
+	stopall = flag.Bool("stopall", false, "stop all nodes")
+	rebuild = flag.Bool("rebuild", false, "rebuild sgn node docker image")
 )
 
 func main() {
 	flag.Parse()
 	repoRoot, _ := filepath.Abs("../../..")
-	if *up {
+	if *start {
 		tc.SetupMainchain()
 		tc.SetupSidechain()
 		p := &tc.SGNParams{
@@ -76,19 +81,56 @@ func main() {
 			configFileViper.Set(common.FlagEthKeystore, ksPath)
 			configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
 			configFileViper.Set(common.FlagSgnNodeURI, tc.SgnNodeURIs[i])
-
 			if err := configFileViper.WriteConfig(); err != nil {
 				log.Error(err)
 			}
 		}
-
 		if *auto {
 			addValidators()
 		}
-
 	} else if *down {
 		log.Infoln("Tearing down all containers...")
 		cmd := exec.Command("make", "localnet-down")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
+	} else if *up != -1 {
+		log.Infoln("Start node", *up)
+		cmd := exec.Command("docker-compose", "up", "-d", fmt.Sprintf("sgnnode%d", *up))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+	} else if *stop != -1 {
+		log.Infoln("Stop node", *stop)
+		cmd := exec.Command("docker-compose", "stop", fmt.Sprintf("sgnnode%d", *stop))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+	} else if *upall {
+		log.Infoln("Start all nodes ...")
+		cmd := exec.Command("make", "localnet-up-nodes")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
+	} else if *stopall {
+		log.Infoln("Stop all nodes ...")
+		cmd := exec.Command("make", "localnet-down-nodes")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
+	} else if *rebuild {
+		log.Infoln("Rebuild sgn node docker image ...")
+		cmd := exec.Command("make", "build-node")
 		cmd.Dir = repoRoot
 		if err := cmd.Run(); err != nil {
 			log.Error(err)
