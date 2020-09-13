@@ -92,4 +92,4 @@ app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.P
 })
 ```
 3. Rebuild images: `go run localnet.go -rebuild`
-4. Start new containers: `go run localnet.go -startall`
+4. Start new containers: `go run localnet.go -upall`
