@@ -97,6 +97,10 @@ build-dockers:
 	DOCKER_BUILDKIT=1 docker build --tag celer-network/sgnnode .
 	# $(MAKE) -C networks/local
 
+.PHONY: build-node
+build-node:
+	DOCKER_BUILDKIT=1 docker build --tag celer-network/sgnnode .
+
 # Prepare docker environment for multinode testing
 .PHONY: prepare-docker-env
 prepare-docker-env: build-dockers build-linux prepare-geth-data

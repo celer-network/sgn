@@ -23,11 +23,14 @@ import (
 )
 
 var (
-	start = flag.Bool("start", false, "start local testnet")
-	auto  = flag.Bool("auto", false, "auto-add all validators")
-	down  = flag.Bool("down", false, "shutdown local testnet")
-	up    = flag.Int("up", -1, "start a testnet node")
-	stop  = flag.Int("stop", -1, "stop a testnet node")
+	start   = flag.Bool("start", false, "start local testnet")
+	auto    = flag.Bool("auto", false, "auto-add all validators")
+	down    = flag.Bool("down", false, "shutdown local testnet")
+	up      = flag.Int("up", -1, "start a testnet node")
+	stop    = flag.Int("stop", -1, "stop a testnet node")
+	upall   = flag.Bool("upall", false, "start all nodes")
+	stopall = flag.Bool("stopall", false, "stop all nodes")
+	rebuild = flag.Bool("rebuild", false, "rebuild sgn node docker image")
 )
 
 func main() {
@@ -109,6 +112,30 @@ func main() {
 		if err := cmd.Run(); err != nil {
 			log.Error(err)
 		}
+	} else if *upall {
+		log.Infoln("Start all nodes ...")
+		cmd := exec.Command("make", "localnet-up-nodes")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
+	} else if *stopall {
+		log.Infoln("Stop all nodes ...")
+		cmd := exec.Command("make", "localnet-down-nodes")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
+	} else if *rebuild {
+		log.Infoln("Rebuild sgn node docker image ...")
+		cmd := exec.Command("make", "build-node")
+		cmd.Dir = repoRoot
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+		os.Exit(0)
 	}
 }
 
