@@ -24,7 +24,7 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(11),
 			MinStakingPool:         big.NewInt(100),
-			AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
+			AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
@@ -57,14 +57,14 @@ func updateSGNConfig() {
 	err := configFileViper.ReadInConfig()
 	tc.ChkErr(err, "failed to read config")
 
-	clientKeystore, err := filepath.Abs("../../keys/ethks0.json")
-	tc.ChkErr(err, "get client keystore path")
+	keystore, err := filepath.Abs("../../keys/vethks0.json")
+	tc.ChkErr(err, "get keystore path")
 
 	configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
 	configFileViper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
 	configFileViper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
 	configFileViper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
-	configFileViper.Set(common.FlagEthKeystore, clientKeystore)
+	configFileViper.Set(common.FlagEthKeystore, keystore)
 	err = configFileViper.WriteConfig()
 	tc.ChkErr(err, "failed to write config")
 	// Update global viper

@@ -14,7 +14,7 @@
       "sgn_address": ""
     },
     "gateway": "http://192.168.10.1:8545",
-    "keystore": "./keys/ethks1.json",
+    "keystore": "./keys/vethks1.json",
     "passphrase": "",
     "poll_interval": 1
   },
