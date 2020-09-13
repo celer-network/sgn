@@ -22,8 +22,8 @@ sgnops channel [flags]
       --ledger               Use a connected Ledger device
       --max-open uint        The number of maximum open connections (default 1000)
       --node string          <host>:<port> to Tendermint RPC interface for this chain (default "tcp://localhost:26657")
-      --peer1 string         peer1 keystore path (default "./test/keys/ethks0.json")
-      --peer2 string         peer2 keystore path (default "./test/keys/ethks1.json")
+      --peer1 string         peer1 keystore path (default "./test/keys/cethks0.json")
+      --peer2 string         peer2 keystore path (default "./test/keys/cethks1.json")
       --read-timeout uint    The RPC read timeout (in seconds) (default 10)
       --trust-node           Trust connected full node (don't verify proofs for responses)
       --unsafe-cors          Allows CORS requests from all domains. For development purposes only, use it at your own risk.

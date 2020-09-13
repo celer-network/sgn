@@ -195,8 +195,8 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(peer1Flag, "./test/keys/ethks0.json", "peer1 keystore path")
-	cmd.Flags().String(peer2Flag, "./test/keys/ethks1.json", "peer2 keystore path")
+	cmd.Flags().String(peer1Flag, "./test/keys/cethks0.json", "peer1 keystore path")
+	cmd.Flags().String(peer2Flag, "./test/keys/cethks1.json", "peer2 keystore path")
 	cmd.Flags().String(gatewayFlag, "", "gateway url")
 	cmd.Flags().Uint64(blockDelayFlag, 5, "block delay")
 	return sdkFlags.RegisterRestServerFlags(cmd)
