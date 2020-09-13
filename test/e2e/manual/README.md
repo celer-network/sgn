@@ -5,11 +5,11 @@ Follow instructions below to start a local testnet with three validator nodes on
 #### Table of contents
 
 - [Add validators](#add-validators)
-- [Update param through governance](#update-param-through-governance)
+- [Governance](#governance)
 
 ## Add validators
 
-Run `go run localnet.go -up` to set up the docker test environment with three sgn nodes.
+Run `go run localnet.go -start` to set up the docker test environment with three sgn nodes.
 
 ### Add node0 to become a validator
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
@@ -41,11 +41,13 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 - `sgncli query validator validators`
 - `sgncli query tendermint-validator-set --trust-node`
 
-## Update param through governance
+## Governance
 
-Update block block reward through governance. 
+Update block reward through governance.
 
-Run `go run localnet.go -up -auto` to start testnet and auto config all nodes as validators.
+Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
+
+### Update block reward through governance.
 
 #### Query current block mining reward and submit change proposal
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
@@ -64,3 +66,30 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 
 - `sgncli query govern proposal 1`
 - `sgncli query validator params`
+
+### Upgrade sidechain through governance
+
+#### Query current block height and submit upgrade proposal
+Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
+
+- `sgncli query block --trust-node`
+- `sgncli tx govern submit-proposal software-upgrade test --title "upgrade test" --description "upgrade test" --deposit 10 --upgrade-height [sidechain block height after more than 2 mins]`
+
+#### All nodes vote yes, same as [above](#all-nodes-vote-yes)
+
+#### Query proposal status after voting timeout (2 mins)
+- `sgncli query govern proposal 1 --config data/node0/config.json --home data/node0/sgncli`
+
+The sidechain will stop at the proposed block height
+
+#### Upgrade to the new version
+1. Stop containers: `go run localnet.go -stopall`
+2. Switch to the new code, add upgrade handler to app.go
+```go
+app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.Plan) {
+    // upgrade changes here
+    log.Info("upgrade to test")
+})
+```
+3. Rebuild images: `go run localnet.go -rebuild`
+4. Start new containers: `go run localnet.go -upall`
