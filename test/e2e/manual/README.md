@@ -101,4 +101,4 @@ app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.P
 4. Start new containers: `go run localnet.go -upall`
 
 #### Note to new validator node after upgrade
-New validator node who wants to join the sidechain after the upgrade should first run from genesis using the old code to replay transactions before upgrade, then switch to the new code the replay transactions after upgrade.
+New validator node who wants to join the sidechain after the upgrade should first run from genesis using the old code to replay transactions before upgrade, then switch to the new code to replay transactions after upgrade.
