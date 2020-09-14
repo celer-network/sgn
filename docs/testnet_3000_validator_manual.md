@@ -52,8 +52,7 @@ from a different directory, you can use the `--config` flag. Eg. `sgncli --confi
 cp genesis.json config.toml $HOME/.sgnd/config
 ```
 
-7. (Optional) Fill out the `moniker` field in `$HOME/.sgnd/config/config.toml` with the name of your
-validator.
+7. Fill out the `moniker` field in `$HOME/.sgnd/config/config.toml` with the name of your validator.
 
 8. Get the validator public key:
 
