@@ -85,19 +85,20 @@ The sidechain will stop at the proposed block height
 #### Upgrade to the new version
 1. Stop containers: `go run localnet.go -stopall`
 2. Switch to the new code, add upgrade handler to app.go
+   
    Example: if upgrade from [commit 1344abd](https://github.com/celer-network/sgn/tree/1344abd02183990f3f958fc3ae2b8ca148ee485f), use the following handler
 ```go
-	app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.Plan) {
-		// upgrade changes here
-		log.Info("upgrade to test")
-		vparams := validator.Params{
-			SyncerDuration: 10,
-			MiningReward:   sdk.NewInt(10000000000000),
-			PullerReward:   sdk.NewInt(500000000000),
-			EpochLength:    3,
-		}
-		app.validatorKeeper.SetParams(ctx, vparams)
-	})
+app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.Plan) {
+    // upgrade changes here
+    log.Info("upgrade to test")
+    vparams := validator.Params{
+        SyncerDuration: 10,
+        MiningReward:   sdk.NewInt(10000000000000),
+        PullerReward:   sdk.NewInt(500000000000),
+        EpochLength:    3,
+    }
+    app.validatorKeeper.SetParams(ctx, vparams)
+})
 ```
 3. Rebuild images: `go run localnet.go -rebuild`
 4. Update `config.json` and `genesis.json` if needed. 
