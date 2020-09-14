@@ -84,9 +84,7 @@ The sidechain will stop at the proposed block height
 
 #### Upgrade to the new version
 1. Stop containers: `go run localnet.go -stopall`
-2. Switch to the new code, add upgrade handler to app.go
-   
-   Example: if upgrade from [commit 1344abd](https://github.com/celer-network/sgn/tree/1344abd02183990f3f958fc3ae2b8ca148ee485f), use the following handler
+2. Switch to the new code, add upgrade handler to `app.go`. Example: if upgrade from [commit 1344abd](https://github.com/celer-network/sgn/tree/1344abd02183990f3f958fc3ae2b8ca148ee485f), use the following handler
 ```go
 app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.Plan) {
     // upgrade changes here
