@@ -132,7 +132,7 @@ It will take a while to complete the transactions on Ropsten.
 sgnops delegate --candidate <candidate-eth-address> --amount 10000
 ```
 
-`<candidate-eth-address>` is the ETH address obtained in step 10. It will take a while to complete
+`<candidate-eth-address>` is the ETH address obtained in step 11. It will take a while to complete
 the transactions on Ropsten.
 
 19. Note that it will take some time for the existing SGN validators to sync your new validator from
