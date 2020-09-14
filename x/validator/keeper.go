@@ -33,7 +33,7 @@ func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec,
 }
 
 // Get validators metadata
-func (k Keeper) GetValidators(ctx sdk.Context) []staking.Validator {
+func (k Keeper) GetBondedValidators(ctx sdk.Context) []staking.Validator {
 	return k.stakingKeeper.GetBondedValidatorsByPower(ctx)
 }
 
@@ -104,6 +104,11 @@ func (k Keeper) SetDelegator(ctx sdk.Context, delegator Delegator) {
 	store.Set(GetDelegatorKey(delegator.CandidateAddr, delegator.DelegatorAddr), k.cdc.MustMarshalBinaryBare(delegator))
 }
 
+func (k Keeper) RemoveDelegator(ctx sdk.Context, delegator Delegator) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetDelegatorKey(delegator.CandidateAddr, delegator.DelegatorAddr))
+}
+
 // Get the entire Candidate metadata
 func (k Keeper) GetCandidate(ctx sdk.Context, candidateAddr string) (candidate Candidate, found bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -161,43 +166,111 @@ func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 }
 
 // AddReward add reward to a specific ethAddress
-func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, amount sdk.Int, rewardType RewardType) {
+func (k Keeper) AddReward(ctx sdk.Context, ethAddress string, miningReward, serviceReward sdk.Int) {
 	reward, _ := k.GetReward(ctx, ethAddress)
-	switch rewardType {
-	case ServiceReward:
-		reward.ServiceReward = reward.ServiceReward.Add(amount)
-	case MiningReward:
-		reward.MiningReward = reward.MiningReward.Add(amount)
-	}
+	reward.MiningReward = reward.MiningReward.Add(miningReward)
+	reward.ServiceReward = reward.ServiceReward.Add(serviceReward)
 	k.SetReward(ctx, reward)
 }
 
-// DistributeServiceReward distributes rewards to candidates and their delegators
-func (k Keeper) DistributeReward(ctx sdk.Context, totalReward sdk.Int, rewardType RewardType) {
+func (k Keeper) distributeEpochReward(ctx sdk.Context) {
+	epoch := k.GetRewardEpoch(ctx)
+	if ctx.BlockHeight()-epoch.StartHeight < int64(k.EpochLength(ctx)) {
+		return
+	}
+
 	candidates := k.GetValidatorCandidates(ctx)
 	totalStake := sdk.ZeroInt()
 
 	for _, candidate := range candidates {
+		if !candidate.StakingPool.IsPositive() {
+			log.Errorln("invalid candidate staking pool", candidate.EthAddress)
+			return
+		}
 		totalStake = totalStake.Add(candidate.StakingPool)
+	}
+	if totalStake.IsZero() {
+		return
 	}
 
 	for _, candidate := range candidates {
-		candidateReward := totalReward.Mul(candidate.StakingPool).Quo(totalStake)
-		commission := candidate.CommissionRate.MulInt(candidateReward).RoundInt()
-		k.AddReward(ctx, candidate.EthAddress, commission, rewardType)
+		candidateMiningReward := epoch.MiningReward.Mul(candidate.StakingPool).Quo(totalStake)
+		candidateServiceReward := epoch.ServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
 
-		delegators := k.GetAllDelegators(ctx, candidate.EthAddress)
-		delegatorsReward := candidateReward.Sub(commission)
-		for _, delegator := range delegators {
-			rewardAmt := delegatorsReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
-			k.AddReward(ctx, delegator.DelegatorAddr, rewardAmt, rewardType)
-		}
+		pendingReward := k.GetPendingReward(ctx, candidate.EthAddress)
+		pendingReward.MiningReward = pendingReward.MiningReward.Add(candidateMiningReward)
+		pendingReward.ServiceReward = pendingReward.ServiceReward.Add(candidateServiceReward)
+		k.SetPendingReward(ctx, pendingReward)
 	}
+
+	k.ResetRewardEpoch(ctx)
+}
+
+func (k Keeper) distributeCandidateReward(ctx sdk.Context) {
+	cycleLen := k.EpochLength(ctx) * 2
+	validators := k.GetBondedValidators(ctx)
+	var idx uint
+	if uint(len(validators)) >= cycleLen {
+		idx = uint(ctx.BlockHeight()) % uint(len(validators))
+	} else {
+		skip := cycleLen/uint(len(validators)) + 1
+		if uint(ctx.BlockHeight())%skip != 0 {
+			return
+		}
+		idx = uint(ctx.BlockHeight()) / skip % uint(len(validators))
+	}
+	ethAddr := mainchain.FormatAddrHex(validators[idx].Description.Identity)
+	k.DistributeCandidatePendingReward(ctx, ethAddr)
+}
+
+func (k Keeper) DistributeCandidatePendingReward(ctx sdk.Context, ethAddress string) {
+	candidate, found := k.GetCandidate(ctx, ethAddress)
+	if !found {
+		log.Debugf("candidate %s not found", ethAddress)
+		return
+	}
+	pendingReward := k.GetPendingReward(ctx, ethAddress)
+	if pendingReward.IsZero() {
+		log.Debugf("candidate %s has no pending reward", ethAddress)
+		return
+	}
+	if !candidate.StakingPool.IsPositive() {
+		log.Debugln("candidate staking pool is empty", candidate.EthAddress)
+		k.ResetPendingReward(ctx, ethAddress)
+		return
+	}
+
+	miningCommission := sdk.ZeroInt()
+	serviceCommission := sdk.ZeroInt()
+	if pendingReward.MiningReward.IsPositive() {
+		miningCommission = candidate.CommissionRate.MulInt(pendingReward.MiningReward).RoundInt()
+	}
+	if pendingReward.ServiceReward.IsPositive() {
+		serviceCommission = candidate.CommissionRate.MulInt(pendingReward.ServiceReward).RoundInt()
+	}
+	k.AddReward(ctx, ethAddress, miningCommission, serviceCommission)
+
+	delegators := k.GetAllDelegators(ctx, ethAddress)
+	delegatorsMiningReward := pendingReward.MiningReward.Sub(miningCommission)
+	delegatorsServiceReward := pendingReward.ServiceReward.Sub(serviceCommission)
+	for _, delegator := range delegators {
+		miningReward := delegatorsMiningReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+		serviceReward := delegatorsServiceReward.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
+		k.AddReward(ctx, delegator.DelegatorAddr, miningReward, serviceReward)
+	}
+
+	k.ResetPendingReward(ctx, ethAddress)
+}
+
+// Distribute epoch rewards to all validators and delegators
+func (k Keeper) DistributeReward(ctx sdk.Context) {
+	k.distributeEpochReward(ctx)
+	k.distributeCandidateReward(ctx)
 }
 
 // GetValidatorCandidates get candidates info for current validators
 func (k Keeper) GetValidatorCandidates(ctx sdk.Context) (candidates []Candidate) {
-	validators := k.GetValidators(ctx)
+	validators := k.GetBondedValidators(ctx)
 
 	for _, validator := range validators {
 		ethAddr := mainchain.FormatAddrHex(validator.Description.Identity)
@@ -227,4 +300,61 @@ func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
 		account = k.accountKeeper.NewAccountWithAddress(ctx, accAddress)
 		k.accountKeeper.SetAccount(ctx, account)
 	}
+}
+
+func (k Keeper) GetRewardEpoch(ctx sdk.Context) (epoch RewardEpoch) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(RewardEpochKey) {
+		epoch = NewRewardEpoch(ctx.BlockHeight())
+		k.SetRewardEpoch(ctx, epoch)
+		return
+	}
+
+	value := store.Get(RewardEpochKey)
+	k.cdc.MustUnmarshalBinaryBare(value, &epoch)
+	return
+}
+
+func (k Keeper) SetRewardEpoch(ctx sdk.Context, epoch RewardEpoch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(RewardEpochKey, k.cdc.MustMarshalBinaryBare(epoch))
+}
+
+func (k Keeper) ResetRewardEpoch(ctx sdk.Context) {
+	k.SetRewardEpoch(ctx, NewRewardEpoch(ctx.BlockHeight()))
+}
+
+func (k Keeper) AddEpochMiningReward(ctx sdk.Context, amount sdk.Int) {
+	epoch := k.GetRewardEpoch(ctx)
+	epoch.MiningReward = epoch.MiningReward.Add(amount)
+	k.SetRewardEpoch(ctx, epoch)
+}
+
+func (k Keeper) AddEpochServiceReward(ctx sdk.Context, amount sdk.Int) {
+	epoch := k.GetRewardEpoch(ctx)
+	epoch.ServiceReward = epoch.ServiceReward.Add(amount)
+	k.SetRewardEpoch(ctx, epoch)
+}
+
+func (k Keeper) GetPendingReward(ctx sdk.Context, ethAddress string) (pendingReward PendingReward) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(GetPendingRewardKey(ethAddress)) {
+		pendingReward = NewPendingReward(ethAddress)
+		return
+	}
+
+	value := store.Get(GetPendingRewardKey(ethAddress))
+	k.cdc.MustUnmarshalBinaryBare(value, &pendingReward)
+	return
+}
+
+func (k Keeper) SetPendingReward(ctx sdk.Context, pendingReward PendingReward) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetPendingRewardKey(pendingReward.CandidateAddr), k.cdc.MustMarshalBinaryBare(pendingReward))
+}
+
+func (k Keeper) ResetPendingReward(ctx sdk.Context, ethAddress string) {
+	k.SetPendingReward(ctx, NewPendingReward(ethAddress))
 }

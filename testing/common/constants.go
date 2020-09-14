@@ -30,10 +30,10 @@ const (
 var (
 	SgnCLIHomes    = [...]string{"../../../docker-volumes/node0/sgncli", "../../../docker-volumes/node1/sgncli", "../../../docker-volumes/node2/sgncli"}
 	ValAccounts    = [...]string{"sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk", "sgn1egtta7su5jxjahtw56pe07qerz4lwvrlttac6y", "sgn19q9usqmjcmx8vynynfl5tj5n2k22gc5f6wjvd7"}
-	ValEthKs       = [...]string{"../../keys/ethks0.json", "../../keys/ethks1.json", "../../keys/ethks2.json"}
-	ValEthAddrs    = [...]string{"6a6d2a97da1c453a4e099e8054865a0a59728863", "ba756d65a1a03f07d205749f35e2406e4a8522ad", "f25d8b54fad6e976eb9175659ae01481665a2254"}
-	ClientEthKs    = [...]string{"../../keys/ethks3.json", "../../keys/ethks4.json"}
-	ClientEthAddrs = [...]string{"cb409caa43e385288d6bff2c3a0635688c7b3294", "75e912af38888643829380fa9f2c4019f5710ff5"}
+	ValEthKs       = [...]string{"../../keys/vethks0.json", "../../keys/vethks1.json", "../../keys/vethks2.json"}
+	ValEthAddrs    = [...]string{"00078b31fa8b29a76bce074b5ea0d515a6aeaee7", "0015f5863ddc59ab6610d7b6d73b2eacd43e6b7e", "00290a43e5b2b151d530845b2d5a818240bc7c70"}
+	ClientEthKs    = [...]string{"../../keys/cethks0.json", "../../keys/cethks1.json"}
+	ClientEthAddrs = [...]string{"c06fdd796e140aee53de5111607e8ded93ebdca3", "c1699e89639adda8f39faefc0fc294ee5c3b462d"}
 
 	// used by local manual tests
 	SgnNodeURIs = [...]string{"tcp://localhost:26657", "tcp://localhost:26660", "tcp://localhost:26662"}
