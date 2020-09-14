@@ -1,8 +1,7 @@
 package gov
 
 import (
-	"fmt"
-
+	"github.com/celer-network/goutils/log"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -29,9 +28,7 @@ func handleParameterProposal(ctx sdk.Context, k params.Keeper, p govtypes.Parame
 			return sdkerrors.Wrap(params.ErrUnknownSubspace, c.Subspace)
 		}
 
-		k.Logger(ctx).Info(
-			fmt.Sprintf("attempt to set new parameter value; key: %s, value: %s", c.Key, c.Value),
-		)
+		log.Infof("attempt to set new parameter value; key: %s, value: %s", c.Key, c.Value)
 
 		if err := ss.Update(ctx, []byte(c.Key), []byte(c.Value)); err != nil {
 			return sdkerrors.Wrapf(params.ErrSettingParameter, "key: %s, value: %s, err: %s", c.Key, c.Value, err.Error())

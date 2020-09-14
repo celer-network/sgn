@@ -15,50 +15,12 @@ import (
 )
 
 var (
-	initiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
-	slashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
+	InitiateWithdrawRewardEvent = fmt.Sprintf("%s.%s='%s'", validator.ModuleName, sdk.AttributeKeyAction, validator.ActionInitiateWithdraw)
+	SlashEvent                  = fmt.Sprintf("%s.%s='%s'", slash.EventTypeSlash, sdk.AttributeKeyAction, slash.ActionPenalty)
 )
 
-func (m *Monitor) monitorSidechainWithdrawReward() {
-	m.monitorTendermintEvent(initiateWithdrawRewardEvent, func(e abci.Event) {
-		if !m.isBonded() {
-			return
-		}
-
-		event := sdk.StringifyEvent(e)
-		if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
-			m.handleInitiateWithdrawReward(event.Attributes[1].Value)
-		}
-	})
-}
-
-func (m *Monitor) monitorSidechainSlash() {
-	m.monitorTendermintEvent(slashEvent, func(e abci.Event) {
-		if !m.isBonded() {
-			return
-		}
-
-		event := sdk.StringifyEvent(e)
-
-		if event.Attributes[0].Value == slash.ActionPenalty {
-			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
-			if err != nil {
-				log.Errorln("Parse penalty nonce error", err)
-				return
-			}
-
-			penaltyEvent := NewPenaltyEvent(nonce)
-			m.handlePenalty(penaltyEvent)
-			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
-			if err != nil {
-				log.Errorln("db Set err", err)
-			}
-		}
-	})
-}
-
-func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event abci.Event)) {
-	client, err := http.New(m.Transactor.CliCtx.NodeURI, "/websocket")
+func MonitorTendermintEvent(nodeURI, eventTag string, handleEvent func(event abci.Event)) {
+	client, err := http.New(nodeURI, "/websocket")
 	if err != nil {
 		log.Errorln("Fail to start create http client", err)
 		return
@@ -92,6 +54,44 @@ func (m *Monitor) monitorTendermintEvent(eventTag string, handleEvent func(event
 			}
 		}
 	}
+}
+
+func (m *Monitor) monitorSidechainWithdrawReward() {
+	MonitorTendermintEvent(m.Transactor.CliCtx.NodeURI, InitiateWithdrawRewardEvent, func(e abci.Event) {
+		if !m.isBonded() {
+			return
+		}
+
+		event := sdk.StringifyEvent(e)
+		if event.Attributes[0].Value == validator.ActionInitiateWithdraw {
+			m.handleInitiateWithdrawReward(event.Attributes[1].Value)
+		}
+	})
+}
+
+func (m *Monitor) monitorSidechainSlash() {
+	MonitorTendermintEvent(m.Transactor.CliCtx.NodeURI, SlashEvent, func(e abci.Event) {
+		if !m.isBonded() {
+			return
+		}
+
+		event := sdk.StringifyEvent(e)
+
+		if event.Attributes[0].Value == slash.ActionPenalty {
+			nonce, err := strconv.ParseUint(event.Attributes[1].Value, 10, 64)
+			if err != nil {
+				log.Errorln("Parse penalty nonce error", err)
+				return
+			}
+
+			penaltyEvent := NewPenaltyEvent(nonce)
+			m.handlePenalty(penaltyEvent)
+			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+			if err != nil {
+				log.Errorln("db Set err", err)
+			}
+		}
+	})
 }
 
 func (m *Monitor) handleInitiateWithdrawReward(ethAddr string) {

@@ -8,7 +8,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	tc "github.com/celer-network/sgn/testing/common"
 	govtypes "github.com/celer-network/sgn/x/gov/types"
-	"github.com/celer-network/sgn/x/guard"
+	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -52,9 +52,9 @@ func govTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 1)
 
 	log.Info("======================== Test change epochlengh passed ===========================")
-	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"3\"")}
+	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"2\"")}
 	content := govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
-	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(0), transactor.Key.GetAddress())
+	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.ZeroInt(), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 
 	proposalID := uint64(1)
@@ -75,12 +75,12 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusPassed)
 	require.NoError(t, err, "failed to query proposal 1 with passed status")
 
-	guardParams, err := guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should be updated to 3")
+	validatorParams, err := validator.CLIQueryParams(transactor.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(2), validatorParams.EpochLength, "EpochLength params should be updated to 2")
 
 	log.Info("======================== Test change epochlengh rejected ===========================")
-	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("guard", "EpochLength", "\"5\"")}
+	paramChanges = []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"5\"")}
 	content = govtypes.NewParameterProposal("Guard Param Change", "Update EpochLength", paramChanges)
 	submitProposalmsg = govtypes.NewMsgSubmitProposal(content, sdk.NewInt(2), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
@@ -96,7 +96,7 @@ func govTest(t *testing.T) {
 	proposal, err = tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusRejected)
 	require.NoError(t, err, "failed to query proposal 2 with rejected status")
 
-	guardParams, err = guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
-	require.NoError(t, err, "failed to query guard params")
-	assert.Equal(t, uint64(3), guardParams.EpochLength, "EpochLength params should stay 3")
+	validatorParams, err = validator.CLIQueryParams(transactor.CliCtx, validator.RouterKey)
+	require.NoError(t, err, "failed to query validator params")
+	assert.Equal(t, uint(2), validatorParams.EpochLength, "EpochLength params should stay 2")
 }

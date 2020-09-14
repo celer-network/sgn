@@ -46,9 +46,9 @@ go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinod
 3. Add upgrade handler to app.go, after the chain halts
 
 ```go
-app.upgradeKeeper.SetUpgradeHandler("tesy", func(ctx sdk.Context, plan upgrade.Plan) {
+app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.Plan) {
 // upgrade changes here
-log.Infof("upgrade to tesy")
+log.Infof("upgrade to test")
 })
 ```
 
