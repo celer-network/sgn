@@ -1,5 +1,8 @@
 # Testnet 3000 Test User Manual
 
+**Note: This manual assumes familiarity with Unix command line and a basic understanding of how
+Ethereum and Celer state channels work.**
+
 1. Clone the `sgn` repository and install the `sgnops` binary:
 
 ```shellscript
@@ -64,7 +67,7 @@ to retry manually.
    sends the state to SGN to be guarded.
 
 ```shellscript
-curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'
+curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "10" }'
 ```
 
 11. Check if the subscription succeeded:
@@ -76,7 +79,7 @@ curl http://sgntest.celer.network:1317/guard/request/<channel-id>/<peer1-address
 12. Now let `peer2` try to maliciously settle the channel with sequence number 9:
 
 ```shellscript
-curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'
+curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seq_num": "9" }'
 ```
 
 13. Check if the SGN guards the channel successfully:
@@ -85,4 +88,4 @@ curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'
 curl http://127.0.0.1:1317/channelInfo
 ```
 
-If so, `seqNum` should be 10. Note that it can take a few minutes for this to happen.
+If so, `seq_num` should be 10. Note that it can take a few minutes for this to happen.

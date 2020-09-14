@@ -1,5 +1,8 @@
 # Testnet 3000 Validator Manual
 
+**Note: This manual assumes familiarity with Unix command line and blockchain validator nodes.
+Prior experience with Cosmos SDK will be helpful.**
+
 1. Pick a Linux machine with a minimum of 1GB RAM (2GB recommended). Make sure you have go
    (version 1.14), gcc, make, git and libleveldb-dev installed. **NOTE: go1.15 seems to have an
    issue with the keyring library Cosmos SDK depends on. We are still investigating it.**
@@ -30,16 +33,7 @@ sgnd init <validator-name> --chain-id sgn-testnet-3000
 
 `<validator-name>` can be any name of your choice.
 
-5. Populate `$HOME/.sgncli/config.toml` with Cosmos SDK configs for the CLI:
-
-```shellscript
-sgncli config chain-id sgn-testnet-3000
-sgncli config output json
-sgncli config indent true
-sgncli config trust-node true
-```
-
-6. Clone the `sgn-testnets` repository:
+5. Clone the `sgn-testnets` repository:
 
 ```shellscript
 git clone https://github.com/celer-network/sgn-testnets
@@ -48,11 +42,18 @@ git checkout master
 cd 3000
 ```
 
-7. Copy the `genesis.json` to the validator node directory:
+You will notice a `config.json` file in the directory. Unless otherwise specified, all the `sgnd` and
+`sgncli` commands in the following steps are run from the `3000` directory. If you would like to run
+from a different directory, you can use the `--config` flag. Eg. `sgncli --config <path-to-config.json> <cmd>`.
+
+6. Copy the `genesis.json` and `config.toml` files to the validator node directory:
 
 ```shellscript
-cp genesis.json $HOME/.sgnd/config
+cp genesis.json config.toml $HOME/.sgnd/config
 ```
+
+7. (Optional) Fill out the `moniker` field in `$HOME/.sgnd/config/config.toml` with the name of your
+validator.
 
 8. Get the validator public key:
 
@@ -108,7 +109,7 @@ geth account new --lightkdf --keystore <path-to-keystore-folder>
 15. Start the validator and redirect the output to a log file:
 
 ```shellscript
-sgnd start > sgnd.log 2>&1
+sgnd start --config <path-to-config.json> > sgnd.log 2>&1
 ```
 
 It will take a while to sync the node.
@@ -148,7 +149,7 @@ which is 10000 Ropsten CELR denominated in wei.
 20. Verify your validator is in the SGN validator set:
 
 ```shellscript
-sgncli query validator validator <validator-account-address>
+sgncli query validator validator <validator-account-address> --trust-node
 ```
 
 `<validator-account-address>` is the sgn-prefixed address obtained in step 9. You should see your
@@ -169,7 +170,7 @@ validator still doesn't show up, please **contact us** on [Discord](https://disc
 22. Verify your validator is in the Tendermint validator set:
 
 ```shellscript
-sgncli query tendermint-validator-set
+sgncli query tendermint-validator-set --trust-node
 ```
 
 You should see an entry with `pub_key` matching the `consensus_pubkey` obtained in step 20.
