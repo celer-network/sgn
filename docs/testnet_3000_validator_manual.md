@@ -42,9 +42,10 @@ git checkout master
 cd 3000
 ```
 
-You will notice a `config.json` file in the directory. Unless otherwise specified, all the `sgnd` and
-`sgncli` commands in the following steps are run from the `3000` directory. If you would like to run
-from a different directory, you can use the `--config` flag. Eg. `sgncli --config <path-to-config.json> <cmd>`.
+You will notice a `config.json` file in the directory. Unless otherwise specified, all the `sgnd`
+and `sgncli` commands in the following steps are run from the `3000` directory. If you would like to
+run `sgncli` from a different directory, you can use the `--config` flag. Eg.
+`sgncli --config <path-to-config.json> <cmd>`.
 
 6. Copy the `genesis.json` and `config.toml` files to the validator node directory:
 
@@ -108,7 +109,7 @@ geth account new --lightkdf --keystore <path-to-keystore-folder>
 15. Start the validator and redirect the output to a log file:
 
 ```shellscript
-sgnd start --config <path-to-config.json> > sgnd.log 2>&1
+sgnd start > sgnd.log 2>&1
 ```
 
 It will take a while to sync the node.
