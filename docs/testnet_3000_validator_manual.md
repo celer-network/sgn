@@ -10,7 +10,7 @@ Prior experience with Cosmos SDK will be helpful.**
 2. Make sure you set \$GOBIN and add \$GOBIN to \$PATH. Eg:
 
 ```shellscript
-export GOBIN=~/go/bin;export GOPATH=~/go;export PATH=$PATH:\$GOBIN
+export GOBIN=~/go/bin;export GOPATH=~/go;export PATH=$PATH:$GOBIN
 ```
 
 Your actual paths might be different.
