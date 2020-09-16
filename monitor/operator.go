@@ -86,8 +86,9 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 		} else if o.EthClient.Address != candidateAddr {
 			log.Debugf("Candidate %x %s is not a validator on sidechain yet, sync candidate only", candidateAddr, candidate.ValAccount)
 			candidateOnly = true
+		} else {
+			selfInit = true
 		}
-		selfInit = true
 	}
 
 	candidateInfo, err := o.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, candidateAddr)

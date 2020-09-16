@@ -123,7 +123,8 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	if !found {
 		if newVal.Status == sdk.Bonded {
 			if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-				return false, fmt.Errorf("Bonded validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
+				log.Infof("Bonded validator %s not initialized, msg sender: %s", candidate.ValAccount, change.Initiator)
+				return false, nil
 			}
 
 			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
@@ -131,7 +132,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 		} else if newVal.Status == sdk.Unbonding {
 			return false, fmt.Errorf("Unbonding validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
 		} else {
-			log.Infof("Candidate %s not unbonded", candidate.ValAccount)
+			log.Debugf("Candidate %s not bonded", candidate.ValAccount)
 			return false, nil
 		}
 	}
