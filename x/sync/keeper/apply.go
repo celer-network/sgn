@@ -115,24 +115,24 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 
 	newVal.Tokens = newVal.Tokens.QuoRaw(common.TokenDec)
-	log.Infof("Apply sync validator %s ethaddr %x status %s token %s commission rate %s",
-		candidate.ValAccount, mainchain.Hex2Addr(ethAddr), newVal.Status, newVal.Tokens, newVal.Commission.Rate)
+	log.Infof("Apply sync validator %s ethaddr %s status %s token %s commission rate %s",
+		candidate.ValAccount, ethAddr, newVal.Status, newVal.Tokens, newVal.Commission.Rate)
 
 	valAddress := sdk.ValAddress(candidate.ValAccount)
 	validator, found := keeper.stakingKeeper.GetValidator(ctx, valAddress)
 	if !found {
 		if newVal.Status == sdk.Bonded {
 			if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
-				log.Infof("Bonded validator %s not initialized, msg sender: %s", candidate.ValAccount, change.Initiator)
+				log.Infof("Bonded validator %s %s not initialized, msg sender: %s", candidate.ValAccount, ethAddr, change.Initiator)
 				return false, nil
 			}
 			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 		} else if newVal.Status == sdk.Unbonding {
-			log.Warnf("Unbonding validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
+			log.Warnf("Unbonding validator %s %s not found, msg sender: %s", candidate.ValAccount, ethAddr, change.Initiator)
 			return false, nil
 		} else {
-			log.Debugf("Candidate %s not bonded", candidate.ValAccount)
+			log.Debugf("Candidate %s %s not bonded", candidate.ValAccount, ethAddr)
 			return false, nil
 		}
 	}
@@ -151,7 +151,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	} else if validator.Status == sdk.Unbonded {
-		log.Infof("remove validator %s %s %x", valAddress, candidate.ValAccount, mainchain.Hex2Addr(ethAddr))
+		log.Infof("remove validator %s %s %s", valAddress, candidate.ValAccount, ethAddr)
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	} else if validator.Status == sdk.Unbonding {
 		keeper.validatorKeeper.DistributeCandidatePendingReward(ctx, ethAddr)
