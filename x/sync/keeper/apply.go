@@ -126,11 +126,11 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 				log.Infof("Bonded validator %s not initialized, msg sender: %s", candidate.ValAccount, change.Initiator)
 				return false, nil
 			}
-
 			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 		} else if newVal.Status == sdk.Unbonding {
-			return false, fmt.Errorf("Unbonding validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
+			log.Warnf("Unbonding validator %s not found, msg sender: %s", candidate.ValAccount, change.Initiator)
+			return false, nil
 		} else {
 			log.Debugf("Candidate %s not bonded", candidate.ValAccount)
 			return false, nil
