@@ -96,7 +96,7 @@ func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (bool, bool) {
 
 	if !paramChange.NewValue.Equal(sdk.NewIntFromBigInt(paramValue)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. new value not match mainchain value: %s", logmsg, paramValue)
+			log.Warnf("%s. new value not match mainchain value: %s", logmsg, paramValue)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, value: %s", logmsg, paramValue)
@@ -135,7 +135,7 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 
 	if !candidate.ValAccount.Equals(acctAddr) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. validator account not match mainchain value: %s", logmsg, acctAddr)
+			log.Warnf("%s. validator account not match mainchain value: %s", logmsg, acctAddr)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, validator account: %s", logmsg, acctAddr)
@@ -168,7 +168,7 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 
 	if delegator.DelegatedStake.BigInt().Cmp(di.DelegatedStake) != 0 {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. stake not match mainchain value: %s", logmsg, di.DelegatedStake)
+			log.Warnf("%s. stake not match mainchain value: %s", logmsg, di.DelegatedStake)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, stake: %s", logmsg, di.DelegatedStake)
@@ -212,7 +212,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 
 	if !newVal.Status.Equal(mainchain.ParseStatus(ci)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. status not match mainchain value: %s", logmsg, mainchain.ParseStatus(ci))
+			log.Warnf("%s. status not match mainchain value: %s", logmsg, mainchain.ParseStatus(ci))
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, status: %s", logmsg, mainchain.ParseStatus(ci))
@@ -221,7 +221,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 
 	if !newVal.Tokens.Equal(sdk.NewIntFromBigInt(ci.StakingPool)) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. staking pool not match mainchain value: %s", logmsg, ci.StakingPool)
+			log.Warnf("%s. staking pool not match mainchain value: %s", logmsg, ci.StakingPool)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, token: %s", logmsg, ci.StakingPool)
@@ -236,7 +236,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 
 	if !newVal.Commission.Rate.Equal(commission.Rate) {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. commission not match mainchain value: %s", logmsg, commission.Rate)
+			log.Warnf("%s. commission not match mainchain value: %s", logmsg, commission.Rate)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, commission: %s", logmsg, commission.Rate)
@@ -261,7 +261,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 
 	if subscription.Deposit.BigInt().Cmp(deposit) != 0 {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. deposit not match mainchain value: %s", logmsg, deposit)
+			log.Warnf("%s. deposit not match mainchain value: %s", logmsg, deposit)
 			return true, false
 		}
 		log.Infof("%s. mainchain block not passed, deposit: %s", logmsg, deposit)
