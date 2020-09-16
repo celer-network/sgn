@@ -105,12 +105,12 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.ValAccount, err)
 			return false
 		}
-		if candidateInfo.Status.Uint64() == mainchain.Unbonding {
-			log.Errorf("Candidate %x %s is unbonding but not found on sidechain ", candidateAddr, candidate.ValAccount)
-			return true
-		}
-		if candidateInfo.Status.Uint64() == mainchain.Unbonded {
-			log.Debugf("Candidate %x %s is unbonded", candidateAddr, candidate.ValAccount)
+		if candidateInfo.Status.Uint64() == mainchain.Unbonded || candidateInfo.Status.Uint64() == mainchain.Unbonding {
+			if candidateInfo.Status.Uint64() == mainchain.Unbonded {
+				log.Debugf("Candidate %x %s is unbonded", candidateAddr, candidate.ValAccount)
+			} else {
+				log.Warnf("Candidate %x %s is unbonding but not found on sidechain ", candidateAddr, candidate.ValAccount)
+			}
 			if newVal.Tokens.Equal(candidate.StakingPool) && newVal.Commission.Rate.Equal(candidate.CommissionRate) {
 				log.Debugf("candidate %x is already updated", candidateAddr)
 				return true
@@ -130,7 +130,6 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 			log.Errorln("GetConsPubKeyBech32 err:", err)
 			return false
 		}
-
 		newVal.ConsPubKey = pk
 	}
 
