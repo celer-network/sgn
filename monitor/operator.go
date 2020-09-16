@@ -69,25 +69,12 @@ func (o *Operator) SyncUpdateSidechainAddr(candidateAddr mainchain.Addr) {
 	o.Transactor.AddTxMsg(msg)
 }
 
-// return true if already updated
+// return true if already updated or no need for retry
 func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 	candidate, err := validator.CLIQueryCandidate(o.Transactor.CliCtx, validator.RouterKey, candidateAddr.Hex())
 	if err != nil {
 		log.Errorln("sidechain query candidate err:", err)
 		return false
-	}
-
-	var selfInit, candidateOnly bool
-	storedVal, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
-	if err != nil {
-		if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
-			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.ValAccount, err)
-			return false
-		} else if o.EthClient.Address != candidateAddr {
-			log.Debugf("Candidate %x %s is not a validator on sidechain yet, sync candidate only", candidateAddr, candidate.ValAccount)
-			candidateOnly = true
-		}
-		selfInit = true
 	}
 
 	candidateInfo, err := o.EthClient.DPoS.GetCandidateInfo(&bind.CallOpts{}, candidateAddr)
@@ -111,21 +98,30 @@ func (o *Operator) SyncValidator(candidateAddr mainchain.Addr) bool {
 		Commission: commission,
 	}
 
-	if !(selfInit || candidateOnly) {
-		if newVal.Status.Equal(storedVal.Status) &&
-			newVal.Tokens.QuoRaw(common.TokenDec).Equal(storedVal.Tokens) &&
-			newVal.Tokens.Equal(candidate.StakingPool) &&
-			newVal.Commission.Rate.Equal(storedVal.Commission.Rate) {
-			log.Debugf("validator %x is already updated", candidateAddr)
+	storedVal, err := validator.CLIQueryValidator(o.Transactor.CliCtx, staking.RouterKey, candidate.ValAccount.String())
+	if err != nil {
+		// validator not found on sidechain
+		if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+			log.Errorf("CLIQueryValidator %x %s, err: %s", candidateAddr, candidate.ValAccount, err)
+			return false
+		}
+		if candidateInfo.Status.Uint64() == mainchain.Unbonding {
+			log.Errorf("Candidate %x %s is unbonding but not found on sidechain ", candidateAddr, candidate.ValAccount)
 			return true
 		}
-	}
-
-	if candidateOnly {
-		if newVal.Tokens.Equal(candidate.StakingPool) && newVal.Commission.Rate.Equal(candidate.CommissionRate) {
-			log.Debugf("candidate %x is already updated", candidateAddr)
-			return true
+		if candidateInfo.Status.Uint64() == mainchain.Unbonded {
+			log.Debugf("Candidate %x %s is unbonded", candidateAddr, candidate.ValAccount)
+			if newVal.Tokens.Equal(candidate.StakingPool) && newVal.Commission.Rate.Equal(candidate.CommissionRate) {
+				log.Debugf("candidate %x is already updated", candidateAddr)
+				return true
+			}
 		}
+	} else if newVal.Status.Equal(storedVal.Status) &&
+		newVal.Tokens.QuoRaw(common.TokenDec).Equal(storedVal.Tokens) &&
+		newVal.Tokens.Equal(candidate.StakingPool) &&
+		newVal.Commission.Rate.Equal(storedVal.Commission.Rate) {
+		log.Debugf("validator %x is already updated", candidateAddr)
+		return true
 	}
 
 	if o.EthClient.Address == candidateAddr {
