@@ -76,12 +76,16 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		panic(err)
 	}
 
+	gasAdjustment := viper.GetFloat64(common.FlagSgnGasAdjustment)
+	if gasAdjustment == 0 {
+		gasAdjustment = common.DefaultGasAdjustment
+	}
 	txBldr := types.NewTxBuilder(
 		utils.GetTxEncoder(cdc),
 		viper.GetUint64(flags.FlagAccountNumber),
 		viper.GetUint64(flags.FlagSequence),
 		flags.GasFlagVar.Gas,
-		flags.DefaultGasAdjustment,
+		gasAdjustment,
 		flags.GasFlagVar.Simulate,
 		chainID,
 		viper.GetString(flags.FlagMemo),

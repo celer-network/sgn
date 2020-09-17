@@ -37,10 +37,15 @@ const (
 	FlagSgnBaseGasPrice     = "sgn.base_gas_price"
 	FlagSgnTimeoutCommit    = "sgn.timeout_commit"
 	FlagSgnKeyringBackend   = "sgn.keyring_backend"
+	FlagSgnGasAdjustment    = "sgn.gas_adjustment"
 	FlagSgnExecuteSlash     = "sgn.execute_slash"
 
 	FlagLogLevel = "log.level"
 	FlagLogColor = "log.color"
+)
+
+const (
+	DefaultGasAdjustment = 1.15
 )
 
 func PostCommands(cmds ...*cobra.Command) []*cobra.Command {
