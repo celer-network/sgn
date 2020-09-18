@@ -213,7 +213,7 @@ func getProposalCommand() *cobra.Command {
 				return err
 			}
 			if checkVotes {
-				fmt.Println("\n---- vote stats based on current validator set ----")
+				fmt.Println("\n---- vote stats based on current staking info ----")
 				yesVoters, noVoters, yesStakes, totalStakes, quorumStakes, err2 := ethClient.GetParamProposalVotes(int64(id))
 				if err2 != nil {
 					return err2
