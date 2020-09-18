@@ -121,13 +121,15 @@ Checkout `sgnops gov --help` to see available commands.
 
 4. **All node vote yes**
 
-   `sgnops gov vote-param-proposal 0 yes --config data/node0/config.json --home data/node0/sgncli`
-   `sgnops gov vote-param-proposal 0 yes --config data/node1/config.json --home data/node1/sgncli`
-   `sgnops gov vote-param-proposal 0 yes --config data/node2/config.json --home data/node2/sgncli`
+    `sgnops gov vote-param-proposal 0 yes --config data/node0/config.json --home data/node0/sgncli`
+ 
+    `sgnops gov vote-param-proposal 0 yes --config data/node1/config.json --home data/node1/sgncli`
+ 
+    `sgnops gov vote-param-proposal 0 yes --config data/node2/config.json --home data/node2/sgncli`
 
 5. **Query proposal and vote stats**
 
-    `sgnops gov get-param-proposal --check-vote --config data/node0/config.json --home data/node0/sgncli`
+    `sgnops gov get-param-proposal --check-votes --config data/node0/config.json --home data/node0/sgncli`
 
 6. **Confirm proposal after voting deadline**
 
