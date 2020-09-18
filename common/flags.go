@@ -1,8 +1,6 @@
 package common
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,23 +35,23 @@ const (
 	FlagSgnBaseGasPrice     = "sgn.base_gas_price"
 	FlagSgnTimeoutCommit    = "sgn.timeout_commit"
 	FlagSgnKeyringBackend   = "sgn.keyring_backend"
+	FlagSgnGasAdjustment    = "sgn.gas_adjustment"
 	FlagSgnExecuteSlash     = "sgn.execute_slash"
 
 	FlagLogLevel = "log.level"
 	FlagLogColor = "log.color"
 )
 
+const (
+	DefaultSgnGasAdjustment = 1.2
+	DefaultSgnGasLimit      = 300000
+)
+
 func PostCommands(cmds ...*cobra.Command) []*cobra.Command {
 	for _, c := range cmds {
 		c.Flags().Bool(flags.FlagIndentResponse, false, "Add indent to JSON response")
 		c.Flags().Bool(flags.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
-		c.Flags().Bool(flags.FlagDryRun, false, "ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it")
 
-		// --gas can accept integers and "simulate"
-		c.Flags().Var(&flags.GasFlagVar, "gas", fmt.Sprintf(
-			"gas limit to set per-transaction; set to %q to calculate required gas automatically (default %d)",
-			flags.GasFlagAuto, flags.DefaultGasLimit,
-		))
 		viper.BindPFlag(flags.FlagTrustNode, c.Flags().Lookup(flags.FlagTrustNode))
 
 		c.SetErr(c.ErrOrStderr())
