@@ -29,7 +29,6 @@ sgncli query guard [flags]
 ### SEE ALSO
 
 * [sgncli query](sgncli_query.md)	 - Querying subcommands
-* [sgncli query guard epoch](sgncli_query_guard_epoch.md)	 - query epoch info by epochId
 * [sgncli query guard params](sgncli_query_guard_params.md)	 - Query the current guard parameters information
 * [sgncli query guard request](sgncli_query_guard_request.md)	 - query request info associated with the channelId
 * [sgncli query guard subscription](sgncli_query_guard_subscription.md)	 - query subscription info associated with the eth address
