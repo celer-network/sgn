@@ -45,7 +45,7 @@ const (
 )
 
 const (
-	DefaultGasAdjustment = 1.15
+	DefaultGasAdjustment = 1.2
 )
 
 func PostCommands(cmds ...*cobra.Command) []*cobra.Command {
