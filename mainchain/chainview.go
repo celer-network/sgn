@@ -25,7 +25,7 @@ type ParamProposal struct {
 
 // return validators, totalStakes, quorumStakes
 func (ethClient *EthClient) GetValidators() (map[Addr]*ValidatorInfo, *big.Int, *big.Int, error) {
-	maxValidatorNum, err := ethClient.GetMaxValidatorNum()
+	maxValidatorNum, err := ethClient.GetUIntValue(MaxValidatorNum)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Get maxValidatorNum err: %w", err)
 	}
@@ -123,40 +123,8 @@ func (ethClient *EthClient) GetParamProposalVotes(id int64) ([]Addr, []Addr, *bi
 	return yesVoters, noVoters, yesStakes, totalStakes, quorumStakes, nil
 }
 
-func (ethClient *EthClient) GetProposalDeposit() (uint64, error) {
-	return ethClient.GetUIntValue(ProposalDeposit)
-}
-
-func (ethClient *EthClient) GetGovernVoteTimeout() (uint64, error) {
-	return ethClient.GetUIntValue(GovernVoteTimeout)
-}
-
-func (ethClient *EthClient) GetSlashTimeout() (uint64, error) {
-	return ethClient.GetUIntValue(SlashTimeout)
-}
-
-func (ethClient *EthClient) GetMinValidatorNum() (uint64, error) {
-	return ethClient.GetUIntValue(MinValidatorNum)
-}
-
-func (ethClient *EthClient) GetMaxValidatorNum() (uint64, error) {
-	return ethClient.GetUIntValue(MaxValidatorNum)
-}
-
-func (ethClient *EthClient) GetMinStakeInPool() (uint64, error) {
-	return ethClient.GetUIntValue(MinStakeInPool)
-}
-
-func (ethClient *EthClient) GetAdvanceNoticePeriod() (uint64, error) {
-	return ethClient.GetUIntValue(AdvanceNoticePeriod)
-}
-
-func (ethClient *EthClient) GetMigrationTime() (uint64, error) {
-	return ethClient.GetUIntValue(MigrationTime)
-}
-
-func (ethClient *EthClient) GetUIntValue(valtype int64) (uint64, error) {
-	res, err := ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(valtype))
+func (ethClient *EthClient) GetUIntValue(paramId uint64) (uint64, error) {
+	res, err := ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(int64(paramId)))
 	if err != nil {
 		return 0, err
 	}

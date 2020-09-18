@@ -2,41 +2,19 @@ package ops
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 const (
-	proposalDepositFlag     = "proposal-deposit"
-	voteTimeoutFlag         = "vote-timeout"
-	slashTimeoutFlag        = "slash-timeout"
-	minValidatorNumFlag     = "min-validator-num"
-	maxValidatorNumFlag     = "max-validator-num"
-	minStakeInPoolFlag      = "min-stake-in-Pool"
-	advanceNoticePeriodFlag = "advance-notice-period"
-	migrationTimeFlag       = "migration-time"
-	allParamsFlag           = "all-params"
-	proposalIdFlag          = "proposal-id"
-	checkVotesFlag          = "check-votes"
+	proposalIdFlag = "proposal-id"
+	checkVotesFlag = "check-votes"
 )
-
-func flagSetGovParams() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	fs.Bool(proposalDepositFlag, false, "proposal deposit")
-	fs.Bool(voteTimeoutFlag, false, "vote timeout")
-	fs.Bool(slashTimeoutFlag, false, "slash timeout")
-	fs.Bool(minValidatorNumFlag, false, "minimal validator num")
-	fs.Bool(maxValidatorNumFlag, false, "maximal validator num")
-	fs.Bool(minStakeInPoolFlag, false, "minimal stakes to become a validator")
-	fs.Bool(advanceNoticePeriodFlag, false, "advance notice period")
-	fs.Bool(migrationTimeFlag, false, "migration time")
-	return fs
-}
 
 func GovCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,12 +35,11 @@ func createParamProposalCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-param-proposal",
 		Short: "create parameter change proposal",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
 	}
-	cmd.Flags().AddFlagSet(flagSetGovParams())
-	cmd.Flags().Int(proposalIdFlag, -1, "proposal id")
 	return cmd
 }
 
@@ -70,6 +47,7 @@ func voteParamProposalCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vote-param-proposal",
 		Short: "vote parameter change proposal",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -81,6 +59,7 @@ func confirmParamProposalCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "confirm-param-proposal",
 		Short: "confirm parameter change proposal",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -160,137 +139,32 @@ func getParamsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-params",
 		Short: "Get mainchain parameters",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
 				return err
 			}
-			count := 0
-
-			allParams, err := cmd.Flags().GetBool(allParamsFlag)
+			n, err := strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
-
-			check, err := cmd.Flags().GetBool(proposalDepositFlag)
+			paramId := uint64(n)
+			name := proposalParamName(paramId)
+			if name == "InvalidParam" {
+				return fmt.Errorf(name)
+			}
+			value, err := ethClient.GetUIntValue(paramId)
 			if err != nil {
 				return err
 			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetProposalDeposit()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("proposal deposit:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(voteTimeoutFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetGovernVoteTimeout()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("vote timeout:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(slashTimeoutFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetSlashTimeout()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("slash timeout:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(minValidatorNumFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetMinValidatorNum()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("minimal validator num:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(maxValidatorNumFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetMaxValidatorNum()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("maximal validator num:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(minStakeInPoolFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetMinStakeInPool()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("minimal stakes to become a validator:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(advanceNoticePeriodFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetAdvanceNoticePeriod()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("advance notice period:", value)
-			}
-
-			check, err = cmd.Flags().GetBool(migrationTimeFlag)
-			if err != nil {
-				return err
-			}
-			if check || allParams {
-				count++
-				value, err := ethClient.GetMigrationTime()
-				if err != nil {
-					return nil
-				}
-				fmt.Println("migration time:", value)
-			}
-
-			if count == 0 {
-				return fmt.Errorf("no param flag provided")
-			}
+			fmt.Printf("Param %s: %d", name, value)
 
 			return nil
 		},
 	}
-	cmd.Flags().AddFlagSet(flagSetGovParams())
-	cmd.Flags().Bool(allParamsFlag, false, "query all parameters")
 
 	return cmd
-}
-
-func paramFlagToRecordId() int64 {
-	return -1
 }
 
 func proposalParamName(param uint64) string {
