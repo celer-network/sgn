@@ -106,7 +106,7 @@ New validator node who wants to join the sidechain after the upgrade should firs
 
 Checkout `sgnops gov --help` to see available commands.
 
-### Example: update mainchain `SlashTimeout`
+### Example: update mainchain parameter
 1. **Query current param.** `sgnops gov get-param --help` to see the `param-id` mapping, then query current `SlashTimeout` value:
 
     `sgnops gov get-param 2 --config data/node0/config.json --home data/node0/sgncli`
@@ -133,6 +133,6 @@ Checkout `sgnops gov --help` to see available commands.
 
     `sgnops gov confirm-param-proposal 0 --config data/node0/config.json --home data/node0/sgncli`
 
-7. **Query updated param**
+7. **Query updated param** Get current `SlashTimeout` value:
 
     `sgnops gov get-param 2 --config data/node0/config.json --home data/node0/sgncli`
