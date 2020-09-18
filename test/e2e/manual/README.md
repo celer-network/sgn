@@ -6,6 +6,7 @@ Follow instructions below to start a local testnet with three validator nodes on
 
 - [Add validators](#add-validators)
 - [Sidechain governance](#sidechain-governance)
+- [Mainchain governance](#mainchain-governance)
 
 ## Add validators
 
