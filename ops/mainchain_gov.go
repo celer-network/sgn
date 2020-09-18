@@ -2,11 +2,15 @@ package ops
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
+	"strings"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -33,10 +37,52 @@ func GovCommand() *cobra.Command {
 
 func createParamProposalCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-param-proposal",
+		Use:   "create-param-proposal [param-id] [value]",
 		Short: "create parameter change proposal",
-		Args:  cobra.ExactArgs(2),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Create a parameter change proposal. 
+Parameter ID mapping:
+  0: ProposalDeposit
+  1: GovernVoteTimeout
+  2: SlashTimeout
+  3: MinValidatorNum
+  4: MaxValidatorNum
+  5: MinStakeInPool
+  6: AdvanceNoticePeriod
+  7: MigrationTime`,
+			),
+		),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			param := new(big.Int)
+			value := new(big.Int)
+			_, ok := param.SetString(args[0], 10)
+			if !ok {
+				return fmt.Errorf("err param input %s", args[0])
+			}
+			_, ok = value.SetString(args[1], 10)
+			if !ok {
+				return fmt.Errorf("err param value %s", args[1])
+			}
+			name := proposalParamName(param.Uint64())
+			if name == "InvalidParam" {
+				return fmt.Errorf(name)
+			}
+			ethClient, err := common.NewEthClientFromConfig()
+			if err != nil {
+				return err
+			}
+			log.Infof("Sending CreateParamProposal, change value of %s to %s", name, value)
+			_, err = ethClient.Transactor.TransactWaitMined(
+				"CreateParamProposal",
+				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+					return ethClient.DPoS.CreateParamProposal(opts, param, value)
+				},
+			)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}
@@ -45,10 +91,41 @@ func createParamProposalCommand() *cobra.Command {
 
 func voteParamProposalCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote-param-proposal",
+		Use:   "vote-param-proposal [proposal-id] [vote]",
 		Short: "vote parameter change proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			proposalId := new(big.Int)
+			_, ok := proposalId.SetString(args[0], 10)
+			if !ok {
+				return fmt.Errorf("err proposalId input %s", args[0])
+			}
+			var vote uint8
+			switch args[1] {
+			case "yes":
+				vote = mainchain.VoteYes
+			case "no":
+				vote = mainchain.VoteNo
+			case "abstain":
+				vote = mainchain.VoteAbstain
+			default:
+				return fmt.Errorf("invalid vote, please vote yes/no/abstain")
+			}
+			ethClient, err := common.NewEthClientFromConfig()
+			if err != nil {
+				return err
+			}
+			log.Infof("Sending VoteParam, vote %s to proposal %s", args[1], proposalId)
+			_, err = ethClient.Transactor.TransactWaitMined(
+				"VoteParam",
+				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+					return ethClient.DPoS.VoteParam(opts, proposalId, vote)
+				},
+			)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}
@@ -57,10 +134,29 @@ func voteParamProposalCommand() *cobra.Command {
 
 func confirmParamProposalCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "confirm-param-proposal",
+		Use:   "confirm-param-proposal [proposal-id]",
 		Short: "confirm parameter change proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			proposalId := new(big.Int)
+			_, ok := proposalId.SetString(args[0], 10)
+			if !ok {
+				return fmt.Errorf("err proposalId input %s", args[0])
+			}
+			ethClient, err := common.NewEthClientFromConfig()
+			if err != nil {
+				return err
+			}
+			log.Infof("Sending ConfirmParamProposal for proposal %s", proposalId)
+			_, err = ethClient.Transactor.TransactWaitMined(
+				"ConfirmParamProposal",
+				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+					return ethClient.DPoS.ConfirmParamProposal(opts, proposalId)
+				},
+			)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 	}
@@ -137,9 +233,22 @@ func getProposalCommand() *cobra.Command {
 
 func getParamsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-params",
-		Short: "Get mainchain parameters",
-		Args:  cobra.ExactArgs(1),
+		Use:   "get-params [param-id]",
+		Short: "get mainchain parameters",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Get mainchain parameter value. 
+Parameter ID mapping:
+  0: ProposalDeposit
+  1: GovernVoteTimeout
+  2: SlashTimeout
+  3: MinValidatorNum
+  4: MaxValidatorNum
+  5: MinStakeInPool
+  6: AdvanceNoticePeriod
+  7: MigrationTime`,
+			),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ethClient, err := common.NewEthClientFromConfig()
 			if err != nil {
