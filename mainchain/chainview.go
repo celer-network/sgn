@@ -32,7 +32,7 @@ func (ethClient *EthClient) GetValidators() (map[Addr]*ValidatorInfo, *big.Int, 
 	validators := make(map[Addr]*ValidatorInfo)
 	totalStakes := new(big.Int)
 	var i uint64
-	for i = 0; i < maxValidatorNum; i++ {
+	for i = 0; i < maxValidatorNum.Uint64(); i++ {
 		addr, err2 := ethClient.DPoS.ValidatorSet(&bind.CallOpts{}, big.NewInt(int64(i)))
 		if err2 != nil {
 			return nil, nil, nil, fmt.Errorf("Get validator %d err: %w", i, err2)
@@ -123,10 +123,6 @@ func (ethClient *EthClient) GetParamProposalVotes(id int64) ([]Addr, []Addr, *bi
 	return yesVoters, noVoters, yesStakes, totalStakes, quorumStakes, nil
 }
 
-func (ethClient *EthClient) GetUIntValue(paramId uint64) (uint64, error) {
-	res, err := ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(int64(paramId)))
-	if err != nil {
-		return 0, err
-	}
-	return res.Uint64(), err
+func (ethClient *EthClient) GetUIntValue(paramId uint64) (*big.Int, error) {
+	return ethClient.DPoS.GetUIntValue(&bind.CallOpts{}, big.NewInt(int64(paramId)))
 }

@@ -41,7 +41,7 @@ func main() {
 		tc.SetupSidechain()
 		p := &tc.SGNParams{
 			CelrAddr:               tc.E2eProfile.CelrAddr,
-			GovernProposalDeposit:  big.NewInt(1000000000000000000),
+			GovernProposalDeposit:  big.NewInt(1000000000000000000), // 1 CELR
 			GovernVoteTimeout:      big.NewInt(60),
 			SlashTimeout:           big.NewInt(15),
 			MinValidatorNum:        big.NewInt(1),

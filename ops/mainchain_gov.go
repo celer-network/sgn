@@ -68,7 +68,16 @@ Parameter ID mapping:
 			if name == "InvalidParam" {
 				return fmt.Errorf(name)
 			}
+
 			ethClient, err := common.NewEthClientFromConfig()
+			if err != nil {
+				return err
+			}
+			deposit, err := ethClient.GetUIntValue(mainchain.ProposalDeposit)
+			if err != nil {
+				return err
+			}
+			err = approveCelrToDPoS(ethClient, deposit)
 			if err != nil {
 				return err
 			}
@@ -82,7 +91,6 @@ Parameter ID mapping:
 			if err != nil {
 				return err
 			}
-
 			return nil
 		},
 	}
@@ -193,11 +201,11 @@ func getProposalCommand() *cobra.Command {
 				return fmt.Errorf("proposal %d uninitialized", id)
 			}
 			fmt.Println("proposal Id:", id)
-			fmt.Printf("proposer: %x", proposal.Proposer)
+			fmt.Printf("proposer: %x\n", proposal.Proposer)
 			fmt.Println("deposit:", proposal.Deposit)
 			fmt.Println("vote deadline:", proposal.VoteDeadline)
-			fmt.Println("record:", proposalParamName(proposal.Record.Uint64()))
-			fmt.Println("new value:", proposal.NewValue)
+			fmt.Println("param:", proposalParamName(proposal.Record.Uint64()))
+			fmt.Println("value:", proposal.NewValue)
 			fmt.Println("status:", proposalStatusName(proposal.Status))
 
 			checkVotes, err := cmd.Flags().GetBool(checkVotesFlag)
@@ -212,14 +220,14 @@ func getProposalCommand() *cobra.Command {
 				}
 				fmt.Println("yes voters:")
 				for _, addr := range yesVoters {
-					fmt.Printf("  %x", addr)
+					fmt.Printf("  %x\n", addr)
 				}
 				fmt.Println("no voters:")
 				for _, addr := range noVoters {
-					fmt.Printf("  %x", addr)
+					fmt.Printf("  %xln", addr)
 				}
-				fmt.Println("yes stakes: ", yesStakes)
-				fmt.Println("total stakes: ", totalStakes)
+				fmt.Println("yes stakes:    ", yesStakes)
+				fmt.Println("total stakes:  ", totalStakes)
 				fmt.Println("quorum stakes: ", quorumStakes)
 			}
 
@@ -233,8 +241,8 @@ func getProposalCommand() *cobra.Command {
 
 func getParamsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-params [param-id]",
-		Short: "get mainchain parameters",
+		Use:   "get-param [param-id]",
+		Short: "get mainchain parameter value",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Get mainchain parameter value. 
 Parameter ID mapping:
@@ -267,7 +275,7 @@ Parameter ID mapping:
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Param %s: %d", name, value)
+			fmt.Printf("Param %s: %s\n", name, value)
 
 			return nil
 		},
