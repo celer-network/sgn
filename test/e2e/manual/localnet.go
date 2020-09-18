@@ -42,7 +42,7 @@ func main() {
 		p := &tc.SGNParams{
 			CelrAddr:               tc.E2eProfile.CelrAddr,
 			GovernProposalDeposit:  big.NewInt(1000000000000000000), // 1 CELR
-			GovernVoteTimeout:      big.NewInt(60),
+			GovernVoteTimeout:      big.NewInt(90),
 			SlashTimeout:           big.NewInt(15),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(5),
