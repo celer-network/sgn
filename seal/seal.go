@@ -8,17 +8,16 @@ import (
 
 func NewTransactorLog(sender string) *TransactorLog {
 	msgtypes := make(map[string]uint32)
-	now := time.Now().UnixNano()
 	return &TransactorLog{
-		MsgType:         msgtypes,
-		Sender:          sender,
-		ExecutionTimeMs: (float64)(now),
+		MsgType:        msgtypes,
+		Sender:         sender,
+		StartTimestamp: time.Now().UnixNano(),
 	}
 }
 
 func CommitTransactorLog(entry *TransactorLog) {
 	now := time.Now().UnixNano()
-	entry.ExecutionTimeMs = ((float64)(now) - entry.ExecutionTimeMs) / 1000000
+	entry.ExecutionTimeMs = ((float64)(now) - float64(entry.StartTimestamp)) / 1000000
 	if len(entry.Error) > 0 {
 		log.Errorln("TransactorLog:", entry)
 	} else {

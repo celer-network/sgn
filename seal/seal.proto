@@ -2,12 +2,21 @@ syntax = "proto3";
 
 package seal; // sgn event aggregated log
 
+enum TxMsgStatus {
+   NULL = 0;
+   SENT = 1;
+   SUCCEED = 2;
+   FAILED = 3;
+}
+
 message TransactorLog {
     uint32 msg_num = 1;
     map<string, uint32> msg_type = 2;
     string sender = 3;
     string tx_hash = 4;
+    TxMsgStatus status = 5;
 
+    int64 start_timestamp = 99;
     double execution_time_ms = 100;
     repeated string error = 101;
 }
