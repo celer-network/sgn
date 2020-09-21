@@ -20,6 +20,8 @@ func CommitTransactorLog(entry *TransactorLog) {
 	entry.ExecutionTimeMs = ((float64)(now) - float64(entry.StartTimestamp)) / 1000000
 	if len(entry.Error) > 0 {
 		log.Errorln("TransactorLog:", entry)
+	} else if len(entry.Warn) > 0 {
+		log.Warnln("TransactorLog:", entry)
 	} else {
 		log.Infoln("TransactorLog:", entry)
 	}

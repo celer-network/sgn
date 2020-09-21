@@ -1,6 +1,7 @@
 package transactor
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -28,7 +29,7 @@ const (
 	maxGasRetry    = 5
 )
 
-var gasErr = fmt.Errorf("out of gas")
+var gasErrCode = fmt.Errorf("code 11")
 
 type Transactor struct {
 	TxBuilder  types.TxBuilder
@@ -150,52 +151,85 @@ func (t *Transactor) start() {
 }
 
 func (t *Transactor) drainTxMsgQueue() {
-	logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
-
 	var msgs []sdk.Msg
 	for t.msgQueue.Len() != 0 {
 		msg := t.msgQueue.PopFront().(sdk.Msg)
-		logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 		msgs = append(msgs, msg)
 	}
-	logEntry.MsgNum = uint32(len(msgs))
 
-	txResponse, err := t.sendTxMsgs(msgs)
-	logEntry.TxHash = txResponse.TxHash
-	if err != nil {
-		logEntry.Error = append(logEntry.Error, err.Error())
-		logEntry.Status = seal.TxMsgStatus_FAILED
-		seal.CommitTransactorLog(logEntry)
-		return
-	}
-	logEntry.Status = seal.TxMsgStatus_SENT
-	seal.CommitTransactorLog(logEntry)
-
-	// wait till transaction is mined or failed
-	_, err = t.waitMined(txResponse.TxHash)
-	if err != nil {
-		logEntry.Error = append(logEntry.Error, err.Error())
-		logEntry.Status = seal.TxMsgStatus_FAILED
-	} else {
-		logEntry.Status = seal.TxMsgStatus_SUCCEED
-	}
-	seal.CommitTransactorLog(logEntry)
+	t.sendTxMsgsWaitMined(msgs)
 }
 
-func (t *Transactor) sendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
+func (t *Transactor) sendTxMsgsWaitMined(msgs []sdk.Msg) (*sdk.TxResponse, error) {
+	var txResponse *sdk.TxResponse
+	var stdSignMsg *types.StdSignMsg
+	var err error
+	var gas uint64
+	var retryNum int
+
+	msgsId := uint32(time.Now().UnixNano() / 1000000)
+	for {
+		var retry bool
+		logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
+		logEntry.MsgNum = uint32(len(msgs))
+		logEntry.MsgsId = msgsId
+		for _, msg := range msgs {
+			logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
+		}
+		txResponse, stdSignMsg, err = t.sendTxMsgs(msgs, gas)
+		logEntry.TxHash = txResponse.TxHash
+		if err != nil {
+			logEntry.Error = append(logEntry.Error, err.Error())
+			logEntry.Status = seal.TxMsgStatus_FAILED
+			seal.CommitTransactorLog(logEntry)
+			return txResponse, err
+		}
+		logEntry.Status = seal.TxMsgStatus_SENT
+		logEntry.GasWanted = int64(stdSignMsg.Fee.Gas)
+		seal.CommitTransactorLog(logEntry)
+
+		// wait till transaction is mined or failed
+		txResponse, err = t.waitMined(txResponse.TxHash)
+		logEntry.GasWanted = txResponse.GasWanted
+		logEntry.GasUsed = txResponse.GasUsed
+		if err != nil {
+			if errors.Is(err, gasErrCode) && retryNum < maxGasRetry {
+				gas = uint64(txResponse.GasUsed) * 2
+				logEntry.Warn = append(logEntry.Warn, err.Error()+". retry...")
+				retry = true
+			} else {
+				logEntry.Error = append(logEntry.Error, err.Error())
+			}
+			logEntry.Status = seal.TxMsgStatus_FAILED
+		} else {
+			logEntry.Status = seal.TxMsgStatus_SUCCEED
+		}
+		seal.CommitTransactorLog(logEntry)
+
+		if retry {
+			retryNum++
+		} else {
+			break
+		}
+
+	}
+	return txResponse, err
+}
+
+func (t *Transactor) sendTxMsgs(msgs []sdk.Msg, gas uint64) (*sdk.TxResponse, *types.StdSignMsg, error) {
 	var txResponseErr error
 	for try := 0; try < maxTxRetry; try++ {
-		txBytes, stdSignMsg, err := t.buildAndSignTx(msgs)
+		txBytes, stdSignMsg, err := t.buildAndSignTx(msgs, gas)
 		if err != nil {
-			return nil, fmt.Errorf("buildAndSignTx err: %w", err)
+			return nil, nil, fmt.Errorf("buildAndSignTx err: %w", err)
 		}
 		txResponse, err := t.CliCtx.BroadcastTx(txBytes)
 		if err != nil {
-			return nil, fmt.Errorf("BroadcastTx err: %w", err)
+			return nil, stdSignMsg, fmt.Errorf("BroadcastTx err: %w", err)
 		}
 
 		if txResponse.Code == sdkerrors.SuccessABCICode {
-			return &txResponse, nil
+			return &txResponse, stdSignMsg, nil
 		}
 
 		txResponseErr = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
@@ -204,13 +238,13 @@ func (t *Transactor) sendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
 			log.Warnln(txResponseErr.Error(), "retrying")
 			time.Sleep(txRetryDelay)
 		} else {
-			return &txResponse, txResponseErr
+			return &txResponse, stdSignMsg, txResponseErr
 		}
 	}
-	return nil, txResponseErr
+	return nil, nil, txResponseErr
 }
 
-func (t *Transactor) buildAndSignTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, error) {
+func (t *Transactor) buildAndSignTx(msgs []sdk.Msg, gas uint64) ([]byte, *types.StdSignMsg, error) {
 	if t.gpe != nil {
 		t.TxBuilder = t.TxBuilder.WithGasPrices(t.gpe.GetGasPrice())
 	}
@@ -220,7 +254,9 @@ func (t *Transactor) buildAndSignTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, 
 		return nil, nil, fmt.Errorf("PrepareTxBuilder err: %w", err)
 	}
 
-	if txBldr.SimulateAndExecute() || t.CliCtx.Simulate {
+	if gas != 0 {
+		txBldr = txBldr.WithGas(gas)
+	} else if txBldr.SimulateAndExecute() || t.CliCtx.Simulate {
 		txBldr, err = utils.EnrichWithGas(txBldr, t.CliCtx, msgs)
 		if err != nil {
 			return nil, nil, fmt.Errorf("EnrichWithGas err: %w", err)
@@ -263,9 +299,8 @@ func (t *Transactor) waitMined(txHash string) (*sdk.TxResponse, error) {
 	if !mined {
 		return &txResponse, fmt.Errorf("tx not mined, err: %w", err)
 	} else if txResponse.Code != sdkerrors.SuccessABCICode {
-		log.Errorf("Transaction %s failed with code %d, %s", txHash, txResponse.Code, txResponse.RawLog)
 		if txResponse.Code == 11 { // out of gas
-			return &txResponse, gasErr
+			return &txResponse, fmt.Errorf("tx failed with %w, %s", gasErrCode, txResponse.RawLog)
 		} else {
 			return &txResponse, fmt.Errorf("tx failed with code %d, %s", txResponse.Code, txResponse.RawLog)
 		}
@@ -278,13 +313,7 @@ func (t *Transactor) CliSendTxMsgWaitMined(msg sdk.Msg) {
 }
 
 func (t *Transactor) CliSendTxMsgsWaitMined(msgs []sdk.Msg) {
-	txResponse, err := t.sendTxMsgs(msgs)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Infof("Transaction %s sent", txResponse.TxHash)
-	res, err := t.waitMined(txResponse.TxHash)
+	res, err := t.sendTxMsgsWaitMined(msgs)
 	if err != nil {
 		log.Error(err)
 	}

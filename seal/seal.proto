@@ -14,11 +14,15 @@ message TransactorLog {
     map<string, uint32> msg_type = 2;
     string sender = 3;
     string tx_hash = 4;
-    TxMsgStatus status = 5;
+    uint32 msgs_id = 5;
+    TxMsgStatus status = 6;
+    int64 gas_wanted = 7;
+    int64 gas_used = 8;
 
     int64 start_timestamp = 99;
     double execution_time_ms = 100;
     repeated string error = 101;
+    repeated string warn = 102;
 }
 
 message MsgLog {
