@@ -25,7 +25,7 @@ sgnd gentx [flags]
   -h, --help                         help for gentx
       --home-client string           client's home directory (default "$HOME/.sgncli")
       --identity string              The (optional) identity signature (ex. UPort or Keybase)
-      --ip string                    The node's public IP (default "192.168.1.5")
+      --ip string                    The node's public IP (default "192.168.1.7")
       --keyring-backend string       Select keyring's backend (os|file|test) (default "os")
       --min-self-delegation string   The minimum self delegation required on the validator
       --name string                  name of private key with which to sign the gentx
