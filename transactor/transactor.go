@@ -177,7 +177,9 @@ func (t *Transactor) sendTxMsgsWaitMined(msgs []sdk.Msg) (*sdk.TxResponse, error
 			logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 		}
 		txResponse, stdSignMsg, err = t.sendTxMsgs(msgs, gas)
-		logEntry.TxHash = txResponse.TxHash
+		if txResponse != nil {
+			logEntry.TxHash = txResponse.TxHash
+		}
 		if err != nil {
 			logEntry.Error = append(logEntry.Error, err.Error())
 			logEntry.Status = seal.TxMsgStatus_FAILED
@@ -190,8 +192,10 @@ func (t *Transactor) sendTxMsgsWaitMined(msgs []sdk.Msg) (*sdk.TxResponse, error
 
 		// wait till transaction is mined or failed
 		txResponse, err = t.waitMined(txResponse.TxHash)
-		logEntry.GasWanted = txResponse.GasWanted
-		logEntry.GasUsed = txResponse.GasUsed
+		if txResponse != nil {
+			logEntry.GasWanted = txResponse.GasWanted
+			logEntry.GasUsed = txResponse.GasUsed
+		}
 		if err != nil {
 			if errors.Is(err, gasErrCode) && retryNum < maxGasRetry {
 				gas = uint64(txResponse.GasUsed) * 2
@@ -313,9 +317,6 @@ func (t *Transactor) CliSendTxMsgWaitMined(msg sdk.Msg) {
 }
 
 func (t *Transactor) CliSendTxMsgsWaitMined(msgs []sdk.Msg) {
-	res, err := t.sendTxMsgsWaitMined(msgs)
-	if err != nil {
-		log.Error(err)
-	}
+	res, _ := t.sendTxMsgsWaitMined(msgs)
 	t.CliCtx.PrintOutput(res)
 }
