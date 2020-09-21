@@ -3,8 +3,8 @@ package ops
 import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,7 +15,7 @@ func confirmUnbondedCandidate() error {
 	if err != nil {
 		return err
 	}
-	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
+	candidate := mainchain.Hex2Addr(viper.GetString(candidateFlag))
 
 	log.Infof(
 		"Confirming unbonded candidate %s",

@@ -28,6 +28,7 @@ sgn ops utility
 * [sgnops get-all-validators](sgnops_get-all-validators.md)	 - Get all validators info
 * [sgnops get-candidate-info](sgnops_get-candidate-info.md)	 - Get candidate info
 * [sgnops get-delegator-info](sgnops_get-delegator-info.md)	 - Get delegator info
+* [sgnops gov](sgnops_gov.md)	 - Mainchain governance
 * [sgnops init-candidate](sgnops_init-candidate.md)	 - Initialize a validator candidate
 * [sgnops sync](sgnops_sync.md)	 - Sync a change from mainchain to sidechain
 * [sgnops update-commission-rate](sgnops_update-commission-rate.md)	 - Update commission rate

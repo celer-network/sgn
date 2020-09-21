@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,8 +20,8 @@ func getDelegatorInfo() error {
 	if err != nil {
 		return err
 	}
-	candidate := ethcommon.HexToAddress(viper.GetString(candidateFlag))
-	delegator := ethcommon.HexToAddress(viper.GetString(delegatorFlag))
+	candidate := mainchain.Hex2Addr(viper.GetString(candidateFlag))
+	delegator := mainchain.Hex2Addr(viper.GetString(delegatorFlag))
 	info, err := ethClient.DPoS.GetDelegatorInfo(&bind.CallOpts{}, candidate, delegator)
 	if err != nil {
 		return err

@@ -51,6 +51,7 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.GetDelegatorInfoCommand(),
 		ops.GetAllValidatorsCommand(),
 		ops.GetSyncCmd(cdc),
+		ops.GovCommand(),
 		version.Cmd,
 	)
 	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
