@@ -100,14 +100,14 @@ func (ethClient *EthClient) GetParamProposalVote(id int64, voter Addr) (uint8, e
 	return ethClient.DPoS.GetParamProposalVote(&bind.CallOpts{}, big.NewInt(id), voter)
 }
 
-// return yesVoters, noVoters, yesStakes, totalStakes, quorumStakes
-func (ethClient *EthClient) GetParamProposalVotes(id int64) ([]Addr, []Addr, *big.Int, *big.Int, *big.Int, error) {
-	validators, totalStakes, quorumStakes, err := ethClient.GetValidators()
+func (ethClient *EthClient) GetParamProposalVotes(id int64) (
+	yesVoters []Addr, noVoters []Addr, yesStakes, totalStakes, quorumStakes *big.Int, err error) {
+	var validators map[Addr]*ValidatorInfo
+	validators, totalStakes, quorumStakes, err = ethClient.GetValidators()
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
-	var yesVoters, noVoters []Addr
-	yesStakes := new(big.Int)
+	yesStakes = new(big.Int)
 	for addr, val := range validators {
 		vote, err2 := ethClient.GetParamProposalVote(id, addr)
 		if err2 != nil {
