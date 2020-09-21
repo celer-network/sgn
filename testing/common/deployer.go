@@ -118,20 +118,22 @@ func DeployCommand() *cobra.Command {
 			configFileViper.Set(common.FlagEthLedgerAddress, ledgerAddr)
 
 			_, erc20Addr, erc20 := DeployERC20Contract()
+			// NOTE: values below are for local tests
 			sgnParams := &SGNParams{
 				CelrAddr:               erc20Addr,
-				GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
-				GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
-				SlashTimeout:           big.NewInt(5760),
-				MinValidatorNum:        big.NewInt(3),
-				MaxValidatorNum:        big.NewInt(7),
-				MinStakingPool:         big.NewInt(10000),
-				AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
-				SidechainGoLiveTimeout: big.NewInt(5760),
+				GovernProposalDeposit:  big.NewInt(1000000000000000000), // 1 CELR
+				GovernVoteTimeout:      big.NewInt(90),
+				SlashTimeout:           big.NewInt(15),
+				MinValidatorNum:        big.NewInt(1),
+				MaxValidatorNum:        big.NewInt(5),
+				MinStakingPool:         big.NewInt(5000000000000000000), // 5 CELR
+				AdvanceNoticePeriod:    big.NewInt(30),
+				SidechainGoLiveTimeout: big.NewInt(0),
 			}
 			tx, dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
 			WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "DeployDPoSContracts")
 
+			configFileViper.Set(common.FlagEthCelrAddress, erc20Addr)
 			configFileViper.Set(common.FlagEthDPoSAddress, dposAddr)
 			configFileViper.Set(common.FlagEthSGNAddress, sgnAddr)
 			err = configFileViper.WriteConfig()

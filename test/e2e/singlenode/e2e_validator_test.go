@@ -14,13 +14,13 @@ import (
 func setupValidator() []tc.Killable {
 	p := &tc.SGNParams{
 		CelrAddr:               tc.E2eProfile.CelrAddr,
-		GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
-		GovernVoteTimeout:      big.NewInt(1), // TODO: use a more practical value
+		GovernProposalDeposit:  big.NewInt(1),
+		GovernVoteTimeout:      big.NewInt(1),
 		SlashTimeout:           big.NewInt(10),
 		MinValidatorNum:        big.NewInt(1),
 		MaxValidatorNum:        big.NewInt(11),
 		MinStakingPool:         big.NewInt(1),
-		AdvanceNoticePeriod:   big.NewInt(1), // TODO: use a more practical value
+		AdvanceNoticePeriod:    big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
 	}
 	res := setupNewSGNEnv(p, "validator")

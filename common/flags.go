@@ -43,7 +43,7 @@ const (
 )
 
 const (
-	DefaultSgnGasAdjustment = 1.2
+	DefaultSgnGasAdjustment = 1.5
 	DefaultSgnGasLimit      = 300000
 )
 

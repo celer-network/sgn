@@ -1,6 +1,7 @@
 package transactor
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -25,7 +26,10 @@ const (
 	txRetryDelay   = 1 * time.Second
 	maxSignRetry   = 10
 	signRetryDelay = 100 * time.Millisecond
+	maxGasRetry    = 5
 )
+
+var gasErrCode = fmt.Errorf("code 11")
 
 type Transactor struct {
 	TxBuilder  types.TxBuilder
@@ -134,38 +138,6 @@ func (t *Transactor) AddTxMsg(msg sdk.Msg) {
 	t.msgQueue.PushBack(msg)
 }
 
-func (t *Transactor) SendTxMsg(msg sdk.Msg) (*sdk.TxResponse, error) {
-	return t.SendTxMsgs([]sdk.Msg{msg})
-}
-
-func (t *Transactor) SendTxMsgs(msgs []sdk.Msg) (*sdk.TxResponse, error) {
-	var txResponseErr error
-	for try := 0; try < maxTxRetry; try++ {
-		txBytes, stdSignMsg, err := t.buildAndSignTx(msgs)
-		if err != nil {
-			return nil, fmt.Errorf("buildAndSignTx err: %w", err)
-		}
-		txResponse, err := t.CliCtx.BroadcastTx(txBytes)
-		if err != nil {
-			return nil, fmt.Errorf("BroadcastTx err: %w", err)
-		}
-
-		if txResponse.Code == sdkerrors.SuccessABCICode {
-			return &txResponse, nil
-		}
-
-		txResponseErr = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
-			txResponse.Code, txResponse.RawLog, stdSignMsg.ChainID, t.Key.GetAddress(), stdSignMsg.AccountNumber, stdSignMsg.Sequence)
-		if txResponse.Code == sdkerrors.ErrUnauthorized.ABCICode() {
-			log.Warnln(txResponseErr.Error(), "retrying")
-			time.Sleep(txRetryDelay)
-		} else {
-			return &txResponse, txResponseErr
-		}
-	}
-	return nil, txResponseErr
-}
-
 // Poll tx queue and send msgs in batch
 func (t *Transactor) start() {
 	for {
@@ -174,59 +146,109 @@ func (t *Transactor) start() {
 			continue
 		}
 
-		logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
-		txResponse, err := t.bcastTxMsgQueue(logEntry)
-		if err != nil {
-			logEntry.Error = append(logEntry.Error, err.Error())
-			seal.CommitTransactorLog(logEntry)
-			continue
-		}
-		seal.CommitTransactorLog(logEntry)
-
-		// Make sure the transaction has been mined
-		t.WaitMined(txResponse.TxHash)
+		t.drainTxMsgQueue()
 	}
 }
 
-func (t *Transactor) WaitMined(txHash string) (*sdk.TxResponse, error) {
-	var err error
-	mined := false
-	var txResponse sdk.TxResponse
-	for try := 0; try < maxTxRetry; try++ {
-		time.Sleep(txRetryDelay)
-		if txResponse, err = utils.QueryTx(t.CliCtx, txHash); err == nil {
-			mined = true
-			break
-		}
-	}
-	if !mined {
-		log.Errorf("Transaction %s not mined within %d retry, err %s", txHash, maxTxRetry, err)
-	} else if txResponse.Code != sdkerrors.SuccessABCICode {
-		log.Errorf("Transaction %s failed with code %d, %s", txHash, txResponse.Code, txResponse.RawLog)
-	} else {
-		log.Debugf("Transaction %s succeeded", txHash)
-	}
-	return &txResponse, err
-}
-
-func (t *Transactor) bcastTxMsgQueue(logEntry *seal.TransactorLog) (*sdk.TxResponse, error) {
-	logEntry.MsgNum = uint32(t.msgQueue.Len())
+func (t *Transactor) drainTxMsgQueue() {
 	var msgs []sdk.Msg
 	for t.msgQueue.Len() != 0 {
 		msg := t.msgQueue.PopFront().(sdk.Msg)
-		logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
 		msgs = append(msgs, msg)
 	}
-	txResponse, err := t.SendTxMsgs(msgs)
-	if err != nil {
-		return nil, err
-	}
-	logEntry.TxHash = txResponse.TxHash
 
+	t.sendTxMsgsWaitMined(msgs)
+}
+
+func (t *Transactor) sendTxMsgsWaitMined(msgs []sdk.Msg) (*sdk.TxResponse, error) {
+	var txResponse *sdk.TxResponse
+	var stdSignMsg *types.StdSignMsg
+	var err error
+	var gas uint64
+	var retryNum int
+
+	msgsId := uint32(time.Now().UnixNano() / 1000000)
+	for {
+		var retry bool
+		logEntry := seal.NewTransactorLog(t.Key.GetAddress().String())
+		logEntry.MsgNum = uint32(len(msgs))
+		logEntry.MsgsId = msgsId
+		for _, msg := range msgs {
+			logEntry.MsgType[msg.Type()] = logEntry.MsgType[msg.Type()] + 1
+		}
+		txResponse, stdSignMsg, err = t.sendTxMsgs(msgs, gas)
+		if txResponse != nil {
+			logEntry.TxHash = txResponse.TxHash
+		}
+		if err != nil {
+			logEntry.Error = append(logEntry.Error, err.Error())
+			logEntry.Status = seal.TxMsgStatus_FAILED
+			seal.CommitTransactorLog(logEntry)
+			return txResponse, err
+		}
+		logEntry.Status = seal.TxMsgStatus_SENT
+		logEntry.GasWanted = int64(stdSignMsg.Fee.Gas)
+		seal.CommitTransactorLog(logEntry)
+
+		// wait till transaction is mined or failed
+		txResponse, err = t.waitMined(txResponse.TxHash)
+		if txResponse != nil {
+			logEntry.GasWanted = txResponse.GasWanted
+			logEntry.GasUsed = txResponse.GasUsed
+		}
+		if err != nil {
+			if errors.Is(err, gasErrCode) && retryNum < maxGasRetry {
+				gas = uint64(txResponse.GasUsed) * 2
+				logEntry.Warn = append(logEntry.Warn, err.Error()+". retry...")
+				retry = true
+			} else {
+				logEntry.Error = append(logEntry.Error, err.Error())
+			}
+			logEntry.Status = seal.TxMsgStatus_FAILED
+		} else {
+			logEntry.Status = seal.TxMsgStatus_SUCCEED
+		}
+		seal.CommitTransactorLog(logEntry)
+
+		if retry {
+			retryNum++
+		} else {
+			break
+		}
+
+	}
 	return txResponse, err
 }
 
-func (t *Transactor) buildAndSignTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, error) {
+func (t *Transactor) sendTxMsgs(msgs []sdk.Msg, gas uint64) (*sdk.TxResponse, *types.StdSignMsg, error) {
+	var txResponseErr error
+	for try := 0; try < maxTxRetry; try++ {
+		txBytes, stdSignMsg, err := t.buildAndSignTx(msgs, gas)
+		if err != nil {
+			return nil, nil, fmt.Errorf("buildAndSignTx err: %w", err)
+		}
+		txResponse, err := t.CliCtx.BroadcastTx(txBytes)
+		if err != nil {
+			return nil, stdSignMsg, fmt.Errorf("BroadcastTx err: %w", err)
+		}
+
+		if txResponse.Code == sdkerrors.SuccessABCICode {
+			return &txResponse, stdSignMsg, nil
+		}
+
+		txResponseErr = fmt.Errorf("BroadcastTx failed with code: %d, rawLog: %s, stdSignMsg chainId: %s acct: %s accnum: %d seq: %d",
+			txResponse.Code, txResponse.RawLog, stdSignMsg.ChainID, t.Key.GetAddress(), stdSignMsg.AccountNumber, stdSignMsg.Sequence)
+		if txResponse.Code == sdkerrors.ErrUnauthorized.ABCICode() {
+			log.Warnln(txResponseErr.Error(), "retrying")
+			time.Sleep(txRetryDelay)
+		} else {
+			return &txResponse, stdSignMsg, txResponseErr
+		}
+	}
+	return nil, nil, txResponseErr
+}
+
+func (t *Transactor) buildAndSignTx(msgs []sdk.Msg, gas uint64) ([]byte, *types.StdSignMsg, error) {
 	if t.gpe != nil {
 		t.TxBuilder = t.TxBuilder.WithGasPrices(t.gpe.GetGasPrice())
 	}
@@ -236,7 +258,9 @@ func (t *Transactor) buildAndSignTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, 
 		return nil, nil, fmt.Errorf("PrepareTxBuilder err: %w", err)
 	}
 
-	if txBldr.SimulateAndExecute() || t.CliCtx.Simulate {
+	if gas != 0 {
+		txBldr = txBldr.WithGas(gas)
+	} else if txBldr.SimulateAndExecute() || t.CliCtx.Simulate {
 		txBldr, err = utils.EnrichWithGas(txBldr, t.CliCtx, msgs)
 		if err != nil {
 			return nil, nil, fmt.Errorf("EnrichWithGas err: %w", err)
@@ -265,17 +289,34 @@ func (t *Transactor) buildAndSignTx(msgs []sdk.Msg) ([]byte, *types.StdSignMsg, 
 	return nil, nil, fmt.Errorf("TxBuilder Sign err: %w", err)
 }
 
+func (t *Transactor) waitMined(txHash string) (*sdk.TxResponse, error) {
+	var err error
+	mined := false
+	var txResponse sdk.TxResponse
+	for try := 0; try < maxTxRetry; try++ {
+		time.Sleep(txRetryDelay)
+		if txResponse, err = utils.QueryTx(t.CliCtx, txHash); err == nil {
+			mined = true
+			break
+		}
+	}
+	if !mined {
+		return &txResponse, fmt.Errorf("tx not mined, err: %w", err)
+	} else if txResponse.Code != sdkerrors.SuccessABCICode {
+		if txResponse.Code == 11 { // out of gas
+			return &txResponse, fmt.Errorf("tx failed with %w, %s", gasErrCode, txResponse.RawLog)
+		} else {
+			return &txResponse, fmt.Errorf("tx failed with code %d, %s", txResponse.Code, txResponse.RawLog)
+		}
+	}
+	return &txResponse, nil
+}
+
 func (t *Transactor) CliSendTxMsgWaitMined(msg sdk.Msg) {
 	t.CliSendTxMsgsWaitMined([]sdk.Msg{msg})
 }
 
 func (t *Transactor) CliSendTxMsgsWaitMined(msgs []sdk.Msg) {
-	txResponse, err := t.SendTxMsgs(msgs)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Infof("Transaction %s sent", txResponse.TxHash)
-	res, err := t.WaitMined(txResponse.TxHash)
+	res, _ := t.sendTxMsgsWaitMined(msgs)
 	t.CliCtx.PrintOutput(res)
 }

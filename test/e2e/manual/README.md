@@ -5,7 +5,8 @@ Follow instructions below to start a local testnet with three validator nodes on
 #### Table of contents
 
 - [Add validators](#add-validators)
-- [Governance](#governance)
+- [Sidechain governance](#sidechain-governance)
+- [Mainchain governance](#mainchain-governance)
 
 ## Add validators
 
@@ -41,13 +42,11 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 - `sgncli query validator validators`
 - `sgncli query tendermint-validator-set --trust-node`
 
-## Governance
-
-Update block reward through governance.
+## Sidechain Governance
 
 Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
 
-### Update block reward through governance.
+### Update block reward
 
 #### Query current block mining reward and submit change proposal
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
@@ -67,7 +66,7 @@ Append args `--config data/node0/config.json --home data/node0/sgncli` to follow
 - `sgncli query govern proposal 1`
 - `sgncli query validator params`
 
-### Upgrade sidechain through governance
+### Upgrade sidechain
 
 #### Query current block height and submit upgrade proposal
 Append args `--config data/node0/config.json --home data/node0/sgncli` to following commands.
@@ -102,3 +101,40 @@ app.upgradeKeeper.SetUpgradeHandler("test", func(ctx sdk.Context, plan upgrade.P
 
 #### Note to new validator node after upgrade
 New validator node who wants to join the sidechain after the upgrade should first run from genesis using the old code to replay transactions before upgrade, then switch to the new code to replay transactions after upgrade.
+
+## Mainchain Governance
+
+Checkout `sgnops gov --help` to see available commands.
+
+### Example: update mainchain parameter
+1. **Query current param.** `sgnops gov get-param --help` to see the `param-id` mapping, then query current `SlashTimeout` value:
+
+    `sgnops gov get-param 2 --config data/node0/config.json --home data/node0/sgncli`
+
+2. **Create param change proposal.** Propose changing `SlashTimeout` to `30`:
+
+   `sgnops gov create-param-proposal 2 30 --config data/node0/config.json --home data/node0/sgncli`
+
+3. **Query submitted proposal** Get the latest proposal. If query previous proposal, add `--proposal-id` flag.
+
+    `sgnops gov get-param-proposal --config data/node0/config.json --home data/node0/sgncli`
+
+4. **All node vote yes**
+
+    `sgnops gov vote-param-proposal 0 yes --config data/node0/config.json --home data/node0/sgncli`
+ 
+    `sgnops gov vote-param-proposal 0 yes --config data/node1/config.json --home data/node1/sgncli`
+ 
+    `sgnops gov vote-param-proposal 0 yes --config data/node2/config.json --home data/node2/sgncli`
+
+5. **Query proposal and vote stats**
+
+    `sgnops gov get-param-proposal --check-votes --config data/node0/config.json --home data/node0/sgncli`
+
+6. **Confirm proposal after voting deadline**
+
+    `sgnops gov confirm-param-proposal 0 --config data/node0/config.json --home data/node0/sgncli`
+
+7. **Query updated param** Get current `SlashTimeout` value:
+
+    `sgnops gov get-param 2 --config data/node0/config.json --home data/node0/sgncli`

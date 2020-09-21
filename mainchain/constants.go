@@ -20,6 +20,15 @@ const (
 	AdvanceNoticePeriod = 6
 	MigrationTime       = 7
 
+	Unvoted     = 0
+	VoteYes     = 1
+	VoteNo      = 2
+	VoteAbstain = 3
+
+	ProposalStatusUninitiated = 0
+	ProposalStatusVoting      = 1
+	ProposalStatusClosed      = 2
+
 	TxFailure = 0
 	TxSuccess = 1
 
