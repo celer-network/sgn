@@ -238,9 +238,9 @@ func mainchainGovTest(t *testing.T) {
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Create param proposal")
 
 	tx, err = tc.DposContract.VoteParam(auth0, big.NewInt(0), 1)
-	require.NoError(t, err, "failed to vote param proposal 0 for client0")
+	require.NoError(t, err, "failed to vote param proposal 0 for validator 0")
 	tx, err = tc.DposContract.VoteParam(auth1, big.NewInt(0), 1)
-	require.NoError(t, err, "failed to vote param proposal 0 for client1")
+	require.NoError(t, err, "failed to vote param proposal 0 for validator 1")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Vote param proposal 0")
 
 	tx, err = tc.DposContract.ConfirmParamProposal(auth0, big.NewInt(0))

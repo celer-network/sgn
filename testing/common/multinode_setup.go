@@ -63,13 +63,13 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	if sgnParams == nil {
 		sgnParams = &SGNParams{
 			CelrAddr:               E2eProfile.CelrAddr,
-			GovernProposalDeposit:  big.NewInt(1), // TODO: use a more practical value
-			GovernVoteTimeout:      big.NewInt(3), // TODO: use a more practical value
+			GovernProposalDeposit:  big.NewInt(1),
+			GovernVoteTimeout:      big.NewInt(5),
 			SlashTimeout:           big.NewInt(50),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(7),
 			MinStakingPool:         big.NewInt(100),
-			AdvanceNoticePeriod:    big.NewInt(1), // TODO: use a more practical value
+			AdvanceNoticePeriod:    big.NewInt(1),
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
 	}
