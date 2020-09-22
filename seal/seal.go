@@ -33,6 +33,7 @@ func NewMsgLog() *MsgLog {
 		ChanInfo:        &ChannelInfo{},
 		Penalty:         &Penalty{},
 		Change:          &Change{},
+		Govern:          &Govern{},
 		ExecutionTimeMs: (float64)(now),
 	}
 }

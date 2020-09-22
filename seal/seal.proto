@@ -71,7 +71,6 @@ message Change {
 
 message Govern {
     uint64 proposal_id = 1;
-    string type = 2;
-    uint64 amount = 3;
-    uint32 option = 4;
+    uint64 amount = 2;
+    uint32 option = 3;
 }
