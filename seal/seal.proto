@@ -36,6 +36,7 @@ message MsgLog {
     Penalty penalty = 8;
     string deposit = 9;
     Change change = 10;
+    Govern govern = 11;
 
     string sender = 99;
     double execution_time_ms = 100;
@@ -66,4 +67,10 @@ message Change {
     uint64 id = 1;
     string type = 2;
     uint64 block_num = 9;
+}
+
+message Govern {
+    uint64 proposal_id = 1;
+    uint64 amount = 2;
+    uint32 option = 3;
 }
