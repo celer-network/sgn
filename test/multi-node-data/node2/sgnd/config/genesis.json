@@ -12,9 +12,7 @@
       "max_age_duration": "172800000000000"
     },
     "validator": {
-      "pub_key_types": [
-        "ed25519"
-      ]
+      "pub_key_types": ["ed25519"]
     }
   },
   "app_hash": "",
@@ -82,6 +80,7 @@
       "params": {
         "syncer_duration": "10",
         "epoch_length": "3",
+        "withdraw_window": "10000",
         "mining_reward": "10000000000000",
         "puller_reward": "500000000000"
       }
