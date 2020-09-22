@@ -55,7 +55,10 @@ func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) 
 			return false, fmt.Errorf("Fail to get staking subspace")
 		}
 
-		err := ss.Update(ctx, staking.KeyMaxValidators, []byte(paramChange.NewValue.String()))
+		// let sidechain maxValidator always larger than mainchain maxValdiator by 10,
+		// to tolerate the latency for sidechain to keep in sync with mainchain.
+		maxValidator := paramChange.NewValue.Add(sdk.NewInt(10))
+		err := ss.Update(ctx, staking.KeyMaxValidators, []byte(maxValidator.String()))
 		if err != nil {
 			return false, err
 		}
