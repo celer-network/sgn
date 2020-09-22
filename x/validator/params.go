@@ -53,6 +53,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.SyncerDuration(ctx),
 		k.EpochLength(ctx),
+		k.WithdrawWindow(ctx),
 		k.MiningReward(ctx),
 		k.PullerReward(ctx),
 	)
