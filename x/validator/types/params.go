@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,8 +12,9 @@ import (
 
 // validator params default values
 const (
-	DefaultSyncerDuration uint = 10
-	DefaultEpochLength    uint = 5
+	DefaultSyncerDuration uint          = 10
+	DefaultEpochLength    uint          = 5
+	DefaultWithdrawWindow time.Duration = time.Hour
 )
 
 var (
@@ -24,6 +26,7 @@ var (
 var (
 	KeySyncerDuration = []byte("SyncerDuration")
 	KeyEpochLength    = []byte("EpochLength")
+	KeyWithdrawWindow = []byte("WithdrawWindow")
 	KeyMiningReward   = []byte("MiningReward")
 	KeyPullerReward   = []byte("PullerReward")
 )
@@ -31,20 +34,22 @@ var (
 var _ params.ParamSet = (*Params)(nil)
 
 type Params struct {
-	SyncerDuration uint    `json:"syncer_duration" yaml:"syncer_duration"`
-	EpochLength    uint    `json:"epoch_length" yaml:"epoch_length"`
-	MiningReward   sdk.Int `json:"mining_reward" yaml:"mining_reward"`
-	PullerReward   sdk.Int `json:"puller_reward" yaml:"puller_reward"`
+	SyncerDuration uint          `json:"syncer_duration" yaml:"syncer_duration"`
+	EpochLength    uint          `json:"epoch_length" yaml:"epoch_length"`
+	WithdrawWindow time.Duration `json:"withdraw_window" yaml:"withdraw_window"`
+	MiningReward   sdk.Int       `json:"mining_reward" yaml:"mining_reward"`
+	PullerReward   sdk.Int       `json:"puller_reward" yaml:"puller_reward"`
 }
 
 // NewParams creates a new Params instance
-func NewParams(syncerDuration, epochLength uint, miningReward, pullerReward sdk.Int) Params {
+func NewParams(syncerDuration, epochLength uint, withdrawWindow time.Duration, miningReward, pullerReward sdk.Int) Params {
 
 	return Params{
 		SyncerDuration: syncerDuration,
+		EpochLength:    epochLength,
+		WithdrawWindow: withdrawWindow,
 		MiningReward:   miningReward,
 		PullerReward:   pullerReward,
-		EpochLength:    epochLength,
 	}
 }
 
@@ -53,6 +58,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		params.NewParamSetPair(KeySyncerDuration, &p.SyncerDuration, validateSyncerDuration),
 		params.NewParamSetPair(KeyEpochLength, &p.EpochLength, validateEpochLength),
+		params.NewParamSetPair(KeyWithdrawWindow, &p.WithdrawWindow, validateWithdrawWindow),
 		params.NewParamSetPair(KeyMiningReward, &p.MiningReward, validateMiningReward),
 		params.NewParamSetPair(KeyPullerReward, &p.PullerReward, validatePullerReward),
 	}
@@ -67,7 +73,7 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultSyncerDuration, DefaultEpochLength, DefaultMiningReward, DefaultPullerReward)
+	return NewParams(DefaultSyncerDuration, DefaultEpochLength, DefaultWithdrawWindow, DefaultMiningReward, DefaultPullerReward)
 }
 
 // String returns a human readable string representation of the parameters.
@@ -75,9 +81,10 @@ func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   SyncerDuration: %d,
   EpochLength:    %d,
+  WithdrawWindow: %s,
   MiningReward:   %s,
   PullerReward:   %s`,
-		p.SyncerDuration, p.EpochLength, p.MiningReward, p.PullerReward)
+		p.SyncerDuration, p.EpochLength, p.WithdrawWindow, p.MiningReward, p.PullerReward)
 }
 
 // unmarshal the current validator params value from store key or panic
@@ -105,6 +112,10 @@ func (p Params) Validate() error {
 	}
 
 	if p.EpochLength == 0 {
+		return fmt.Errorf("validator parameter EpochLength must be a positive integer")
+	}
+
+	if p.WithdrawWindow <= 0 {
 		return fmt.Errorf("validator parameter EpochLength must be a positive integer")
 	}
 
@@ -140,6 +151,19 @@ func validateEpochLength(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("validator parameter EpochLength must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateWithdrawWindow(i interface{}) error {
+	v, ok := i.(time.Duration)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("validator parameter WithdrawWindow must be positive: %d", v)
 	}
 
 	return nil

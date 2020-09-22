@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"time"
+
 	"github.com/celer-network/sgn/x/validator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -25,6 +27,12 @@ func (k Keeper) SyncerDuration(ctx sdk.Context) (res uint) {
 // EpochLength - epoch length
 func (k Keeper) EpochLength(ctx sdk.Context) (res uint) {
 	k.paramstore.Get(ctx, types.KeyEpochLength, &res)
+	return
+}
+
+// WithdrawWindow - withdraw window
+func (k Keeper) WithdrawWindow(ctx sdk.Context) (res time.Duration) {
+	k.paramstore.Get(ctx, types.KeyWithdrawWindow, &res)
 	return
 }
 
