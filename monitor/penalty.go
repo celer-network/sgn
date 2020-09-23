@@ -6,7 +6,10 @@ import (
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/slash"
+	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
@@ -58,6 +61,11 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
+	if !m.validatePenaltySigs(penaltyEvent.Nonce) {
+		log.Infof("Penalty %d does not have enough sigs", penaltyEvent.Nonce)
+		return
+	}
+
 	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.Transactor.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
 	if err != nil {
 		log.Errorln("QueryPenaltyRequest err", err)
@@ -94,4 +102,35 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 	log.Infoln("Slash tx submitted", tx.Hash().Hex())
+}
+
+func (m *Monitor) validatePenaltySigs(nonce uint64) bool {
+	penalty, err := slash.CLIQueryPenalty(m.Transactor.CliCtx, slash.StoreKey, nonce)
+	if err != nil {
+		log.Errorln("QueryPenalty err", err)
+		return false
+	}
+
+	signedValidators := mapset.NewSet()
+	for _, sig := range penalty.Sigs {
+		signedValidators.Add(sig.Signer)
+	}
+
+	validators, err := validator.CLIQueryBondedValidators(m.Transactor.CliCtx, validator.StoreKey)
+	if err != nil {
+		log.Errorln("QueryBondedValidators err", err)
+		return false
+	}
+
+	totalStake := sdk.ZeroInt()
+	votingStake := sdk.ZeroInt()
+	for _, v := range validators {
+		totalStake = totalStake.Add(v.BondedTokens())
+
+		if signedValidators.Contains(v.Description.Identity) {
+			votingStake = votingStake.Add(v.BondedTokens())
+		}
+	}
+
+	return votingStake.GTE(totalStake.MulRaw(2).QuoRaw(3))
 }
