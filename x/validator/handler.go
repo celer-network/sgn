@@ -106,12 +106,15 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 	if !found {
 		return nil, fmt.Errorf("Reward does not exist")
 	}
-	if !reward.HasNewReward() {
-		logEntry.Warn = append(logEntry.Warn, "no new reward")
-		return &sdk.Result{}, nil
+
+	if ctx.BlockTime().Before(reward.LastWithdrawTime.Add(keeper.WithdrawWindow(ctx))) {
+		if !reward.HasNewReward() {
+			logEntry.Warn = append(logEntry.Warn, "no new reward")
+			return &sdk.Result{}, nil
+		}
 	}
 
-	reward.InitateWithdraw()
+	reward.InitateWithdraw(ctx.BlockTime())
 	keeper.SetReward(ctx, reward)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
