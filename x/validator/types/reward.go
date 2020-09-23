@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -18,6 +19,7 @@ type Reward struct {
 	MiningReward     sdk.Int      `json:"mining_reward"`
 	ServiceReward    sdk.Int      `json:"service_reward"`
 	RewardProtoBytes []byte       `json:"reward_proto_bytes"` // proto msg for reward snapshot from latest intendWithdraw
+	LastWithdrawTime time.Time    `json:"last_withdraw_time"` // last time the user triggers withdraw
 	Sigs             []common.Sig `json:"sigs"`
 }
 
@@ -53,7 +55,7 @@ func (r Reward) HasNewReward() bool {
 }
 
 // Initiate the withdraw process
-func (r *Reward) InitateWithdraw() {
+func (r *Reward) InitateWithdraw(now time.Time) {
 	rewardBytes, _ := proto.Marshal(
 		&sgn.Reward{
 			Receiver:                mainchain.Hex2Bytes(r.Receiver),
@@ -63,6 +65,7 @@ func (r *Reward) InitateWithdraw() {
 
 	r.RewardProtoBytes = rewardBytes
 	r.Sigs = []common.Sig{}
+	r.LastWithdrawTime = now
 }
 
 // Add signature to reward sigs
