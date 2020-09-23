@@ -80,6 +80,7 @@
       "params": {
         "syncer_duration": "10",
         "epoch_length": "3",
+        "max_validator_diff": "5",
         "withdraw_window": "3000000000",
         "mining_reward": "10000000000000",
         "puller_reward": "500000000000"

@@ -50,14 +50,15 @@ func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) 
 	log.Infoln("Apply confirm param proposal", paramChange)
 	switch paramChange.Record.Uint64() {
 	case mainchain.MaxValidatorNum:
+		maxValidatorDiff := keeper.validatorKeeper.MaxValidatorDiff(ctx)
 		ss, ok := keeper.paramsKeeper.GetSubspace(staking.DefaultParamspace)
 		if !ok {
 			return false, fmt.Errorf("Fail to get staking subspace")
 		}
 
-		// let sidechain maxValidator always larger than mainchain maxValdiator by 10,
+		// let sidechain maxValidator larger than mainchain maxValdiator
 		// to tolerate the latency for sidechain to keep in sync with mainchain.
-		maxValidator := paramChange.NewValue.Add(sdk.NewInt(10))
+		maxValidator := paramChange.NewValue.Add(sdk.NewInt(int64(maxValidatorDiff)))
 		err := ss.Update(ctx, staking.KeyMaxValidators, []byte(maxValidator.String()))
 		if err != nil {
 			return false, err
