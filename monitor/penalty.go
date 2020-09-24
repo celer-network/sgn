@@ -6,6 +6,7 @@ import (
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/x/slash"
+	"github.com/celer-network/sgn/x/slash/types"
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,14 +62,15 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 		return
 	}
 
-	if !m.validatePenaltySigs(penaltyEvent.Nonce) {
-		log.Infof("Penalty %d does not have enough sigs", penaltyEvent.Nonce)
+	penalty, err := slash.CLIQueryPenalty(m.Transactor.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
+	if err != nil {
+		log.Errorln("QueryPenalty err", err)
 		return
 	}
 
-	penaltyRequest, err := slash.CLIQueryPenaltyRequest(m.Transactor.CliCtx, slash.StoreKey, penaltyEvent.Nonce)
-	if err != nil {
-		log.Errorln("QueryPenaltyRequest err", err)
+	if !m.validatePenaltySigs(penalty) {
+		log.Infof("Penalty %d does not have enough sigs", penaltyEvent.Nonce)
+		m.requeuePenalty(penaltyEvent)
 		return
 	}
 
@@ -86,31 +88,18 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 			},
 		},
 		func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return m.EthClient.DPoS.Slash(opts, penaltyRequest)
+			return m.EthClient.DPoS.Slash(opts, penalty.GetPenaltyRequest())
 		},
 	)
 	if err != nil {
-		if penaltyEvent.RetryCount < maxSlashRetry {
-			penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
-			err = m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
-			if err != nil {
-				log.Errorln("db Set err", err)
-			}
-			return
-		}
+		m.requeuePenalty(penaltyEvent)
 		log.Errorln("Slash err", err)
 		return
 	}
 	log.Infoln("Slash tx submitted", tx.Hash().Hex())
 }
 
-func (m *Monitor) validatePenaltySigs(nonce uint64) bool {
-	penalty, err := slash.CLIQueryPenalty(m.Transactor.CliCtx, slash.StoreKey, nonce)
-	if err != nil {
-		log.Errorln("QueryPenalty err", err)
-		return false
-	}
-
+func (m *Monitor) validatePenaltySigs(penalty types.Penalty) bool {
 	signedValidators := mapset.NewSet()
 	for _, sig := range penalty.Sigs {
 		signedValidators.Add(sig.Signer)
@@ -133,4 +122,15 @@ func (m *Monitor) validatePenaltySigs(nonce uint64) bool {
 	}
 
 	return votingStake.GTE(totalStake.MulRaw(2).QuoRaw(3))
+}
+
+func (m *Monitor) requeuePenalty(penaltyEvent PenaltyEvent) {
+	if penaltyEvent.RetryCount < maxSlashRetry {
+		penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
+		err := m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+		if err != nil {
+			log.Errorln("db Set err", err)
+		}
+		return
+	}
 }
