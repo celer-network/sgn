@@ -30,6 +30,12 @@ func (k Keeper) EpochLength(ctx sdk.Context) (res uint) {
 	return
 }
 
+// MaxValidatorDiff - max validator add
+func (k Keeper) MaxValidatorDiff(ctx sdk.Context) (res uint) {
+	k.paramstore.Get(ctx, types.KeyMaxValidatorDiff, &res)
+	return
+}
+
 // WithdrawWindow - withdraw window
 func (k Keeper) WithdrawWindow(ctx sdk.Context) (res time.Duration) {
 	k.paramstore.Get(ctx, types.KeyWithdrawWindow, &res)
@@ -53,6 +59,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.SyncerDuration(ctx),
 		k.EpochLength(ctx),
+		k.MaxValidatorDiff(ctx),
 		k.WithdrawWindow(ctx),
 		k.MiningReward(ctx),
 		k.PullerReward(ctx),
