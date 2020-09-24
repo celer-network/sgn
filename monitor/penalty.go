@@ -69,7 +69,7 @@ func (m *Monitor) submitPenalty(penaltyEvent PenaltyEvent) {
 	}
 
 	if !m.validatePenaltySigs(penalty) {
-		log.Infof("Penalty %d does not have enough sigs", penaltyEvent.Nonce)
+		log.Debugf("Penalty %d does not have enough sigs", penaltyEvent.Nonce)
 		m.requeuePenalty(penaltyEvent)
 		return
 	}
@@ -125,12 +125,14 @@ func (m *Monitor) validatePenaltySigs(penalty types.Penalty) bool {
 }
 
 func (m *Monitor) requeuePenalty(penaltyEvent PenaltyEvent) {
-	if penaltyEvent.RetryCount < maxSlashRetry {
-		penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
-		err := m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
-		if err != nil {
-			log.Errorln("db Set err", err)
-		}
+	if penaltyEvent.RetryCount >= maxSlashRetry {
+		log.Infof("Penalty %d hits retry limit", penaltyEvent.Nonce)
 		return
+	}
+
+	penaltyEvent.RetryCount = penaltyEvent.RetryCount + 1
+	err := m.dbSet(GetPenaltyKey(penaltyEvent.Nonce), penaltyEvent.MustMarshal())
+	if err != nil {
+		log.Errorln("db Set err", err)
 	}
 }
