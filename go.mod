@@ -7,6 +7,7 @@ require (
 	github.com/celer-network/goutils v0.1.16
 	github.com/cosmos/cosmos-sdk v0.39.1
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
+	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b // indirect
 	github.com/ethereum/go-ethereum v1.9.20
 	github.com/gammazero/deque v0.0.0-20200721202602-07291166fe33
 	github.com/golang/protobuf v1.4.2
@@ -24,4 +25,6 @@ require (
 
 replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.39.2-celer.3
 
-// replace github.com/cosmos/cosmos-sdk => ../cosmos-sdk
+replace github.com/dvsekhvalnov/jose2go => github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
+
+//replace github.com/cosmos/cosmos-sdk => ../cosmos-sdk
