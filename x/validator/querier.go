@@ -1,9 +1,9 @@
 package validator
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,7 +55,7 @@ func queryDelegator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 
 	delegator, found := keeper.GetDelegator(ctx, params.CandidateAddress, params.DelegatorAddress)
 	if !found {
-		return nil, fmt.Errorf("Cannot find delegator %s for candidate %s", params.DelegatorAddress, params.CandidateAddress)
+		return nil, fmt.Errorf("%w for delegator %s, candidate %s", common.ErrRecordNotFound, params.DelegatorAddress, params.CandidateAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, delegator)
@@ -76,7 +76,7 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 
 	candidate, found := keeper.GetCandidate(ctx, params.CandidateAddress)
 	if !found {
-		return nil, errors.New("Cannot find candidate " + params.CandidateAddress)
+		return nil, fmt.Errorf("%w for candidate %s", common.ErrRecordNotFound, params.CandidateAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
@@ -115,7 +115,7 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 
 	reward, found := keeper.GetReward(ctx, params.EthAddress)
 	if !found {
-		return nil, errors.New("Reward does not exist for " + params.EthAddress)
+		return nil, fmt.Errorf("%w for reward of %s", common.ErrRecordNotFound, params.EthAddress)
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, reward)
