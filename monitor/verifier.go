@@ -157,6 +157,11 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 			log.Infof("%s. delegator stake already updated", logmsg)
 			return true, false
 		}
+	} else if strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
+		if delegator.DelegatedStake.IsZero() {
+			log.Debugf("%s. delegator with zero stake already removed", logmsg)
+			return true, false
+		}
 	}
 
 	di, err := m.EthClient.DPoS.GetDelegatorInfo(

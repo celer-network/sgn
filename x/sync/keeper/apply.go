@@ -97,6 +97,8 @@ func (keeper Keeper) SyncDelegator(ctx sdk.Context, change types.Change) (bool, 
 			return true, nil
 		}
 		delegator.DelegatedStake = d.DelegatedStake
+	} else if d.DelegatedStake.IsZero() {
+		return false, nil
 	} else {
 		delegator = d
 	}
