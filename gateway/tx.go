@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
@@ -183,7 +184,14 @@ func postWithdrawRewardHandlerFn(rs *RestServer) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		if !reward.HasNewReward() {
+
+		params, err := validator.CLIQueryParams(transactor.CliCtx, validator.RouterKey)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if time.Now().Before(reward.LastWithdrawTime.Add(params.WithdrawWindow)) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "reward request is already the latest")
 			return
 		}
