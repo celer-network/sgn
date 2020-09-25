@@ -134,6 +134,7 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 			EventName:     string(UpdateSidechainAddr),
 			Contract:      m.sgnContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateSidechainAddr),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -166,6 +167,7 @@ func (m *Monitor) monitorSGNAddSubscriptionBalance() {
 			EventName:     string(AddSubscriptionBalance),
 			Contract:      m.sgnContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(AddSubscriptionBalance),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -188,6 +190,7 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 			EventName:     string(CandidateUnbonded),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(CandidateUnbonded),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -209,6 +212,7 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 			EventName:     string(ConfirmParamProposal),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(ConfirmParamProposal),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -230,6 +234,7 @@ func (m *Monitor) monitorDPoSUpdateCommissionRate() {
 			EventName:     string(UpdateCommissionRate),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateCommissionRate),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -251,6 +256,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 			EventName:     string(ValidatorChange),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(ValidatorChange),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -295,6 +301,7 @@ func (m *Monitor) monitorDPoSUpdateDelegatedStake() {
 			EventName:     string(UpdateDelegatedStake),
 			Contract:      m.dposContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateDelegatedStake),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -326,6 +333,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 			EventName:     string(IntendSettle),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
@@ -347,6 +355,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 			EventName:     string(IntendWithdraw),
 			Contract:      m.ledgerContract,
 			StartBlock:    m.getCurrentBlockNumber(),
+			Reset:         true,
 			CheckInterval: getEventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
