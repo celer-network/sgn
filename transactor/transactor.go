@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	maxTxRetry     = 15
-	txRetryDelay   = 1 * time.Second
-	maxSignRetry   = 10
-	signRetryDelay = 100 * time.Millisecond
-	maxGasRetry    = 5
+	maxTxRetry      = 15
+	maxTxQueryRetry = 30
+	txRetryDelay    = 1 * time.Second
+	maxSignRetry    = 10
+	signRetryDelay  = 100 * time.Millisecond
+	maxGasRetry     = 5
 )
 
 var gasErrCode = fmt.Errorf("code 11")
@@ -293,7 +294,7 @@ func (t *Transactor) waitMined(txHash string) (*sdk.TxResponse, error) {
 	var err error
 	mined := false
 	var txResponse sdk.TxResponse
-	for try := 0; try < maxTxRetry; try++ {
+	for try := 0; try < maxTxQueryRetry; try++ {
 		time.Sleep(txRetryDelay)
 		if txResponse, err = utils.QueryTx(t.CliCtx, txHash); err == nil {
 			mined = true
