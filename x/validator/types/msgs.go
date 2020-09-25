@@ -17,15 +17,13 @@ const (
 )
 
 type MsgSetTransactors struct {
-	EthAddress  string           `json:"eth_address"`
 	Transactors []sdk.AccAddress `json:"transactors"`
 	Sender      sdk.AccAddress   `json:"sender"`
 }
 
 // NewMsgSetTransactors is a constructor function for MsgSetTransactors
-func NewMsgSetTransactors(ethAddress string, transactors []sdk.AccAddress, sender sdk.AccAddress) MsgSetTransactors {
+func NewMsgSetTransactors(transactors []sdk.AccAddress, sender sdk.AccAddress) MsgSetTransactors {
 	return MsgSetTransactors{
-		EthAddress:  mainchain.FormatAddrHex(ethAddress),
 		Transactors: transactors,
 		Sender:      sender,
 	}
@@ -39,10 +37,6 @@ func (msg MsgSetTransactors) Type() string { return TypeMsgSetTransactors }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgSetTransactors) ValidateBasic() error {
-	if msg.EthAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
-	}
-
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
@@ -50,6 +44,11 @@ func (msg MsgSetTransactors) ValidateBasic() error {
 	for _, transactor := range msg.Transactors {
 		if transactor.Empty() {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, transactor.String())
+		}
+
+		err := sdk.VerifyAddressFormat(transactor)
+		if err != nil {
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 		}
 	}
 
@@ -67,15 +66,13 @@ func (msg MsgSetTransactors) GetSigners() []sdk.AccAddress {
 }
 
 type MsgEditCandidateDescription struct {
-	EthAddress  string              `json:"eth_address"`
 	Description staking.Description `json:"description"`
 	Sender      sdk.AccAddress      `json:"sender"`
 }
 
 // NewMsgEditCandidateDescription is a constructor function for MsgEditCandidateDescription
-func NewMsgEditCandidateDescription(ethAddress string, description staking.Description, sender sdk.AccAddress) MsgEditCandidateDescription {
+func NewMsgEditCandidateDescription(description staking.Description, sender sdk.AccAddress) MsgEditCandidateDescription {
 	return MsgEditCandidateDescription{
-		EthAddress:  mainchain.FormatAddrHex(ethAddress),
 		Description: description,
 		Sender:      sender,
 	}
@@ -89,10 +86,6 @@ func (msg MsgEditCandidateDescription) Type() string { return TypeMsgEditCandida
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgEditCandidateDescription) ValidateBasic() error {
-	if msg.EthAddress == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
-	}
-
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}

@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	flagTransactors     = "transactors"
 	flagMoniker         = "moniker"
 	flagIdentity        = "identity"
 	flagWebsite         = "website"
@@ -42,12 +41,11 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdSetTransactors is the CLI command for sending a SetTransactors transaction
 func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-transactors [eth-addr]",
-		Short: "set transactors for the eth address",
-		Args:  cobra.ExactArgs(1),
+		Use:   "set-transactors",
+		Short: "set transactors based on transactors in config",
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Info(viper.GetStringSlice(flagTransactors))
-			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
+			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 			if err != nil {
 				return err
 			}
@@ -58,7 +56,7 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgSetTransactors(args[0], transactors, txr.Key.GetAddress())
+			msg := types.NewMsgSetTransactors(transactors, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -70,17 +68,15 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSlice(flagTransactors, []string{}, "transactors")
-
 	return cmd
 }
 
 // GetCmdEditCandidateDescription is the CLI command for sending a EditCandidateDescription transaction
 func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit-candidate-description [eth-addr]",
-		Short: "Edit candidate description for the eth address",
-		Args:  cobra.ExactArgs(1),
+		Use:   "edit-candidate-description",
+		Short: "Edit candidate description",
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			moniker, _ := cmd.Flags().GetString(flagMoniker)
 			identity, _ := cmd.Flags().GetString(flagIdentity)
@@ -95,7 +91,7 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgEditCandidateDescription(args[0], description, txr.Key.GetAddress())
+			msg := types.NewMsgEditCandidateDescription(description, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

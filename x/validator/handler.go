@@ -6,6 +6,7 @@ import (
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/thoas/go-funk"
 )
 
 // NewHandler returns a handler for "validator" type messages.
@@ -40,31 +41,30 @@ func NewHandler(keeper Keeper) sdk.Handler {
 func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransactors, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
 
-	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	validator, found := keeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
-		return nil, fmt.Errorf("Candidate does not exist")
-	}
-	if !candidate.ValAccount.Equals(msg.Sender) {
-		return nil, fmt.Errorf("The candidate is not operated by the sender.")
+		return nil, fmt.Errorf("Sender is not a validator")
 	}
 
-	dedup := make(map[string]bool)
-	candidate.Transactors = []sdk.AccAddress{}
-	for _, transactor := range msg.Transactors {
-		err := sdk.VerifyAddressFormat(transactor)
-		if err != nil {
-			return nil, fmt.Errorf("%w, %s", err, transactor)
-		}
-		if !transactor.Equals(candidate.ValAccount) {
-			if _, exist := dedup[transactor.String()]; !exist {
-				logEntry.Transactor = append(logEntry.Transactor, transactor.String())
-				candidate.Transactors = append(candidate.Transactors, transactor)
-				dedup[transactor.String()] = true
-				keeper.InitAccount(ctx, transactor)
-			}
-		}
+	candidate, found := keeper.GetCandidate(ctx, validator.Description.Identity)
+	if !found {
+		return nil, fmt.Errorf("Candidate does not exist. This should not happen")
+	}
+
+	transactorsToSet := msg.Transactors
+	transactorsToSet = funk.Uniq(transactorsToSet).([]sdk.AccAddress)
+	transactorsToSet = funk.Subtract(transactorsToSet, []sdk.AccAddress{candidate.ValAccount}).([]sdk.AccAddress)
+	newTs, oldTs := funk.Difference(transactorsToSet, candidate.Transactors)
+	candidate.Transactors = transactorsToSet
+	candidate.Transactors = transactorsToSet
+
+	for _, transactor := range newTs.([]sdk.AccAddress) {
+		keeper.InitAccount(ctx, transactor)
+	}
+
+	for _, transactor := range oldTs.([]sdk.AccAddress) {
+		keeper.RemoveAccount(ctx, transactor)
 	}
 
 	keeper.SetCandidate(ctx, candidate)
@@ -75,15 +75,15 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 func handleMsgEditCandidateDescription(ctx sdk.Context, keeper Keeper, msg MsgEditCandidateDescription, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
 
-	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	validator, found := keeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
 	if !found {
-		return nil, fmt.Errorf("Candidate does not exist")
+		return nil, fmt.Errorf("Sender is not a validator")
 	}
 
-	if !candidate.ValAccount.Equals(msg.Sender) {
-		return nil, fmt.Errorf("The candidate is not operated by the sender.")
+	candidate, found := keeper.GetCandidate(ctx, validator.Description.Identity)
+	if !found {
+		return nil, fmt.Errorf("Candidate does not exist")
 	}
 
 	description, err := candidate.Description.UpdateDescription(msg.Description)
