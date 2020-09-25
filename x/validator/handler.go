@@ -108,10 +108,8 @@ func handleMsgWithdrawReward(ctx sdk.Context, keeper Keeper, msg MsgWithdrawRewa
 	}
 
 	if ctx.BlockTime().Before(reward.LastWithdrawTime.Add(keeper.WithdrawWindow(ctx))) {
-		if !reward.HasNewReward() {
-			logEntry.Warn = append(logEntry.Warn, "no new reward")
-			return &sdk.Result{}, nil
-		}
+		logEntry.Warn = append(logEntry.Warn, "Request too fast")
+		return &sdk.Result{}, nil
 	}
 
 	reward.InitateWithdraw(ctx.BlockTime())

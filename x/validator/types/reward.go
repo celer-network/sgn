@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"math/big"
 	"strings"
 	"time"
 
@@ -34,24 +33,6 @@ func NewReward(receiver string) Reward {
 // implement fmt.Stringer
 func (r Reward) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`Receiver: %s, MiningReward: %v, ServiceReward: %v`, r.Receiver, r.MiningReward, r.ServiceReward))
-}
-
-// Check if have new reward added
-func (r Reward) HasNewReward() bool {
-	if len(r.RewardProtoBytes) == 0 {
-		return true
-	}
-
-	var reward sgn.Reward
-	err := proto.Unmarshal(r.RewardProtoBytes, &reward)
-	if err != nil {
-		log.Errorln("proto umarshal err", err)
-		return false
-	}
-
-	hasNewServiceReward := new(big.Int).SetBytes(reward.CumulativeServiceReward).Cmp(r.ServiceReward.BigInt()) != 0
-	hasNewMingingReward := new(big.Int).SetBytes(reward.CumulativeMiningReward).Cmp(r.MiningReward.BigInt()) != 0
-	return hasNewServiceReward || hasNewMingingReward
 }
 
 // Initiate the withdraw process
