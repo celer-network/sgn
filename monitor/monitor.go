@@ -99,6 +99,7 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 	go m.monitorCelerLedgerIntendSettle()
 	go m.monitorCelerLedgerIntendWithdraw()
 
+	go m.monitorSidechainCreateValidator()
 	go m.monitorSidechainWithdrawReward()
 	if m.executeSlash {
 		go m.monitorSidechainSlash()
@@ -273,7 +274,6 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 					log.Infof("%s. Init my own validator.", logmsg)
 					m.setBonded()
 					go m.selfSyncValidator()
-					m.setTransactors()
 				} else {
 					log.Infof("%s, addValidator addr: %x, ", logmsg, validatorChange.EthAddr)
 				}

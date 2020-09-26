@@ -6,7 +6,6 @@ import (
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/thoas/go-funk"
 )
 
 // NewHandler returns a handler for "validator" type messages.
@@ -52,19 +51,24 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 		return nil, fmt.Errorf("Candidate does not exist. This should not happen")
 	}
 
-	transactorsToSet := msg.Transactors
-	transactorsToSet = funk.Uniq(transactorsToSet).([]sdk.AccAddress)
-	transactorsToSet = funk.Subtract(transactorsToSet, []sdk.AccAddress{candidate.ValAccount}).([]sdk.AccAddress)
-	newTs, oldTs := funk.Difference(transactorsToSet, candidate.Transactors)
-	candidate.Transactors = transactorsToSet
-	candidate.Transactors = transactorsToSet
-
-	for _, transactor := range newTs.([]sdk.AccAddress) {
-		keeper.InitAccount(ctx, transactor)
+	dedup := make(map[string]bool)
+	oldTransactors := candidate.Transactors
+	candidate.Transactors = []sdk.AccAddress{}
+	for _, transactor := range msg.Transactors {
+		if !transactor.Equals(candidate.ValAccount) {
+			if _, exist := dedup[transactor.String()]; !exist {
+				logEntry.Transactor = append(logEntry.Transactor, transactor.String())
+				candidate.Transactors = append(candidate.Transactors, transactor)
+				dedup[transactor.String()] = true
+				keeper.InitAccount(ctx, transactor)
+			}
+		}
 	}
 
-	for _, transactor := range oldTs.([]sdk.AccAddress) {
-		keeper.RemoveAccount(ctx, transactor)
+	for _, transactor := range oldTransactors {
+		if _, exist := dedup[transactor.String()]; !exist {
+			keeper.RemoveAccount(ctx, transactor)
+		}
 	}
 
 	keeper.SetCandidate(ctx, candidate)
