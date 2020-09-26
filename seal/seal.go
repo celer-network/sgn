@@ -47,9 +47,11 @@ func CommitMsgLog(entry *MsgLog) {
 	if entry.Penalty.Nonce == 0 && len(entry.Penalty.Validator) == 0 {
 		entry.Penalty = nil
 	}
-
 	if entry.Change.Id == 0 {
 		entry.Change = nil
+	}
+	if entry.Govern.ProposalId == 0 { // assuming starting_proposal_id = 1
+		entry.Govern = nil
 	}
 
 	if len(entry.Error) > 0 {

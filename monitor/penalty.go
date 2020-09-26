@@ -10,6 +10,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	mapset "github.com/deckarep/golang-set"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -105,7 +106,7 @@ func (m *Monitor) validatePenaltySigs(penalty types.Penalty) bool {
 		signedValidators.Add(sig.Signer)
 	}
 
-	validators, err := validator.CLIQueryBondedValidators(m.Transactor.CliCtx, validator.StoreKey)
+	validators, err := validator.CLIQueryBondedValidators(m.Transactor.CliCtx, staking.StoreKey)
 	if err != nil {
 		log.Errorln("QueryBondedValidators err", err)
 		return false
@@ -120,8 +121,8 @@ func (m *Monitor) validatePenaltySigs(penalty types.Penalty) bool {
 			votingStake = votingStake.Add(v.BondedTokens())
 		}
 	}
-
-	return votingStake.GTE(totalStake.MulRaw(2).QuoRaw(3))
+	quorumStake := totalStake.MulRaw(2).QuoRaw(3)
+	return votingStake.GTE(quorumStake)
 }
 
 func (m *Monitor) requeuePenalty(penaltyEvent PenaltyEvent) {
