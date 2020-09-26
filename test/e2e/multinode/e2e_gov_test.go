@@ -249,15 +249,16 @@ func mainchainGovTest(t *testing.T) {
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Confirm param proposal 0")
 
 	var params staking.Params
+	expectedMaxValidators := uint16(25) // 20 (mainchain value) + 5 (max_validator_diff)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		bz, _, err := transactor.CliCtx.Query(fmt.Sprintf("custom/%s/%s", staking.StoreKey, staking.QueryParameters))
 		require.NoError(t, err, "failed to query staking params")
 		transactor.CliCtx.Codec.MustUnmarshalJSON(bz, &params)
-		if params.MaxValidators == 20 {
+		if params.MaxValidators == expectedMaxValidators {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
 
-	assert.Equal(t, uint16(20), params.MaxValidators, "MaxValidators params should be 20")
+	assert.Equal(t, expectedMaxValidators, params.MaxValidators, "MaxValidators param not match")
 }
