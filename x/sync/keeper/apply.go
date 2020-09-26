@@ -130,7 +130,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 		if newVal.Status == sdk.Bonded {
 			if !sdk.ValAddress(change.Initiator).Equals(valAddress) {
 				log.Infof("Bonded validator %s %s not initialized, msg sender: %s", candidate.ValAccount, ethAddr, change.Initiator)
-				return false, nil
+				return true, nil
 			}
 			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
@@ -139,7 +139,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 			return false, nil
 		} else {
 			log.Debugf("Candidate %s %s not bonded", candidate.ValAccount, ethAddr)
-			return false, nil
+			return true, nil
 		}
 	}
 
