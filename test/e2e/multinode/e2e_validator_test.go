@@ -49,7 +49,9 @@ func validatorTest(t *testing.T) {
 	)
 
 	// delegation ratio. V0 : V1 : V2 = 2 : 1 : 1
-	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(1000000000000000000), big.NewInt(1000000000000000000)}
+	amts := []*big.Int{big.NewInt(8000000000000000000), big.NewInt(4000000000000000000), big.NewInt(4000000000000000000)}
+	minAmts := []*big.Int{big.NewInt(4000000000000000000), big.NewInt(2000000000000000000), big.NewInt(2000000000000000000)}
+	commissionRate := big.NewInt(200)
 
 	// add two validators, 0 and 1
 	log.Infoln("---------- It should add two validators successfully ----------")
@@ -58,15 +60,19 @@ func validatorTest(t *testing.T) {
 		// get auth
 		ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[i])
 		require.NoError(t, err, "failed to get auth")
-		tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[i], amts[i], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+		tc.AddCandidateWithStake(
+			t, transactor, ethAddr, auth, tc.ValAccounts[i],
+			amts[i], minAmts[i], commissionRate, big.NewInt(10000), true)
 		tc.CheckValidatorNum(t, transactor, i+1)
 	}
 
 	log.Infoln("---------- It should fail to add validator 2 without enough delegation ----------")
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[2])
 	require.NoError(t, err, "failed to get auth")
-	initialDelegation := big.NewInt(1)
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[2], initialDelegation, big.NewInt(10), big.NewInt(1), big.NewInt(10000), false)
+	initialDelegation := big.NewInt(1000000000000000000)
+	tc.AddCandidateWithStake(
+		t, transactor, ethAddr, auth, tc.ValAccounts[2],
+		initialDelegation, minAmts[2], commissionRate, big.NewInt(10000), false)
 	log.Info("Query sgn about validators to check if validator 2 is not added...")
 	tc.CheckValidatorNum(t, transactor, 2)
 
