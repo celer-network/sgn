@@ -1,7 +1,8 @@
 package cli
 
 import (
-	"github.com/celer-network/goutils/log"
+	"io/ioutil"
+
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/validator/types"
@@ -9,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -52,7 +54,6 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 
@@ -87,11 +88,20 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 
-			msg := types.NewMsgEditCandidateDescription(description, txr.Key.GetAddress())
+			ksBytes, err := ioutil.ReadFile(viper.GetString(common.FlagEthKeystore))
+			if err != nil {
+				return err
+			}
+
+			key, err := keystore.DecryptKey(ksBytes, viper.GetString(common.FlagEthPassphrase))
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgEditCandidateDescription(key.Address.Hex(), description, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -121,7 +131,6 @@ func GetCmdWithdrawReward(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 

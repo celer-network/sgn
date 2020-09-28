@@ -48,7 +48,7 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 
 	candidate, found := keeper.GetCandidate(ctx, validator.Description.Identity)
 	if !found {
-		return nil, fmt.Errorf("Candidate does not exist. This should not happen")
+		return nil, fmt.Errorf("Candidate does not exist")
 	}
 
 	dedup := make(map[string]bool)
@@ -79,13 +79,9 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 func handleMsgEditCandidateDescription(ctx sdk.Context, keeper Keeper, msg MsgEditCandidateDescription, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
+	logEntry.EthAddress = msg.EthAddress
 
-	validator, found := keeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
-	if !found {
-		return nil, fmt.Errorf("Sender is not a validator")
-	}
-
-	candidate, found := keeper.GetCandidate(ctx, validator.Description.Identity)
+	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		return nil, fmt.Errorf("Candidate does not exist")
 	}

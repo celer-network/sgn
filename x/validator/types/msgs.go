@@ -66,13 +66,15 @@ func (msg MsgSetTransactors) GetSigners() []sdk.AccAddress {
 }
 
 type MsgEditCandidateDescription struct {
+	EthAddress  string              `json:"eth_address"`
 	Description staking.Description `json:"description"`
 	Sender      sdk.AccAddress      `json:"sender"`
 }
 
 // NewMsgEditCandidateDescription is a constructor function for MsgEditCandidateDescription
-func NewMsgEditCandidateDescription(description staking.Description, sender sdk.AccAddress) MsgEditCandidateDescription {
+func NewMsgEditCandidateDescription(ethAddress string, description staking.Description, sender sdk.AccAddress) MsgEditCandidateDescription {
 	return MsgEditCandidateDescription{
+		EthAddress:  mainchain.FormatAddrHex(ethAddress),
 		Description: description,
 		Sender:      sender,
 	}
@@ -86,12 +88,16 @@ func (msg MsgEditCandidateDescription) Type() string { return TypeMsgEditCandida
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgEditCandidateDescription) ValidateBasic() error {
-	if msg.Sender.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
+	if msg.EthAddress == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "EthAddress cannot be empty")
 	}
 
 	if msg.Description == (staking.Description{}) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
+	}
+
+	if msg.Sender.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender.String())
 	}
 
 	return nil
