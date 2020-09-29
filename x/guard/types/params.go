@@ -127,19 +127,6 @@ func validateRequestGuardCount(i interface{}) error {
 	return nil
 }
 
-func validateEpochLength(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v <= 0 {
-		return fmt.Errorf("guard parameter EpochLength must be positive: %d", v)
-	}
-
-	return nil
-}
-
 func validateRequestCost(i interface{}) error {
 	v, ok := i.(sdk.Int)
 	if !ok {

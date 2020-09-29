@@ -126,7 +126,7 @@ func (p Params) Validate() error {
 	}
 
 	if p.WithdrawWindow <= 0 {
-		return fmt.Errorf("validator parameter EpochLength must be a positive integer")
+		return fmt.Errorf("validator parameter WithdrawWindow must be a positive integer")
 	}
 
 	if !p.MiningReward.IsPositive() {
