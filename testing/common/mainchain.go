@@ -347,7 +347,7 @@ func prepareEtherBaseClient() (
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
 	}
-	etherBaseAddrStr, err := GetAddressFromKeystore(etherBaseKsBytes)
+	etherBaseAddrStr, err := mainchain.GetAddressFromKeystore(etherBaseKsBytes)
 	if err != nil {
 		return nil, nil, nil, mainchain.Addr{}, err
 	}

@@ -4,13 +4,13 @@ import (
 	"io/ioutil"
 
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -96,12 +96,12 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			key, err := keystore.DecryptKey(ksBytes, viper.GetString(common.FlagEthPassphrase))
+			address, err := mainchain.GetAddressFromKeystore(ksBytes)
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgEditCandidateDescription(key.Address.Hex(), description, txr.Key.GetAddress())
+			msg := types.NewMsgEditCandidateDescription(address, description, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
