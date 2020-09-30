@@ -2,6 +2,7 @@ package mainchain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,4 +44,15 @@ func GetTxSender(ec *ethclient.Client, txHashStr string) (string, error) {
 		return "", fmt.Errorf("Failed to get msg: %w", err)
 	}
 	return Addr2Hex(msg.From()), nil
+}
+
+func GetAddressFromKeystore(ksBytes []byte) (string, error) {
+	type ksStruct struct {
+		Address string
+	}
+	var ks ksStruct
+	if err := json.Unmarshal(ksBytes, &ks); err != nil {
+		return "", err
+	}
+	return ks.Address, nil
 }

@@ -1,8 +1,10 @@
 package cli
 
 import (
-	"github.com/celer-network/goutils/log"
+	"io/ioutil"
+
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/validator/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,7 +16,6 @@ import (
 )
 
 const (
-	flagTransactors     = "transactors"
 	flagMoniker         = "moniker"
 	flagIdentity        = "identity"
 	flagWebsite         = "website"
@@ -42,23 +43,21 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdSetTransactors is the CLI command for sending a SetTransactors transaction
 func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-transactors [eth-addr]",
-		Short: "set transactors for the eth address",
-		Args:  cobra.ExactArgs(1),
+		Use:   "set-transactors",
+		Short: "set transactors based on transactors in config",
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Info(viper.GetStringSlice(flagTransactors))
-			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(flagTransactors))
+			transactors, err := common.ParseTransactorAddrs(viper.GetStringSlice(common.FlagSgnTransactors))
 			if err != nil {
 				return err
 			}
 
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 
-			msg := types.NewMsgSetTransactors(args[0], transactors, txr.Key.GetAddress())
+			msg := types.NewMsgSetTransactors(transactors, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -70,17 +69,15 @@ func GetCmdSetTransactors(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSlice(flagTransactors, []string{}, "transactors")
-
 	return cmd
 }
 
 // GetCmdEditCandidateDescription is the CLI command for sending a EditCandidateDescription transaction
 func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit-candidate-description [eth-addr]",
-		Short: "Edit candidate description for the eth address",
-		Args:  cobra.ExactArgs(1),
+		Use:   "edit-candidate-description",
+		Short: "Edit candidate description",
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			moniker, _ := cmd.Flags().GetString(flagMoniker)
 			identity, _ := cmd.Flags().GetString(flagIdentity)
@@ -91,11 +88,20 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 
-			msg := types.NewMsgEditCandidateDescription(args[0], description, txr.Key.GetAddress())
+			ksBytes, err := ioutil.ReadFile(viper.GetString(common.FlagEthKeystore))
+			if err != nil {
+				return err
+			}
+
+			address, err := mainchain.GetAddressFromKeystore(ksBytes)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgEditCandidateDescription(address, description, txr.Key.GetAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -125,7 +131,6 @@ func GetCmdWithdrawReward(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 

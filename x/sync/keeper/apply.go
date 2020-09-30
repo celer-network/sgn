@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingType "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
@@ -134,6 +135,12 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 			}
 			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					stakingType.EventTypeCreateValidator,
+					sdk.NewAttribute(stakingType.AttributeKeyValidator, candidate.ValAccount.String()),
+				),
+			)
 		} else if newVal.Status == sdk.Unbonding {
 			log.Warnf("Unbonding validator %s %s not found, msg sender: %s", candidate.ValAccount, ethAddr, change.Initiator)
 			return false, nil

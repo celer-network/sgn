@@ -9,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingType "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	tm "github.com/tendermint/tendermint/types"
@@ -54,6 +55,17 @@ func MonitorTendermintEvent(nodeURI, eventTag string, handleEvent func(event abc
 			}
 		}
 	}
+}
+
+func (m *Monitor) monitorSidechainCreateValidator() {
+	createValidatorEvent := fmt.Sprintf("%s.%s='%s'", stakingType.EventTypeCreateValidator, stakingType.AttributeKeyValidator, m.sidechainAcct.String())
+	MonitorTendermintEvent(m.Transactor.CliCtx.NodeURI, createValidatorEvent, func(e abci.Event) {
+		event := sdk.StringifyEvent(e)
+		log.Infoln("monitorSidechainCreateValidator", event)
+		if event.Attributes[0].Value == m.sidechainAcct.String() {
+			m.setTransactors()
+		}
+	})
 }
 
 func (m *Monitor) monitorSidechainWithdrawReward() {

@@ -40,23 +40,21 @@ func NewHandler(keeper Keeper) sdk.Handler {
 func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransactors, logEntry *seal.MsgLog) (*sdk.Result, error) {
 	logEntry.Type = msg.Type()
 	logEntry.Sender = msg.Sender.String()
-	logEntry.EthAddress = msg.EthAddress
 
-	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
+	validator, found := keeper.GetValidator(ctx, sdk.ValAddress(msg.Sender))
+	if !found {
+		return nil, fmt.Errorf("Sender is not a validator")
+	}
+
+	candidate, found := keeper.GetCandidate(ctx, validator.Description.Identity)
 	if !found {
 		return nil, fmt.Errorf("Candidate does not exist")
 	}
-	if !candidate.ValAccount.Equals(msg.Sender) {
-		return nil, fmt.Errorf("The candidate is not operated by the sender.")
-	}
 
 	dedup := make(map[string]bool)
+	oldTransactors := candidate.Transactors
 	candidate.Transactors = []sdk.AccAddress{}
 	for _, transactor := range msg.Transactors {
-		err := sdk.VerifyAddressFormat(transactor)
-		if err != nil {
-			return nil, fmt.Errorf("%w, %s", err, transactor)
-		}
 		if !transactor.Equals(candidate.ValAccount) {
 			if _, exist := dedup[transactor.String()]; !exist {
 				logEntry.Transactor = append(logEntry.Transactor, transactor.String())
@@ -64,6 +62,12 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 				dedup[transactor.String()] = true
 				keeper.InitAccount(ctx, transactor)
 			}
+		}
+	}
+
+	for _, transactor := range oldTransactors {
+		if _, exist := dedup[transactor.String()]; !exist {
+			keeper.RemoveAccount(ctx, transactor)
 		}
 	}
 
@@ -80,10 +84,6 @@ func handleMsgEditCandidateDescription(ctx sdk.Context, keeper Keeper, msg MsgEd
 	candidate, found := keeper.GetCandidate(ctx, msg.EthAddress)
 	if !found {
 		return nil, fmt.Errorf("Candidate does not exist")
-	}
-
-	if !candidate.ValAccount.Equals(msg.Sender) {
-		return nil, fmt.Errorf("The candidate is not operated by the sender.")
 	}
 
 	description, err := candidate.Description.UpdateDescription(msg.Description)

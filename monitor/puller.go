@@ -158,7 +158,6 @@ func (m *Monitor) setTransactors() {
 		return
 	}
 	setTransactorsMsg := validator.NewMsgSetTransactors(
-		mainchain.Addr2Hex(m.EthClient.Address),
 		transactors,
 		m.Transactor.Key.GetAddress(),
 	)

@@ -77,17 +77,6 @@ func LogBlkNum(conn *ethclient.Client) {
 	log.Infoln("Latest block number on mainchain:", header.Number)
 }
 
-func GetAddressFromKeystore(ksBytes []byte) (string, error) {
-	type ksStruct struct {
-		Address string
-	}
-	var ks ksStruct
-	if err := json.Unmarshal(ksBytes, &ks); err != nil {
-		return "", err
-	}
-	return ks.Address, nil
-}
-
 func sleep(second time.Duration) {
 	time.Sleep(second * time.Second)
 }

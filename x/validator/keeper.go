@@ -302,6 +302,14 @@ func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
 	}
 }
 
+func (k Keeper) RemoveAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
+	account := k.accountKeeper.GetAccount(ctx, accAddress)
+	if account != nil {
+		log.Infof("Remove account %s", accAddress)
+		k.accountKeeper.RemoveAccount(ctx, account)
+	}
+}
+
 func (k Keeper) GetRewardEpoch(ctx sdk.Context) (epoch RewardEpoch) {
 	store := ctx.KVStore(k.storeKey)
 
