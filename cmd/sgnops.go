@@ -40,6 +40,7 @@ func GetSgnopsExecutor() cli.Executor {
 		transactor.AccountsCommand(),
 		tc.DeployCommand(),
 		channel.ServeCommand(),
+		ops.SnapshotMainchainCommand(),
 		ops.InitCandidateCommand(),
 		ops.DelegateCommand(),
 		ops.WithdrawCommand(),
