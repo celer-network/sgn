@@ -8,11 +8,10 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,6 +26,8 @@ type Candidate struct {
 	CommissionRate  *big.Int              `json:"commission_rate"`
 	MinSelfStake    *big.Int              `json:"min_self_stake"`
 	RateLockEndTime *big.Int              `json:"rate_lock_end_time"`
+	Status          *big.Int              `json:"status"`
+	UnbondTime      *big.Int              `json:"unbond_time"`
 	Delegators      map[string]*Delegator `json:"delegators"`
 }
 
@@ -76,30 +77,22 @@ func snapshotMainchain() error {
 
 	latestBlock := header.Number.Uint64()
 	dposContract := ethClient.DPoS
-	err = snapshotInitializeCandidate(dposContract)
-	if err != nil {
-		return err
-	}
-
-	err = snapshotUpdateCommissionRate(dposContract)
-	if err != nil {
-		return err
-	}
-
-	err = snapshotUpdateMinSelfStake(dposContract)
+	err = snapshotInitializeCandidate(dposContract, snapshot.EndBlockNumber, latestBlock)
 	if err != nil {
 		return err
 	}
 
 	for cur := snapshot.EndBlockNumber; cur < latestBlock; {
 		nextCur := cur + queryInterval
-		err = snapshotUpdateDelegatedStake(dposContract, cur, nextCur)
+		err = snapshotDelegate(dposContract, cur, nextCur)
 		if err != nil {
 			return err
 		}
 
 		cur = nextCur
 	}
+
+	snapshotStaking(dposContract, header.Number)
 
 	snapshot.EndBlockNumber = latestBlock
 	res, err := json.MarshalIndent(snapshot, "", "  ")
@@ -116,8 +109,12 @@ func snapshotMainchain() error {
 	return nil
 }
 
-func snapshotInitializeCandidate(dposContract *mainchain.DPoS) error {
-	initializeCandidateIt, err := dposContract.FilterInitializeCandidate(&bind.FilterOpts{}, []mainchain.Addr{})
+func snapshotInitializeCandidate(dposContract *mainchain.DPoS, start, end uint64) error {
+	log.Infof("Snapshot InitializeCandidate event from %d to %d", start, end)
+	initializeCandidateIt, err := dposContract.FilterInitializeCandidate(&bind.FilterOpts{
+		Start: start,
+		End:   &end,
+	}, []mainchain.Addr{})
 	if err != nil {
 		return err
 	}
@@ -138,41 +135,9 @@ func snapshotInitializeCandidate(dposContract *mainchain.DPoS) error {
 	return nil
 }
 
-func snapshotUpdateCommissionRate(dposContract *mainchain.DPoS) error {
-	updateCommissionRateIt, err := dposContract.FilterUpdateCommissionRate(&bind.FilterOpts{}, []mainchain.Addr{})
-	if err != nil {
-		return err
-	}
-
-	defer updateCommissionRateIt.Close()
-	for updateCommissionRateIt.Next() {
-		updateCommissionRate := updateCommissionRateIt.Event
-		candidate := candidateMap[updateCommissionRate.Candidate.String()]
-		candidate.CommissionRate = updateCommissionRate.NewRate
-		candidate.RateLockEndTime = updateCommissionRate.NewLockEndTime
-	}
-
-	return nil
-}
-
-func snapshotUpdateMinSelfStake(dposContract *mainchain.DPoS) error {
-	minSelfStakeIt, err := dposContract.FilterUpdateMinSelfStake(&bind.FilterOpts{}, []mainchain.Addr{})
-	if err != nil {
-		return err
-	}
-
-	defer minSelfStakeIt.Close()
-	for minSelfStakeIt.Next() {
-		minSelfStake := minSelfStakeIt.Event
-		candidate := candidateMap[minSelfStake.Candidate.String()]
-		candidate.MinSelfStake = minSelfStake.MinSelfStake
-	}
-
-	return nil
-}
-
-func snapshotUpdateDelegatedStake(dposContract *mainchain.DPoS, start, end uint64) error {
-	updateDelegatedStakeIt, err := dposContract.FilterUpdateDelegatedStake(&bind.FilterOpts{
+func snapshotDelegate(dposContract *mainchain.DPoS, start, end uint64) error {
+	log.Infof("Snapshot Delegate event from %d to %d", start, end)
+	delegatedIt, err := dposContract.FilterDelegate(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, []mainchain.Addr{}, []mainchain.Addr{})
@@ -180,31 +145,48 @@ func snapshotUpdateDelegatedStake(dposContract *mainchain.DPoS, start, end uint6
 		return err
 	}
 
-	defer updateDelegatedStakeIt.Close()
-	for updateDelegatedStakeIt.Next() {
-		updateDelegatedStake := updateDelegatedStakeIt.Event
-		candidate := candidateMap[updateDelegatedStake.Candidate.String()]
-		candidate.StakingPool = updateDelegatedStake.CandidatePool
-
-		delegator := getDelegator(candidate, updateDelegatedStake.Delegator.String())
-		delegator.DelegatedStake = updateDelegatedStake.DelegatorStake
+	defer delegatedIt.Close()
+	for delegatedIt.Next() {
+		delegate := delegatedIt.Event
+		candidate := candidateMap[delegate.Candidate.String()]
+		_, ok := candidate.Delegators[delegate.Delegator.String()]
+		if !ok {
+			candidate.Delegators[delegate.Delegator.String()] = &Delegator{
+				DelegatedStake:    big.NewInt(0),
+				UndelegatingStake: big.NewInt(0),
+			}
+		}
 	}
 
 	return nil
 }
 
-func getDelegator(candidate *Candidate, delegatorAddr string) *Delegator {
-	delegator, ok := candidate.Delegators[delegatorAddr]
-	if !ok {
-		delegator = &Delegator{
-			DelegatedStake:    big.NewInt(0),
-			UndelegatingStake: big.NewInt(0),
+func snapshotStaking(dposContract *mainchain.DPoS, blkNum *big.Int) error {
+	for candidateAddr, candidate := range candidateMap {
+		log.Infof("Snapshot candidate %s at %s", candidateAddr, blkNum)
+		candidateInfo, err := dposContract.GetCandidateInfo(&bind.CallOpts{BlockNumber: blkNum}, mainchain.Hex2Addr(candidateAddr))
+		if err != nil {
+			return err
 		}
+		candidate.CommissionRate = candidateInfo.CommissionRate
+		candidate.RateLockEndTime = candidateInfo.RateLockEndTime
+		candidate.StakingPool = candidateInfo.StakingPool
+		candidate.MinSelfStake = candidateInfo.MinSelfStake
+		candidate.Status = candidateInfo.Status
+		candidate.UnbondTime = candidateInfo.UnbondTime
 
-		candidate.Delegators[delegatorAddr] = delegator
+		for delegatorAddr, delegator := range candidate.Delegators {
+			log.Infof("Snapshot delegator %s of candidate %s at %s", delegatorAddr, candidateAddr, blkNum)
+			delegatorInfo, err := dposContract.GetDelegatorInfo(&bind.CallOpts{BlockNumber: blkNum}, mainchain.Hex2Addr(candidateAddr), mainchain.Hex2Addr(delegatorAddr))
+			if err != nil {
+				return err
+			}
+			delegator.DelegatedStake = delegatorInfo.DelegatedStake
+			delegator.UndelegatingStake = delegatorInfo.UndelegatingStake
+		}
 	}
 
-	return delegator
+	return nil
 }
 
 func SnapshotMainchainCommand() *cobra.Command {
