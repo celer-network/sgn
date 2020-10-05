@@ -37,19 +37,19 @@ type Snapshot struct {
 }
 
 const (
-	startBlkNum   = uint64(8580124)
-	queryInterval = uint64(200)
-
-	prevSnapshotFlag = "prev-snapshot"
+	prevSnapshotFlag  = "prev-snapshot"
+	startBlkNumFlag   = "start-blk-number"
+	queryIntervalFlag = "query-interval"
 )
 
 var (
-	candidateMap = make(map[string]*Candidate)
+	candidateMap              = make(map[string]*Candidate)
+	candidateDelegatorChanges = make(map[string](map[string]bool))
 )
 
 func snapshotMainchain() error {
 	snapshot := Snapshot{
-		EndBlockNumber: startBlkNum,
+		EndBlockNumber: viper.GetUint64(startBlkNumFlag),
 		Candidates:     candidateMap,
 	}
 	prevSnapshotFile := viper.GetString(prevSnapshotFlag)
@@ -82,9 +82,10 @@ func snapshotMainchain() error {
 		return err
 	}
 
+	queryInterval := viper.GetUint64(queryIntervalFlag)
 	for cur := snapshot.EndBlockNumber; cur < latestBlock; {
 		nextCur := cur + queryInterval
-		err = snapshotDelegate(dposContract, cur, nextCur)
+		err = snapshotUpdateDelegatedStake(dposContract, cur, nextCur)
 		if err != nil {
 			return err
 		}
@@ -92,7 +93,7 @@ func snapshotMainchain() error {
 		cur = nextCur
 	}
 
-	snapshotStaking(dposContract, header.Number)
+	syncCandidateDelegators(dposContract, header.Number)
 
 	snapshot.EndBlockNumber = latestBlock
 	res, err := json.MarshalIndent(snapshot, "", "  ")
@@ -135,9 +136,9 @@ func snapshotInitializeCandidate(dposContract *mainchain.DPoS, start, end uint64
 	return nil
 }
 
-func snapshotDelegate(dposContract *mainchain.DPoS, start, end uint64) error {
-	log.Infof("Snapshot Delegate event from %d to %d", start, end)
-	delegatedIt, err := dposContract.FilterDelegate(&bind.FilterOpts{
+func snapshotUpdateDelegatedStake(dposContract *mainchain.DPoS, start, end uint64) error {
+	log.Infof("Snapshot UpdateDelegatedStake event from %d to %d", start, end)
+	updateDelegatedStakeIt, err := dposContract.FilterUpdateDelegatedStake(&bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, []mainchain.Addr{}, []mainchain.Addr{})
@@ -145,29 +146,40 @@ func snapshotDelegate(dposContract *mainchain.DPoS, start, end uint64) error {
 		return err
 	}
 
-	defer delegatedIt.Close()
-	for delegatedIt.Next() {
-		delegate := delegatedIt.Event
-		candidate := candidateMap[delegate.Candidate.String()]
-		_, ok := candidate.Delegators[delegate.Delegator.String()]
+	defer updateDelegatedStakeIt.Close()
+	for updateDelegatedStakeIt.Next() {
+		updateDelegatedStake := updateDelegatedStakeIt.Event
+		candidateAddr := updateDelegatedStake.Candidate.String()
+		delegatorAddr := updateDelegatedStake.Delegator.String()
+		candidate := candidateMap[candidateAddr]
+		_, ok := candidate.Delegators[delegatorAddr]
 		if !ok {
-			candidate.Delegators[delegate.Delegator.String()] = &Delegator{
+			candidate.Delegators[delegatorAddr] = &Delegator{
 				DelegatedStake:    big.NewInt(0),
 				UndelegatingStake: big.NewInt(0),
 			}
 		}
+
+		_, ok = candidateDelegatorChanges[candidateAddr]
+		if !ok {
+			candidateDelegatorChanges[candidateAddr] = make(map[string]bool)
+		}
+
+		candidateDelegatorChanges[candidateAddr][delegatorAddr] = true
 	}
 
 	return nil
 }
 
-func snapshotStaking(dposContract *mainchain.DPoS, blkNum *big.Int) error {
-	for candidateAddr, candidate := range candidateMap {
+func syncCandidateDelegators(dposContract *mainchain.DPoS, blkNum *big.Int) error {
+	for candidateAddr, delegatorChanges := range candidateDelegatorChanges {
 		log.Infof("Snapshot candidate %s at %s", candidateAddr, blkNum)
 		candidateInfo, err := dposContract.GetCandidateInfo(&bind.CallOpts{BlockNumber: blkNum}, mainchain.Hex2Addr(candidateAddr))
 		if err != nil {
 			return err
 		}
+
+		candidate := candidateMap[candidateAddr]
 		candidate.CommissionRate = candidateInfo.CommissionRate
 		candidate.RateLockEndTime = candidateInfo.RateLockEndTime
 		candidate.StakingPool = candidateInfo.StakingPool
@@ -175,12 +187,14 @@ func snapshotStaking(dposContract *mainchain.DPoS, blkNum *big.Int) error {
 		candidate.Status = candidateInfo.Status
 		candidate.UnbondTime = candidateInfo.UnbondTime
 
-		for delegatorAddr, delegator := range candidate.Delegators {
+		for delegatorAddr := range delegatorChanges {
 			log.Infof("Snapshot delegator %s of candidate %s at %s", delegatorAddr, candidateAddr, blkNum)
 			delegatorInfo, err := dposContract.GetDelegatorInfo(&bind.CallOpts{BlockNumber: blkNum}, mainchain.Hex2Addr(candidateAddr), mainchain.Hex2Addr(delegatorAddr))
 			if err != nil {
 				return err
 			}
+
+			delegator := candidate.Delegators[delegatorAddr]
 			delegator.DelegatedStake = delegatorInfo.DelegatedStake
 			delegator.UndelegatingStake = delegatorInfo.UndelegatingStake
 		}
@@ -198,5 +212,7 @@ func SnapshotMainchainCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().String(prevSnapshotFlag, "", "Previous snapshot file")
+	cmd.Flags().Uint64(startBlkNumFlag, 8580124, "Block number start to query")
+	cmd.Flags().Uint64(queryIntervalFlag, 10000, "Number of blocks between each query")
 	return cmd
 }
