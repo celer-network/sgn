@@ -172,20 +172,23 @@ func snapshotUpdateDelegatedStake(dposContract *mainchain.DPoS, start, end uint6
 }
 
 func syncCandidateDelegators(dposContract *mainchain.DPoS, blkNum *big.Int) error {
-	for candidateAddr, delegatorChanges := range candidateDelegatorChanges {
+	for candidateAddr, candidate := range candidateMap {
 		log.Infof("Snapshot candidate %s at %s", candidateAddr, blkNum)
 		candidateInfo, err := dposContract.GetCandidateInfo(&bind.CallOpts{BlockNumber: blkNum}, mainchain.Hex2Addr(candidateAddr))
 		if err != nil {
 			return err
 		}
 
-		candidate := candidateMap[candidateAddr]
 		candidate.CommissionRate = candidateInfo.CommissionRate
 		candidate.RateLockEndTime = candidateInfo.RateLockEndTime
 		candidate.StakingPool = candidateInfo.StakingPool
 		candidate.MinSelfStake = candidateInfo.MinSelfStake
 		candidate.Status = candidateInfo.Status
 		candidate.UnbondTime = candidateInfo.UnbondTime
+	}
+
+	for candidateAddr, delegatorChanges := range candidateDelegatorChanges {
+		candidate := candidateMap[candidateAddr]
 
 		for delegatorAddr := range delegatorChanges {
 			log.Infof("Snapshot delegator %s of candidate %s at %s", delegatorAddr, candidateAddr, blkNum)
