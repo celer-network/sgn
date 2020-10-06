@@ -51,25 +51,41 @@ func NewEthClient(
 	if err != nil {
 		return nil, err
 	}
-	ethClient.Client = ethclient.NewClient(rpcClient)
 
-	ksBytes, err := ioutil.ReadFile(ksfile)
+	ethClient.Client = ethclient.NewClient(rpcClient)
+	err = ethClient.setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
 	if err != nil {
 		return nil, err
+	}
+
+	if ksfile != "" {
+		err = ethClient.setTransactor(ksfile, passphrase, tconfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return ethClient, nil
+}
+
+func (ethClient *EthClient) setTransactor(ksfile string, passphrase string, tconfig *TransactorConfig) error {
+	ksBytes, err := ioutil.ReadFile(ksfile)
+	if err != nil {
+		return err
 	}
 
 	key, err := keystore.DecryptKey(ksBytes, passphrase)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	ethClient.Address = key.Address
 
+	ethClient.Address = key.Address
 	ethClient.Signer, err = eth.NewSigner(hex.EncodeToString(crypto.FromECDSA(key.PrivateKey)), tconfig.ChainId)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	transactor, err := eth.NewTransactor(
+	ethClient.Transactor, err = eth.NewTransactor(
 		string(ksBytes),
 		passphrase,
 		ethClient.Client,
@@ -79,17 +95,8 @@ func NewEthClient(
 		eth.WithAddGasGwei(tconfig.AddGasPriceGwei),
 		eth.WithMinGasGwei(tconfig.MinGasPriceGwei),
 	)
-	if err != nil {
-		return nil, err
-	}
-	ethClient.Transactor = transactor
 
-	err = ethClient.setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
-	if err != nil {
-		return nil, err
-	}
-
-	return ethClient, nil
+	return err
 }
 
 func (ethClient *EthClient) setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
