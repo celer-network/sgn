@@ -15,5 +15,5 @@ VOLUME /sgn/env
 WORKDIR /sgn/env
 EXPOSE 26656 26657
 COPY --from=builder /sgn/bin/sgnd /usr/local/bin
-CMD ["/bin/sh", "-c", "sgnd start --cli-home /sgn/env/sgncli --home /sgn/env/sgnd 2>&1 | tee /sgn/env/sgnd/sgnd.log"]
+CMD ["/bin/sh", "-c", "sgnd start --cli-home /sgn/env/sgncli --home /sgn/env/sgnd --config /sgn/env/sgncli/config/sgn.toml 2>&1 | tee /sgn/env/sgnd/sgnd.log"]
 STOPSIGNAL SIGTERM

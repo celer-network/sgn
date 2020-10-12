@@ -9,7 +9,7 @@ sgn ops utility
 ### Options
 
 ```
-      --config string     config path (default "./config.json")
+      --config string     Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
   -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
   -h, --help              help for sgnops
       --home string       directory for config and data (default "$HOME/.sgncli")
@@ -30,6 +30,7 @@ sgn ops utility
 * [sgnops get-delegator-info](sgnops_get-delegator-info.md)	 - Get delegator info
 * [sgnops gov](sgnops_gov.md)	 - Mainchain governance
 * [sgnops init-candidate](sgnops_init-candidate.md)	 - Initialize a validator candidate
+* [sgnops snapshot-mainchain](sgnops_snapshot-mainchain.md)	 - Snapshot mainchain
 * [sgnops sync](sgnops_sync.md)	 - Sync a change from mainchain to sidechain
 * [sgnops update-commission-rate](sgnops_update-commission-rate.md)	 - Update commission rate
 * [sgnops update-min-self-stake](sgnops_update-min-self-stake.md)	 - Update minimal self-delegated stake

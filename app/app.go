@@ -79,7 +79,7 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-type sgnApp struct {
+type SgnApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
@@ -118,17 +118,12 @@ type sgnApp struct {
 }
 
 // NewSgnApp is a constructor function for sgnApp
-func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *sgnApp {
-	viper.SetConfigFile("config.json")
-	err := viper.ReadInConfig()
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
+func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *SgnApp {
 	viper.SetDefault(common.FlagStartMonitor, true)
 	viper.SetDefault(common.FlagEthPollInterval, 15)
 	viper.SetDefault(common.FlagEthBlockDelay, 5)
 
-	err = common.SetupUserPassword()
+	err := common.SetupUserPassword()
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
@@ -149,7 +144,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 
 	// Here you initialize your application with the store keys it requires
-	var app = &sgnApp{
+	var app = &SgnApp{
 		BaseApp: bApp,
 		cdc:     cdc,
 
@@ -358,7 +353,7 @@ func NewDefaultGenesisState() GenesisState {
 	return ModuleBasics.DefaultGenesis()
 }
 
-func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *SgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
 
 	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
@@ -369,21 +364,21 @@ func (app *sgnApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.
 	return app.mm.InitGenesis(ctx, genesisState)
 }
 
-func (app *sgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *SgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
-func (app *sgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *SgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
-func (app *sgnApp) LoadHeight(height int64) error {
+func (app *SgnApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
 }
 
 //_________________________________________________________
 
-func (app *sgnApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
+func (app *SgnApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
 ) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
 	// as if they could withdraw from the start of the next block
@@ -401,7 +396,7 @@ func (app *sgnApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
+func (app *SgnApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[supply.NewModuleAddress(acc).String()] = true
@@ -410,7 +405,7 @@ func (app *sgnApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-func (app *sgnApp) startMonitor(db dbm.DB) {
+func (app *SgnApp) startMonitor(db dbm.DB) {
 	operator, err := monitor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome))
 	if err != nil {
 		tmos.Exit(err.Error())

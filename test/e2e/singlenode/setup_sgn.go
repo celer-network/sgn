@@ -49,9 +49,9 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 }
 
 func updateSGNConfig() {
-	log.Infoln("Updating SGN's config.json")
+	log.Infoln("Updating sgn.toml")
 
-	configFilePath := "../../../config.json"
+	configFilePath := "../../data/.sgncli/config/sgn.toml"
 	configFileViper := viper.New()
 	configFileViper.SetConfigFile(configFilePath)
 	err := configFileViper.ReadInConfig()
@@ -61,9 +61,10 @@ func updateSGNConfig() {
 	tc.ChkErr(err, "get keystore path")
 
 	configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
-	configFileViper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr)
-	configFileViper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr)
-	configFileViper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr)
+	configFileViper.Set(common.FlagEthCelrAddress, tc.E2eProfile.CelrAddr.Hex())
+	configFileViper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr.Hex())
+	configFileViper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr.Hex())
+	configFileViper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr.Hex())
 	configFileViper.Set(common.FlagEthKeystore, keystore)
 	err = configFileViper.WriteConfig()
 	tc.ChkErr(err, "failed to write config")
@@ -82,18 +83,15 @@ func installSgn() error {
 
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
-	if err := cmd.Run(); err != nil {
+	err := cmd.Run()
+	if err != nil {
 		return err
 	}
 
-	cmd = exec.Command("cp", "./test/data/local_config.json", "./config.json")
+	cmd = exec.Command("cp", "./test/data/.sgncli/config/sgn_template.toml", "./test/data/.sgncli/config/sgn.toml")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Run()
 }
 
 // startSidechain starts sgn sidechain with the data in test/data

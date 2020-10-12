@@ -139,12 +139,6 @@ func ServeCommand(cdc *codec.Codec) *cobra.Command {
 		Use:   "gateway",
 		Short: "Start a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			viper.SetConfigFile("config.json")
-			err := viper.MergeInConfig()
-			if err != nil {
-				return err
-			}
-
 			buf := bufio.NewReader(os.Stdin)
 			if viper.Get(common.FlagSgnPassphrase) == nil {
 				pass, err2 := input.GetString("Enter sidechain validator passphrase:", buf)

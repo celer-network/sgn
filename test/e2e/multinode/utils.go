@@ -25,7 +25,7 @@ func shutdownNode(node uint) {
 func turnOffMonitor(node uint) {
 	log.Infoln("Turn off node monitor", node)
 
-	configPath := fmt.Sprintf("../../../docker-volumes/node%d/config.json", node)
+	configPath := fmt.Sprintf("../../../docker-volumes/node%d/sgncli/config/sgn.toml", node)
 	configFileViper := viper.New()
 	configFileViper.SetConfigFile(configPath)
 	err := configFileViper.ReadInConfig()
