@@ -21,7 +21,7 @@ sgnops gov get-param-proposal [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string     config path (default "./config.json")
+      --config string     Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
   -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
       --home string       directory for config and data (default "$HOME/.sgncli")
   -o, --output string     Output format (text|json) (default "text")

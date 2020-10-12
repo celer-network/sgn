@@ -9,7 +9,8 @@ SGN App Daemon (server)
 ### Options
 
 ```
-      --cli-home string    directory for cli config and data (default "$HOME/.sgncli")
+      --cli-home string    Directory for cli config and data (default "$HOME/.sgncli")
+      --config string      Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
   -h, --help               help for sgnd
       --home string        directory for config and data (default "$HOME/.sgnd")
       --log_level string   Log level (default "main:info,state:info,*:error")

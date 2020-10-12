@@ -71,7 +71,7 @@ func main() {
 		}
 		log.Infoln("update config files")
 		for i := 0; i < 3; i++ {
-			configPath := fmt.Sprintf("./data/node%d/config.json", i)
+			configPath := fmt.Sprintf("./data/node%d/sgncli/config/sgn.toml", i)
 			configFileViper := viper.New()
 			configFileViper.SetConfigFile(configPath)
 			if err := configFileViper.ReadInConfig(); err != nil {

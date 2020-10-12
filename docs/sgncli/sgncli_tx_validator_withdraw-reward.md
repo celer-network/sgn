@@ -13,8 +13,6 @@ sgncli tx validator withdraw-reward [eth-addr] [flags]
 ### Options
 
 ```
-      --dry-run      ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it
-      --gas string   gas limit to set per-transaction; set to "auto" to calculate required gas automatically (default 200000) (default "200000")
   -h, --help         help for withdraw-reward
       --indent       Add indent to JSON response
       --trust-node   Trust connected full node (don't verify proofs for responses) (default true)
@@ -23,7 +21,7 @@ sgncli tx validator withdraw-reward [eth-addr] [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string     config path (default "./config.json")
+      --config string     Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
   -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
       --home string       directory for config and data (default "$HOME/.sgncli")
   -o, --output string     Output format (text|json) (default "text")

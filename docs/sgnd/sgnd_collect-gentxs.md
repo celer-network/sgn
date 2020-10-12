@@ -20,7 +20,8 @@ sgnd collect-gentxs [flags]
 ### Options inherited from parent commands
 
 ```
-      --cli-home string    directory for cli config and data (default "$HOME/.sgncli")
+      --cli-home string    Directory for cli config and data (default "$HOME/.sgncli")
+      --config string      Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
       --home string        directory for config and data (default "$HOME/.sgnd")
       --log_level string   Log level (default "main:info,state:info,*:error")
       --trace              print out full stack trace on errors

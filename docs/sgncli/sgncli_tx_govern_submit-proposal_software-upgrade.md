@@ -17,8 +17,6 @@ sgncli tx govern submit-proposal software-upgrade [name] (--upgrade-height [heig
 ```
       --deposit uint         deposit of proposal
       --description string   description of proposal
-      --dry-run              ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it
-      --gas string           gas limit to set per-transaction; set to "auto" to calculate required gas automatically (default 200000) (default "200000")
   -h, --help                 help for software-upgrade
       --indent               Add indent to JSON response
       --info string          Optional info for the planned upgrade such as commit hash, etc.
@@ -31,7 +29,7 @@ sgncli tx govern submit-proposal software-upgrade [name] (--upgrade-height [heig
 ### Options inherited from parent commands
 
 ```
-      --config string     config path (default "./config.json")
+      --config string     Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
   -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
       --home string       directory for config and data (default "$HOME/.sgncli")
   -o, --output string     Output format (text|json) (default "text")

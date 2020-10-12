@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
@@ -32,7 +34,7 @@ func GetSgndExecutor() cli.Executor {
 	rootCmd := &cobra.Command{
 		Use:               "sgnd",
 		Short:             "SGN App Daemon (server)",
-		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
+		PersistentPreRunE: persistentPreRunEFn(ctx),
 	}
 	// CLI commands to initialize the chain
 	rootCmd.AddCommand(
@@ -46,10 +48,28 @@ func GetSgndExecutor() cli.Executor {
 	)
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
-	rootCmd.PersistentFlags().String(common.FlagCLIHome, app.DefaultCLIHome, "directory for cli config and data")
+	rootCmd.PersistentFlags().String(common.FlagCLIHome, app.DefaultCLIHome, "Directory for cli config and data")
+	rootCmd.PersistentFlags().String(
+		common.FlagConfig, filepath.Join(app.DefaultCLIHome, "config", "sgn.toml"), "Path to SGN-specific configs")
 
 	// prepare and add flags
 	return cli.PrepareBaseCmd(rootCmd, "SGN", app.DefaultNodeHome)
+}
+
+func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		err := server.PersistentPreRunEFn(context)(cmd, args)
+		if err != nil {
+			return err
+		}
+		sgnConfigPath := viper.GetString(common.FlagConfig)
+		_, err = os.Stat(sgnConfigPath)
+		if err != nil {
+			return err
+		}
+		viper.SetConfigFile(sgnConfigPath)
+		return viper.ReadInConfig()
+	}
 }
 
 func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
@@ -66,17 +86,17 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		nsApp := app.NewSgnApp(logger, db, map[int64]bool{})
-		err := nsApp.LoadHeight(height)
+		sgnApp := app.NewSgnApp(logger, db, map[int64]bool{})
+		err := sgnApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
-		return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+		return sgnApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	nsApp := app.NewSgnApp(logger, db, map[int64]bool{})
+	sgnApp := app.NewSgnApp(logger, db, map[int64]bool{})
 
-	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+	return sgnApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
 
 func addGenesisAccountCmd(

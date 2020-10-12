@@ -98,7 +98,7 @@ func getEventCheckInterval(name EventName) uint64 {
 	m := viper.GetStringMap(common.FlagEthCheckInterval)
 	eventNameInConfig := strcase.ToSnake(string(name))
 	if m[eventNameInConfig] != nil {
-		return uint64(m[eventNameInConfig].(float64))
+		return uint64(m[eventNameInConfig].(int64))
 	}
 	// If not specified, use the default value of 0
 	return 0

@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
@@ -21,8 +24,13 @@ func GetSgnopsExecutor() cli.Executor {
 		Use:   "sgnops",
 		Short: "sgn ops utility",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			viper.SetConfigFile(viper.GetString(common.FlagConfig))
-			err := viper.ReadInConfig()
+			sgnConfigPath := viper.GetString(common.FlagConfig)
+			_, err := os.Stat(sgnConfigPath)
+			if err != nil {
+				return err
+			}
+			viper.SetConfigFile(sgnConfigPath)
+			err = viper.ReadInConfig()
 			if err != nil {
 				return err
 			}
@@ -55,7 +63,8 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.GovCommand(),
 		version.Cmd,
 	)
-	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
+	rootCmd.PersistentFlags().String(
+		common.FlagConfig, filepath.Join(app.DefaultCLIHome, "config", "sgn.toml"), "Path to SGN-specific configs")
 
 	return cli.PrepareMainCmd(rootCmd, "SGN", app.DefaultCLIHome)
 }

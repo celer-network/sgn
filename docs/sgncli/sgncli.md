@@ -9,7 +9,7 @@ SGN node command line interface
 ### Options
 
 ```
-      --config string     config path (default "./config.json")
+      --config string     Path to SGN-specific configs (default "$HOME/.sgncli/config/sgn.toml")
   -e, --encoding string   Binary encoding (hex|b64|btc) (default "hex")
   -h, --help              help for sgncli
       --home string       directory for config and data (default "$HOME/.sgncli")

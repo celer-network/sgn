@@ -28,7 +28,7 @@ go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinod
 #### Setup
 
 Do following operations at repo root folder
-1. `cp test/data/local_config.json config.json`
+1. `cp test/data/.sgncli/config/sgn_template.toml test/data/.sgncli/config/sgn.toml`
 2. `docker-compose up -d geth`
 3. `WITH_CLEVELDB=yes make install-all`
 4. `sgnops deploy`

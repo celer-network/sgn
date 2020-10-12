@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
@@ -29,7 +32,6 @@ func GetSgncliExecutor() cli.Executor {
 		Short: "SGN node command line interface",
 	}
 
-	rootCmd.PersistentFlags().String(common.FlagConfig, "./config.json", "config path")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}
@@ -47,6 +49,9 @@ func GetSgncliExecutor() cli.Executor {
 		flags.LineBreak,
 		version.Cmd,
 	)
+
+	rootCmd.PersistentFlags().String(
+		common.FlagConfig, filepath.Join(app.DefaultCLIHome, "config", "sgn.toml"), "Path to SGN-specific configs")
 
 	return cli.PrepareMainCmd(rootCmd, "SGN", app.DefaultCLIHome)
 
@@ -121,13 +126,32 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 }
 
 func initConfig(cmd *cobra.Command) error {
-	viper.SetConfigFile(viper.GetString(common.FlagConfig))
-	err := viper.ReadInConfig()
+	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)
+	if err != nil {
+		return err
+	}
+	cfgFile := filepath.Join(home, "config", "config.toml")
+	_, err = os.Stat(cfgFile)
+	if err == nil {
+		viper.SetConfigFile(cfgFile)
+		readErr := viper.ReadInConfig()
+		if readErr != nil {
+			return readErr
+		}
+	}
+	sgnCfgFile := viper.GetString(common.FlagConfig)
+	_, err = os.Stat(sgnCfgFile)
+	if err != nil {
+		return err
+	}
+	viper.SetConfigFile(sgnCfgFile)
+	err = viper.MergeInConfig()
 	if err != nil {
 		return err
 	}
 
-	if err := viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag)); err != nil {
+	err = viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag))
+	if err != nil {
 		return err
 	}
 
