@@ -115,7 +115,7 @@ func DeployCommand() *cobra.Command {
 			}
 
 			ledgerAddr := DeployLedgerContract()
-			configFileViper.Set(common.FlagEthLedgerAddress, ledgerAddr)
+			configFileViper.Set(common.FlagEthLedgerAddress, ledgerAddr.Hex())
 
 			_, erc20Addr, erc20 := DeployERC20Contract()
 			// NOTE: values below are for local tests
@@ -133,9 +133,9 @@ func DeployCommand() *cobra.Command {
 			tx, dposAddr, sgnAddr := DeployDPoSSGNContracts(sgnParams)
 			WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "DeployDPoSContracts")
 
-			configFileViper.Set(common.FlagEthCelrAddress, erc20Addr)
-			configFileViper.Set(common.FlagEthDPoSAddress, dposAddr)
-			configFileViper.Set(common.FlagEthSGNAddress, sgnAddr)
+			configFileViper.Set(common.FlagEthCelrAddress, erc20Addr.Hex())
+			configFileViper.Set(common.FlagEthDPoSAddress, dposAddr.Hex())
+			configFileViper.Set(common.FlagEthSGNAddress, sgnAddr.Hex())
 			err = configFileViper.WriteConfig()
 			ChkErr(err, "failed to write config")
 
