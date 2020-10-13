@@ -16,7 +16,7 @@ Run `go run localnet.go -start` to set up the docker test environment with three
 Append args `--config data/node0/sgncli/config/sgn.toml --home data/node0/sgncli` to the following commands.
 
 - `sgnops init-candidate --commission-rate 150 --min-self-stake 1000 --rate-lock-period 300`
-- `sgncli tx validator set-transactors`
+- `sgncli tx validator set-transactors` // this is only needed for the seed validator (node0).
 - `sgncli query validator candidate 00078b31fa8b29a76bce074b5ea0d515a6aeaee7`
 - `sgnops delegate --candidate 00078b31fa8b29a76bce074b5ea0d515a6aeaee7 --amount 10000`
 - `sgncli query validator validator sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk`
