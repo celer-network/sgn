@@ -114,10 +114,10 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().String(flagMoniker, staking.DoNotModifyDesc, "The candidate's name")
-	cmd.Flags().String(flagIdentity, staking.DoNotModifyDesc, "The (optional) identity signature (ex. UPort or Keybase)")
-	cmd.Flags().String(flagWebsite, staking.DoNotModifyDesc, "The candidate's (optional) website")
-	cmd.Flags().String(flagSecurityContact, staking.DoNotModifyDesc, "The candidate's (optional) security contact email")
-	cmd.Flags().String(flagDetails, staking.DoNotModifyDesc, "The candidate's (optional) details")
+	cmd.Flags().String(flagIdentity, staking.DoNotModifyDesc, "The identity signature (ex. UPort or Keybase)")
+	cmd.Flags().String(flagWebsite, staking.DoNotModifyDesc, "The candidate's website")
+	cmd.Flags().String(flagSecurityContact, staking.DoNotModifyDesc, "The candidate's security contact email")
+	cmd.Flags().String(flagDetails, staking.DoNotModifyDesc, "The candidate's details")
 
 	return cmd
 }
