@@ -385,14 +385,14 @@ func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Par
 // ----------------------- CLI print-friendly output --------------------
 
 type ValidatorOutput struct {
-	AccountAddress  sdk.AccAddress      `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
-	OperatorAddress sdk.ValAddress      `json:"operator_address" yaml:"operator_address"` // address of the validator's operator; bech encoded in JSON
-	ConsPubKey      string              `json:"consensus_pubkey" yaml:"consensus_pubkey"` // the consensus public key of the validator; bech encoded in JSON
-	Status          string              `json:"status" yaml:"status"`                     // validator status (bonded/unbonding/unbonded)
-	Tokens          sdk.Int             `json:"tokens" yaml:"tokens"`                     // delegated tokens (incl. self-delegation)
-	DelegatorShares sdk.Dec             `json:"delegator_shares" yaml:"delegator_shares"` // total shares issued to a validator's delegators
-	CommissionRate  sdk.Dec             `json:"commissionRate"`
-	Description     staking.Description `json:"description" yaml:"description"` // description terms for the validator
+	AccountAddress  sdk.AccAddress `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
+	OperatorAddress sdk.ValAddress `json:"operator_address" yaml:"operator_address"` // address of the validator's operator; bech encoded in JSON
+	ConsPubKey      string         `json:"consensus_pubkey" yaml:"consensus_pubkey"` // the consensus public key of the validator; bech encoded in JSON
+	Status          string         `json:"status" yaml:"status"`                     // validator status (bonded/unbonding/unbonded)
+	Tokens          sdk.Int        `json:"tokens" yaml:"tokens"`                     // delegated tokens (incl. self-delegation)
+	DelegatorShares sdk.Dec        `json:"delegator_shares" yaml:"delegator_shares"` // total shares issued to a validator's delegators
+	CommissionRate  sdk.Dec        `json:"commission_rate" yaml:"commission_rate"`   // commission rate of the validator
+	EthAddress      string         `json:"eth_address" yaml:"eth_address"`           // ETH address for the validator
 }
 
 func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
@@ -414,7 +414,7 @@ func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
 		Tokens:          v.Tokens,
 		DelegatorShares: v.DelegatorShares,
 		CommissionRate:  v.Commission.Rate,
-		Description:     v.Description,
+		EthAddress:      v.Description.Identity,
 	}
 }
 
