@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -325,9 +326,10 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			rewardOutput := RewardOutput{
-				Receiver:      reward.Receiver,
-				MiningReward:  reward.MiningReward,
-				ServiceReward: reward.ServiceReward,
+				Receiver:         reward.Receiver,
+				MiningReward:     reward.MiningReward,
+				ServiceReward:    reward.ServiceReward,
+				LastWithdrawTime: reward.LastWithdrawTime,
 			}
 
 			var signers []mainchain.Addr
@@ -463,11 +465,12 @@ type SigndReward struct {
 }
 
 type RewardOutput struct {
-	Receiver      string      `json:"receiver"`
-	MiningReward  sdk.Int     `json:"mining_reward"`
-	ServiceReward sdk.Int     `json:"service_reward"`
-	SignedReward  SigndReward `json:"signed_msg"`
-	Signers       []string    `json:"signers"`
+	Receiver         string      `json:"receiver"`
+	MiningReward     sdk.Int     `json:"mining_reward"`
+	ServiceReward    sdk.Int     `json:"service_reward"`
+	SignedReward     SigndReward `json:"signed_msg"`
+	Signers          []string    `json:"signers"`
+	LastWithdrawTime time.Time   `json:"last_withdraw_time"`
 }
 
 type DelegatorOutput struct {
