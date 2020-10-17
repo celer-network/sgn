@@ -12,9 +12,11 @@ const (
 	QuerySyncer              = types.QuerySyncer
 	QueryDelegator           = types.QueryDelegator
 	QueryCandidate           = types.QueryCandidate
+	QueryCandidates          = types.QueryCandidates
 	QueryCandidateDelegators = types.QueryCandidateDelegators
 	QueryReward              = types.QueryReward
 	QueryRewardEpoch         = types.QueryRewardEpoch
+	QueryRewardStats         = types.QueryRewardStats
 	QueryParameters          = types.QueryParameters
 	TypeMsgWithdrawReward    = types.TypeMsgWithdrawReward
 	AttributeKeyEthAddress   = types.AttributeKeyEthAddress
@@ -34,6 +36,7 @@ var (
 	GetDelegatorKey                = types.GetDelegatorKey
 	GetDelegatorsKey               = types.GetDelegatorsKey
 	GetCandidateKey                = types.GetCandidateKey
+	RewardKeyPrefix                = types.RewardKeyPrefix
 	GetRewardKey                   = types.GetRewardKey
 	GetPendingRewardKey            = types.GetPendingRewardKey
 	RewardEpochKey                 = types.RewardEpochKey
@@ -43,8 +46,10 @@ var (
 	NewReward                      = types.NewReward
 	NewRewardEpoch                 = types.NewRewardEpoch
 	NewPendingReward               = types.NewPendingReward
+	NewRewardStats                 = types.NewRewardStats
 	CLIQuerySyncer                 = cli.QuerySyncer
 	CLIQueryCandidate              = cli.QueryCandidate
+	CLIQueryCandidates             = cli.QueryCandidates
 	CLIQueryCandidateDelegators    = cli.QueryCandidateDelegators
 	CLIQueryReward                 = cli.QueryReward
 	CLIQueryDelegator              = cli.QueryDelegator
@@ -63,6 +68,7 @@ type (
 	Reward                      = types.Reward
 	RewardEpoch                 = types.RewardEpoch
 	PendingReward               = types.PendingReward
+	RewardStats                 = types.RewardStats
 	QueryDelegatorParams        = types.QueryDelegatorParams
 	QueryCandidateParams        = types.QueryCandidateParams
 	QueryRewardParams           = types.QueryRewardParams

@@ -8,9 +8,11 @@ const (
 	QuerySyncer              = "syncer"
 	QueryDelegator           = "delegator"
 	QueryCandidate           = "candidate"
+	QueryCandidates          = "candidates"
 	QueryCandidateDelegators = "candidate-delegators"
 	QueryReward              = "reward"
 	QueryRewardEpoch         = "reward-epoch"
+	QueryRewardStats         = "reward-stats"
 	QueryParameters          = "parameters"
 )
 

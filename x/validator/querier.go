@@ -21,12 +21,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryDelegator(ctx, req, keeper)
 		case QueryCandidate:
 			return queryCandidate(ctx, req, keeper)
+		case QueryCandidates:
+			return queryCandidates(ctx, req, keeper)
 		case QueryCandidateDelegators:
 			return queryCandidateDelegators(ctx, req, keeper)
 		case QueryReward:
 			return queryReward(ctx, req, keeper)
 		case QueryRewardEpoch:
 			return queryRewardEpoch(ctx, req, keeper)
+		case QueryRewardStats:
+			return queryRewardStats(ctx, req, keeper)
 		case QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
@@ -88,6 +92,17 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 	return res, nil
 }
 
+func queryCandidates(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	candidates := keeper.GetAllCandidates(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, candidates)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+
+	}
+
+	return res, nil
+}
+
 func queryCandidateDelegators(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	var params QueryCandidateParams
 	err := ModuleCdc.UnmarshalJSON(req.Data, &params)
@@ -130,6 +145,16 @@ func queryReward(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 func queryRewardEpoch(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	epoch := keeper.GetRewardEpoch(ctx)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, epoch)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return res, nil
+}
+
+func queryRewardStats(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	stats := keeper.GetRewardStats(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, stats)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

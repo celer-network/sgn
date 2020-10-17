@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	"math/big"
+	"sort"
+	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -32,12 +34,14 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 	validatorQueryCmd.AddCommand(common.GetCommands(
 		GetCmdCandidate(storeKey, cdc),
+		GetCmdCandidates(storeKey, cdc),
 		GetCmdDelegator(storeKey, cdc),
 		GetCmdCandidateDelegators(storeKey, cdc),
 		GetCmdValidator(staking.StoreKey, cdc),
 		GetCmdValidators(staking.StoreKey, cdc),
 		GetCmdSyncer(storeKey, cdc),
 		GetCmdReward(storeKey, cdc),
+		GetCmdRewardStats(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return validatorQueryCmd
@@ -144,6 +148,43 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	return
 }
 
+func GetCmdCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "candidates",
+		Short: "query all candidates",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			candidates, err := QueryCandidates(cliCtx, queryRoute)
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+			var outputs []CandidateOutput
+			for _, c := range candidates {
+				outputs = append(outputs, getCandidateOutput(c))
+			}
+			return cliCtx.PrintOutput(outputs)
+		},
+	}
+}
+
+func QueryCandidates(cliCtx context.CLIContext, queryRoute string) (candidates []types.Candidate, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidates)
+	res, err := common.RobustQuery(cliCtx, route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &candidates)
+	if err != nil {
+		return
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		return candidates[i].StakingPool.GT(candidates[j].StakingPool)
+	})
+	return
+}
+
 // GetCmdCandidateDelegators queries request info
 // TODO: support pagination
 func GetCmdCandidateDelegators(queryRoute string, cdc *codec.Codec) *cobra.Command {
@@ -193,7 +234,7 @@ func GetCmdValidator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				log.Errorln("query error", err)
 				return err
 			}
-			output := getValidatorOutput(&validator)
+			output := getValidatorOutput(validator)
 			return cliCtx.PrintOutput(output)
 		},
 	}
@@ -213,7 +254,7 @@ func GetCmdValidators(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 			var outputs []ValidatorOutput
 			for _, v := range validators {
-				outputs = append(outputs, getValidatorOutput(&v))
+				outputs = append(outputs, getValidatorOutput(v))
 			}
 			return cliCtx.PrintOutput(outputs)
 		},
@@ -286,9 +327,10 @@ func GetCmdReward(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			rewardOutput := RewardOutput{
-				Receiver:      reward.Receiver,
-				MiningReward:  reward.MiningReward,
-				ServiceReward: reward.ServiceReward,
+				Receiver:         reward.Receiver,
+				MiningReward:     reward.MiningReward,
+				ServiceReward:    reward.ServiceReward,
+				LastWithdrawTime: reward.LastWithdrawTime,
 			}
 
 			var signers []mainchain.Addr
@@ -351,6 +393,33 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 	return
 }
 
+func GetCmdRewardStats(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "reward-stats",
+		Short: "query reward statistics",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			stats, err := QueryRewardStats(cliCtx, queryRoute)
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+			return cliCtx.PrintOutput(stats)
+		},
+	}
+}
+
+func QueryRewardStats(cliCtx context.CLIContext, queryRoute string) (stats types.RewardStats, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRewardStats)
+	res, err := common.RobustQuery(cliCtx, route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &stats)
+	return
+}
+
 // GetCmdQueryParams implements the params query command.
 func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
@@ -385,17 +454,17 @@ func QueryParams(cliCtx context.CLIContext, queryRoute string) (params types.Par
 // ----------------------- CLI print-friendly output --------------------
 
 type ValidatorOutput struct {
-	AccountAddress  sdk.AccAddress      `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
-	OperatorAddress sdk.ValAddress      `json:"operator_address" yaml:"operator_address"` // address of the validator's operator; bech encoded in JSON
-	ConsPubKey      string              `json:"consensus_pubkey" yaml:"consensus_pubkey"` // the consensus public key of the validator; bech encoded in JSON
-	Status          string              `json:"status" yaml:"status"`                     // validator status (bonded/unbonding/unbonded)
-	Tokens          sdk.Int             `json:"tokens" yaml:"tokens"`                     // delegated tokens (incl. self-delegation)
-	DelegatorShares sdk.Dec             `json:"delegator_shares" yaml:"delegator_shares"` // total shares issued to a validator's delegators
-	CommissionRate  sdk.Dec             `json:"commissionRate"`
-	Description     staking.Description `json:"description" yaml:"description"` // description terms for the validator
+	AccountAddress  sdk.AccAddress `json:"account_address" yaml:"account_address"`   // address of the validator's account; bech encoded in JSON
+	OperatorAddress sdk.ValAddress `json:"operator_address" yaml:"operator_address"` // address of the validator's operator; bech encoded in JSON
+	ConsPubKey      string         `json:"consensus_pubkey" yaml:"consensus_pubkey"` // the consensus public key of the validator; bech encoded in JSON
+	Status          string         `json:"status" yaml:"status"`                     // validator status (bonded/unbonding/unbonded)
+	Tokens          sdk.Int        `json:"tokens" yaml:"tokens"`                     // delegated tokens (incl. self-delegation)
+	DelegatorShares sdk.Dec        `json:"delegator_shares" yaml:"delegator_shares"` // total shares issued to a validator's delegators
+	CommissionRate  sdk.Dec        `json:"commission_rate" yaml:"commission_rate"`   // commission rate of the validator
+	EthAddress      string         `json:"eth_address" yaml:"eth_address"`           // ETH address for the validator
 }
 
-func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
+func getValidatorOutput(v stakingTypes.Validator) ValidatorOutput {
 	bechConsPubKey, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, v.ConsPubKey)
 	if err != nil {
 		log.Error(err)
@@ -414,7 +483,7 @@ func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
 		Tokens:          v.Tokens,
 		DelegatorShares: v.DelegatorShares,
 		CommissionRate:  v.Commission.Rate,
-		Description:     v.Description,
+		EthAddress:      v.Description.Identity,
 	}
 }
 
@@ -424,11 +493,12 @@ type SigndReward struct {
 }
 
 type RewardOutput struct {
-	Receiver      string      `json:"receiver"`
-	MiningReward  sdk.Int     `json:"mining_reward"`
-	ServiceReward sdk.Int     `json:"service_reward"`
-	SignedReward  SigndReward `json:"signed_msg"`
-	Signers       []string    `json:"signers"`
+	Receiver         string      `json:"receiver"`
+	MiningReward     sdk.Int     `json:"mining_reward"`
+	ServiceReward    sdk.Int     `json:"service_reward"`
+	SignedReward     SigndReward `json:"signed_msg"`
+	Signers          []string    `json:"signers"`
+	LastWithdrawTime time.Time   `json:"last_withdraw_time"`
 }
 
 type DelegatorOutput struct {
@@ -453,4 +523,20 @@ func getCandidateDelegatorsOutput(delegators []types.Delegator) CandidateDelegat
 			})
 	}
 	return output
+}
+
+type CandidateOutput struct {
+	EthAddress     string         `json:"eth_address"`
+	ValAccount     sdk.AccAddress `json:"val_account"`
+	StakingPool    sdk.Int        `json:"staking_pool"`
+	CommissionRate sdk.Dec        `json:"commission_rate"`
+}
+
+func getCandidateOutput(candidate types.Candidate) CandidateOutput {
+	return CandidateOutput{
+		EthAddress:     candidate.EthAddress,
+		ValAccount:     candidate.ValAccount,
+		StakingPool:    candidate.StakingPool,
+		CommissionRate: candidate.CommissionRate,
+	}
 }

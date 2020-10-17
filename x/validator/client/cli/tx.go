@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	flagMoniker         = "moniker"
-	flagIdentity        = "identity"
-	flagWebsite         = "website"
-	flagSecurityContact = "security-contact"
-	flagDetails         = "details"
+	flagMoniker  = "moniker"
+	flagIdentity = "identity"
+	flagWebsite  = "website"
+	flagContact  = "contact"
+	flagDetails  = "details"
 )
 
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
@@ -82,9 +82,9 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 			moniker, _ := cmd.Flags().GetString(flagMoniker)
 			identity, _ := cmd.Flags().GetString(flagIdentity)
 			website, _ := cmd.Flags().GetString(flagWebsite)
-			security, _ := cmd.Flags().GetString(flagSecurityContact)
+			contact, _ := cmd.Flags().GetString(flagContact)
 			details, _ := cmd.Flags().GetString(flagDetails)
-			description := staking.NewDescription(moniker, identity, website, security, details)
+			description := staking.NewDescription(moniker, identity, website, contact, details)
 
 			txr, err := transactor.NewCliTransactor(cdc, viper.GetString(flags.FlagHome))
 			if err != nil {
@@ -114,10 +114,10 @@ func GetCmdEditCandidateDescription(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().String(flagMoniker, staking.DoNotModifyDesc, "The candidate's name")
-	cmd.Flags().String(flagIdentity, staking.DoNotModifyDesc, "The (optional) identity signature (ex. UPort or Keybase)")
-	cmd.Flags().String(flagWebsite, staking.DoNotModifyDesc, "The candidate's (optional) website")
-	cmd.Flags().String(flagSecurityContact, staking.DoNotModifyDesc, "The candidate's (optional) security contact email")
-	cmd.Flags().String(flagDetails, staking.DoNotModifyDesc, "The candidate's (optional) details")
+	cmd.Flags().String(flagIdentity, staking.DoNotModifyDesc, "The identity signature (ex. UPort or Keybase)")
+	cmd.Flags().String(flagWebsite, staking.DoNotModifyDesc, "The candidate's website")
+	cmd.Flags().String(flagContact, staking.DoNotModifyDesc, "The candidate's security contact email")
+	cmd.Flags().String(flagDetails, staking.DoNotModifyDesc, "The candidate's details")
 
 	return cmd
 }

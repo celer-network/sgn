@@ -107,3 +107,20 @@ func NewPendingReward(ethAddress string) PendingReward {
 func (pr PendingReward) IsZero() bool {
 	return pr.MiningReward.IsZero() && pr.ServiceReward.IsZero()
 }
+
+type RewardStats struct {
+	TotalMiningReward  sdk.Int `json:"total_mining_reward"`
+	TotalServiceReward sdk.Int `json:"total_service_reward"`
+	NumReceiver        uint    `json:"num_receiver"`
+	NumWithdrawer      uint    `json:"num_withdrawer"`
+	MaxReward          sdk.Int `json:"max_reward"`
+	MaxRewardReceiver  string  `json:"max_reward_receiver"`
+}
+
+func NewRewardStats() RewardStats {
+	return RewardStats{
+		TotalMiningReward:  sdk.ZeroInt(),
+		TotalServiceReward: sdk.ZeroInt(),
+		MaxReward:          sdk.ZeroInt(),
+	}
+}
