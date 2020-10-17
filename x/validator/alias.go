@@ -12,6 +12,7 @@ const (
 	QuerySyncer              = types.QuerySyncer
 	QueryDelegator           = types.QueryDelegator
 	QueryCandidate           = types.QueryCandidate
+	QueryCandidates          = types.QueryCandidates
 	QueryCandidateDelegators = types.QueryCandidateDelegators
 	QueryReward              = types.QueryReward
 	QueryRewardEpoch         = types.QueryRewardEpoch

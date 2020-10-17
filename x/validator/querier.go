@@ -21,6 +21,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryDelegator(ctx, req, keeper)
 		case QueryCandidate:
 			return queryCandidate(ctx, req, keeper)
+		case QueryCandidates:
+			return queryCandidates(ctx, req, keeper)
 		case QueryCandidateDelegators:
 			return queryCandidateDelegators(ctx, req, keeper)
 		case QueryReward:
@@ -80,6 +82,17 @@ func queryCandidate(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]by
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, candidate)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+
+	}
+
+	return res, nil
+}
+
+func queryCandidates(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	candidates := keeper.GetAllCandidates(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, candidates)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 

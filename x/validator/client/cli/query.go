@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -32,6 +33,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 	validatorQueryCmd.AddCommand(common.GetCommands(
 		GetCmdCandidate(storeKey, cdc),
+		GetCmdCandidates(storeKey, cdc),
 		GetCmdDelegator(storeKey, cdc),
 		GetCmdCandidateDelegators(storeKey, cdc),
 		GetCmdValidator(staking.StoreKey, cdc),
@@ -144,6 +146,43 @@ func QueryCandidate(cliCtx context.CLIContext, queryRoute, ethAddress string) (c
 	return
 }
 
+func GetCmdCandidates(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "candidates",
+		Short: "query all candidates",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			candidates, err := QueryCandidates(cliCtx, queryRoute)
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+			var outputs []CandidateOutput
+			for _, c := range candidates {
+				outputs = append(outputs, getCandidateOutput(c))
+			}
+			return cliCtx.PrintOutput(outputs)
+		},
+	}
+}
+
+func QueryCandidates(cliCtx context.CLIContext, queryRoute string) (candidates []types.Candidate, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryCandidates)
+	res, err := common.RobustQuery(cliCtx, route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &candidates)
+	if err != nil {
+		return
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		return candidates[i].StakingPool.GT(candidates[j].StakingPool)
+	})
+	return
+}
+
 // GetCmdCandidateDelegators queries request info
 // TODO: support pagination
 func GetCmdCandidateDelegators(queryRoute string, cdc *codec.Codec) *cobra.Command {
@@ -193,7 +232,7 @@ func GetCmdValidator(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				log.Errorln("query error", err)
 				return err
 			}
-			output := getValidatorOutput(&validator)
+			output := getValidatorOutput(validator)
 			return cliCtx.PrintOutput(output)
 		},
 	}
@@ -213,7 +252,7 @@ func GetCmdValidators(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			}
 			var outputs []ValidatorOutput
 			for _, v := range validators {
-				outputs = append(outputs, getValidatorOutput(&v))
+				outputs = append(outputs, getValidatorOutput(v))
 			}
 			return cliCtx.PrintOutput(outputs)
 		},
@@ -395,7 +434,7 @@ type ValidatorOutput struct {
 	EthAddress      string         `json:"eth_address" yaml:"eth_address"`           // ETH address for the validator
 }
 
-func getValidatorOutput(v *stakingTypes.Validator) ValidatorOutput {
+func getValidatorOutput(v stakingTypes.Validator) ValidatorOutput {
 	bechConsPubKey, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, v.ConsPubKey)
 	if err != nil {
 		log.Error(err)
@@ -453,4 +492,20 @@ func getCandidateDelegatorsOutput(delegators []types.Delegator) CandidateDelegat
 			})
 	}
 	return output
+}
+
+type CandidateOutput struct {
+	EthAddress     string         `json:"eth_address"`
+	ValAccount     sdk.AccAddress `json:"val_account"`
+	StakingPool    sdk.Int        `json:"staking_pool"`
+	CommissionRate sdk.Dec        `json:"commission_rate"`
+}
+
+func getCandidateOutput(candidate types.Candidate) CandidateOutput {
+	return CandidateOutput{
+		EthAddress:     candidate.EthAddress,
+		ValAccount:     candidate.ValAccount,
+		StakingPool:    candidate.StakingPool,
+		CommissionRate: candidate.CommissionRate,
+	}
 }
