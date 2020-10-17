@@ -12,6 +12,7 @@ const (
 	QueryCandidateDelegators = "candidate-delegators"
 	QueryReward              = "reward"
 	QueryRewardEpoch         = "reward-epoch"
+	QueryRewardStats         = "reward-stats"
 	QueryParameters          = "parameters"
 )
 

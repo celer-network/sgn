@@ -41,6 +41,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdValidators(staking.StoreKey, cdc),
 		GetCmdSyncer(storeKey, cdc),
 		GetCmdReward(storeKey, cdc),
+		GetCmdRewardStats(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return validatorQueryCmd
@@ -389,6 +390,33 @@ func QueryReward(cliCtx context.CLIContext, queryRoute string, ethAddress string
 	}
 
 	err = cliCtx.Codec.UnmarshalJSON(res, &reward)
+	return
+}
+
+func GetCmdRewardStats(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "reward-stats",
+		Short: "query reward statistics",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			stats, err := QueryRewardStats(cliCtx, queryRoute)
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+			return cliCtx.PrintOutput(stats)
+		},
+	}
+}
+
+func QueryRewardStats(cliCtx context.CLIContext, queryRoute string) (stats types.RewardStats, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRewardStats)
+	res, err := common.RobustQuery(cliCtx, route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &stats)
 	return
 }
 

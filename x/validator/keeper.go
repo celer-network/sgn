@@ -159,6 +159,29 @@ func (k Keeper) GetReward(ctx sdk.Context, ethAddress string) (Reward, bool) {
 	return reward, true
 }
 
+func (k Keeper) GetRewardStats(ctx sdk.Context) RewardStats {
+	stats := NewRewardStats()
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, RewardKeyPrefix)
+	for ; iterator.Valid(); iterator.Next() {
+		var reward Reward
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &reward)
+		stats.TotalMiningReward = stats.TotalMiningReward.Add(reward.MiningReward)
+		stats.TotalServiceReward = stats.TotalServiceReward.Add(reward.ServiceReward)
+		sum := reward.MiningReward.Add(reward.ServiceReward)
+		if sum.GT(stats.MaxReward) {
+			stats.MaxReward = sum
+			stats.MaxRewardReceiver = reward.Receiver
+		}
+		stats.NumReceiver++
+		if reward.RewardProtoBytes != nil {
+			stats.NumWithdrawer++
+		}
+	}
+
+	return stats
+}
+
 // Sets the Reward metadata for ethAddress
 func (k Keeper) SetReward(ctx sdk.Context, reward Reward) {
 	store := ctx.KVStore(k.storeKey)
