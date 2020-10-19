@@ -1,11 +1,13 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"strings"
 
 	"github.com/celer-network/goutils/eth"
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -59,10 +61,15 @@ func AddSig(sigs []Sig, msg []byte, sig []byte, expectedSigner string) ([]Sig, e
 		return nil, err
 	}
 
-	for _, s := range sigs {
+	for i, s := range sigs {
 		if s.Signer == signerAddr {
-			err = fmt.Errorf("repeated signer %s", signerAddr)
-			return nil, err
+			if bytes.Compare(s.Sig, sig) == 0 {
+				// already signed with the same sig
+				return sigs, nil
+			}
+			log.Debugf("repeated signer %s overwite existing sig", signerAddr)
+			sigs[i] = NewSig(signerAddr, sig)
+			return sigs, nil
 		}
 	}
 
