@@ -15,8 +15,10 @@ import (
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		logEntry := seal.NewMsgLog()
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		var res *sdk.Result
 		var err error
+
 		switch msg := msg.(type) {
 		case MsgRequestGuard:
 			res, err = handleMsgRequestGuard(ctx, keeper, msg, logEntry)
