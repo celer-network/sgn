@@ -247,6 +247,7 @@ func (k Keeper) distributeCandidateReward(ctx sdk.Context) {
 }
 
 func (k Keeper) DistributeCandidatePendingReward(ctx sdk.Context, ethAddress string) {
+	log.Debugln("Distribute pending reward for candidate", ethAddress)
 	candidate, found := k.GetCandidate(ctx, ethAddress)
 	if !found {
 		log.Debugf("candidate %s not found", ethAddress)

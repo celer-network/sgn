@@ -44,18 +44,24 @@ func TestMain(m *testing.M) {
 
 	// set up mainchain: deploy contracts and fund ethpool etc
 	// first fund each account 100 ETH
-	addr0 := mainchain.Hex2Addr(tc.ValEthAddrs[0])
-	addr1 := mainchain.Hex2Addr(tc.ClientEthAddrs[0])
-	addr2 := mainchain.Hex2Addr(tc.ClientEthAddrs[1])
-	err = tc.FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{addr0, addr1, addr2})
-	tc.ChkErr(err, "fund server")
+	addrs := []mainchain.Addr{
+		mainchain.Hex2Addr(tc.ValEthAddrs[0]),
+		mainchain.Hex2Addr(tc.DelEthAddrs[0]),
+		mainchain.Hex2Addr(tc.DelEthAddrs[1]),
+		mainchain.Hex2Addr(tc.DelEthAddrs[2]),
+		mainchain.Hex2Addr(tc.DelEthAddrs[3]),
+		mainchain.Hex2Addr(tc.ClientEthAddrs[0]),
+		mainchain.Hex2Addr(tc.ClientEthAddrs[1]),
+	}
+	err = tc.FundAddrsETH("1"+strings.Repeat("0", 20), addrs)
+	tc.ChkErr(err, "fund eth")
 	tc.SetupEthClients()
 	tc.SetupE2eProfile()
 
 	// fund CELR to each eth account
-	log.Infoln("fund each validator 10 million CELR")
-	err = tc.FundAddrsErc20(tc.E2eProfile.CelrAddr, []mainchain.Addr{addr0, addr1, addr2}, "1"+strings.Repeat("0", 25))
-	tc.ChkErr(err, "fund each validator ERC20")
+	log.Infoln("fund each addr 10 million CELR")
+	err = tc.FundAddrsErc20(tc.E2eProfile.CelrAddr, addrs, "1"+strings.Repeat("0", 25))
+	tc.ChkErr(err, "fund each addr ERC20")
 
 	// make install sgn and sgncli
 	err = installSgn()
