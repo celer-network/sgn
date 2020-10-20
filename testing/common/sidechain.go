@@ -78,7 +78,7 @@ func AddValidators(t *testing.T, transactor *transactor.Transactor, ethkss, vala
 func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	ethAddr mainchain.Addr, auth *bind.TransactOpts,
 	valacct string, amt *big.Int, minAmt *big.Int, commissionRate *big.Int,
-	rateLockEndTime *big.Int, isValidator bool) {
+	rateLockEndTime *big.Int, checkValidator bool) {
 
 	// get sgnAddr
 	sgnAddr, err := sdk.AccAddressFromBech32(valacct)
@@ -101,7 +101,7 @@ func AddCandidateWithStake(t *testing.T, transactor *transactor.Transactor,
 	log.Info("Query sgn about the candidate to check if it has correct stakes...")
 	CheckCandidate(t, transactor, ethAddr, valacct, amt)
 
-	if isValidator {
+	if checkValidator {
 		log.Infof("Query sgn about the validator %s to check if it has correct stakes...", valacct)
 		CheckValidator(t, transactor, valacct, amt, sdk.Bonded)
 	}
