@@ -1,10 +1,10 @@
 ## sgnops channel
 
-Start a local REST server talking to channel and sgn
+Start a local REST server talking to channel and SGN for testing
 
 ### Synopsis
 
-Start a local REST server talking to channel and sgn
+Start a local REST server talking to channel and SGN for testing
 
 ```
 sgnops channel [flags]
@@ -13,8 +13,6 @@ sgnops channel [flags]
 ### Options
 
 ```
-      --blockDelay uint      block delay (default 5)
-      --gateway string       gateway url
       --height int           Use a specific height to query state at (this can error if the node is pruning state)
   -h, --help                 help for channel
       --indent               Add indent to JSON response
@@ -22,9 +20,10 @@ sgnops channel [flags]
       --ledger               Use a connected Ledger device
       --max-open uint        The number of maximum open connections (default 1000)
       --node string          <host>:<port> to Tendermint RPC interface for this chain (default "tcp://localhost:26657")
-      --peer1 string         peer1 keystore path (default "./test/keys/cethks0.json")
-      --peer2 string         peer2 keystore path (default "./test/keys/cethks1.json")
+      --peer0 string         peer0 keystore path (default "./test/keys/cethks0.json")
+      --peer1 string         peer1 keystore path (default "./test/keys/cethks1.json")
       --read-timeout uint    The RPC read timeout (in seconds) (default 10)
+      --sgn-gateway string   SGN gateway URL
       --trust-node           Trust connected full node (don't verify proofs for responses)
       --unsafe-cors          Allows CORS requests from all domains. For development purposes only, use it at your own risk.
       --write-timeout uint   The RPC write timeout (in seconds) (default 10)

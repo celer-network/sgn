@@ -13,14 +13,14 @@ sgncli tx validator edit-candidate-description [flags]
 ### Options
 
 ```
-      --details string            The candidate's (optional) details (default "[do-not-modify]")
-  -h, --help                      help for edit-candidate-description
-      --identity string           The (optional) identity signature (ex. UPort or Keybase) (default "[do-not-modify]")
-      --indent                    Add indent to JSON response
-      --moniker string            The candidate's name (default "[do-not-modify]")
-      --security-contact string   The candidate's (optional) security contact email (default "[do-not-modify]")
-      --trust-node                Trust connected full node (don't verify proofs for responses) (default true)
-      --website string            The candidate's (optional) website (default "[do-not-modify]")
+      --contact string    The candidate's security contact email (default "[do-not-modify]")
+      --details string    The candidate's details (default "[do-not-modify]")
+  -h, --help              help for edit-candidate-description
+      --identity string   The identity signature (ex. UPort or Keybase) (default "[do-not-modify]")
+      --indent            Add indent to JSON response
+      --moniker string    The candidate's name (default "[do-not-modify]")
+      --trust-node        Trust connected full node (don't verify proofs for responses) (default true)
+      --website string    The candidate's website (default "[do-not-modify]")
 ```
 
 ### Options inherited from parent commands
