@@ -173,7 +173,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 func GuardTestCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "guard-test",
-		Short: "Start a local REST server talking to state channel and SGN for testing",
+		Short: "Start a local REST server talking to channel contract and SGN for testing",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rs, err := NewRestServer()
 			if err != nil {
