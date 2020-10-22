@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"math/big"
 	"strings"
 
 	"github.com/celer-network/goutils/log"
@@ -165,21 +164,25 @@ func (o *Operator) SyncDelegator(candidatorAddr, delegatorAddr mainchain.Addr) {
 	o.Transactor.AddTxMsg(msg)
 }
 
-func (o *Operator) SyncSubscriptionBalance(consumerAddr mainchain.Addr, deposit *big.Int) {
+func (o *Operator) SyncSubscriptionBalance(consumerAddr mainchain.Addr) {
+	mainchainDeposit, err := o.EthClient.SGN.SubscriptionDeposits(&bind.CallOpts{}, consumerAddr)
+	if err != nil {
+		log.Errorf("Failed to query mainchain deposit: %s", err)
+		return
+	}
+	mainchainDepositInt := sdk.NewIntFromBigInt(mainchainDeposit)
 	consumerAddrHex := consumerAddr.Hex()
-	depositInt := sdk.NewIntFromBigInt(deposit)
 	subscription, err := guard.CLIQuerySubscription(o.Transactor.CliCtx, guard.RouterKey, consumerAddrHex)
 	if err == nil {
-		if subscription.Deposit.Equal(depositInt) {
-			log.Infof("Subscription already updated for %s, deposit %s", consumerAddrHex, deposit)
+		if mainchainDepositInt.Equal(subscription.Deposit) {
+			log.Infof("Subscription already updated for %s, deposit %s", consumerAddrHex, mainchainDepositInt)
 			return
 		}
 	}
-
 	subscription = guard.NewSubscription(consumerAddrHex)
-	subscription.Deposit = depositInt
+	subscription.Deposit = mainchainDepositInt
 	subscriptionData := o.Transactor.CliCtx.Codec.MustMarshalBinaryBare(subscription)
 	msg := sync.NewMsgSubmitChange(sync.Subscribe, subscriptionData, o.EthClient.Client, o.Transactor.Key.GetAddress())
-	log.Infof("Submit change tx: subscribe ethAddress %s, deposit %s", consumerAddrHex, deposit)
+	log.Infof("Submit change tx: subscribe ethAddress %s, deposit %s", consumerAddrHex, mainchainDepositInt)
 	o.Transactor.AddTxMsg(msg)
 }
