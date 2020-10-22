@@ -104,7 +104,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "text/plain")
-		if _, err := w.Write([]byte("success")); err != nil {
+		if _, err := w.Write([]byte("success\n")); err != nil {
 			log.Errorln("could not write response:", err)
 		}
 	}

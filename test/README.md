@@ -48,8 +48,8 @@ Wait for a few seconds between steps
 #### Test Guard
 
 1. `sgnops channel`
-2. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seqNum": "10" }'`
-3. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seqNum": "9" }'`
+2. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "10" }'`
+3. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seq_num": "9" }'`
 
 #### Test Upgrade
 
