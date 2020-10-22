@@ -3,6 +3,7 @@ package channel
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"math/big"
 	"net/http"
 
@@ -51,7 +52,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer2.Address.Bytes(), rs.peer1, rs.peer2)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer1.Address.Bytes(), rs.peer0, rs.peer1)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -63,7 +64,7 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		simplexReceiverSig, err := rs.peer1.Signer.SignEthMessage(signedSimplexStateBytes)
+		simplexReceiverSig, err := rs.peer0.Signer.SignEthMessage(signedSimplexStateBytes)
 		if err != nil {
 			return
 		}
@@ -80,15 +81,24 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			rs.transactor.AddTxMsg(msg)
 		} else {
 			reqBody, err := json.Marshal(map[string]string{
-				"signedSimplexStateBytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
-				"simplexReceiverSig":      mainchain.Bytes2Hex(simplexReceiverSig),
+				"signed_simplex_state_bytes": mainchain.Bytes2Hex(signedSimplexStateBytes),
+				"simplex_receiver_sig":       mainchain.Bytes2Hex(simplexReceiverSig),
 			})
 			if err != nil {
 				return
 			}
-			_, err = http.Post(rs.gateway+"/guard/requestGuard",
+			resp, err := http.Post(rs.gateway+"/guard/requestGuard",
 				"application/json", bytes.NewBuffer(reqBody))
 			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				log.Error(string(body))
 				return
 			}
 		}
@@ -107,7 +117,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer2.Address.Bytes(), rs.peer1, rs.peer2)
+		signedSimplexStateProto, err := tc.PrepareSignedSimplexState(req.SeqNum, rs.channelID[:], rs.peer1.Address.Bytes(), rs.peer0, rs.peer1)
 		if err != nil {
 			log.Errorln("could not get SignedSimplexState:", err)
 			return
@@ -121,7 +131,7 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		_, err = tc.LedgerContract.IntendSettle(rs.peer2.Auth, signedSimplexStateArrayBytes)
+		_, err = tc.LedgerContract.IntendSettle(rs.peer1.Auth, signedSimplexStateArrayBytes)
 		if err != nil {
 			log.Errorln("could not intendSettle:", err)
 			return
@@ -136,6 +146,26 @@ func postIntendSettleHandlerFn(rs *RestServer) http.HandlerFunc {
 
 func getChannelInfoHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		status, err := tc.LedgerContract.GetChannelStatus(&bind.CallOpts{}, rs.channelID)
+		if err != nil {
+			log.Errorln("Query ChannelStatus err", err)
+			return
+		}
+
+		var statusStr string
+		switch status {
+		case 0:
+			statusStr = "Uninitialized"
+		case 1:
+			statusStr = "Operable"
+		case 2:
+			statusStr = "Settling"
+		case 3:
+			statusStr = "Closed"
+		case 4:
+			statusStr = "Migrated"
+		}
+
 		addresses, seqNums, err := tc.LedgerContract.GetStateSeqNumMap(&bind.CallOpts{}, rs.channelID)
 		if err != nil {
 			log.Errorln("Query StateSeqNumMap err", err)
@@ -143,9 +173,10 @@ func getChannelInfoHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		result, err := rs.cdc.MarshalJSON(struct {
+			Status    string
 			Addresses [2]mainchain.Addr
 			SeqNums   [2]*big.Int
-		}{addresses, seqNums})
+		}{statusStr, addresses, seqNums})
 
 		if err != nil {
 			log.Errorln("MarshalJSON err", err)

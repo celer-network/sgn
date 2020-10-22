@@ -20,7 +20,7 @@ sgn ops utility
 ### SEE ALSO
 
 * [sgnops accounts](sgnops_accounts.md)	 - Add accounts in batch
-* [sgnops channel](sgnops_channel.md)	 - Start a local REST server talking to channel and sgn
+* [sgnops channel](sgnops_channel.md)	 - Start a local REST server talking to channel and SGN for testing
 * [sgnops claim-validator](sgnops_claim-validator.md)	 - Claim the validator status
 * [sgnops confirm-unbonded-candidate](sgnops_confirm-unbonded-candidate.md)	 - Confirm an unbonded candidate
 * [sgnops delegate](sgnops_delegate.md)	 - Delegate stake to a validator candidate
