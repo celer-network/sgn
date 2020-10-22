@@ -47,9 +47,13 @@ Wait for a few seconds between steps
 
 #### Test Guard
 
-1. `sgnops channel`
-2. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "10" }'`
-3. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seq_num": "9" }'`
+1. `sgncli gateway --laddr tcp://0.0.0.0:1318`
+2. `sgnops guard-test --sgn-gateway http://127.0.0.1:1318`
+3. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "10" }'`, should success
+3. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "12" }'`, should success
+4. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "11" }'`, should fail
+4. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seq_num": "9" }'`, should success, watch guard logs
+5. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "15" }'`, should fail
 
 #### Test Upgrade
 
