@@ -52,7 +52,7 @@ Wait for a few seconds between steps
 3. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "10" }'`, should success
 3. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "12" }'`, should success
 4. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "11" }'`, should fail
-4. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seq_num": "9" }'`, should success, watch guard logs
+4. `curl -X POST http://127.0.0.1:1317/intendSettle -d '{ "seq_num": "9" }'`, should success, look for guard tx in sgnd.log
 5. `curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "15" }'`, should fail
 
 #### Test Upgrade
