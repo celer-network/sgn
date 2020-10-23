@@ -110,8 +110,12 @@ func DeployCommand() *cobra.Command {
 			if ethurl == LocalGeth {
 				SetEthBaseKs("./docker-volumes/geth-env")
 				err = FundAddrsETH("1"+strings.Repeat("0", 20),
-					[]mainchain.Addr{mainchain.Hex2Addr(ValEthAddrs[0]), mainchain.Hex2Addr(ValEthAddrs[1])})
-				ChkErr(err, "fund client0 and client1")
+					[]mainchain.Addr{
+						mainchain.Hex2Addr(ValEthAddrs[0]),
+						mainchain.Hex2Addr(ClientEthAddrs[0]),
+						mainchain.Hex2Addr(ClientEthAddrs[1]),
+					})
+				ChkErr(err, "fund ETH to validator and clients")
 			}
 
 			ledgerAddr := DeployLedgerContract()
@@ -145,6 +149,14 @@ func DeployCommand() *cobra.Command {
 				tx, err := erc20.Approve(EtherBaseAuth, dposAddr, amt)
 				ChkErr(err, "failed to approve erc20")
 				WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "approve erc20")
+				err = FundAddrsErc20(erc20Addr,
+					[]mainchain.Addr{
+						mainchain.Hex2Addr(ClientEthAddrs[0]),
+						mainchain.Hex2Addr(ClientEthAddrs[1]),
+					},
+					"1"+strings.Repeat("0", 20),
+				)
+				ChkErr(err, "fund test CELR to clients")
 			}
 
 			return nil

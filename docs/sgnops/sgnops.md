@@ -20,7 +20,6 @@ sgn ops utility
 ### SEE ALSO
 
 * [sgnops accounts](sgnops_accounts.md)	 - Add accounts in batch
-* [sgnops channel](sgnops_channel.md)	 - Start a local REST server talking to channel and SGN for testing
 * [sgnops claim-validator](sgnops_claim-validator.md)	 - Claim the validator status
 * [sgnops confirm-unbonded-candidate](sgnops_confirm-unbonded-candidate.md)	 - Confirm an unbonded candidate
 * [sgnops delegate](sgnops_delegate.md)	 - Delegate stake to a validator candidate
@@ -29,6 +28,7 @@ sgn ops utility
 * [sgnops get-candidate-info](sgnops_get-candidate-info.md)	 - Get candidate info
 * [sgnops get-delegator-info](sgnops_get-delegator-info.md)	 - Get delegator info
 * [sgnops gov](sgnops_gov.md)	 - Mainchain governance
+* [sgnops guard-test](sgnops_guard-test.md)	 - Start a local REST server talking to channel contract and SGN for testing
 * [sgnops init-candidate](sgnops_init-candidate.md)	 - Initialize a validator candidate
 * [sgnops snapshot-mainchain](sgnops_snapshot-mainchain.md)	 - Snapshot mainchain
 * [sgnops sync](sgnops_sync.md)	 - Sync a change from mainchain to sidechain

@@ -167,13 +167,13 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 	return rpcserver.Serve(rs.listener, rs.Mux, rs.logger, cfg)
 }
 
-// ServeCommand will start the application REST service as a blocking process. It
+// GuardTestCommand will start the application REST service as a blocking process. It
 // takes a codec to create a RestServer object and a function to register all
 // necessary routes.
-func ServeCommand() *cobra.Command {
+func GuardTestCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "channel",
-		Short: "Start a local REST server talking to channel and SGN for testing",
+		Use:   "guard-test",
+		Short: "Start a local REST server talking to channel contract and SGN for testing",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rs, err := NewRestServer()
 			if err != nil {

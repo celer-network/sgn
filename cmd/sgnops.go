@@ -46,8 +46,6 @@ func GetSgnopsExecutor() cli.Executor {
 
 	rootCmd.AddCommand(
 		transactor.AccountsCommand(),
-		tc.DeployCommand(),
-		channel.ServeCommand(),
 		ops.SnapshotMainchainCommand(),
 		ops.InitCandidateCommand(),
 		ops.DelegateCommand(),
@@ -61,6 +59,8 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.GetAllValidatorsCommand(),
 		ops.GetSyncCmd(cdc),
 		ops.GovCommand(),
+		tc.DeployCommand(),
+		channel.GuardTestCommand(),
 		version.Cmd,
 	)
 	rootCmd.PersistentFlags().String(

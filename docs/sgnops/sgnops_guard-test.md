@@ -1,20 +1,20 @@
-## sgnops channel
+## sgnops guard-test
 
-Start a local REST server talking to channel and SGN for testing
+Start a local REST server talking to channel contract and SGN for testing
 
 ### Synopsis
 
-Start a local REST server talking to channel and SGN for testing
+Start a local REST server talking to channel contract and SGN for testing
 
 ```
-sgnops channel [flags]
+sgnops guard-test [flags]
 ```
 
 ### Options
 
 ```
       --height int           Use a specific height to query state at (this can error if the node is pruning state)
-  -h, --help                 help for channel
+  -h, --help                 help for guard-test
       --indent               Add indent to JSON response
       --laddr string         The address for the server to listen on (default "tcp://localhost:1317")
       --ledger               Use a connected Ledger device

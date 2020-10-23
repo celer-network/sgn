@@ -20,7 +20,7 @@ ledger_address = ""
 sgn_address = ""
 
 [log]
-color = true
+color = false
 level = "debug"
 
 [sgn]
