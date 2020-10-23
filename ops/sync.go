@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -162,13 +161,7 @@ $ %s tx submit-change sync-subscription-balance --consumer="0xf75f679d958b7610ba
 
 			consumer := viper.GetString(FlagConsumerAddr)
 			consumerAddr := mainchain.Hex2Addr(consumer)
-			deposit, err := operator.EthClient.SGN.SubscriptionDeposits(
-				&bind.CallOpts{}, consumerAddr)
-			if err != nil {
-				return
-			}
-
-			operator.SyncSubscriptionBalance(consumerAddr, deposit)
+			operator.SyncSubscriptionBalance(consumerAddr)
 			time.Sleep(5 * time.Second)
 			return
 		},

@@ -31,9 +31,11 @@ sgncli query validator [flags]
 * [sgncli query](sgncli_query.md)	 - Querying subcommands
 * [sgncli query validator candidate](sgncli_query_validator_candidate.md)	 - query candidate info by candidate ETH address
 * [sgncli query validator candidate-delegators](sgncli_query_validator_candidate-delegators.md)	 - query candidate delegators by candidate ETH address
+* [sgncli query validator candidates](sgncli_query_validator_candidates.md)	 - query all candidates
 * [sgncli query validator delegator](sgncli_query_validator_delegator.md)	 - query delegator info by candidate and delegator ETH addresses
 * [sgncli query validator params](sgncli_query_validator_params.md)	 - Query the current validator parameters information
 * [sgncli query validator reward](sgncli_query_validator_reward.md)	 - query reward info by delegator or validator ETH address
+* [sgncli query validator reward-stats](sgncli_query_validator_reward-stats.md)	 - query reward statistics
 * [sgncli query validator syncer](sgncli_query_validator_syncer.md)	 - query syncer info
 * [sgncli query validator validator](sgncli_query_validator_validator.md)	 - query a validator by account address
 * [sgncli query validator validators](sgncli_query_validator_validators.md)	 - query all validators

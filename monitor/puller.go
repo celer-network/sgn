@@ -114,7 +114,7 @@ func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSC
 }
 
 func (m *Monitor) syncSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance, logmsg string) {
-	m.SyncSubscriptionBalance(event.Consumer, event.Amount)
+	m.SyncSubscriptionBalance(event.Consumer)
 }
 
 func (m *Monitor) syncIntendSettle(intendSettle *mainchain.CelerLedgerIntendSettle, logmsg string) {

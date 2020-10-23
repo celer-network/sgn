@@ -45,7 +45,6 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr 
 	}
 
 	var beneficiaries []AccountFractionPair
-	// TODO: need to add address(0) as the miningPool and make sure the total share is 1
 	if !beneficiaryAddr.Empty() {
 		beneficiaryValAddr := sdk.ValAddress(beneficiaryAddr)
 		beneficiaryValidator, found := k.validatorKeeper.GetValidator(ctx, beneficiaryValAddr)
@@ -53,7 +52,7 @@ func (k Keeper) HandleGuardFailure(ctx sdk.Context, beneficiaryAddr, failedAddr 
 			log.Errorf("Cannot find beneficiary validator %s", beneficiaryValAddr)
 			return
 		}
-		beneficiaries = append(beneficiaries, NewAccountFractionPair(beneficiaryValidator.Description.Identity, k.SlashFractionGuardFailure(ctx)))
+		beneficiaries = append(beneficiaries, NewAccountFractionPair(beneficiaryValidator.Description.Identity, k.FallbackGuardReward(ctx)))
 	}
 
 	k.Slash(ctx, AttributeValueGuardFailure, failedValidator, calculateSlashAmount(failedValidator.GetConsensusPower(), k.SlashFractionGuardFailure(ctx)), beneficiaries)

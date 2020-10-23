@@ -33,18 +33,17 @@ type RestServer struct {
 	listener   net.Listener
 	logger     tlog.Logger
 	transactor *transactor.Transactor
+	peer0      *tc.TestEthClient
 	peer1      *tc.TestEthClient
-	peer2      *tc.TestEthClient
 	cdc        *codec.Codec
 	channelID  mainchain.CidType
 	gateway    string
 }
 
 const (
-	peer1Flag      = "peer1"
-	peer2Flag      = "peer2"
-	gatewayFlag    = "gateway"
-	blockDelayFlag = "blockDelay"
+	flagPeer0      = "peer0"
+	flagPeer1      = "peer1"
+	flagSgnGateway = "sgn-gateway"
 )
 
 // NewRestServer creates a new rest server instance
@@ -54,10 +53,10 @@ func NewRestServer() (rs *RestServer, err error) {
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 	viper.Set(sdkFlags.FlagTrustNode, true)
 	cdc := app.MakeCodec()
-	gateway := viper.GetString(gatewayFlag)
+	sgnGateway := viper.GetString(flagSgnGateway)
 	var ts *transactor.Transactor
 
-	if gateway == "" {
+	if sgnGateway == "" {
 		ts, err = transactor.NewTransactor(
 			viper.GetString(sdkFlags.FlagHome),
 			viper.GetString(common.FlagSgnChainID),
@@ -79,12 +78,12 @@ func NewRestServer() (rs *RestServer, err error) {
 	}
 	tc.EthClient = ethclient.NewClient(rpcClient)
 
-	peer1, err := tc.SetupTestEthClient(viper.GetString(peer1Flag))
+	peer0, err := tc.SetupTestEthClient(viper.GetString(flagPeer0))
 	if err != nil {
 		return
 	}
 
-	peer2, err := tc.SetupTestEthClient(viper.GetString(peer2Flag))
+	peer1, err := tc.SetupTestEthClient(viper.GetString(flagPeer1))
 	if err != nil {
 		return
 	}
@@ -108,7 +107,7 @@ func NewRestServer() (rs *RestServer, err error) {
 	}
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 18), 10)
-	peer1Auth := peer1.Auth
+	peer1Auth := peer0.Auth
 	allowance, err := tokenContract.Allowance(&bind.CallOpts{}, peer1Auth.From, sgnContractAddress)
 	if allowance.Cmp(amt) < 0 {
 		log.Info("Approving CELR to SGN contract")
@@ -124,12 +123,12 @@ func NewRestServer() (rs *RestServer, err error) {
 		context.Background(),
 		tc.EthClient,
 		tx,
-		viper.GetUint64(blockDelayFlag)+3,
+		tc.BlockDelay,
 		tc.PollingInterval,
 		"Subscribe on SGN contract",
 	)
 
-	channelID, err := tc.OpenChannel(peer1, peer2)
+	channelID, err := tc.OpenChannel(peer0, peer1)
 	if err != nil {
 		return
 	}
@@ -139,10 +138,10 @@ func NewRestServer() (rs *RestServer, err error) {
 		logger:     logger,
 		transactor: ts,
 		cdc:        cdc,
+		peer0:      peer0,
 		peer1:      peer1,
-		peer2:      peer2,
 		channelID:  channelID,
-		gateway:    gateway,
+		gateway:    sgnGateway,
 	}, nil
 }
 
@@ -174,7 +173,7 @@ func (rs *RestServer) Start(listenAddr string, maxOpen int, readTimeout, writeTi
 func ServeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "channel",
-		Short: "Start a local REST server talking to channel and sgn",
+		Short: "Start a local REST server talking to channel and SGN for testing",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rs, err := NewRestServer()
 			if err != nil {
@@ -195,9 +194,8 @@ func ServeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(peer1Flag, "./test/keys/cethks0.json", "peer1 keystore path")
-	cmd.Flags().String(peer2Flag, "./test/keys/cethks1.json", "peer2 keystore path")
-	cmd.Flags().String(gatewayFlag, "", "gateway url")
-	cmd.Flags().Uint64(blockDelayFlag, 5, "block delay")
+	cmd.Flags().String(flagPeer0, "./test/keys/cethks0.json", "peer0 keystore path")
+	cmd.Flags().String(flagPeer1, "./test/keys/cethks1.json", "peer1 keystore path")
+	cmd.Flags().String(flagSgnGateway, "", "SGN gateway URL")
 	return sdkFlags.RegisterRestServerFlags(cmd)
 }
