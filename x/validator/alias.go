@@ -38,6 +38,7 @@ var (
 	GetCandidateKey                = types.GetCandidateKey
 	RewardKeyPrefix                = types.RewardKeyPrefix
 	GetRewardKey                   = types.GetRewardKey
+	PendingRewardKeyPrefix         = types.PendingRewardKeyPrefix
 	GetPendingRewardKey            = types.GetPendingRewardKey
 	RewardEpochKey                 = types.RewardEpochKey
 	NewSyncer                      = types.NewSyncer
