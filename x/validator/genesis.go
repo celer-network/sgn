@@ -31,7 +31,10 @@ func DefaultGenesisState() GenesisState {
 
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
 	keeper.SetParams(ctx, data.Params)
-	keeper.SetSyncer(ctx, data.Syncer)
+	if !data.Syncer.ValidatorAddr.Empty() {
+		keeper.SetSyncer(ctx, data.Syncer)
+	}
+
 	keeper.SetRewardEpoch(ctx, data.RewardEpoch)
 
 	for _, candidate := range data.Candidates {
