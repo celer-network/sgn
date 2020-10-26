@@ -47,7 +47,7 @@ func (k Keeper) SetSubscription(ctx sdk.Context, subscription Subscription) {
 	store.Set(GetSubscriptionKey(subscription.EthAddress), k.cdc.MustMarshalBinaryBare(subscription))
 }
 
-// IterateSubscriptions iterates over the stored ValidatorSigningInfo
+// IterateSubscriptions iterates over the stored subscriptions
 func (k Keeper) IterateSubscriptions(ctx sdk.Context,
 	handler func(subscription Subscription) (stop bool)) {
 
@@ -61,6 +61,15 @@ func (k Keeper) IterateSubscriptions(ctx sdk.Context,
 			break
 		}
 	}
+}
+
+// GetSubscriptions returns all the subscriptions from store
+func (keeper Keeper) GetSubscriptions(ctx sdk.Context) (subscriptions []Subscription) {
+	keeper.IterateSubscriptions(ctx, func(subscription Subscription) bool {
+		subscriptions = append(subscriptions, subscription)
+		return false
+	})
+	return
 }
 
 // Charge the fee for request
@@ -102,4 +111,29 @@ func (k Keeper) GetRequest(ctx sdk.Context, channelId []byte, simplexReceiver st
 func (k Keeper) SetRequest(ctx sdk.Context, request Request) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetRequestKey(request.ChannelId, request.SimplexReceiver), k.cdc.MustMarshalBinaryBare(request))
+}
+
+// IterateRequests iterates over the stored requests
+func (k Keeper) IterateRequests(ctx sdk.Context,
+	handler func(request Request) (stop bool)) {
+
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, RequestKeyPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var request Request
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &request)
+		if handler(request) {
+			break
+		}
+	}
+}
+
+// GetRequests returns all the requests from store
+func (keeper Keeper) GetRequests(ctx sdk.Context) (requests []Request) {
+	keeper.IterateRequests(ctx, func(request Request) bool {
+		requests = append(requests, request)
+		return false
+	})
+	return
 }

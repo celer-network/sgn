@@ -159,13 +159,34 @@ func (k Keeper) GetReward(ctx sdk.Context, ethAddress string) (Reward, bool) {
 	return reward, true
 }
 
+// IterateRewards iterates over the stored penalties
+func (k Keeper) IterateRewards(ctx sdk.Context,
+	handler func(reward Reward) (stop bool)) {
+
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, RewardKeyPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var reward Reward
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &reward)
+		if handler(reward) {
+			break
+		}
+	}
+}
+
+// GetRewards returns all the rewards from store
+func (keeper Keeper) GetRewards(ctx sdk.Context) (rewards []Reward) {
+	keeper.IterateRewards(ctx, func(reward Reward) bool {
+		rewards = append(rewards, reward)
+		return false
+	})
+	return
+}
+
 func (k Keeper) GetRewardStats(ctx sdk.Context) RewardStats {
 	stats := NewRewardStats()
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, RewardKeyPrefix)
-	for ; iterator.Valid(); iterator.Next() {
-		var reward Reward
-		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &reward)
+	k.IterateRewards(ctx, func(reward Reward) bool {
 		stats.TotalMiningReward = stats.TotalMiningReward.Add(reward.MiningReward)
 		stats.TotalServiceReward = stats.TotalServiceReward.Add(reward.ServiceReward)
 		sum := reward.MiningReward.Add(reward.ServiceReward)
@@ -177,7 +198,8 @@ func (k Keeper) GetRewardStats(ctx sdk.Context) RewardStats {
 		if reward.RewardProtoBytes != nil {
 			stats.NumWithdrawer++
 		}
-	}
+		return false
+	})
 
 	return stats
 }
@@ -379,6 +401,31 @@ func (k Keeper) GetPendingReward(ctx sdk.Context, ethAddress string) (pendingRew
 
 	value := store.Get(GetPendingRewardKey(ethAddress))
 	k.cdc.MustUnmarshalBinaryBare(value, &pendingReward)
+	return
+}
+
+// IteratePendingRewards iterates over the stored penalties
+func (k Keeper) IteratePendingRewards(ctx sdk.Context,
+	handler func(pendingReward PendingReward) (stop bool)) {
+
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, PendingRewardKeyPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var pendingReward PendingReward
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &pendingReward)
+		if handler(pendingReward) {
+			break
+		}
+	}
+}
+
+// GetPendingRewards returns all the pendingRewards from store
+func (keeper Keeper) GetPendingRewards(ctx sdk.Context) (pendingRewards []PendingReward) {
+	keeper.IteratePendingRewards(ctx, func(pendingReward PendingReward) bool {
+		pendingRewards = append(pendingRewards, pendingReward)
+		return false
+	})
 	return
 }
 

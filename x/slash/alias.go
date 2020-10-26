@@ -25,10 +25,11 @@ var (
 	NewPenalty             = types.NewPenalty
 	NewQueryPenaltyParams  = types.NewQueryPenaltyParams
 	NewMsgSignPenalty      = types.NewMsgSignPenalty
+	ActionPenalty          = types.ActionPenalty
 	EventTypeSlash         = slashing.EventTypeSlash
 	PenaltyNonceKey        = types.PenaltyNonceKey
-	ActionPenalty          = types.ActionPenalty
 	GetPenaltyKey          = types.GetPenaltyKey
+	PenaltyKeyPrefix       = types.PenaltyKeyPrefix
 	CLIQueryPenalty        = cli.QueryPenalty
 	CLIQueryPenaltyRequest = cli.QueryPenaltyRequest
 	DefaultParams          = types.DefaultParams

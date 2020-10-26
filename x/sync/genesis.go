@@ -6,10 +6,13 @@ import (
 
 // InitGenesis - store genesis parameters
 func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) {
-
 	k.SetChangeID(ctx, data.StartingChangeID)
 	k.SetVotingParams(ctx, data.VotingParams)
 	k.SetTallyParams(ctx, data.TallyParams)
+
+	for _, change := range data.Changes {
+		k.SetChange(ctx, change)
+	}
 }
 
 // ExportGenesis - output genesis parameters
