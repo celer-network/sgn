@@ -101,7 +101,8 @@ func (m *Monitor) processGuardQueue() {
 		}
 
 		if request.Status == guard.ChanStatus_Withdrawing || request.Status == guard.ChanStatus_Settling {
-			if !m.isCurrentGuard(request, request.TriggerTxBlkNum) {
+			shouldGuard, assigned := m.isCurrentGuard(request, request.TriggerTxBlkNum)
+			if !shouldGuard {
 				log.Debugf("not my turn to guard request %s", request)
 				continue
 			}
@@ -109,6 +110,13 @@ func (m *Monitor) processGuardQueue() {
 			guarded, err := m.guardChannel(request)
 			if err != nil {
 				log.Error(err)
+				if !assigned {
+					// not the assigned guard, only try once
+					err = m.dbDelete(key)
+					if err != nil {
+						log.Errorln("db Delete err", err)
+					}
+				}
 				continue
 			}
 			if guarded {
@@ -161,7 +169,6 @@ func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 
 	signedSimplexStateArrayBytes, err := proto.Marshal(&stateArray)
 	if err != nil {
-		log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
 		return false, fmt.Errorf("marshal stateArray err %w", err)
 	}
 
@@ -302,11 +309,11 @@ func (m *Monitor) setChanInfo(cid mainchain.CidType, simplexReceiver mainchain.A
 }
 
 // Is the current node the guard to submit state proof
-func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) bool {
+func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) (shouldGuard, assigned bool) {
 	assignedGuards := request.AssignedGuards
 	if len(assignedGuards) == 0 {
 		log.Debug("no assigned guards")
-		return false
+		return false, false
 	}
 
 	blkNum := m.getCurrentBlockNumber().Uint64()
@@ -316,10 +323,14 @@ func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64
 	// All other validators need to guard
 	if guardIndex >= uint64(len(assignedGuards)) {
 		log.Debugf("guard index %d, current blk %d, event blk %d", guardIndex, blkNum, eventBlockNumber)
-		return true
+		return true, false
 	}
 	log.Debugf("Assigned guard index %d acct %s, current blk %d, event blk %d",
 		guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
 
-	return assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
+	shouldGuard = assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
+	if shouldGuard {
+		assigned = true
+	}
+	return
 }
