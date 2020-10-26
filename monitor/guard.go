@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/celer-network/goutils/eth"
@@ -109,12 +110,26 @@ func (m *Monitor) processGuardQueue() {
 
 			guarded, err := m.guardChannel(request)
 			if err != nil {
-				log.Error(err)
+				log.Errorln("guardChannel err", err)
 				if !assigned {
 					// not the assigned guard, only try once
 					err = m.dbDelete(key)
 					if err != nil {
 						log.Errorln("db Delete err", err)
+					}
+				} else {
+					settleFinalizedTime, err2 :=
+						m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, chanInfo.Cid)
+					if err2 != nil {
+						log.Errorln("get settleFinalizedTime err", err2)
+					}
+					if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 &&
+						m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
+						log.Infoln("passed settleFinalizedTime", settleFinalizedTime)
+						err = m.dbDelete(key)
+						if err != nil {
+							log.Errorln("db Delete err", err)
+						}
 					}
 				}
 				continue
