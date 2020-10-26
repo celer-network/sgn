@@ -111,7 +111,7 @@ func (m *Monitor) processGuardQueue() {
 			if err != nil {
 				log.Errorln("guardChannel err", err)
 				if !isAssigned {
-					// not the assigned guard, only try once
+					log.Infoln("non-assigned guard only tries once, delete from guard queue")
 					err = m.dbDelete(key)
 					if err != nil {
 						log.Errorln("db Delete err", err)
@@ -124,7 +124,7 @@ func (m *Monitor) processGuardQueue() {
 					}
 					if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 &&
 						m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
-						log.Infoln("passed settleFinalizedTime", settleFinalizedTime)
+						log.Infof("passed settleFinalizedTime %s, delete from guard queue", settleFinalizedTime)
 						err = m.dbDelete(key)
 						if err != nil {
 							log.Errorln("db Delete err", err)
