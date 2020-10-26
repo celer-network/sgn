@@ -69,6 +69,13 @@ func (m *Monitor) processGuardQueue() {
 
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
+		if chanInfo == nil {
+			err := m.dbDelete(key)
+			if err != nil {
+				log.Errorln("db Delete err", err)
+			}
+			continue
+		}
 		if chanInfo.State == ChanInfoState_GuardedWithdraw || chanInfo.State == ChanInfoState_GuardedSettle {
 			continue
 		}
@@ -86,7 +93,7 @@ func (m *Monitor) processGuardQueue() {
 			skip = true
 		}
 		if skip {
-			err = m.dbDelete(GetGuardKey(chanInfo.Cid, chanInfo.SimplexReceiver))
+			err = m.dbDelete(key)
 			if err != nil {
 				log.Errorln("db Delete err", err)
 			}
@@ -94,6 +101,11 @@ func (m *Monitor) processGuardQueue() {
 		}
 
 		if request.Status == guard.ChanStatus_Withdrawing || request.Status == guard.ChanStatus_Settling {
+			if !m.isCurrentGuard(request, request.TriggerTxBlkNum) {
+				log.Debugf("not my turn to guard request %s", request)
+				continue
+			}
+
 			guarded, err := m.guardChannel(request)
 			if err != nil {
 				log.Error(err)
@@ -114,7 +126,10 @@ func (m *Monitor) processGuardQueue() {
 						m.lock.Unlock()
 						continue
 					}
-					chanInfo = unmarshalChanInfo(val)
+					ci := unmarshalChanInfo(val)
+					if ci != nil {
+						chanInfo = ci
+					}
 				}
 				if request.Status == guard.ChanStatus_Withdrawing {
 					if chanInfo.State == ChanInfoState_CaughtWithdraw {
@@ -134,14 +149,6 @@ func (m *Monitor) processGuardQueue() {
 }
 
 func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
-	if request == nil {
-		return false, fmt.Errorf("nil request")
-	}
-	if !m.isCurrentGuard(request, request.TriggerTxBlkNum) {
-		log.Debugf("not my turn to guard request %s", request)
-		return false, nil
-	}
-
 	log.Infof("Guard request %s", request)
 
 	var stateArray chain.SignedSimplexStateArray
