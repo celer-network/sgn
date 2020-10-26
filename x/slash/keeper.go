@@ -159,7 +159,8 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		return
 	}
 
-	penalty := NewPenalty(k.GetNextPenaltyNonce(ctx), reason, identity)
+	penaltyNonce := k.GetPenaltyNonce(ctx)
+	penalty := NewPenalty(penaltyNonce, reason, identity)
 	if reason == AttributeValueDepositBurn {
 		penalty.PenalizedDelegators = []AccountAmtPair{NewAccountAmtPair(candidate.EthAddress, slashAmount)}
 	} else {
@@ -174,6 +175,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	penalty.Beneficiaries = beneficiaries
 	penalty.GenerateProtoBytes()
 	k.SetPenalty(ctx, penalty)
+	k.SetPenaltyNonce(ctx, penaltyNonce+1)
 
 	log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d",
 		candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce)
@@ -188,19 +190,24 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	)
 }
 
-// Gets the next Penalty nonce, and increment nonce by 1
-func (k Keeper) GetNextPenaltyNonce(ctx sdk.Context) (nonce uint64) {
+// Get the next Penalty nonce
+func (k Keeper) GetPenaltyNonce(ctx sdk.Context) (nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(PenaltyNonceKey)
 	if bz != nil {
 		nonce = binary.BigEndian.Uint64(bz)
 	}
 
-	store.Set(PenaltyNonceKey, sdk.Uint64ToBigEndian(nonce+1))
 	return
 }
 
-// Gets the entire Penalty metadata for a nonce
+// Set the penalty nonce
+func (k Keeper) SetPenaltyNonce(ctx sdk.Context, nonce uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(PenaltyNonceKey, sdk.Uint64ToBigEndian(nonce))
+}
+
+// Get the entire Penalty metadata for a nonce
 func (k Keeper) GetPenalty(ctx sdk.Context, nonce uint64) (penalty Penalty, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has(GetPenaltyKey(nonce)) {
@@ -212,10 +219,35 @@ func (k Keeper) GetPenalty(ctx sdk.Context, nonce uint64) (penalty Penalty, foun
 	return penalty, true
 }
 
-// Sets the entire Penalty metadata for a nonce
+// Set the entire Penalty metadata for a nonce
 func (k Keeper) SetPenalty(ctx sdk.Context, penalty Penalty) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetPenaltyKey(penalty.Nonce), k.cdc.MustMarshalBinaryBare(penalty))
+}
+
+// IteratePenaltys iterates over the stored penalties
+func (k Keeper) IteratePenaltys(ctx sdk.Context,
+	handler func(penalty Penalty) (stop bool)) {
+
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, PenaltyKeyPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var penalty Penalty
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &penalty)
+		if handler(penalty) {
+			break
+		}
+	}
+}
+
+// GetPenalties returns all the penalties from store
+func (keeper Keeper) GetPenalties(ctx sdk.Context) (penalties []Penalty) {
+	keeper.IteratePenaltys(ctx, func(penalty Penalty) bool {
+		penalties = append(penalties, penalty)
+		return false
+	})
+	return
 }
 
 // Stored by *validator consensus* address (not account address)

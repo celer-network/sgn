@@ -6,7 +6,9 @@ import (
 )
 
 type GenesisState struct {
-	Params Params `json:"params" yaml:"params"`
+	Params        Params         `json:"params" yaml:"params"`
+	Subscriptions []Subscription `json:"subscriptions" yaml:"subscriptions"`
+	Requests      []Request      `json:"requests" yaml:"requests"`
 }
 
 func NewGenesisState(params Params) GenesisState {
@@ -26,10 +28,25 @@ func DefaultGenesisState() GenesisState {
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
 	keeper.SetParams(ctx, data.Params)
 
+	for _, subscription := range data.Subscriptions {
+		keeper.SetSubscription(ctx, subscription)
+	}
+
+	for _, request := range data.Requests {
+		keeper.SetRequest(ctx, request)
+	}
+
 	return []abci.ValidatorUpdate{}
 }
 
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	params := keeper.GetParams(ctx)
-	return NewGenesisState(params)
+	subscriptions := keeper.GetSubscriptions(ctx)
+	requests := keeper.GetRequests(ctx)
+
+	return GenesisState{
+		Params:        params,
+		Subscriptions: subscriptions,
+		Requests:      requests,
+	}
 }
