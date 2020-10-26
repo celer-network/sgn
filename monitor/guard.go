@@ -293,3 +293,26 @@ func (m *Monitor) setChanInfo(cid mainchain.CidType, simplexReceiver mainchain.A
 		log.Errorln("db Set err", err)
 	}
 }
+
+// Is the current node the guard to submit state proof
+func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) bool {
+	assignedGuards := request.AssignedGuards
+	if len(assignedGuards) == 0 {
+		log.Debug("no assigned guards")
+		return false
+	}
+
+	blkNum := m.getCurrentBlockNumber().Uint64()
+	blockNumberDiff := blkNum - eventBlockNumber
+	guardIndex := uint64(len(assignedGuards)+1) * blockNumberDiff / request.DisputeTimeout
+
+	// All other validators need to guard
+	if guardIndex >= uint64(len(assignedGuards)) {
+		log.Debugf("guard index %d, current blk %d, event blk %d", guardIndex, blkNum, eventBlockNumber)
+		return true
+	}
+	log.Debugf("Assigned guard index %d acct %s, current blk %d, event blk %d",
+		guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
+
+	return assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
+}
