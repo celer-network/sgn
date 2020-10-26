@@ -58,7 +58,7 @@ func (keeper Keeper) Tally(ctx sdk.Context, proposal types.Proposal) (passes boo
 	tallyParams := keeper.GetTallyParams(ctx)
 	tallyResults = types.NewTallyResultFromMap(results)
 
-	// If there is not enough quorum of votes, the proposal fails
+	// If there is not enough params.quorum of votes, the proposal fails
 	percentVoting := totalVotingPower.ToDec().QuoInt(totalBondedTokens)
 	if percentVoting.LT(tallyParams.Quorum) {
 		return false, true, tallyResults
@@ -69,16 +69,16 @@ func (keeper Keeper) Tally(ctx sdk.Context, proposal types.Proposal) (passes boo
 		return false, false, tallyResults
 	}
 
-	// If more than 1/3 of voters veto, proposal fails
+	// If more than params.veto of voters veto, proposal fails
 	if results[types.OptionNoWithVeto].ToDec().QuoInt(totalVotingPower).GT(tallyParams.Veto) {
 		return false, true, tallyResults
 	}
 
-	// If more than 1/2 of non-abstaining voters vote Yes, proposal passes
+	// If more than params.threshold of non-abstaining voters vote Yes, proposal passes
 	if results[types.OptionYes].ToDec().QuoInt(totalVotingPower.Sub(results[types.OptionAbstain])).GT(tallyParams.Threshold) {
 		return true, false, tallyResults
 	}
 
-	// If more than 1/2 of non-abstaining voters vote No, proposal fails
+	// If more than params.threshold of non-abstaining voters vote No, proposal fails
 	return false, false, tallyResults
 }
