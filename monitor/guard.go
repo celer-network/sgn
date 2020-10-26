@@ -102,16 +102,15 @@ func (m *Monitor) processGuardQueue() {
 		}
 
 		if request.Status == guard.ChanStatus_Withdrawing || request.Status == guard.ChanStatus_Settling {
-			shouldGuard, assigned := m.isCurrentGuard(request, request.TriggerTxBlkNum)
+			shouldGuard, isAssigned := m.shouldGuardChannel(request, request.TriggerTxBlkNum)
 			if !shouldGuard {
-				log.Debugf("not my turn to guard request %s", request)
 				continue
 			}
 
 			guarded, err := m.guardChannel(request)
 			if err != nil {
 				log.Errorln("guardChannel err", err)
-				if !assigned {
+				if !isAssigned {
 					// not the assigned guard, only try once
 					err = m.dbDelete(key)
 					if err != nil {
@@ -172,7 +171,7 @@ func (m *Monitor) processGuardQueue() {
 }
 
 func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
-	log.Infof("Guard request %s", request)
+	log.Infof("guard %s", request)
 
 	var stateArray chain.SignedSimplexStateArray
 	var signedSimplexState chain.SignedSimplexState
@@ -324,10 +323,11 @@ func (m *Monitor) setChanInfo(cid mainchain.CidType, simplexReceiver mainchain.A
 }
 
 // Is the current node the guard to submit state proof
-func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) (shouldGuard, assigned bool) {
+func (m *Monitor) shouldGuardChannel(request *guard.Request, eventBlockNumber uint64) (shouldGuard, isAssigned bool) {
+	reqlog := fmt.Sprintf("channel %x receiver %s", request.ChannelId, request.SimplexReceiver)
 	assignedGuards := request.AssignedGuards
 	if len(assignedGuards) == 0 {
-		log.Debug("no assigned guards")
+		log.Debugf("no assigned guards for request %s", reqlog)
 		return false, false
 	}
 
@@ -337,15 +337,18 @@ func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64
 
 	// All other validators need to guard
 	if guardIndex >= uint64(len(assignedGuards)) {
-		log.Debugf("guard index %d, current blk %d, event blk %d", guardIndex, blkNum, eventBlockNumber)
+		log.Debugf("should guard %s after assigned slots passed. current blk %d, event blk %d",
+			reqlog, blkNum, eventBlockNumber)
 		return true, false
 	}
-	log.Debugf("Assigned guard index %d acct %s, current blk %d, event blk %d",
-		guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
-
+	actionlog := "not my turn to guard"
 	shouldGuard = assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
 	if shouldGuard {
-		assigned = true
+		isAssigned = true
+		actionlog = "should guard"
 	}
-	return
+	log.Debugf("%s %s. index %d acct %s, current blk %d, event blk %d",
+		actionlog, reqlog, guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
+
+	return shouldGuard, isAssigned
 }
