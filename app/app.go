@@ -122,6 +122,8 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 	viper.SetDefault(common.FlagStartMonitor, true)
 	viper.SetDefault(common.FlagEthPollInterval, 15)
 	viper.SetDefault(common.FlagEthBlockDelay, 5)
+	viper.SetDefault(common.FlagSgnCheckIntervalGuardQueue, 60)
+	viper.SetDefault(common.FlagSgnCheckIntervalSlashQueue, 60)
 
 	err := common.SetupUserPassword()
 	if err != nil {

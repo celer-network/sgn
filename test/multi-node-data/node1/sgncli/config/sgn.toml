@@ -27,7 +27,7 @@ level = "debug"
 base_gas_price = 0
 chain_id = "sgntest"
 execute_slash = true
-gas_adjustment = 1.1
+gas_adjustment = 1.5
 keyring_backend = "file"
 node_uri = "tcp://localhost:26657"
 passphrase = "12341234"
@@ -35,3 +35,7 @@ pubkey = "sgnvalconspub1zcjduepqxqz973gvjkk84p2d8m9j92pfffghhrv677gd35jcn9ppzvm9
 timeout_commit = 2
 transactors = ["sgn1k88dweqanvd3j2csaak034amvjuyzlkeq9f95k"]
 validator_account = "sgn1egtta7su5jxjahtw56pe07qerz4lwvrlttac6y"
+
+[sgn.check_interval]
+guard_queue = 2
+slash_queue = 2
