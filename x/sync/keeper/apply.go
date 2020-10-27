@@ -242,6 +242,11 @@ func (keeper Keeper) GuardTrigger(ctx sdk.Context, change types.Change) (bool, e
 	if request.SeqNum > trigger.TriggerSeqNum {
 		request.AssignedGuards = guard.AssignGuards(ctx, keeper.guardKeeper)
 		request.Status = trigger.Status
+		guards := ""
+		for _, acct := range request.AssignedGuards {
+			guards += acct.String() + " "
+		}
+		log.Debugln("assigned guards:", guards)
 	}
 	keeper.guardKeeper.SetRequest(ctx, request)
 	return true, nil
