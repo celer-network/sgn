@@ -109,26 +109,12 @@ func (m *Monitor) processGuardQueue() {
 
 			guarded, err := m.guardChannel(request)
 			if err != nil {
-				log.Errorln("guardChannel err", err)
+				log.Errorln("guardChannel err:", err)
 				if !isAssigned {
 					log.Infoln("non-assigned guard only tries once, delete from guard queue")
 					err = m.dbDelete(key)
 					if err != nil {
 						log.Errorln("db Delete err", err)
-					}
-				} else {
-					settleFinalizedTime, err2 :=
-						m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, chanInfo.Cid)
-					if err2 != nil {
-						log.Errorln("get settleFinalizedTime err", err2)
-					}
-					if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 &&
-						m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
-						log.Infof("passed settleFinalizedTime %s, delete from guard queue", settleFinalizedTime)
-						err = m.dbDelete(key)
-						if err != nil {
-							log.Errorln("db Delete err", err)
-						}
 					}
 				}
 				continue
@@ -172,6 +158,9 @@ func (m *Monitor) processGuardQueue() {
 
 func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 	log.Infof("guard %s", request)
+	if !m.guardPreCheck(request) {
+		return false, nil
+	}
 
 	var stateArray chain.SignedSimplexStateArray
 	var signedSimplexState chain.SignedSimplexState
@@ -351,4 +340,22 @@ func (m *Monitor) shouldGuardChannel(request *guard.Request, eventBlockNumber ui
 		actionlog, reqlog, guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
 
 	return shouldGuard, isAssigned
+}
+
+func (m *Monitor) guardPreCheck(request *guard.Request) bool {
+	settleFinalizedTime, err :=
+		m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
+	if err != nil {
+		log.Errorln("get settleFinalizedTime err", err)
+		return false
+	}
+	if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 && m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
+		log.Infof("passed settleFinalizedTime %s, delete from guard queue", settleFinalizedTime)
+		err = m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
+		if err != nil {
+			log.Errorln("db Delete err", err)
+		}
+		return false
+	}
+	return true
 }
