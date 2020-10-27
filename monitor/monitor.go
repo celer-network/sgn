@@ -107,24 +107,39 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 }
 
 func (m *Monitor) processQueues() {
-	ticker := time.NewTicker(time.Duration(viper.GetUint64(common.FlagEthPollInterval)) * time.Second)
-	defer ticker.Stop()
+	pullerInterval := time.Duration(viper.GetUint64(common.FlagEthPollInterval)) * time.Second
+	guardInterval := time.Duration(viper.GetUint64(common.FlagSgnCheckIntervalGuardQueue)) * time.Second
+	slashInterval := time.Duration(viper.GetUint64(common.FlagSgnCheckIntervalSlashQueue)) * time.Second
+	log.Infof("Queue process interval: puller %s, guard %s, slash %s", pullerInterval, guardInterval, slashInterval)
+
+	pullerTicker := time.NewTicker(pullerInterval)
+	guardTicker := time.NewTicker(guardInterval)
+	slashTicker := time.NewTicker(slashInterval)
+	defer func() {
+		pullerTicker.Stop()
+		guardTicker.Stop()
+		slashTicker.Stop()
+	}()
 
 	blkNum := m.getCurrentBlockNumber().Uint64()
 	for {
-		<-ticker.C
-		newblk := m.getCurrentBlockNumber().Uint64()
-		if blkNum == newblk {
-			continue
-		}
+		select {
+		case <-pullerTicker.C:
+			newblk := m.getCurrentBlockNumber().Uint64()
+			if blkNum == newblk {
+				continue
+			}
+			blkNum = newblk
+			m.processPullerQueue()
+			m.verifyActiveChanges()
 
-		blkNum = newblk
+		case <-guardTicker.C:
+			m.processGuardQueue()
 
-		m.processPullerQueue()
-		m.processGuardQueue()
-		m.verifyActiveChanges()
-		if m.executeSlash {
-			m.processPenaltyQueue()
+		case <-slashTicker.C:
+			if m.executeSlash {
+				m.processPenaltyQueue()
+			}
 		}
 	}
 }

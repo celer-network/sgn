@@ -38,6 +38,9 @@ const (
 	FlagSgnGasAdjustment    = "sgn.gas_adjustment"
 	FlagSgnExecuteSlash     = "sgn.execute_slash"
 
+	FlagSgnCheckIntervalGuardQueue = "sgn.check_interval.guard_queue"
+	FlagSgnCheckIntervalSlashQueue = "sgn.check_interval.slash_queue"
+
 	FlagLogLevel = "log.level"
 	FlagLogColor = "log.color"
 )

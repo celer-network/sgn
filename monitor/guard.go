@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/celer-network/goutils/eth"
@@ -69,6 +70,13 @@ func (m *Monitor) processGuardQueue() {
 
 	for i, key := range keys {
 		chanInfo := unmarshalChanInfo(vals[i])
+		if chanInfo == nil {
+			err := m.dbDelete(key)
+			if err != nil {
+				log.Errorln("db Delete err", err)
+			}
+			continue
+		}
 		if chanInfo.State == ChanInfoState_GuardedWithdraw || chanInfo.State == ChanInfoState_GuardedSettle {
 			continue
 		}
@@ -86,7 +94,7 @@ func (m *Monitor) processGuardQueue() {
 			skip = true
 		}
 		if skip {
-			err = m.dbDelete(GetGuardKey(chanInfo.Cid, chanInfo.SimplexReceiver))
+			err = m.dbDelete(key)
 			if err != nil {
 				log.Errorln("db Delete err", err)
 			}
@@ -94,9 +102,21 @@ func (m *Monitor) processGuardQueue() {
 		}
 
 		if request.Status == guard.ChanStatus_Withdrawing || request.Status == guard.ChanStatus_Settling {
+			shouldGuard, isAssigned := m.shouldGuardChannel(request, request.TriggerTxBlkNum)
+			if !shouldGuard {
+				continue
+			}
+
 			guarded, err := m.guardChannel(request)
 			if err != nil {
-				log.Error(err)
+				log.Errorln("guardChannel err:", err)
+				if !isAssigned {
+					log.Infoln("non-assigned guard only tries once, delete from guard queue")
+					err = m.dbDelete(key)
+					if err != nil {
+						log.Errorln("db Delete err", err)
+					}
+				}
 				continue
 			}
 			if guarded {
@@ -114,7 +134,10 @@ func (m *Monitor) processGuardQueue() {
 						m.lock.Unlock()
 						continue
 					}
-					chanInfo = unmarshalChanInfo(val)
+					ci := unmarshalChanInfo(val)
+					if ci != nil {
+						chanInfo = ci
+					}
 				}
 				if request.Status == guard.ChanStatus_Withdrawing {
 					if chanInfo.State == ChanInfoState_CaughtWithdraw {
@@ -134,15 +157,10 @@ func (m *Monitor) processGuardQueue() {
 }
 
 func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
-	if request == nil {
-		return false, fmt.Errorf("nil request")
-	}
-	if !m.isCurrentGuard(request, request.TriggerTxBlkNum) {
-		log.Debugf("not my turn to guard request %s", request)
+	log.Infof("guard %s", request)
+	if !m.guardPreCheck(request) {
 		return false, nil
 	}
-
-	log.Infof("Guard request %s", request)
 
 	var stateArray chain.SignedSimplexStateArray
 	var signedSimplexState chain.SignedSimplexState
@@ -154,7 +172,6 @@ func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 
 	signedSimplexStateArrayBytes, err := proto.Marshal(&stateArray)
 	if err != nil {
-		log.Errorln("Marshal signedSimplexStateArrayBytes error:", err)
 		return false, fmt.Errorf("marshal stateArray err %w", err)
 	}
 
@@ -292,4 +309,53 @@ func (m *Monitor) setChanInfo(cid mainchain.CidType, simplexReceiver mainchain.A
 	if err != nil {
 		log.Errorln("db Set err", err)
 	}
+}
+
+// Is the current node the guard to submit state proof
+func (m *Monitor) shouldGuardChannel(request *guard.Request, eventBlockNumber uint64) (shouldGuard, isAssigned bool) {
+	reqlog := fmt.Sprintf("channel %x receiver %s", request.ChannelId, request.SimplexReceiver)
+	assignedGuards := request.AssignedGuards
+	if len(assignedGuards) == 0 {
+		log.Debugf("no assigned guards for request %s", reqlog)
+		return false, false
+	}
+
+	blkNum := m.getCurrentBlockNumber().Uint64()
+	blockNumberDiff := blkNum - eventBlockNumber
+	guardIndex := uint64(len(assignedGuards)+1) * blockNumberDiff / request.DisputeTimeout
+
+	// All other validators need to guard
+	if guardIndex >= uint64(len(assignedGuards)) {
+		log.Debugf("should guard %s after assigned slots passed. current blk %d, event blk %d",
+			reqlog, blkNum, eventBlockNumber)
+		return true, false
+	}
+	actionlog := "not my turn to guard"
+	shouldGuard = assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
+	if shouldGuard {
+		isAssigned = true
+		actionlog = "should guard"
+	}
+	log.Debugf("%s %s. index %d acct %s, current blk %d, event blk %d",
+		actionlog, reqlog, guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
+
+	return shouldGuard, isAssigned
+}
+
+func (m *Monitor) guardPreCheck(request *guard.Request) bool {
+	settleFinalizedTime, err :=
+		m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
+	if err != nil {
+		log.Errorln("get settleFinalizedTime err", err)
+		return false
+	}
+	if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 && m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
+		log.Infof("passed settleFinalizedTime %s, delete from guard queue", settleFinalizedTime)
+		err = m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
+		if err != nil {
+			log.Errorln("db Delete err", err)
+		}
+		return false
+	}
+	return true
 }

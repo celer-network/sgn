@@ -45,28 +45,6 @@ func (m *Monitor) isSyncer() bool {
 	return syncer.ValidatorAddr.Equals(m.Transactor.Key.GetAddress())
 }
 
-// Is the current node the guard to submit state proof
-func (m *Monitor) isCurrentGuard(request *guard.Request, eventBlockNumber uint64) bool {
-	assignedGuards := request.AssignedGuards
-	if len(assignedGuards) == 0 {
-		log.Debug("no assigned guards")
-		return false
-	}
-
-	blkNum := m.getCurrentBlockNumber().Uint64()
-	blockNumberDiff := blkNum - eventBlockNumber
-	guardIndex := uint64(len(assignedGuards)+1) * blockNumberDiff / request.DisputeTimeout
-
-	// All other validators need to guard
-	if guardIndex >= uint64(len(assignedGuards)) {
-		log.Debugln("Assigned guard:", blkNum, eventBlockNumber, guardIndex)
-		return true
-	}
-	log.Debugln("Assigned guard:", blkNum, eventBlockNumber, guardIndex, assignedGuards[guardIndex].String())
-
-	return assignedGuards[guardIndex].Equals(m.Transactor.Key.GetAddress())
-}
-
 func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (*guard.Request, error) {
 	request, err := guard.CLIQueryRequest(m.Transactor.CliCtx, guard.RouterKey, channelId, simplexReceiver)
 	if err != nil {
