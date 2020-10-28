@@ -159,7 +159,7 @@ func (m *Monitor) processGuardQueue() {
 }
 
 func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, err error) {
-	log.Infof("guard %s", request)
+	log.Infof("start to guard %s", request)
 
 	// tx pre-check: settle finalized time
 	cid := mainchain.Bytes2Cid(request.ChannelId)
@@ -173,7 +173,7 @@ func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, er
 		return false, true, nil
 	}
 
-	// tx precheck: sequence number
+	// tx pre-check: sequence number
 	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		return false, false, fmt.Errorf("get stateSeqNumMap err: %w", err)
