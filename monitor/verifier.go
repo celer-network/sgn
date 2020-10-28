@@ -59,8 +59,7 @@ func (m *Monitor) verifyActiveChanges() {
 	}
 }
 
-// return (done, approve)
-func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	switch change.Type {
 	case sync.ConfirmParamProposal:
 		return m.verifyConfirmParamProposal(change)
@@ -83,7 +82,7 @@ func (m *Monitor) verifyChange(change sync.Change) (bool, bool) {
 	}
 }
 
-func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (done, approve bool) {
 	var paramChange common.ParamChange
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &paramChange)
 	logmsg := fmt.Sprintf("verify change id %d, pramameter: %s", change.ID, paramChange)
@@ -107,7 +106,7 @@ func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (done, approve bool) {
 	var candidate validator.Candidate
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &candidate)
 	logmsg := fmt.Sprintf("verify change id %d, sidechain addr for candidate: %s", change.ID, candidate)
@@ -146,7 +145,7 @@ func (m *Monitor) verifyUpdateSidechainAddr(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
+func (m *Monitor) verifySyncDelegator(change sync.Change) (done, approve bool) {
 	var delegator validator.Delegator
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &delegator)
 	logmsg := fmt.Sprintf("verify change id %d, sync delegator: %s", change.ID, delegator)
@@ -184,7 +183,7 @@ func (m *Monitor) verifySyncDelegator(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
+func (m *Monitor) verifySyncValidator(change sync.Change) (done, approve bool) {
 	var newVal staking.Validator
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &newVal)
 
@@ -252,7 +251,7 @@ func (m *Monitor) verifySyncValidator(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
+func (m *Monitor) verifySubscribe(change sync.Change) (done, approve bool) {
 	var subscription guard.Subscription
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &subscription)
 	logmsg := fmt.Sprintf("verify change id %d, subscription: %s", change.ID, subscription)
@@ -277,7 +276,7 @@ func (m *Monitor) verifySubscribe(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool) {
 	var request guard.InitRequest
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &request)
 	logmsg := fmt.Sprintf("verify change id %d, init request", change.ID)
@@ -300,7 +299,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 
 	_, err = m.getGuardRequest(simplexChannel.ChannelId, mainchain.Addr2Hex(simplexReceiver))
 	if err == nil {
-		log.Errorf("%s. request already initiated", logmsg)
+		log.Infof("%s. request already initiated", logmsg)
 		return true, false
 	} else if !strings.Contains(err.Error(), common.ErrRecordNotFound.Error()) {
 		log.Errorf("%s. getGuardRequest err: %s", logmsg, err)
@@ -384,7 +383,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 	var trigger guard.GuardTrigger
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &trigger)
 	logmsg := fmt.Sprintf("verify change id %d, trigger guard request: %s", change.ID, trigger)
@@ -398,7 +397,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 
 	// verify trigger block number
 	if trigger.TriggerTxBlkNum <= r.TriggerTxBlkNum {
-		log.Errorf("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
+		log.Infof("%s. TriggerTxBlkNum not greater than stored value %d", logmsg, r.TriggerTxBlkNum)
 		return true, false
 	}
 
@@ -481,7 +480,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (bool, bool) {
 	return true, true
 }
 
-func (m *Monitor) verifyGuardProof(change sync.Change) (bool, bool) {
+func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 	var proof guard.GuardProof
 	m.Transactor.CliCtx.Codec.MustUnmarshalBinaryBare(change.Data, &proof)
 	logmsg := fmt.Sprintf("verify change id %d, guard proof request: %s", change.ID, proof)
