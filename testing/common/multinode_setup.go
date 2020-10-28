@@ -40,22 +40,31 @@ func SetupMainchain() {
 	}
 	SleepWithLog(5, "geth start")
 
-	log.Infoln("fund each validator's ETH address 100 ETH")
-	addr0 := mainchain.Hex2Addr(ValEthAddrs[0])
-	addr1 := mainchain.Hex2Addr(ValEthAddrs[1])
-	addr2 := mainchain.Hex2Addr(ValEthAddrs[2])
-	addr3 := mainchain.Hex2Addr(ClientEthAddrs[0])
-	err := FundAddrsETH("1"+strings.Repeat("0", 20), []mainchain.Addr{addr0, addr1, addr2, addr3})
-	ChkErr(err, "fund each validator ETH")
+	// set up mainchain: deploy contracts, fund addrs, etc
+	addrs := []mainchain.Addr{
+		mainchain.Hex2Addr(ValEthAddrs[0]),
+		mainchain.Hex2Addr(ValEthAddrs[1]),
+		mainchain.Hex2Addr(ValEthAddrs[2]),
+		mainchain.Hex2Addr(ValEthAddrs[3]),
+		mainchain.Hex2Addr(DelEthAddrs[0]),
+		mainchain.Hex2Addr(DelEthAddrs[1]),
+		mainchain.Hex2Addr(DelEthAddrs[2]),
+		mainchain.Hex2Addr(DelEthAddrs[3]),
+		mainchain.Hex2Addr(ClientEthAddrs[0]),
+		mainchain.Hex2Addr(ClientEthAddrs[1]),
+	}
+	log.Infoln("fund each test addr 100 ETH")
+	err := FundAddrsETH("1"+strings.Repeat("0", 20), addrs)
+	ChkErr(err, "fund each test addr 100 ETH")
 
 	log.Infoln("set up mainchain")
 	SetupEthClients()
 	SetupE2eProfile()
 
 	// fund CELR to each eth account
-	log.Infoln("fund each validator 10 million CELR")
-	err = FundAddrsErc20(E2eProfile.CelrAddr, []mainchain.Addr{addr0, addr1, addr2, addr3}, "1"+strings.Repeat("0", 25))
-	ChkErr(err, "fund each validator ERC20")
+	log.Infoln("fund each test addr 10 million CELR")
+	err = FundAddrsErc20(E2eProfile.CelrAddr, addrs, "1"+strings.Repeat("0", 25))
+	ChkErr(err, "fund each test addr 10 million CELR")
 }
 
 func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
@@ -95,7 +104,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	ChkErr(err, "Failed to make prepare-sgn-data")
 
 	log.Infoln("Updating config files of SGN nodes")
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/sgncli/config/sgn.toml", i)
 		configFileViper := viper.New()
 		configFileViper.SetConfigFile(configPath)
