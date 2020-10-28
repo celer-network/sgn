@@ -70,10 +70,12 @@ func guardTest(t *testing.T) {
 	err = tc.DelegateStake(dAuth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), big.NewInt(1000000000000000000)) // 1 CELR
 	require.NoError(t, err, "failed to delegate stake")
 
-	restartWithConfig(0, common.FlagSgnCheckIntervalGuardQueue, 10000)
-
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
+
+	restartWithConfig(0, common.FlagSgnCheckIntervalGuardQueue, 10000)
+	/* validator 0 will fail to guard as the queue check interval is set to 10000, so validator 1
+	will send the guard tx, and validator 0 will be slashed */
 
 	/* Request cost is 1000000000000000000 * 2, validator0 has a 10/32 of stake,
 	so it is going to get 625000000000000000 to distribute to its delegators.
@@ -108,6 +110,6 @@ func guardTest(t *testing.T) {
 	}
 	assert.Equal(t, expPoolAmt, poolAmt, fmt.Sprintf("The expected StakingPool should be %s", expPoolAmt))
 
-	// 2nd channel guard test
+	// 2nd channel guard test, first guardian should be assigned to validator 3
 	e2ecommon.GuardTestCommon(t, transactor, big.NewInt(0), tc.ValEthAddrs[3], "", 0)
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,8 +34,10 @@ func GuardTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.I
 	require.NoError(t, err, "failed to open channel")
 
 	if amt.Cmp(big.NewInt(0)) > 0 {
+		var tx *ethtypes.Transaction
+
 		log.Infoln("Call subscribe on sgn contract...")
-		tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
+		tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
 		require.NoError(t, err, "failed to approve CELR to DPoS contract")
 		tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to DPoS contract")
 
