@@ -129,12 +129,12 @@ func (p Params) Validate() error {
 		return fmt.Errorf("validator parameter WithdrawWindow must be a positive integer")
 	}
 
-	if !p.MiningReward.IsPositive() {
-		return fmt.Errorf("validator parameter MiningReward must be a positive integer")
+	if p.MiningReward.IsNegative() {
+		return fmt.Errorf("validator parameter MiningReward must be a non-negative integer")
 	}
 
-	if !p.PullerReward.IsPositive() {
-		return fmt.Errorf("validator parameter PullerReward must be a positive integer")
+	if p.PullerReward.IsNegative() {
+		return fmt.Errorf("validator parameter PullerReward must be a non-negative integer")
 	}
 
 	return nil
