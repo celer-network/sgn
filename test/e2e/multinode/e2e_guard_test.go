@@ -57,13 +57,14 @@ func guardTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{
-		big.NewInt(2000000000000000000), // 2 CELR
-		big.NewInt(2000000000000000000), // 2 CELR
-		big.NewInt(1000000000000000000), // 1 CELR
+		big.NewInt(9000000000000000000), // 9 CELR
+		big.NewInt(9000000000000000000), // 9 CELR
+		big.NewInt(7000000000000000000), // 7 CELR
+		big.NewInt(6000000000000000000), // 6 CELR
 	}
 	log.Infoln("Add validators...")
-	tc.AddValidators(t, transactor, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
-	log.Infoln("Additionally delegate to validator 0...")
+	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
+	log.Infoln("Additionally delegate 1 CELR to validator 0...")
 	_, dAuth, err := tc.GetAuth(tc.DelEthKs[0])
 	require.NoError(t, err, "failed to get delegator auth")
 	err = tc.DelegateStake(dAuth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), big.NewInt(1000000000000000000)) // 1 CELR
@@ -73,13 +74,14 @@ func guardTest(t *testing.T) {
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
-	// Request cost is 1000000000000000000 * 2, validator0 has a half of stake,
-	// so it is going to get 1000000000000000000 to distribute to its delegators.
-	// validators0 commission rate is 0.01%, so the comission fee it collections is 100000000000000
-	// The self delegated stake of validator0 is 2/3 of total stake of validator0,
-	// so validator0 gets (1000000000000000000 - 100000000000000) * 2/3 = 666600000000000000 reward.
-	// The total service reward of validator0 is 666600000000000000 + 100000000000000 = 666700000000000000
-	e2ecommon.GuardTestCommon(t, transactor, amt, "666700000000000000", 3)
+
+	/* Request cost is 1000000000000000000 * 2, validator0 has a 10/32 of stake,
+	so it is going to get 625000000000000000 to distribute to its delegators.
+	validators0 commission rate is 0.01%, so the comission fee it collections is 62500000000000
+	The self delegated stake of validator0 is 9/10 of total stake of validator0,
+	so validator0 gets (625000000000000000 - 62500000000000) * 9/10 = 562443750000000000 reward.
+	The total service reward of validator0 is 562443750000000000 + 62500000000000 = 562506250000000000 */
+	e2ecommon.GuardTestCommon(t, transactor, amt, tc.ValEthAddrs[1], "562506250000000000", 4)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
@@ -87,22 +89,25 @@ func guardTest(t *testing.T) {
 	require.NoError(t, err, "failed to query penalty")
 	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 20000000000000000`, tc.ValEthAddrs[0])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 90000000000000000`, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[1].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	assert.Equal(t, 3, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 3"))
+	assert.Equal(t, 4, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 4"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
+	expPoolAmt := "9900000000000000000"
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "2970000000000000000" {
+		if poolAmt == expPoolAmt {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
-	assert.Equal(t, "2970000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 2970000000000000000"))
+	assert.Equal(t, expPoolAmt, poolAmt, fmt.Sprintf("The expected StakingPool should be %s", expPoolAmt))
 
+	// 2nd channel guard test
+	e2ecommon.GuardTestCommon(t, transactor, big.NewInt(0), tc.ValEthAddrs[3], "", 0)
 }
