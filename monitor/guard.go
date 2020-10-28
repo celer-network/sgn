@@ -107,17 +107,19 @@ func (m *Monitor) processGuardQueue() {
 				continue
 			}
 
-			guarded, err := m.guardChannel(request)
+			guarded, delete, err := m.guardChannel(request)
 			if err != nil {
 				log.Errorln("guardChannel err:", err)
 				if !isAssigned {
-					log.Infoln("non-assigned guard only tries once, delete from guard queue")
-					err = m.dbDelete(key)
-					if err != nil {
-						log.Errorln("db Delete err", err)
-					}
+					log.Infoln("non-assigned guard only tries once, should delete from guard queue")
+					delete = true
 				}
-				continue
+			}
+			if delete {
+				err = m.dbDelete(key)
+				if err != nil {
+					log.Errorln("db Delete err", err)
+				}
 			}
 			if guarded {
 				m.lock.Lock()
@@ -156,25 +158,51 @@ func (m *Monitor) processGuardQueue() {
 	}
 }
 
-func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
+func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, err error) {
 	log.Infof("guard %s", request)
-	if !m.guardPreCheck(request) {
-		return false, nil
+
+	// tx pre-check: settle finalized time
+	cid := mainchain.Bytes2Cid(request.ChannelId)
+	settleFinalizedTime, err :=
+		m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, cid)
+	if err != nil {
+		return false, false, fmt.Errorf("get settleFinalizedTime err: %w", err)
+	}
+	if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 && m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
+		log.Infof("channel %x passed settleFinalizedTime %s", cid, settleFinalizedTime)
+		return false, true, nil
 	}
 
+	// tx precheck: sequence number
+	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	if err != nil {
+		return false, false, fmt.Errorf("get stateSeqNumMap err: %w", err)
+	}
+	simplexSender := mainchain.Hex2Addr(request.SimplexSender)
+	seqIndex := 0
+	if simplexSender == addrs[1] {
+		seqIndex = 1
+	}
+	if request.SeqNum <= seqNums[seqIndex].Uint64() {
+		log.Infof("channel %x stored seq %d no larger than mainchain value %s", cid, request.SeqNum, seqNums[seqIndex])
+		return false, false, nil
+	}
+
+	// generate guard tx input
 	var stateArray chain.SignedSimplexStateArray
 	var signedSimplexState chain.SignedSimplexState
-	err := proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
+	err = proto.Unmarshal(request.SignedSimplexStateBytes, &signedSimplexState)
 	if err != nil {
-		return false, fmt.Errorf("Unmarshal SignedSimplexState err: %w", err)
+		return false, true, fmt.Errorf("Unmarshal SignedSimplexState err: %w", err)
 	}
 	stateArray.SignedSimplexStates = append(stateArray.SignedSimplexStates, &signedSimplexState)
 
 	signedSimplexStateArrayBytes, err := proto.Marshal(&stateArray)
 	if err != nil {
-		return false, fmt.Errorf("marshal stateArray err %w", err)
+		return false, true, fmt.Errorf("marshal stateArray err %w", err)
 	}
 
+	// submit guard tx
 	var tx *ethtypes.Transaction
 	switch request.Status {
 	case guard.ChanStatus_Withdrawing:
@@ -190,15 +218,15 @@ func (m *Monitor) guardChannel(request *guard.Request) (bool, error) {
 				return m.EthClient.Ledger.IntendSettle(opts, signedSimplexStateArrayBytes)
 			})
 	default:
-		return false, fmt.Errorf("Invalid guard state %d", request.Status)
+		return false, false, fmt.Errorf("Invalid guard state %d", request.Status)
 	}
 	if err != nil {
-		return false, fmt.Errorf("tx err %w", err)
+		return false, false, fmt.Errorf("tx err %w", err)
 	} else {
 		log.Infof("submitted guard tx %x", tx.Hash())
 	}
 
-	return true, nil
+	return true, false, nil
 }
 
 func (m *Monitor) guardTxHandler(
@@ -340,22 +368,4 @@ func (m *Monitor) shouldGuardChannel(request *guard.Request, eventBlockNumber ui
 		actionlog, reqlog, guardIndex, assignedGuards[guardIndex], blkNum, eventBlockNumber)
 
 	return shouldGuard, isAssigned
-}
-
-func (m *Monitor) guardPreCheck(request *guard.Request) bool {
-	settleFinalizedTime, err :=
-		m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, mainchain.Bytes2Cid(request.ChannelId))
-	if err != nil {
-		log.Errorln("get settleFinalizedTime err", err)
-		return false
-	}
-	if settleFinalizedTime.Cmp(big.NewInt(0)) > 0 && m.getCurrentBlockNumber().Cmp(settleFinalizedTime) > 0 {
-		log.Infof("passed settleFinalizedTime %s, delete from guard queue", settleFinalizedTime)
-		err = m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
-		if err != nil {
-			log.Errorln("db Delete err", err)
-		}
-		return false
-	}
-	return true
 }
