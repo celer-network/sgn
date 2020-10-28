@@ -74,7 +74,7 @@ func guardTest(t *testing.T) {
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
 
 	restartWithConfig(0, common.FlagSgnCheckIntervalGuardQueue, 10000)
-	/* validator 0 will fail to guard as the queue check interval is set to 10000, so validator 1
+	/* validator 0 will fail to guard as the queue check interval was set to 10000, so validator 1
 	will send the guard tx, and validator 0 will be slashed */
 
 	/* Request cost is 1000000000000000000 * 2, validator0 has a 10/32 of stake,

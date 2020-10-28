@@ -30,14 +30,13 @@ func setupValidator(maxValidatorNum *big.Int) {
 func TestE2EValidator(t *testing.T) {
 	t.Run("e2e-validator", func(t *testing.T) {
 		t.Run("validatorTest", validatorTest)
-		t.Run("replaceValidatorTest", replaceValidatorTest)
 	})
 }
 
 func validatorTest(t *testing.T) {
 	log.Info("===================================================================")
 	log.Info("======================== Test validator ===========================")
-	setupValidator(big.NewInt(11))
+	setupValidator(big.NewInt(3))
 
 	transactor := tc.NewTestTransactor(
 		t,
@@ -48,16 +47,23 @@ func validatorTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	// delegation ratio. V0 : V1 : V2 = 2 : 1 : 1
-	amts := []*big.Int{big.NewInt(8000000000000000000), big.NewInt(4000000000000000000), big.NewInt(4000000000000000000)}
-	minAmts := []*big.Int{big.NewInt(4000000000000000000), big.NewInt(2000000000000000000), big.NewInt(2000000000000000000)}
+	amts := []*big.Int{
+		big.NewInt(8000000000000000000),
+		big.NewInt(5000000000000000000),
+		big.NewInt(4000000000000000000),
+		big.NewInt(6000000000000000000),
+	}
+	minAmts := []*big.Int{
+		big.NewInt(4000000000000000000),
+		big.NewInt(2000000000000000000),
+		big.NewInt(2000000000000000000),
+		big.NewInt(2000000000000000000),
+	}
 	commissionRate := big.NewInt(200)
 
-	// add two validators, 0 and 1
 	log.Infoln("---------- It should add two validators successfully ----------")
 	for i := 0; i < 2; i++ {
 		log.Infoln("Adding validator", i)
-		// get auth
 		ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[i])
 		require.NoError(t, err, "failed to get auth")
 		tc.AddCandidateWithStake(
@@ -92,7 +98,6 @@ func validatorTest(t *testing.T) {
 	err = tc.ConfirmUnbondedCandidate(auth, ethAddr)
 	require.NoError(t, err, "failed to confirmUnbondedCandidate")
 	tc.CheckCandidate(t, transactor, ethAddr, tc.ValAccounts[2], big.NewInt(0))
-	//tc.SleepWithLog(5, "waiting node2 to unbond")
 
 	log.Infoln("---------- It should successfully add back validator 2 with enough delegation ----------")
 	err = tc.DelegateStake(auth, ethAddr, amts[2])
@@ -100,33 +105,12 @@ func validatorTest(t *testing.T) {
 	tc.CheckValidatorNum(t, transactor, 3)
 	tc.CheckValidator(t, transactor, tc.ValAccounts[2], amts[2], sdk.Bonded)
 
-	//tc.SleepWithLog(10, "sgn wait a while to check logs")
-}
-
-func replaceValidatorTest(t *testing.T) {
-	log.Info("===================================================================")
-	log.Info("========================  Test replacing validator ===========================")
-	setupValidator(big.NewInt(2))
-
-	transactor := tc.NewTestTransactor(
-		t,
-		tc.SgnCLIHomes[0],
-		tc.SgnChainID,
-		tc.SgnNodeURI,
-		tc.SgnCLIAddr,
-		tc.SgnPassphrase,
-	)
-
-	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(1000000000000000000), big.NewInt(2000000000000000000)}
-	// add two validators, 0 and 1
-	tc.AddValidators(t, transactor, tc.ValEthKs[:2], tc.ValAccounts[:2], amts[:2])
-
-	log.Infoln("---------- It should correctly replace validator 1 with validator 2 ----------")
-	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[2])
+	log.Infoln("---------- It should correctly replace validator 2 with validator 3 ----------")
+	ethAddr, auth, err = tc.GetAuth(tc.ValEthKs[3])
 	require.NoError(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[2], amts[2], big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
-
-	log.Info("Query sgn about the validators...")
-	tc.CheckValidatorNum(t, transactor, 2)
-	tc.CheckValidator(t, transactor, tc.ValAccounts[1], amts[1], sdk.Unbonding)
+	tc.AddCandidateWithStake(
+		t, transactor, ethAddr, auth, tc.ValAccounts[3],
+		amts[3], minAmts[3], commissionRate, big.NewInt(10000), true)
+	tc.CheckValidatorNum(t, transactor, 3)
+	tc.CheckValidator(t, transactor, tc.ValAccounts[2], amts[2], sdk.Unbonding)
 }
