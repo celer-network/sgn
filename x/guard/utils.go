@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/celer-network/goutils/eth"
-	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -44,32 +43,17 @@ func AssignGuards(ctx sdk.Context, keeper Keeper) []sdk.AccAddress {
 	sort.Slice(validatorCandidates, func(i, j int) bool {
 		validatorCandidate0 := validatorCandidates[i]
 		validatorCandidate1 := validatorCandidates[j]
-		reqStakeRatio0 := validatorCandidate0.RequestCount.ToDec().QuoInt(validatorCandidate0.StakingPool)
-		reqStakeRatio1 := validatorCandidate1.RequestCount.ToDec().QuoInt(validatorCandidate1.StakingPool)
-		log.Debugf("--- c0 count %s ratio %s pool %s",
-			validatorCandidate0.RequestCount, reqStakeRatio0, validatorCandidate0.StakingPool)
-		log.Debugf("--- c1 count %s ratio %s pool %s",
-			validatorCandidate1.RequestCount, reqStakeRatio1, validatorCandidate1.StakingPool)
-		if reqStakeRatio0.Equal(reqStakeRatio1) {
-			log.Debugln("--- c0 ratio = c1 ratio")
-		} else if reqStakeRatio0.LT(reqStakeRatio1) {
-			log.Debugln("--- c0 ratio > c1 ratio")
-		}
+		stakeReqRatio0 := validatorCandidate0.StakingPool.Quo(validatorCandidate0.RequestCount.AddRaw(1))
+		stakeReqRatio1 := validatorCandidate1.StakingPool.Quo(validatorCandidate1.RequestCount.AddRaw(1))
 
-		if !reqStakeRatio0.Equal(reqStakeRatio1) {
-			return reqStakeRatio0.LT(reqStakeRatio1)
+		if !stakeReqRatio0.Equal(stakeReqRatio1) {
+			return stakeReqRatio0.GT(stakeReqRatio1)
 		}
-
-		return validatorCandidate0.StakingPool.LT(validatorCandidate1.StakingPool)
+		return validatorCandidate0.StakingPool.GT(validatorCandidate1.StakingPool)
 	})
 
 	requestGuardCount := int(keeper.RequestGuardCount(ctx))
 	assignedGuards := []sdk.AccAddress{}
-	for _, candidate := range validatorCandidates {
-		ratio := candidate.RequestCount.ToDec().QuoInt(candidate.StakingPool)
-		log.Debugf("--- candidate %s ratio %s pool %s", candidate.EthAddress, ratio, candidate.StakingPool)
-	}
-
 	for len(assignedGuards) < requestGuardCount && len(assignedGuards) < len(validatorCandidates) {
 		candidate := validatorCandidates[len(assignedGuards)]
 		candidate.RequestCount = candidate.RequestCount.AddRaw(1)
