@@ -10,8 +10,6 @@ const (
 	FlagConfig  = "config"
 	FlagCLIHome = "cli-home"
 
-	FlagStartMonitor = "startMonitor"
-
 	FlagEthGateway         = "eth.gateway"
 	FlagEthCelrAddress     = "eth.contracts.celr_address"
 	FlagEthDPoSAddress     = "eth.contracts.dpos_address"
