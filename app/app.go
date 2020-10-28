@@ -119,7 +119,6 @@ type SgnApp struct {
 
 // NewSgnApp is a constructor function for sgnApp
 func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp)) *SgnApp {
-	viper.SetDefault(common.FlagStartMonitor, true)
 	viper.SetDefault(common.FlagEthPollInterval, 15)
 	viper.SetDefault(common.FlagEthBlockDelay, 5)
 	viper.SetDefault(common.FlagSgnCheckIntervalGuardQueue, 60)
@@ -342,9 +341,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 		tmos.Exit(err.Error())
 	}
 
-	if viper.GetBool(common.FlagStartMonitor) {
-		go app.startMonitor(db)
-	}
+	go app.startMonitor(db)
 
 	return app
 }

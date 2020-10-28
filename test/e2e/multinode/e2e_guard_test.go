@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	e2ecommon "github.com/celer-network/sgn/test/e2e/common"
 	tc "github.com/celer-network/sgn/testing/common"
@@ -65,7 +66,7 @@ func guardTest(t *testing.T) {
 	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
 	require.NoError(t, err, "failed to delegate stake")
 
-	turnOffMonitor(2)
+	restartWithConfig(0, common.FlagSgnCheckIntervalGuardQueue, 10000)
 
 	amt := new(big.Int)
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
@@ -75,28 +76,30 @@ func guardTest(t *testing.T) {
 	// The self delegated stake of validator0 is 2/3 of total stake of validator0,
 	// so validator0 gets (1000000000000000000 - 100000000000000) * 2/3 = 666600000000000000 reward.
 	// The total service reward of validator0 is 666600000000000000 + 100000000000000 = 666700000000000000
-	e2ecommon.GuardTestCommon(t, transactor, amt, "666700000000000000", 2)
+	e2ecommon.GuardTestCommon(t, transactor, amt, "666700000000000000", 3)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	require.NoError(t, err, "failed to query penalty")
-	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[2])
+	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 20000000000000000`, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	assert.Equal(t, 2, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 2"))
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[1])
+	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[1].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, 3, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 3"))
 
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
+		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "990000000000000000" {
+		if poolAmt == "2970000000000000000" {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
-	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
+	assert.Equal(t, "2970000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 2970000000000000000"))
 
 }
