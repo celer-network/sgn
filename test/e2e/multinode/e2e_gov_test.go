@@ -68,7 +68,7 @@ func sidechainGovTest(t *testing.T) {
 	amt2 := big.NewInt(2000000000000000000)
 	amt3 := big.NewInt(2000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
-	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.ValAccounts[:], amts)
+	tc.AddValidators(t, transactor0, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
 
 	log.Info("======================== Test change epochlengh rejected due to small quorum ===========================")
 	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("validator", "EpochLength", "\"2\"")}
@@ -221,7 +221,7 @@ func mainchainGovTest(t *testing.T) {
 	amt2 := big.NewInt(2000000000000000000)
 	amt3 := big.NewInt(2000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
 
 	_, auth0, err := tc.GetAuth(tc.ValEthKs[0])
 	require.NoError(t, err, "failed to get auth0")

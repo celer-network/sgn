@@ -48,7 +48,7 @@ func upgradeTest(t *testing.T) {
 	amt2 := big.NewInt(2000000000000000000)
 	amt3 := big.NewInt(2000000000000000000)
 	amts := []*big.Int{amt1, amt2, amt3}
-	tc.AddValidators(t, transactor0, tc.ValEthKs[:], tc.ValAccounts[:], amts)
+	tc.AddValidators(t, transactor0, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
 
 	upgradeHeight := int64(100)
 	plan := upgrade.Plan{Name: "test", Height: upgradeHeight}

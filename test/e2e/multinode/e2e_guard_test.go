@@ -56,14 +56,17 @@ func guardTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amt1 := big.NewInt(2000000000000000000)
-	amt2 := big.NewInt(2000000000000000000)
-	amt3 := big.NewInt(1000000000000000000)
-	amts := []*big.Int{amt1, amt2, amt3}
+	amts := []*big.Int{
+		big.NewInt(2000000000000000000), // 2 CELR
+		big.NewInt(2000000000000000000), // 2 CELR
+		big.NewInt(1000000000000000000), // 1 CELR
+	}
 	log.Infoln("Add validators...")
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
-	_, auth, err := tc.GetAuth(tc.ValEthKs[1])
-	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), amt3)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
+	log.Infoln("Additionally delegate to validator 0...")
+	_, dAuth, err := tc.GetAuth(tc.DelEthKs[0])
+	require.NoError(t, err, "failed to get delegator auth")
+	err = tc.DelegateStake(dAuth, mainchain.Hex2Addr(tc.ValEthAddrs[0]), big.NewInt(1000000000000000000)) // 1 CELR
 	require.NoError(t, err, "failed to delegate stake")
 
 	restartWithConfig(0, common.FlagSgnCheckIntervalGuardQueue, 10000)
@@ -86,7 +89,7 @@ func guardTest(t *testing.T) {
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 20000000000000000`, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[1])
+	expectedRes = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[1].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	assert.Equal(t, 3, len(penalty.Sigs), fmt.Sprintf("The length of validators should be 3"))
 
