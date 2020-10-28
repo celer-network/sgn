@@ -163,8 +163,7 @@ func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, er
 
 	// tx pre-check: settle finalized time
 	cid := mainchain.Bytes2Cid(request.ChannelId)
-	settleFinalizedTime, err :=
-		m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, cid)
+	settleFinalizedTime, err := m.EthClient.Ledger.GetSettleFinalizedTime(&bind.CallOpts{}, cid)
 	if err != nil {
 		return false, false, fmt.Errorf("get settleFinalizedTime err: %w", err)
 	}
