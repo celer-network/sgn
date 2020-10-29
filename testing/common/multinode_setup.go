@@ -104,7 +104,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	ChkErr(err, "Failed to make prepare-sgn-data")
 
 	log.Infoln("Updating config files of SGN nodes")
-	for i := 0; i < 4; i++ {
+	for i := 0; i < len(ValEthKs); i++ {
 		configPath := fmt.Sprintf("../../../docker-volumes/node%d/sgncli/config/sgn.toml", i)
 		configFileViper := viper.New()
 		configFileViper.SetConfigFile(configPath)
