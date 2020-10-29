@@ -54,7 +54,7 @@ func slashTest(t *testing.T) {
 	)
 
 	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(2000000000000000000), big.NewInt(1000000000000000000)}
-	tc.AddValidators(t, transactor, tc.ValEthKs[:], tc.ValAccounts[:], amts)
+	tc.AddValidators(t, transactor, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
 	shutdownNode(2)
 
 	log.Infoln("Query sgn about penalty info...")

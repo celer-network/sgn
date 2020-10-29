@@ -70,7 +70,7 @@ func main() {
 			log.Error(err)
 		}
 		log.Infoln("update config files")
-		for i := 0; i < 3; i++ {
+		for i := 0; i < len(tc.ValEthKs); i++ {
 			configPath := fmt.Sprintf("./data/node%d/sgncli/config/sgn.toml", i)
 			configFileViper := viper.New()
 			configFileViper.SetConfigFile(configPath)

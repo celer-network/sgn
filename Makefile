@@ -115,13 +115,13 @@ localnet-start-geth:
 # Run a 3-node sgn testnet locally
 .PHONY: localnet-up-nodes
 localnet-up-nodes: localnet-down-nodes
-	docker-compose up -d sgnnode0 sgnnode1 sgnnode2
+	docker-compose up -d sgnnode0 sgnnode1 sgnnode2 sgnnode3
 
 # Stop sgn testnet
 .PHONY: localnet-down-nodes
 localnet-down-nodes:
-	docker-compose stop sgnnode0 sgnnode1 sgnnode2
-	docker-compose rm -f sgnnode0 sgnnode1 sgnnode2
+	docker-compose stop sgnnode0 sgnnode1 sgnnode2 sgnnode3
+	docker-compose rm -f sgnnode0 sgnnode1 sgnnode2 sgnnode3
 
 # Stop both geth and sgn testnet
 .PHONY: localnet-down

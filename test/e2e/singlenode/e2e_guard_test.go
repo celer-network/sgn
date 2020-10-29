@@ -59,5 +59,6 @@ func guardTest(t *testing.T) {
 	require.NoError(t, err, "failed to get auth")
 	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
-	e2ecommon.GuardTestCommon(t, transactor, amt, "", 1)
+	// request cost is 1000000000000000000 * 2, all goes to validator
+	e2ecommon.GuardTestCommon(t, transactor, amt, tc.ValEthAddrs[0], "2000000000000000000", 1)
 }

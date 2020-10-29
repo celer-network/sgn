@@ -157,6 +157,9 @@ func (m *Monitor) setTransactors() {
 		log.Errorln("parse transactors err", err)
 		return
 	}
+	if len(transactors) == 0 {
+		return
+	}
 	setTransactorsMsg := validator.NewMsgSetTransactors(
 		transactors,
 		m.Transactor.Key.GetAddress(),

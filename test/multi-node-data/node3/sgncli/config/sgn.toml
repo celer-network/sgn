@@ -4,7 +4,7 @@
 block_delay = 1
 chain_id = 883
 gateway = "http://192.168.10.1:8545"
-keystore = "./keys/vethks2.json"
+keystore = "./keys/vethks3.json"
 passphrase = ""
 poll_interval = 1
 
@@ -31,10 +31,10 @@ gas_adjustment = 1.5
 keyring_backend = "file"
 node_uri = "tcp://localhost:26657"
 passphrase = "12341234"
-pubkey = "sgnvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qggrxg9"
+pubkey = "sgnvalconspub1zcjduepqqjgqn6d54442zys0cn3d6cf3g6g9a0uwjnv98dtr4xnfh3wk8k3skr9u87"
 timeout_commit = 2
-transactors = ["sgn1cdsx4maazrykkurydqjl5aq76vle065razf924"]
-validator_account = "sgn19q9usqmjcmx8vynynfl5tj5n2k22gc5f6wjvd7"
+transactors = []
+validator_account = "sgn1rjr9uaewus3qh4vs4sqdkdvepwyxq8ql84udfh"
 
 [sgn.check_interval]
 guard_queue = 2

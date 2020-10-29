@@ -33,7 +33,7 @@ node_uri = "tcp://localhost:26657"
 passphrase = "12341234"
 pubkey = "sgnvalconspub1zcjduepqxqz973gvjkk84p2d8m9j92pfffghhrv677gd35jcn9ppzvm9gn0qwsd8ax"
 timeout_commit = 2
-transactors = ["sgn1k88dweqanvd3j2csaak034amvjuyzlkeq9f95k"]
+transactors = ["sgn1wkmgk2acpjxfwcmgaaa32ruqnutnf0lr030apy"]
 validator_account = "sgn1egtta7su5jxjahtw56pe07qerz4lwvrlttac6y"
 
 [sgn.check_interval]
