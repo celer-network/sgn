@@ -184,7 +184,7 @@ func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, er
 	}
 	if request.SeqNum <= seqNums[seqIndex].Uint64() {
 		log.Infof("channel %x stored seq %d no larger than mainchain value %s", cid, request.SeqNum, seqNums[seqIndex])
-		return false, false, nil
+		return false, true, nil
 	}
 
 	// generate guard tx input
