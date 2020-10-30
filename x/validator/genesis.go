@@ -7,7 +7,7 @@ import (
 
 type GenesisState struct {
 	Params         Params          `json:"params" yaml:"params"`
-	Syncer         Syncer          `json:"syner" yaml:"syner"`
+	Syncer         Syncer          `json:"syncer" yaml:"syncer"`
 	Candidates     []Candidate     `json:"candidates" yaml:"candidates"`
 	Delegators     []Delegator     `json:"delegators" yaml:"delegators"`
 	Rewards        []Reward        `json:"rewards" yaml:"rewards"`
