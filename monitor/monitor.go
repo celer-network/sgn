@@ -36,6 +36,7 @@ type Monitor struct {
 	bonded          bool
 	executeSlash    bool
 	bootstrapped    bool // SGN has bootstrapped with at least one bonded validator on the mainchain contract
+	startBlock      *big.Int
 	lock            sync.RWMutex
 }
 
@@ -70,6 +71,14 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		log.Fatalln("NewBigCache err", err)
 	}
 
+	configuredStartBlock := viper.GetInt64(common.FlagEthMonitorStartBlock)
+	var startBlock *big.Int
+	if configuredStartBlock == 0 {
+		startBlock = ethMonitor.GetCurrentBlockNumber()
+	} else {
+		startBlock = big.NewInt(viper.GetInt64(common.FlagEthMonitorStartBlock))
+	}
+
 	m := Monitor{
 		Operator:        operator,
 		db:              db,
@@ -81,6 +90,7 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		bonded:          mainchain.IsBonded(dposCandidateInfo),
 		bootstrapped:    valnum.Uint64() > 0,
 		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
+		startBlock:      startBlock,
 	}
 	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
@@ -149,7 +159,7 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 		&monitor.Config{
 			EventName:     string(UpdateSidechainAddr),
 			Contract:      m.sgnContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateSidechainAddr),
 		},
@@ -182,7 +192,7 @@ func (m *Monitor) monitorSGNAddSubscriptionBalance() {
 		&monitor.Config{
 			EventName:     string(AddSubscriptionBalance),
 			Contract:      m.sgnContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(AddSubscriptionBalance),
 		},
@@ -205,7 +215,7 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 		&monitor.Config{
 			EventName:     string(CandidateUnbonded),
 			Contract:      m.dposContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(CandidateUnbonded),
 		},
@@ -227,7 +237,7 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 		&monitor.Config{
 			EventName:     string(ConfirmParamProposal),
 			Contract:      m.dposContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(ConfirmParamProposal),
 		},
@@ -249,7 +259,7 @@ func (m *Monitor) monitorDPoSUpdateCommissionRate() {
 		&monitor.Config{
 			EventName:     string(UpdateCommissionRate),
 			Contract:      m.dposContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateCommissionRate),
 		},
@@ -271,7 +281,7 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 		&monitor.Config{
 			EventName:     string(ValidatorChange),
 			Contract:      m.dposContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(ValidatorChange),
 		},
@@ -315,7 +325,7 @@ func (m *Monitor) monitorDPoSUpdateDelegatedStake() {
 		&monitor.Config{
 			EventName:     string(UpdateDelegatedStake),
 			Contract:      m.dposContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateDelegatedStake),
 		},
@@ -347,7 +357,7 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 		&monitor.Config{
 			EventName:     string(IntendSettle),
 			Contract:      m.ledgerContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(IntendSettle),
 		},
@@ -369,7 +379,7 @@ func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
 		&monitor.Config{
 			EventName:     string(IntendWithdraw),
 			Contract:      m.ledgerContract,
-			StartBlock:    m.getCurrentBlockNumber(),
+			StartBlock:    m.startBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(IntendWithdrawChannel),
 		},
