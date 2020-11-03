@@ -34,6 +34,10 @@
               {
                 "denom": "stake",
                 "amount": "100000000"
+              },
+              {
+                "denom": "quota",
+                "amount": "100000000"
               }
             ],
             "public_key": null,
@@ -48,6 +52,10 @@
             "coins": [
               {
                 "denom": "stake",
+                "amount": "100000000"
+              },
+              {
+                "denom": "quota",
                 "amount": "100000000"
               }
             ],

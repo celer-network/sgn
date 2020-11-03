@@ -38,6 +38,7 @@ type SGNParams struct {
 	AdvanceNoticePeriod   *big.Int
 	// TODO: rename to DposGoLiveTimeout
 	SidechainGoLiveTimeout *big.Int
+	MinGasPrices           string
 	StartGateway           bool
 }
 
@@ -58,7 +59,6 @@ func NewTestTransactor(t *testing.T, sgnCLIHome, sgnChainID, sgnNodeURI, sgnValA
 		sgnValAcct,
 		sgnPassphrase,
 		cdc,
-		nil,
 	)
 	require.NoError(t, err, "Failed to create new transactor.")
 	tr.Run()

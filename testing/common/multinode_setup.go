@@ -12,6 +12,8 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 )
@@ -80,6 +82,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 			MinStakingPool:         big.NewInt(100),
 			AdvanceNoticePeriod:    big.NewInt(1),
 			SidechainGoLiveTimeout: big.NewInt(0),
+			MinGasPrices:           "0.000001quota",
 		}
 	}
 	var tx *types.Transaction
@@ -114,6 +117,11 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 		configFileViper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr.Hex())
 		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr.Hex())
 		configFileViper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr.Hex())
+
+		if len(sgnParams.MinGasPrices) > 0 {
+			configFileViper.Set(server.FlagMinGasPrices, sgnParams.MinGasPrices)
+			configFileViper.Set(flags.FlagGasPrices, sgnParams.MinGasPrices)
+		}
 		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
 

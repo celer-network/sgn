@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
@@ -13,6 +14,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingType "github.com/cosmos/cosmos-sdk/x/staking/types"
+)
+
+var (
+	candidateQuota = sdk.NewInt(1000)
 )
 
 func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
@@ -80,8 +85,15 @@ func (keeper Keeper) UpdateSidechainAddr(ctx sdk.Context, change types.Change) (
 	} else {
 		candidate = c
 	}
+
 	keeper.validatorKeeper.SetCandidate(ctx, candidate)
 	keeper.validatorKeeper.InitAccount(ctx, c.ValAccount)
+
+	err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, candidateQuota)))
+	if err != nil {
+		log.Errorln("SetCoins err", err)
+		return false, err
+	}
 
 	return true, nil
 }
@@ -133,6 +145,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 				log.Infof("Bonded validator %s %s not initialized, msg sender: %s", candidate.ValAccount, ethAddr, change.Initiator)
 				return true, nil
 			}
+
 			validator = staking.NewValidator(valAddress, newVal.ConsPubKey, newVal.Description)
 			keeper.stakingKeeper.SetValidatorByConsAddr(ctx, validator)
 			ctx.EventManager().EmitEvent(
@@ -151,15 +164,24 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	}
 
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
+
+	quota := sdk.ZeroInt()
 	validator.Commission = newVal.Commission
 	validator.Status = newVal.Status
 	if validator.Status == sdk.Unbonded {
 		validator.Tokens = sdk.ZeroInt()
 	} else {
 		validator.Tokens = newVal.Tokens
+		quota = sdk.NewInt(math.MaxInt64)
 	}
 	validator.DelegatorShares = newVal.Tokens.ToDec()
+
 	keeper.stakingKeeper.SetValidator(ctx, validator)
+	err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, quota)))
+	if err != nil {
+		log.Errorln("SetCoins err", err)
+		return false, err
+	}
 
 	if validator.Status == sdk.Bonded {
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)

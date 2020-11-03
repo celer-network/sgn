@@ -148,7 +148,7 @@ func addValidators() {
 		tc.SgnNodeURI,
 		tc.SgnCLIAddr,
 		tc.SgnPassphrase,
-		cdc, nil,
+		cdc,
 	)
 	if err != nil {
 		log.Error(err)

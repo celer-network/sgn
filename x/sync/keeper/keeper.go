@@ -7,6 +7,7 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
@@ -17,6 +18,8 @@ type Keeper struct {
 	paramSpace types.ParamSubspace
 
 	paramsKeeper params.Keeper
+
+	bankKeeper bank.Keeper
 
 	slashKeeper slash.Keeper
 
@@ -42,13 +45,14 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	paramsKeeper params.Keeper, slashKeeper slash.Keeper, stakingKeeper staking.Keeper,
+	paramsKeeper params.Keeper, bankKeeper bank.Keeper, slashKeeper slash.Keeper, stakingKeeper staking.Keeper,
 	guardKeeper guard.Keeper, validatorKeeper validator.Keeper,
 ) Keeper {
 	return Keeper{
 		storeKey:        key,
 		paramSpace:      paramSpace,
 		paramsKeeper:    paramsKeeper,
+		bankKeeper:      bankKeeper,
 		slashKeeper:     slashKeeper,
 		stakingKeeper:   stakingKeeper,
 		guardKeeper:     guardKeeper,

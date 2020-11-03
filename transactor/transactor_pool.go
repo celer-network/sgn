@@ -12,17 +12,15 @@ type TransactorPool struct {
 	cliHome     string
 	chainID     string
 	cdc         *codec.Codec
-	gpe         *GasPriceEstimator
 }
 
-func NewTransactorPool(cliHome, chainID string, cdc *codec.Codec, gpe *GasPriceEstimator) *TransactorPool {
+func NewTransactorPool(cliHome, chainID string, cdc *codec.Codec) *TransactorPool {
 	return &TransactorPool{
 		transactors: []*Transactor{},
 		index:       0,
 		cliHome:     cliHome,
 		chainID:     chainID,
 		cdc:         cdc,
-		gpe:         gpe,
 	}
 }
 
@@ -35,7 +33,7 @@ func (tp *TransactorPool) AddTransactor(transactor *Transactor) {
 func (tp *TransactorPool) AddTransactors(nodeURI, passphrase string, ts []string) error {
 	var transactors []*Transactor
 	for _, t := range ts {
-		transactor, err := NewTransactor(tp.cliHome, tp.chainID, nodeURI, t, passphrase, tp.cdc, tp.gpe)
+		transactor, err := NewTransactor(tp.cliHome, tp.chainID, nodeURI, t, passphrase, tp.cdc)
 		if err != nil {
 			return err
 		}

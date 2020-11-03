@@ -35,7 +35,6 @@ func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err erro
 		viper.GetString(common.FlagSgnValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 		cdc,
-		transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI)),
 	)
 	if err != nil {
 		return
