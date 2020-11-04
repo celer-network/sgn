@@ -218,6 +218,7 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 		app.keyValidator,
 		app.cdc,
 		app.accountKeeper,
+		app.bankKeeper,
 		app.stakingKeeper,
 		validatorSubspace,
 	)

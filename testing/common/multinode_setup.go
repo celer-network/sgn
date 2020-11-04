@@ -12,7 +12,6 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
@@ -120,7 +119,6 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 
 		if len(sgnParams.MinGasPrices) > 0 {
 			configFileViper.Set(server.FlagMinGasPrices, sgnParams.MinGasPrices)
-			configFileViper.Set(flags.FlagGasPrices, sgnParams.MinGasPrices)
 		}
 		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")

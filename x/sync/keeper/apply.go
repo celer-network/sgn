@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	candidateQuota = sdk.NewInt(1000)
+	candidateQuota = sdk.NewInt(10)
 )
 
 func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
@@ -164,32 +164,32 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	}
 
 	keeper.stakingKeeper.DeleteValidatorByPowerIndex(ctx, validator)
-
-	quota := sdk.ZeroInt()
 	validator.Commission = newVal.Commission
 	validator.Status = newVal.Status
 	if validator.Status == sdk.Unbonded {
 		validator.Tokens = sdk.ZeroInt()
 	} else {
 		validator.Tokens = newVal.Tokens
-		quota = sdk.NewInt(math.MaxInt64)
 	}
 	validator.DelegatorShares = newVal.Tokens.ToDec()
-
 	keeper.stakingKeeper.SetValidator(ctx, validator)
-	err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, quota)))
-	if err != nil {
-		log.Errorln("SetCoins err", err)
-		return false, err
-	}
+
+	quota := candidateQuota
 
 	if validator.Status == sdk.Bonded {
+		quota = sdk.NewInt(math.MaxInt64)
 		keeper.stakingKeeper.SetNewValidatorByPowerIndex(ctx, validator)
 	} else if validator.Status == sdk.Unbonded {
 		log.Infof("remove validator %s %s %s", valAddress, candidate.ValAccount, ethAddr)
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
 	} else if validator.Status == sdk.Unbonding {
 		keeper.validatorKeeper.DistributeCandidatePendingReward(ctx, ethAddr)
+	}
+
+	err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, quota)))
+	if err != nil {
+		log.Errorln("SetCoins err", err)
+		return false, err
 	}
 
 	return true, nil

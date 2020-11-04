@@ -30,9 +30,9 @@ func TestMain(m *testing.M) {
 		log.Infoln("Tearing down all containers...")
 		cmd := exec.Command("make", "localnet-down")
 		cmd.Dir = repoRoot
-		if err := cmd.Run(); err != nil {
-			log.Error(err)
-		}
+		// if err := cmd.Run(); err != nil {
+		// 	log.Error(err)
+		// }
 		os.Exit(0)
 	} else {
 		log.Errorln("Tests failed. 🚧🚧🚧 Geth and sgn containers are still running for debug. 🚧🚧🚧 Run \"make localnet-down\" to stop them")

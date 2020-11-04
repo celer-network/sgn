@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
@@ -75,7 +76,7 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		panic(err)
 	}
 
-	gasPrices, err := sdk.ParseDecCoins(viper.GetString(flags.FlagGasPrices))
+	gasPrices, err := sdk.ParseDecCoins(viper.GetString(server.FlagMinGasPrices))
 	if err != nil {
 		panic(err)
 	}
