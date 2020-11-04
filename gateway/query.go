@@ -1,13 +1,17 @@
 package gateway
 
 import (
+	"math/big"
 	"net/http"
 
+	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/proto/sgn"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/mux"
 )
 
@@ -129,6 +133,12 @@ func rewardHandlerFn(rs *RestServer) http.HandlerFunc {
 	}
 }
 
+type RewardRequest struct {
+	MiningReward            *big.Int `json:"mining_reward"`
+	ServiceReward           *big.Int `json:"service_reward"`
+	RewardRequestProtoBytes string   `json:"reward_request_proto_bytes"` // proto msg for reward snapshot from latest intendWithdraw
+}
+
 // http request handler to query reward request
 func rewardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +151,22 @@ func rewardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 		ethAddr := vars["ethAddr"]
 		transactor := rs.transactorPool.GetTransactor()
 		reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, ethAddr)
-		postProcessResponse(w, transactor.CliCtx, mainchain.Bytes2Hex(reward.GetRewardRequest()), err)
+		rewardRequest := RewardRequest{
+			RewardRequestProtoBytes: mainchain.Bytes2Hex(reward.GetRewardRequest()),
+		}
+
+		if len(reward.RewardProtoBytes) != 0 {
+			var pbReward sgn.Reward
+			err = proto.Unmarshal(reward.RewardProtoBytes, &pbReward)
+			if err != nil {
+				log.Errorln("proto umarshal err", err, reward.RewardProtoBytes)
+			} else {
+				rewardRequest.MiningReward = new(big.Int).SetBytes(pbReward.CumulativeMiningReward)
+				rewardRequest.ServiceReward = new(big.Int).SetBytes(pbReward.CumulativeServiceReward)
+			}
+		}
+
+		postProcessResponse(w, transactor.CliCtx, rewardRequest, err)
 	}
 }
 
