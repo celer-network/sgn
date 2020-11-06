@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/celer-network/goutils/log"
@@ -36,17 +37,19 @@ var (
 func main() {
 	flag.Parse()
 	repoRoot, _ := filepath.Abs("../../..")
+	minStakingPool := new(big.Int)
+	minStakingPool.SetString("5"+strings.Repeat("0", 21), 10) // 5000 CELR
 	if *start {
 		tc.SetupMainchain()
 		tc.SetupSidechain()
 		p := &tc.SGNParams{
 			CelrAddr:               tc.E2eProfile.CelrAddr,
-			GovernProposalDeposit:  big.NewInt(1000000000000000000), // 1 CELR
+			GovernProposalDeposit:  big.NewInt(5000000000000000000), // 5 CELR
 			GovernVoteTimeout:      big.NewInt(90),
 			SlashTimeout:           big.NewInt(15),
 			MinValidatorNum:        big.NewInt(1),
 			MaxValidatorNum:        big.NewInt(5),
-			MinStakingPool:         big.NewInt(5000000000000000000), // 5 CELR
+			MinStakingPool:         minStakingPool, // 5000 CELR
 			AdvanceNoticePeriod:    big.NewInt(30),
 			SidechainGoLiveTimeout: big.NewInt(0),
 		}
