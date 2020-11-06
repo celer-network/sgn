@@ -134,9 +134,9 @@ func rewardHandlerFn(rs *RestServer) http.HandlerFunc {
 }
 
 type RewardRequest struct {
-	MiningReward            *big.Int `json:"mining_reward"`
-	ServiceReward           *big.Int `json:"service_reward"`
-	RewardRequestProtoBytes string   `json:"reward_request_proto_bytes"` // proto msg for reward snapshot from latest intendWithdraw
+	MiningReward            string `json:"mining_reward"`
+	ServiceReward           string `json:"service_reward"`
+	RewardRequestProtoBytes string `json:"reward_request_proto_bytes"` // proto msg for reward snapshot from latest intendWithdraw
 }
 
 // http request handler to query reward request
@@ -161,8 +161,8 @@ func rewardRequestHandlerFn(rs *RestServer) http.HandlerFunc {
 			if err != nil {
 				log.Errorln("proto umarshal err", err, reward.RewardProtoBytes)
 			} else {
-				rewardRequest.MiningReward = new(big.Int).SetBytes(pbReward.CumulativeMiningReward)
-				rewardRequest.ServiceReward = new(big.Int).SetBytes(pbReward.CumulativeServiceReward)
+				rewardRequest.MiningReward = new(big.Int).SetBytes(pbReward.CumulativeMiningReward).String()
+				rewardRequest.ServiceReward = new(big.Int).SetBytes(pbReward.CumulativeServiceReward).String()
 			}
 		}
 
