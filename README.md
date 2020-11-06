@@ -10,4 +10,4 @@ Please follow the [local test instructions](./test/README.md) to test SGN on you
 
 ## Join the public networks
 
-Please refer to instructions in [sgn-networks](https://github.com/celer-network/sgn-networks/tree/master/docs) to see how to [run a validator](https://github.com./celer-network/sgn-networks/blobs/master/validator.md) and how to [test as a state channel client](https://github.com./celer-network/sgn-networks/blobs/master/test_user.md).
+Please refer to instructions in [sgn-networks](https://github.com/celer-network/sgn-networks/tree/master/docs) to see how to [run a validator](https://github.com/celer-network/sgn-networks/blob/master/docs/validator.md) and how to [test as a state channel client](https://github.com/celer-network/sgn-networks/blob/master/docs/test_user.md).
