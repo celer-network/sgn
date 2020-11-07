@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
-	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
@@ -23,6 +22,9 @@ import (
 )
 
 const (
+	gasAdjustment = 1.5
+	gasLimit      = 300000
+
 	maxTxRetry      = 15
 	maxTxQueryRetry = 30
 	txRetryDelay    = 1 * time.Second
@@ -71,30 +73,21 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		}
 	}
 
-	fees, err := sdk.ParseCoins(viper.GetString(flags.FlagFees))
+	gasPrices, err := sdk.ParseDecCoins(viper.GetString(common.FlagSgnMinGasPrices))
 	if err != nil {
 		panic(err)
 	}
 
-	gasPrices, err := sdk.ParseDecCoins(viper.GetString(server.FlagMinGasPrices))
-	if err != nil {
-		panic(err)
-	}
-
-	gasAdjustment := viper.GetFloat64(common.FlagSgnGasAdjustment)
-	if gasAdjustment == 0 {
-		gasAdjustment = common.DefaultSgnGasAdjustment
-	}
 	txBldr := types.NewTxBuilder(
 		utils.GetTxEncoder(cdc),
 		viper.GetUint64(flags.FlagAccountNumber),
 		viper.GetUint64(flags.FlagSequence),
-		common.DefaultSgnGasLimit,
+		gasLimit,
 		gasAdjustment,
 		true,
 		chainID,
-		viper.GetString(flags.FlagMemo),
-		fees,
+		"",
+		sdk.NewCoins(),
 		gasPrices)
 	txBldr = txBldr.WithKeybase(kb)
 

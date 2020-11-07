@@ -38,7 +38,6 @@ type SGNParams struct {
 	AdvanceNoticePeriod   *big.Int
 	// TODO: rename to DposGoLiveTimeout
 	SidechainGoLiveTimeout *big.Int
-	MinGasPrices           string
 	StartGateway           bool
 }
 

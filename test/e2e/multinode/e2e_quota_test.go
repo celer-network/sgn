@@ -25,7 +25,6 @@ func setUpQuota() {
 		MinStakingPool:         big.NewInt(100),
 		AdvanceNoticePeriod:    big.NewInt(1),
 		SidechainGoLiveTimeout: big.NewInt(0),
-		MinGasPrices:           "0.000001quota",
 	}
 	tc.SetupNewSGNEnv(p, false)
 	tc.SleepWithLog(10, "sgn syncing")
