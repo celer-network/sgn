@@ -27,7 +27,6 @@ level = "debug"
 chain_id = "sgntest"
 execute_slash = true
 keyring_backend = "file"
-min_gas_prices = "0.000001quota"
 node_uri = "tcp://localhost:26657"
 passphrase = "12341234"
 pubkey = "sgnvalconspub1zcjduepq22mf6x9zcxl7qy4h9e9v2gl4krmfq3002ga5ztmxdne4awn32yuq57794u"
