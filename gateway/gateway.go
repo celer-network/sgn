@@ -61,12 +61,10 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	gpe := transactor.NewGasPriceEstimator(viper.GetString(common.FlagSgnNodeURI))
 	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
 		viper.GetString(common.FlagSgnChainID),
 		cdc,
-		gpe,
 	)
 
 	transactors := viper.GetStringSlice(common.FlagSgnTransactors)

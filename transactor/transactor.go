@@ -22,6 +22,9 @@ import (
 )
 
 const (
+	gasAdjustment = 1.5
+	gasLimit      = 300000
+
 	maxTxRetry      = 15
 	maxTxQueryRetry = 30
 	txRetryDelay    = 1 * time.Second
@@ -38,10 +41,9 @@ type Transactor struct {
 	Key        keys.Info
 	passphrase string
 	msgQueue   deque.Deque
-	gpe        *GasPriceEstimator
 }
 
-func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec, gpe *GasPriceEstimator) (*Transactor, error) {
+func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *codec.Codec) (*Transactor, error) {
 	kb, err := keys.NewKeyringWithPassphrase(appName,
 		viper.GetString(common.FlagSgnKeyringBackend), cliHome, passphrase)
 	if err != nil {
@@ -71,30 +73,21 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		}
 	}
 
-	fees, err := sdk.ParseCoins(viper.GetString(flags.FlagFees))
+	gasPrices, err := sdk.ParseDecCoins(viper.GetString(common.FlagSgnMinGasPrices))
 	if err != nil {
 		panic(err)
 	}
 
-	gasPrices, err := sdk.ParseDecCoins(viper.GetString(flags.FlagGasPrices))
-	if err != nil {
-		panic(err)
-	}
-
-	gasAdjustment := viper.GetFloat64(common.FlagSgnGasAdjustment)
-	if gasAdjustment == 0 {
-		gasAdjustment = common.DefaultSgnGasAdjustment
-	}
 	txBldr := types.NewTxBuilder(
 		utils.GetTxEncoder(cdc),
 		viper.GetUint64(flags.FlagAccountNumber),
 		viper.GetUint64(flags.FlagSequence),
-		common.DefaultSgnGasLimit,
+		gasLimit,
 		gasAdjustment,
 		true,
 		chainID,
-		viper.GetString(flags.FlagMemo),
-		fees,
+		"",
+		sdk.NewCoins(),
 		gasPrices)
 	txBldr = txBldr.WithKeybase(kb)
 
@@ -112,7 +105,6 @@ func NewTransactor(cliHome, chainID, nodeURI, accAddr, passphrase string, cdc *c
 		CliCtx:     cliCtx,
 		Key:        key,
 		passphrase: passphrase,
-		gpe:        gpe,
 	}
 
 	return transactor, nil
@@ -126,7 +118,6 @@ func NewCliTransactor(cdc *codec.Codec, cliHome string) (*Transactor, error) {
 		viper.GetString(common.FlagSgnValidatorAccount),
 		viper.GetString(common.FlagSgnPassphrase),
 		cdc,
-		nil,
 	)
 }
 
@@ -250,10 +241,6 @@ func (t *Transactor) sendTxMsgs(msgs []sdk.Msg, gas uint64) (*sdk.TxResponse, *t
 }
 
 func (t *Transactor) buildAndSignTx(msgs []sdk.Msg, gas uint64) ([]byte, *types.StdSignMsg, error) {
-	if t.gpe != nil {
-		t.TxBuilder = t.TxBuilder.WithGasPrices(t.gpe.GetGasPrice())
-	}
-
 	txBldr, err := utils.PrepareTxBuilder(t.TxBuilder, t.CliCtx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("PrepareTxBuilder err: %w", err)

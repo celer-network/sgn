@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/exported"
@@ -16,17 +17,19 @@ type Keeper struct {
 	storeKey      sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc           *codec.Codec // The wire codec for binary encoding/decoding.
 	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
 	stakingKeeper staking.Keeper
 	paramstore    params.Subspace
 }
 
 // NewKeeper creates new instances of the validator Keeper
 func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec,
-	accountKeeper auth.AccountKeeper, stakingKeeper staking.Keeper, paramstore params.Subspace) Keeper {
+	accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, stakingKeeper staking.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
 	}

@@ -114,6 +114,7 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 		configFileViper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr.Hex())
 		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr.Hex())
 		configFileViper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr.Hex())
+
 		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
 

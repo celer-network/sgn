@@ -2,7 +2,9 @@ package validator
 
 import (
 	"fmt"
+	"math"
 
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -63,6 +65,11 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 				candidate.Transactors = append(candidate.Transactors, transactor)
 				dedup[transactor.String()] = true
 				keeper.InitAccount(ctx, transactor)
+
+				err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, sdk.NewInt(math.MaxInt64))))
+				if err != nil {
+					return nil, fmt.Errorf("Failed to SetCoins: %s", err)
+				}
 			}
 		}
 	}
@@ -70,6 +77,10 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 	for _, transactor := range oldTransactors {
 		if _, exist := dedup[transactor.String()]; !exist {
 			keeper.RemoveAccount(ctx, transactor)
+			err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, sdk.ZeroInt())))
+			if err != nil {
+				return nil, fmt.Errorf("Failed to SetCoins: %s", err)
+			}
 		}
 	}
 

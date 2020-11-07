@@ -31,10 +31,9 @@ const (
 	FlagSgnPubKey           = "sgn.pubkey"
 	FlagSgnChainID          = "sgn.chain_id"
 	FlagSgnNodeURI          = "sgn.node_uri"
-	FlagSgnBaseGasPrice     = "sgn.base_gas_price"
 	FlagSgnTimeoutCommit    = "sgn.timeout_commit"
 	FlagSgnKeyringBackend   = "sgn.keyring_backend"
-	FlagSgnGasAdjustment    = "sgn.gas_adjustment"
+	FlagSgnMinGasPrices     = "sgn.min_gas_prices"
 	FlagSgnExecuteSlash     = "sgn.execute_slash"
 
 	FlagSgnCheckIntervalGuardQueue = "sgn.check_interval.guard_queue"
@@ -42,11 +41,6 @@ const (
 
 	FlagLogLevel = "log.level"
 	FlagLogColor = "log.color"
-)
-
-const (
-	DefaultSgnGasAdjustment = 1.5
-	DefaultSgnGasLimit      = 300000
 )
 
 func PostCommands(cmds ...*cobra.Command) []*cobra.Command {

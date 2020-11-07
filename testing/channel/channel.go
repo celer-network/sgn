@@ -64,7 +64,6 @@ func NewRestServer() (rs *RestServer, err error) {
 			viper.GetString(common.FlagSgnValidatorAccount),
 			viper.GetString(common.FlagSgnPassphrase),
 			cdc,
-			nil,
 		)
 		if err != nil {
 			return

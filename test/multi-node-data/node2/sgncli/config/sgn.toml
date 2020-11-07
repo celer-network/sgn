@@ -24,11 +24,10 @@ color = false
 level = "debug"
 
 [sgn]
-base_gas_price = 0
 chain_id = "sgntest"
 execute_slash = true
-gas_adjustment = 1.5
 keyring_backend = "file"
+min_gas_prices = "0.000001quota"
 node_uri = "tcp://localhost:26657"
 passphrase = "12341234"
 pubkey = "sgnvalconspub1zcjduepqc5q7yg5r62qrtfgdqxsuswn3nx8t4djp8vm9t598l8ctvzm4652qggrxg9"
