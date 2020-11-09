@@ -32,23 +32,9 @@ func (rs *RestServer) registerTxRoutes() {
 }
 
 type (
-	SubscribeRequest struct {
-		EthAddr string `json:"eth_addr" yaml:"eth_addr"`
-		Amount  string `json:"amount" yaml:"amount"`
-	}
-
 	GuardRequest struct {
 		SignedSimplexStateBytes string `json:"signed_simplex_state_bytes" yaml:"signed_simplex_state_bytes"`
 		SimplexReceiverSig      string `json:"simplex_receiver_sig" yaml:"simplex_receiver_sig"`
-	}
-
-	UpdateSidechainAddrRequest struct {
-		EthAddr string `json:"eth_addr" yaml:"eth_addr"`
-	}
-
-	SyncDelegatorRequest struct {
-		CandidateAddress string `json:"candidate_address"`
-		DelegatorAddress string `json:"delegator_address"`
 	}
 
 	WithdrawRewardRequest struct {
