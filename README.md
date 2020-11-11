@@ -6,8 +6,10 @@ Official implementation of the [Celer State Guardian Network (SGN)](https://www.
 
 ## Run local tests
 
-Please follow the [local test instructions](./test/README.md) to test SGN on your machine.
+Please follow the [local test instructions](./test/README.md) to test SGN and get familiar with the validator CLI operations on your machine.
 
 ## Join the public networks
 
-Please refer to instructions in [sgn-networks](https://github.com/celer-network/sgn-networks/tree/master/docs) to see how to [run a validator](https://github.com/celer-network/sgn-networks/blob/master/docs/validator.md) and how to [test as a state channel client](https://github.com/celer-network/sgn-networks/blob/master/docs/test_user.md).
+Both SGN mainnet and testnet are up and running.
+
+Please refer to instructions in [sgn-networks](https://github.com/celer-network/sgn-networks/) to see how to [run a validator](https://github.com/celer-network/sgn-networks/blob/master/docs/validator.md), how to [operate as a delegator](https://github.com/celer-network/sgn-networks/blob/master/docs/delegator.md), and how to [test as a state channel client](https://github.com/celer-network/sgn-networks/blob/master/docs/test_user.md).
