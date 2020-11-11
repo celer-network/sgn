@@ -53,8 +53,15 @@ func slashTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amts := []*big.Int{big.NewInt(2000000000000000000), big.NewInt(2000000000000000000), big.NewInt(1000000000000000000)}
+	amts := []*big.Int{big.NewInt(3000000000000000000), big.NewInt(3000000000000000000), big.NewInt(1000000000000000000)}
 	tc.AddValidators(t, transactor, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
+
+	// Add second delegator to third validator
+	_, auth, err := tc.GetAuth(tc.ValEthKs[0])
+	require.NoError(t, err, "failed to get auth")
+	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[2]), big.NewInt(1000000000000000000))
+	require.NoError(t, err, "failed to delegate stake")
+
 	shutdownNode(2)
 
 	log.Infoln("Query sgn about penalty info...")
@@ -63,7 +70,16 @@ func slashTest(t *testing.T) {
 	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
 	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[0])
+	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
+	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
+
+	nonce = uint64(1)
+	penalty, err = tc.QueryPenalty(transactor.CliCtx, nonce, 2)
+	require.NoError(t, err, "failed to query penalty")
+	log.Infoln("Query sgn about penalty info:", penalty.String())
+	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
+	expRes2 = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 
@@ -72,10 +88,10 @@ func slashTest(t *testing.T) {
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
 		poolAmt = ci.StakingPool.String()
-		if poolAmt == "990000000000000000" {
+		if poolAmt == "1980000000000000000" {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
-	assert.Equal(t, "990000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 990000000000000000"))
+	assert.Equal(t, "1980000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 1970000000000000000"))
 }
