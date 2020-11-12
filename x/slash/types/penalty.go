@@ -48,17 +48,19 @@ type Penalty struct {
 	Nonce               uint64                `json:"nonce"`
 	ValidatorAddr       string                `json:"validator_addr"`
 	Reason              string                `json:"reason"`
-	PenalizedDelegators []AccountAmtPair      `json:"penalized_delegators"`
 	Beneficiaries       []AccountFractionPair `json:"beneficiaries"`
+	PenalizedDelegators []AccountAmtPair      `json:"penalized_delegators"`
 	PenaltyProtoBytes   []byte                `json:"penalty_proto_bytes"`
 	Sigs                []common.Sig          `json:"sigs"`
 }
 
-func NewPenalty(nonce uint64, reason string, validatorAddr string) Penalty {
+func NewPenalty(nonce uint64, reason string, validatorAddr string, beneficiaries []AccountFractionPair, penalizedDelegators []AccountAmtPair) Penalty {
 	return Penalty{
-		Nonce:         nonce,
-		Reason:        reason,
-		ValidatorAddr: mainchain.FormatAddrHex(validatorAddr),
+		Nonce:               nonce,
+		Reason:              reason,
+		ValidatorAddr:       mainchain.FormatAddrHex(validatorAddr),
+		Beneficiaries:       beneficiaries,
+		PenalizedDelegators: penalizedDelegators,
 	}
 }
 

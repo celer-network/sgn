@@ -22,6 +22,12 @@ func (k Keeper) SignedBlocksWindow(ctx sdk.Context) (res int64) {
 	return
 }
 
+// PenaltyDelegatorSize - sliding window for downtime slashing
+func (k Keeper) PenaltyDelegatorSize(ctx sdk.Context) (res int64) {
+	k.paramstore.Get(ctx, types.KeyPenaltyDelegatorSize, &res)
+	return
+}
+
 // MinSignedPerWindow - minimum blocks signed per window
 func (k Keeper) MinSignedPerWindow(ctx sdk.Context) (res sdk.Dec) {
 	k.paramstore.Get(ctx, types.KeyMinSignedPerWindow, &res)
@@ -56,6 +62,7 @@ func (k Keeper) FallbackGuardReward(ctx sdk.Context) (res sdk.Dec) {
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.SignedBlocksWindow(ctx),
+		k.PenaltyDelegatorSize(ctx),
 		k.MinSignedPerWindow(ctx),
 		k.SlashFractionDoubleSign(ctx),
 		k.SlashFractionDowntime(ctx),

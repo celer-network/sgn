@@ -159,35 +159,50 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		return
 	}
 
-	penaltyNonce := k.GetPenaltyNonce(ctx)
-	penalty := NewPenalty(penaltyNonce, reason, identity)
+	var penalizedDelegators []AccountAmtPair
+
 	if reason == AttributeValueDepositBurn {
-		penalty.PenalizedDelegators = []AccountAmtPair{NewAccountAmtPair(candidate.EthAddress, slashAmount)}
+		penalizedDelegators = []AccountAmtPair{NewAccountAmtPair(candidate.EthAddress, slashAmount)}
 	} else {
 		delegators := k.validatorKeeper.GetAllDelegators(ctx, candidate.EthAddress)
 		for _, delegator := range delegators {
 			penaltyAmt := slashAmount.Mul(delegator.DelegatedStake).Quo(candidate.StakingPool)
 			accountAmtPair := NewAccountAmtPair(delegator.DelegatorAddr, penaltyAmt)
-			penalty.PenalizedDelegators = append(penalty.PenalizedDelegators, accountAmtPair)
+			penalizedDelegators = append(penalizedDelegators, accountAmtPair)
 		}
 	}
 
-	penalty.Beneficiaries = beneficiaries
-	penalty.GenerateProtoBytes()
-	k.SetPenalty(ctx, penalty)
-	k.SetPenaltyNonce(ctx, penaltyNonce+1)
+	penaltyNonce := k.GetPenaltyNonce(ctx)
+	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
+	penalizedDelegatorCount := len(penalizedDelegators)
+	low := 0
+	for low < penalizedDelegatorCount {
+		up := low + penaltyDelegatorSize
+		if up > penalizedDelegatorCount {
+			up = penalizedDelegatorCount
+		}
 
-	log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d",
-		candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce)
+		penalty := NewPenalty(penaltyNonce, reason, identity, beneficiaries, penalizedDelegators[low:up])
+		penalty.GenerateProtoBytes()
+		k.SetPenalty(ctx, penalty)
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			EventTypeSlash,
-			sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
-			sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
-			sdk.NewAttribute(slashing.AttributeKeyReason, reason),
-		),
-	)
+		log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d",
+			candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				EventTypeSlash,
+				sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
+				sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
+				sdk.NewAttribute(slashing.AttributeKeyReason, reason),
+			),
+		)
+
+		low = up
+		penaltyNonce += 1
+	}
+
+	k.SetPenaltyNonce(ctx, penaltyNonce)
+
 }
 
 // Get the next Penalty nonce
