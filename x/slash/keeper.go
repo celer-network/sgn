@@ -174,9 +174,15 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 
 	penaltyNonce := k.GetPenaltyNonce(ctx)
 	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
-	i := 0
-	for i < len(penalizedDelegators) {
-		penalty := NewPenalty(penaltyNonce, reason, identity, beneficiaries, penalizedDelegators[i:i+penaltyDelegatorSize])
+	penalizedDelegatorCount := len(penalizedDelegators)
+	low := 0
+	for low < penalizedDelegatorCount {
+		up := low + penaltyDelegatorSize
+		if up > penalizedDelegatorCount {
+			up = penalizedDelegatorCount
+		}
+
+		penalty := NewPenalty(penaltyNonce, reason, identity, beneficiaries, penalizedDelegators[low:up])
 		penalty.GenerateProtoBytes()
 		k.SetPenalty(ctx, penalty)
 
@@ -191,7 +197,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 			),
 		)
 
-		i += penaltyDelegatorSize
+		low = up
 		penaltyNonce += 1
 	}
 
