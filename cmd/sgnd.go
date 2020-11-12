@@ -87,7 +87,7 @@ func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Applicatio
 		panic(err)
 	}
 
-	return app.NewSgnApp(
+	app := app.NewSgnApp(
 		logger,
 		db,
 		skipUpgradeHeights,
@@ -97,6 +97,10 @@ func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Applicatio
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetPruning(pruningOpts),
 	)
+	if err := app.LoadLatestVersion(); err != nil {
+		panic(err)
+	}
+	return app
 }
 
 func exportAppStateAndTMValidators(

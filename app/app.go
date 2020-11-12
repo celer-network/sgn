@@ -338,11 +338,6 @@ func NewSgnApp(logger tlog.Logger, db dbm.DB, skipUpgradeHeights map[int64]bool,
 		app.keySync,
 	)
 
-	err = app.LoadLatestVersion(app.keyMain)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-
 	go app.startMonitor(db)
 
 	return app
@@ -372,6 +367,10 @@ func (app *SgnApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abc
 
 func (app *SgnApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
+}
+
+func (app *SgnApp) LoadLatestVersion() error {
+	return app.BaseApp.LoadLatestVersion(app.keyMain)
 }
 
 func (app *SgnApp) LoadHeight(height int64) error {
