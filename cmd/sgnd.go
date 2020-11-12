@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
@@ -68,17 +69,34 @@ func persistentPreRunEFn(context *server.Context) func(*cobra.Command, []string)
 			return err
 		}
 		viper.SetConfigFile(sgnConfigPath)
-		return viper.ReadInConfig()
+		return viper.MergeInConfig()
 	}
 }
 
 func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+	var cache sdk.MultiStorePersistentCache
+	if viper.GetBool(server.FlagInterBlockCache) {
+		cache = store.NewCommitKVStoreCacheManager()
+	}
 	skipUpgradeHeights := make(map[int64]bool)
 	for _, h := range viper.GetIntSlice(server.FlagUnsafeSkipUpgrades) {
 		skipUpgradeHeights[int64(h)] = true
 	}
+	pruningOpts, err := server.GetPruningOptionsFromFlags()
+	if err != nil {
+		panic(err)
+	}
 
-	return app.NewSgnApp(logger, db, skipUpgradeHeights, baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)))
+	return app.NewSgnApp(
+		logger,
+		db,
+		skipUpgradeHeights,
+		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
+		baseapp.SetHaltTime(viper.GetUint64(server.FlagHaltTime)),
+		baseapp.SetInterBlockCache(cache),
+		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
+		baseapp.SetPruning(pruningOpts),
+	)
 }
 
 func exportAppStateAndTMValidators(
