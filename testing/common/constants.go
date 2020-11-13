@@ -23,8 +23,8 @@ const (
 	PollingInterval  = time.Second
 	DisputeTimeout   = 100
 
-	RetryPeriod = 200 * time.Millisecond
-	RetryLimit  = 200
+	RetryPeriod = 300 * time.Millisecond
+	RetryLimit  = 100
 )
 
 var (

@@ -171,5 +171,8 @@ func checkRequest(t *testing.T, transactor *transactor.Transactor, cid mainchain
 	}
 	require.NoError(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	assert.True(t, rexp.MatchString(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	success := assert.True(t, rexp.MatchString(request.String()), fmt.Sprintf("res is \"%s\"\nexpect \"%s\"", request, expectedRes))
+	if !success {
+		t.FailNow()
+	}
 }
