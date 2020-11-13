@@ -51,7 +51,7 @@ func Subscribe(t *testing.T, transactor *transactor.Transactor, amt *big.Int) {
 	subscription := guardtypes.NewSubscription(tc.Client0.Address.Hex())
 	subscription.Deposit = sdk.NewIntFromBigInt(amt)
 	log.Infoln("Query sgn about the subscription info...")
-	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
+	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		subscription, err = guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, tc.Client0.Address.Hex())
 		if err == nil && expectedRes == subscription.String() {
@@ -68,29 +68,20 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	ctx := context.Background()
 
 	log.Infoln("Open channel...")
-	channelId, err := tc.OpenChannel(tc.Client0, tc.Client1)
+	cid, err := tc.OpenChannel(tc.Client0, tc.Client1)
 	require.NoError(t, err, "failed to open channel")
 
 	log.Infoln("Request to init guard ...")
 	seqNum := uint64(10)
-	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
-	require.NoError(t, err, "failed to prepare SignedSimplexState")
-	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
-	require.NoError(t, err, "failed to get signedSimplexStateBytes")
-	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
-	require.NoError(t, err, "failed to sign signedSimplexStateBytes")
-	initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig, tc.DisputeTimeout)
-	syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(initRequest)
-	msgSubmitChange := sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient, transactor.Key.GetAddress())
+	msgSubmitChange := getGuardMsg(t, transactor, cid, seqNum, true)
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	// TxHash now should be empty
 	var request guard.Request
 	expectedRes := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Idle`,
-		channelId, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
+		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
@@ -102,20 +93,14 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 
 	log.Infoln("Request guard (2nd request)...")
 	seqNum = uint64(12)
-	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(seqNum, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
-	require.NoError(t, err, "failed to prepare SignedSimplexState")
-	signedSimplexStateBytes, err = proto.Marshal(signedSimplexStateProto)
-	require.NoError(t, err, "failed to get signedSimplexStateBytes")
-	requestSig, err = tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
-	require.NoError(t, err, "failed to sign signedSimplexStateBytes")
-	msgRequestGuard := guard.NewMsgRequestGuard(signedSimplexStateBytes, requestSig, transactor.Key.GetAddress())
+	msgRequestGuard := getGuardMsg(t, transactor, cid, seqNum, false)
 	transactor.AddTxMsg(msgRequestGuard)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Idle`,
-		channelId, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
+		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
 			break
 		}
@@ -126,7 +111,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err = tc.PrepareSignedSimplexState(1, channelId[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(1, cid[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
 	require.NoError(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
@@ -137,12 +122,12 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Settled, TriggerTxHash: 0x[a-f0-9]{64}, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
-		channelId, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout, guardSender)
+	rstr := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
+		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout, tx.Hash().Hex(), guardSender)
 	r, err := regexp.Compile(strings.ToLower(rstr))
 	require.NoError(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, channelId[:], tc.Client0.Address.Hex())
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
 		if err == nil && r.MatchString(strings.ToLower(request.String())) {
 			break
 		}
@@ -186,4 +171,19 @@ func CheckReward(t *testing.T, transactor *transactor.Transactor, valAddr, srvRe
 	rsr, err := tc.SgnContract.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(valAddr))
 	require.NoError(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
+}
+
+func getGuardMsg(t *testing.T, transactor *transactor.Transactor, cid mainchain.CidType, seqNum uint64, init bool) sdk.Msg {
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(seqNum, cid[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
+	require.NoError(t, err, "failed to prepare SignedSimplexState")
+	signedSimplexStateBytes, err := proto.Marshal(signedSimplexStateProto)
+	require.NoError(t, err, "failed to get signedSimplexStateBytes")
+	requestSig, err := tc.Client0.Signer.SignEthMessage(signedSimplexStateBytes)
+	require.NoError(t, err, "failed to sign signedSimplexStateBytes")
+	if init {
+		initRequest := guard.NewInitRequest(signedSimplexStateBytes, requestSig, tc.DisputeTimeout)
+		syncData := transactor.CliCtx.Codec.MustMarshalBinaryBare(initRequest)
+		return sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient, transactor.Key.GetAddress())
+	}
+	return guard.NewMsgRequestGuard(signedSimplexStateBytes, requestSig, transactor.Key.GetAddress())
 }
