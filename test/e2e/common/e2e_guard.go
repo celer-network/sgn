@@ -26,52 +26,50 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func GuardTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.Int, guardSender, srvReward string, rewardSigLen int) {
+// common functions for single-node and multi-node e2e guard tests
+
+func Subscribe(t *testing.T, transactor *transactor.Transactor, amt *big.Int) {
+	ctx := context.Background()
+	var tx *ethtypes.Transaction
+
+	log.Infoln("Call subscribe on sgn contract...")
+	tx, err := tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
+	require.NoError(t, err, "failed to approve CELR to DPoS contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to DPoS contract")
+
+	tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
+	require.NoError(t, err, "failed to approve CELR to SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to SGN contract")
+
+	_, err = tc.DposContract.ContributeToMiningPool(tc.Client0.Auth, amt)
+	require.NoError(t, err, "failed to call ContributeToMiningPool of DPoS contract")
+
+	tx, err = tc.SgnContract.Subscribe(tc.Client0.Auth, amt)
+	require.NoError(t, err, "failed to call subscribe of SGN contract")
+	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
+
+	subscription := guardtypes.NewSubscription(tc.Client0.Address.Hex())
+	subscription.Deposit = sdk.NewIntFromBigInt(amt)
+	log.Infoln("Query sgn about the subscription info...")
+	expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
+	for retry := 0; retry < tc.RetryLimit; retry++ {
+		subscription, err = guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, tc.Client0.Address.Hex())
+		if err == nil && expectedRes == subscription.String() {
+			break
+		}
+		time.Sleep(tc.RetryPeriod)
+	}
+	require.NoError(t, err, "failed to query subscription on sgn")
+	log.Infoln("Query sgn about the subscription info:", subscription.String())
+	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+}
+
+func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender string) {
 	ctx := context.Background()
 
 	log.Infoln("Open channel...")
 	channelId, err := tc.OpenChannel(tc.Client0, tc.Client1)
 	require.NoError(t, err, "failed to open channel")
-
-	if amt.Cmp(big.NewInt(0)) > 0 {
-		var tx *ethtypes.Transaction
-
-		log.Infoln("Call subscribe on sgn contract...")
-		tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.DPoSAddr, amt)
-		require.NoError(t, err, "failed to approve CELR to DPoS contract")
-		tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to DPoS contract")
-
-		tx, err = tc.E2eProfile.CelrContract.Approve(tc.Client0.Auth, tc.E2eProfile.SGNAddr, amt)
-		require.NoError(t, err, "failed to approve CELR to SGN contract")
-		tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Approve CELR to SGN contract")
-
-		_, err = tc.DposContract.ContributeToMiningPool(tc.Client0.Auth, amt)
-		require.NoError(t, err, "failed to call ContributeToMiningPool of DPoS contract")
-
-		tx, err = tc.SgnContract.Subscribe(tc.Client0.Auth, amt)
-		require.NoError(t, err, "failed to call subscribe of SGN contract")
-		tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "Subscribe on SGN contract")
-
-		subscription := guardtypes.NewSubscription(tc.Client0.Address.Hex())
-		subscription.Deposit = sdk.NewIntFromBigInt(amt)
-		log.Infoln("Query sgn about the subscription info...")
-		expectedRes := fmt.Sprintf(`EthAddress: %s, Deposit: %d, Spend: %d`, mainchain.Addr2Hex(tc.Client0.Address), amt, 0) // defined in Subscription.String()
-		for retry := 0; retry < tc.RetryLimit; retry++ {
-			subscription, err = guard.CLIQuerySubscription(transactor.CliCtx, guard.RouterKey, tc.Client0.Address.Hex())
-			if err == nil && expectedRes == subscription.String() {
-				break
-			}
-			time.Sleep(tc.RetryPeriod)
-		}
-		require.NoError(t, err, "failed to query subscription on sgn")
-		log.Infoln("Query sgn about the subscription info:", subscription.String())
-		assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
-	}
-	// Query sgn to check if epoch has correct fee
-	// TODO: add this test after merging the change of pay per use
-
-	// Query sgn about validator reward
-	// TODO: add this test after merging the change of pay per use
 
 	log.Infoln("Request to init guard ...")
 	seqNum := uint64(10)
@@ -153,26 +151,26 @@ func GuardTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.I
 	require.NoError(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
 	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
+}
 
-	// check reward distribution
-	if srvReward == "" {
-		return
-	}
+func CheckReward(t *testing.T, transactor *transactor.Transactor, valAddr, srvReward string, rewardSigLen int) {
+	ctx := context.Background()
 	log.Infoln("Query sgn to check if it gets the correct reward info (without sigs)...")
-	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])
+	reward, err := validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, valAddr)
 	require.NoError(t, err, "failed to query reward on sgn")
 	log.Infoln("Query sgn about the reward info:", reward.String())
 	assert.True(t, reward.MiningReward.IsPositive(), "Minging reward should be larger than 0")
-	expectedRes = fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`, tc.ValEthAddrs[0], reward.MiningReward.String(), srvReward)
+	expectedRes := fmt.Sprintf(`Receiver: %s, MiningReward: %s, ServiceReward: %s`,
+		valAddr, reward.MiningReward.String(), srvReward)
 	assert.Equal(t, expectedRes, reward.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Send tx on sidechain to withdraw reward...")
-	msgWithdrawReward := validator.NewMsgWithdrawReward(tc.ValEthAddrs[0], transactor.Key.GetAddress())
+	msgWithdrawReward := validator.NewMsgWithdrawReward(valAddr, transactor.Key.GetAddress())
 	transactor.AddTxMsg(msgWithdrawReward)
 
 	log.Infoln("Query sgn to check if reward gets signature...")
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, tc.ValEthAddrs[0])
+		reward, err = validator.CLIQueryReward(transactor.CliCtx, validator.RouterKey, valAddr)
 		if err == nil && len(reward.Sigs) == rewardSigLen {
 			break
 		}
@@ -182,10 +180,10 @@ func GuardTestCommon(t *testing.T, transactor *transactor.Transactor, amt *big.I
 	assert.Equal(t, rewardSigLen, len(reward.Sigs), "The length of reward signatures mismatch")
 
 	log.Infoln("Call redeemReward on sgn contract...")
-	tx, err = tc.SgnContract.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())
+	tx, err := tc.SgnContract.RedeemReward(tc.Client0.Auth, reward.GetRewardRequest())
 	require.NoError(t, err, "failed to redeem reward")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "redeem reward on SGN contract")
-	rsr, err := tc.SgnContract.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
+	rsr, err := tc.SgnContract.RedeemedServiceReward(&bind.CallOpts{}, mainchain.Hex2Addr(valAddr))
 	require.NoError(t, err, "failed to query redeemed service reward")
 	assert.Equal(t, reward.ServiceReward.BigInt(), rsr, "reward is not redeemed")
 }
