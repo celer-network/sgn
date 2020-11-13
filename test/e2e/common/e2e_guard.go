@@ -78,18 +78,9 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	transactor.AddTxMsg(msgSubmitChange)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	var request guard.Request
+
 	expectedRes := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle`, cid, seqNum, reqsubstr)
-	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
-		if err == nil && expectedRes == request.String() {
-			break
-		}
-		time.Sleep(tc.RetryPeriod)
-	}
-	require.NoError(t, err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
-	assert.Equal(t, expectedRes, request.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	checkRequest(t, transactor, cid, expectedRes)
 
 	log.Infoln("Request guard (2nd request)...")
 	seqNum = uint64(12)
@@ -98,16 +89,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle`, cid, seqNum, reqsubstr)
-	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
-		if err == nil && expectedRes == request.String() {
-			break
-		}
-		time.Sleep(tc.RetryPeriod)
-	}
-	require.NoError(t, err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
-	assert.Equal(t, expectedRes, request.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	checkRequest(t, transactor, cid, expectedRes)
 
 	log.Infoln("Call intendSettle on ledger contract...")
 	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(1, cid[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
@@ -123,18 +105,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
 	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
 		cid, seqNum, reqsubstr, tx.Hash().Hex(), guardSender)
-	rexp, err := regexp.Compile(expectedRes)
-	require.NoError(t, err, "failed to compile regexp")
-	for retry := 0; retry < tc.RetryLimit; retry++ {
-		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
-		if err == nil && rexp.MatchString(request.String()) {
-			break
-		}
-		time.Sleep(tc.RetryPeriod)
-	}
-	require.NoError(t, err, "failed to query request on sgn")
-	log.Infoln("Query sgn about the request info:", request.String())
-	assert.True(t, rexp.MatchString(request.String()), "SGN query result is wrong")
+	checkRequest(t, transactor, cid, expectedRes)
 }
 
 func CheckReward(t *testing.T, transactor *transactor.Transactor, valAddr, srvReward string, rewardSigLen int) {
@@ -185,4 +156,20 @@ func getGuardMsg(t *testing.T, transactor *transactor.Transactor, cid mainchain.
 		return sync.NewMsgSubmitChange(sync.InitGuardRequest, syncData, tc.EthClient, transactor.Key.GetAddress())
 	}
 	return guard.NewMsgRequestGuard(signedSimplexStateBytes, requestSig, transactor.Key.GetAddress())
+}
+
+func checkRequest(t *testing.T, transactor *transactor.Transactor, cid mainchain.CidType, expectedRes string) {
+	var request guard.Request
+	rexp, err := regexp.Compile(expectedRes)
+	require.NoError(t, err, "failed to compile regexp")
+	for retry := 0; retry < tc.RetryLimit; retry++ {
+		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
+		if err == nil && rexp.MatchString(request.String()) {
+			break
+		}
+		time.Sleep(tc.RetryPeriod)
+	}
+	require.NoError(t, err, "failed to query request on sgn")
+	log.Infoln("Query sgn about the request info:", request.String())
+	assert.True(t, rexp.MatchString(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }
