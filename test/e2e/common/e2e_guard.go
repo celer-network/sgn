@@ -65,6 +65,8 @@ func Subscribe(t *testing.T, transactor *transactor.Transactor, amt *big.Int) {
 
 func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender string) {
 	ctx := context.Background()
+	reqsubstr := fmt.Sprintf(`SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`,
+		tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
 
 	log.Infoln("Open channel...")
 	cid, err := tc.OpenChannel(tc.Client0, tc.Client1)
@@ -77,8 +79,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
 	var request guard.Request
-	expectedRes := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Idle`,
-		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
+	expectedRes := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle`, cid, seqNum, reqsubstr)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -96,8 +97,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	transactor.AddTxMsg(msgRequestGuard)
 
 	log.Infoln("Query sgn to check if request has correct state proof data...")
-	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Idle`,
-		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
+	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle`, cid, seqNum, reqsubstr)
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
 		if err == nil && expectedRes == request.String() {
@@ -121,8 +121,8 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
-		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout, tx.Hash().Hex(), guardSender)
+	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
+		cid, seqNum, reqsubstr, tx.Hash().Hex(), guardSender)
 	rexp, err := regexp.Compile(expectedRes)
 	require.NoError(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {
