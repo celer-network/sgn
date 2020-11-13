@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -89,7 +88,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	}
 	require.NoError(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, request.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Request guard (2nd request)...")
 	seqNum = uint64(12)
@@ -108,7 +107,7 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	}
 	require.NoError(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	assert.Equal(t, strings.ToLower(expectedRes), strings.ToLower(request.String()), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
+	assert.Equal(t, expectedRes, request.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 
 	log.Infoln("Call intendSettle on ledger contract...")
 	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(1, cid[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
@@ -122,20 +121,20 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
-	rstr := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
+	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
 		cid, seqNum, tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout, tx.Hash().Hex(), guardSender)
-	r, err := regexp.Compile(strings.ToLower(rstr))
+	rexp, err := regexp.Compile(expectedRes)
 	require.NoError(t, err, "failed to compile regexp")
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		request, err = guard.CLIQueryRequest(transactor.CliCtx, guard.RouterKey, cid[:], tc.Client0.Address.Hex())
-		if err == nil && r.MatchString(strings.ToLower(request.String())) {
+		if err == nil && rexp.MatchString(request.String()) {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
 	require.NoError(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	assert.True(t, r.MatchString(strings.ToLower(request.String())), "SGN query result is wrong")
+	assert.True(t, rexp.MatchString(request.String()), "SGN query result is wrong")
 }
 
 func CheckReward(t *testing.T, transactor *transactor.Transactor, valAddr, srvReward string, rewardSigLen int) {
