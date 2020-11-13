@@ -61,7 +61,7 @@ func guardTest(t *testing.T) {
 		t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
 	tec.Subscribe(t, transactor, amt)
-	tec.TestGuard(t, transactor, tc.ValEthAddrs[0])
-	// request cost is 1000000000000000000 * 2, all goes to validator
+	tec.TestGuard(t, transactor, []string{tc.ValEthAddrs[0], tc.ValEthAddrs[0]})
+	// 2 requests, pre request cost is 1000000000000000000, all goes to validator
 	tec.CheckReward(t, transactor, tc.ValEthAddrs[0], "2000000000000000000", 1)
 }

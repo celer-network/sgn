@@ -63,7 +63,7 @@ func Subscribe(t *testing.T, transactor *transactor.Transactor, amt *big.Int) {
 	assert.Equal(t, expectedRes, subscription.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 }
 
-func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender string) {
+func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSenders []string) {
 	ctx := context.Background()
 	reqsubstr := fmt.Sprintf(`SimplexSender: %s, SimplexReceiver: %s, DisputeTimeout: %d`,
 		tc.ClientEthAddrs[1], tc.ClientEthAddrs[0], tc.DisputeTimeout)
@@ -82,29 +82,38 @@ func TestGuard(t *testing.T, transactor *transactor.Transactor, guardSender stri
 	expectedRes := fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle`, cid, seqNum, reqsubstr)
 	checkRequest(t, transactor, cid, expectedRes)
 
+	log.Infoln("Call intendWithdraw on ledger contract...")
+	tx, err := tc.LedgerContract.IntendWithdraw(tc.Client1.Auth, cid, big.NewInt(0), mainchain.ZeroCid)
+
+	log.Infoln("Query sgn to check if guard is triggered...")
+	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Withdrawing, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}`,
+		cid, seqNum, reqsubstr, tx.Hash().Hex())
+	checkRequest(t, transactor, cid, expectedRes)
+
+	log.Infoln("Query sgn to check if request has correct state proof data...")
+	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
+		cid, seqNum, reqsubstr, tx.Hash().Hex(), guardSenders[0])
+	checkRequest(t, transactor, cid, expectedRes)
+
 	log.Infoln("Request guard (2nd request)...")
 	seqNum = uint64(12)
 	msgRequestGuard := getGuardMsg(t, transactor, cid, seqNum, false)
 	transactor.AddTxMsg(msgRequestGuard)
 
-	log.Infoln("Query sgn to check if request has correct state proof data...")
-	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Idle`, cid, seqNum, reqsubstr)
-	checkRequest(t, transactor, cid, expectedRes)
-
 	log.Infoln("Call intendSettle on ledger contract...")
-	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(1, cid[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
+	signedSimplexStateProto, err := tc.PrepareSignedSimplexState(11, cid[:], tc.Client1.Address.Bytes(), tc.Client0, tc.Client1)
 	require.NoError(t, err, "failed to prepare SignedSimplexState")
 	signedSimplexStateArrayBytes, err := proto.Marshal(&chain.SignedSimplexStateArray{
 		SignedSimplexStates: []*chain.SignedSimplexState{signedSimplexStateProto},
 	})
 	require.NoError(t, err, "failed to get signedSimplexStateArrayBytes")
-	tx, err := tc.LedgerContract.IntendSettle(tc.Client0.Auth, signedSimplexStateArrayBytes)
+	tx, err = tc.LedgerContract.IntendSettle(tc.Client0.Auth, signedSimplexStateArrayBytes)
 	require.NoError(t, err, "failed to IntendSettle")
 	tc.WaitMinedWithChk(ctx, tc.EthClient, tx, tc.BlockDelay, tc.PollingInterval, "IntendSettle")
 
 	log.Infoln("Query sgn to check if validator has submitted the state proof correctly...")
 	expectedRes = fmt.Sprintf(`ChannelId: %x, SeqNum: %d, %s, Status: Settled, TriggerTxHash: %s, TriggerTxBlkNum: [0-9]{2,3}, GuardTxHash: 0x[a-f0-9]{64}, GuardTxBlkNum: [0-9]{2,3}, GuardSender: %s`,
-		cid, seqNum, reqsubstr, tx.Hash().Hex(), guardSender)
+		cid, seqNum, reqsubstr, tx.Hash().Hex(), guardSenders[1])
 	checkRequest(t, transactor, cid, expectedRes)
 }
 
@@ -171,7 +180,7 @@ func checkRequest(t *testing.T, transactor *transactor.Transactor, cid mainchain
 	}
 	require.NoError(t, err, "failed to query request on sgn")
 	log.Infoln("Query sgn about the request info:", request.String())
-	success := assert.True(t, rexp.MatchString(request.String()), fmt.Sprintf("res is \"%s\"\nexpect \"%s\"", request, expectedRes))
+	success := assert.True(t, rexp.MatchString(request.String()), fmt.Sprintf("expect \"%s\"", expectedRes))
 	if !success {
 		t.FailNow()
 	}

@@ -75,9 +75,10 @@ func guardTest(t *testing.T) {
 	tec.Subscribe(t, transactor, amt)
 
 	restartWithConfig(0, common.FlagSgnCheckIntervalGuardQueue, 10000)
-	// validator 0 will fail to guard as the queue check interval was set to 10000, so validator 1
-	// will send the guard tx, and validator 0 will be slashed
-	tec.TestGuard(t, transactor, tc.ValEthAddrs[1])
+	// validator 0 will fail to guard as the queue check interval was set to 10000,
+	// so validator 1 will send the first guard tx, and validator 0 will be slashed.
+	// validaotr 3 will send then second guard tx
+	tec.TestGuard(t, transactor, []string{tc.ValEthAddrs[1], tc.ValEthAddrs[3]})
 
 	/* Request cost is 1000000000000000000 * 2, validator0 has a 10/32 of stake,
 	so it is going to get 625000000000000000 to distribute to its delegators.
@@ -111,7 +112,4 @@ func guardTest(t *testing.T) {
 		time.Sleep(tc.RetryPeriod)
 	}
 	assert.Equal(t, expPoolAmt, poolAmt, fmt.Sprintf("The expected StakingPool should be %s", expPoolAmt))
-
-	// 2nd channel guard test, first guardian should be assigned to validator 3
-	tec.TestGuard(t, transactor, tc.ValEthAddrs[3])
 }

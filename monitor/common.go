@@ -71,7 +71,7 @@ func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Req
 			continue
 		}
 		if seqNums[1-i].Uint64() >= request.SeqNum {
-			log.Debugln("Ignore the intendSettle event with an equal or larger seqNum")
+			log.Debugln("Ignore request with an equal or larger mainchain seqnum")
 			continue
 		}
 

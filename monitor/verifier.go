@@ -16,7 +16,6 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -459,6 +458,15 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
 			return true, false
 		}
+		event, err2 := m.EthClient.Ledger.ParseIntendWithdraw(*triggerLog)
+		if err2 != nil {
+			log.Errorf("%s. ParseIntendWithdraw event err %s", logmsg, err2)
+			return true, false
+		}
+		if event.Receiver == mainchain.Hex2Addr(r.SimplexReceiver) {
+			log.Errorf("%s intendWithdraw receiver is the simplex receiver", logmsg)
+			return true, false
+		}
 	} else {
 		log.Errorf("%s. Trigger Tx is not for IntendSettle/IntendWithdraw event", logmsg)
 		return true, false
@@ -506,7 +514,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 		log.Errorf("%s. Trigger transaction failed: %d", logmsg, receipt.Status)
 		return true, false
 	}
-	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
+	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/SnapshotStates event is the last one
 
 	// verify transaction contract address
 	if guardLog.Address != m.EthClient.LedgerAddress {
@@ -541,36 +549,29 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
 		seqIndex = 1
 	}
-	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
-	if err != nil {
-		log.Errorf("%s. Failed to parse CelerLedgerABI: %s", logmsg, err)
-		return true, false
-	}
 	var seqNum uint64
 	if r.Status == guard.ChanStatus_Settling {
 		if proof.Status != guard.ChanStatus_Settled {
 			log.Errorf("%s. Proof guard state should be settled", logmsg)
 			return true, false
 		}
-		var intendSettleEvent mainchain.CelerLedgerIntendSettle
-		err = ledgerABI.Unpack(&intendSettleEvent, "IntendSettle", guardLog.Data)
-		if err != nil {
-			log.Errorf("%s. Failed to unpack IntendSettle event: %s", logmsg, err)
+		event, err2 := m.EthClient.Ledger.ParseIntendSettle(*guardLog)
+		if err2 != nil {
+			log.Errorf("%s. ParseIntendSettle event err %s", logmsg, err2)
 			return true, false
 		}
-		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
+		seqNum = event.SeqNums[seqIndex].Uint64()
 	} else if r.Status == guard.ChanStatus_Withdrawing {
 		if proof.Status != guard.ChanStatus_Idle {
 			log.Errorf("%s. Proof guard state should be idle", logmsg)
 			return true, false
 		}
-		var snapshotStatesEvent mainchain.CelerLedgerSnapshotStates
-		err = ledgerABI.Unpack(&snapshotStatesEvent, "SnapshotStates", guardLog.Data)
-		if err != nil {
-			log.Errorf("%s. Failed to unpack SnapshotStates event: %s", logmsg, err)
+		event, err2 := m.EthClient.Ledger.ParseSnapshotStates(*guardLog)
+		if err2 != nil {
+			log.Errorf("%s. ParseSnapshotStates event err %s", logmsg, err2)
 			return true, false
 		}
-		seqNum = snapshotStatesEvent.SeqNums[seqIndex].Uint64()
+		seqNum = event.SeqNums[seqIndex].Uint64()
 	} else {
 		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.Status)
 		return true, false
