@@ -3,6 +3,7 @@ package monitor
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -328,6 +329,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
+		return errors.Is(err, mainchain.ErrPeersNotMatch), false
 	}
 	if simplexChannel.SeqNum <= seqNum {
 		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
@@ -392,6 +394,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
+		return errors.Is(err, mainchain.ErrPeersNotMatch), false
 	}
 	if r.SeqNum <= seqNum {
 		if m.cmpBlkNum(change.BlockNum) == 1 {

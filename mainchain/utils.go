@@ -3,6 +3,7 @@ package mainchain
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +11,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+)
+
+var (
+	ErrPeersNotMatch = errors.New("channel peers not match")
 )
 
 func IsBonded(dposCandidateInfo DPoSCandidateInfo) bool {
@@ -75,7 +80,8 @@ func GetSimplexSeqNum(
 		seqIndex = 1
 	}
 	if !match {
-		return 0, fmt.Errorf("channel peers not match")
+		return 0, fmt.Errorf("%w: cid %x, sender %x, receiver %x",
+			ErrPeersNotMatch, cid, simplexSender, simplexReceiver)
 	}
 
 	return seqNums[seqIndex].Uint64(), nil
