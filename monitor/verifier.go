@@ -419,7 +419,11 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 		return false, false
 	}
 
-	// TODO: verify triggerSeqNum
+	// verify triggerSeqNum
+	if trigger.TriggerSeqNum > seqNums[seqIndex].Uint64() {
+		log.Errorf("%s. TriggerSeqNum greater than mainchain value %s", logmsg, seqNums[seqIndex])
+		return true, false
+	}
 
 	// verify onchain trasaction receipt and status
 	receipt, err := m.EthClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
