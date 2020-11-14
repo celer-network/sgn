@@ -173,17 +173,14 @@ func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, er
 	}
 
 	// tx pre-check: sequence number
-	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
-	if err != nil {
-		return false, false, fmt.Errorf("get stateSeqNumMap err: %w", err)
-	}
 	simplexSender := mainchain.Hex2Addr(request.SimplexSender)
-	seqIndex := 0
-	if simplexSender == addrs[1] {
-		seqIndex = 1
+	simplexReceiver := mainchain.Hex2Addr(request.SimplexReceiver)
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
+	if err != nil {
+		return false, false, fmt.Errorf("GetSimplexSeqNum err: %w", err)
 	}
-	if request.SeqNum <= seqNums[seqIndex].Uint64() {
-		log.Infof("channel %x stored seq %d no larger than mainchain value %s", cid, request.SeqNum, seqNums[seqIndex])
+	if request.SeqNum <= seqNum {
+		log.Infof("channel %x stored seq %d no larger than mainchain value %d", cid, request.SeqNum, seqNum)
 		return false, true, nil
 	}
 

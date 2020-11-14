@@ -111,29 +111,15 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		// Initialize first guard request
 		// verify peer addr
 		cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
-		addrs, seqNums, err := rs.ledgerContract.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+		seqNum, err := mainchain.GetSimplexSeqNum(rs.ledgerContract, cid, simplexSender, simplexReceiver)
 		if err != nil {
-			errmsg := fmt.Sprintf("Failed to get mainchain channel info: %s", err)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
-			return
-		}
-		seqIndex := 0
-		var match bool
-		if simplexSender == addrs[0] {
-			match = (simplexReceiver == addrs[1])
-		} else if simplexSender == addrs[1] {
-			match = (simplexReceiver == addrs[0])
-			seqIndex = 1
-		}
-		if !match {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "channel peers not match")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// verify seq
-		if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
-			errmsg := fmt.Sprintf("invalid sequence number, request: %d, mainchain: %d",
-				simplexChannel.SeqNum, seqNums[seqIndex].Uint64())
+		if simplexChannel.SeqNum <= seqNum {
+			errmsg := fmt.Sprintf("invalid sequence number, request: %d, mainchain: %d", simplexChannel.SeqNum, seqNum)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}

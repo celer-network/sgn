@@ -324,28 +324,13 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 		return true, false
 	}
 
-	// verify addr
-	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	// verify addr and seq
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
 	if err != nil {
-		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
-		return false, false
+		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
 	}
-	seqIndex := 0
-	var match bool
-	if simplexSender == addrs[0] {
-		match = (simplexReceiver == addrs[1])
-	} else if simplexSender == addrs[1] {
-		match = (simplexReceiver == addrs[0])
-		seqIndex = 1
-	}
-	if !match {
-		log.Errorf("%s. simplex addrs not match mainchain value %x %x", logmsg, addrs[0], addrs[1])
-		return true, false
-	}
-
-	// verify seq
-	if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
-		log.Errorf("%s. SeqNum not larger than mainchain value %s", logmsg, seqNums[seqIndex])
+	if simplexChannel.SeqNum <= seqNum {
+		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
 		return true, false
 	}
 
@@ -401,27 +386,25 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 	}
 
 	// verify seqNum
-	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Bytes2Cid(trigger.ChannelId))
+	cid := mainchain.Bytes2Cid(trigger.ChannelId)
+	simplexSender := mainchain.Hex2Addr(r.SimplexSender)
+	simplexReceiver := mainchain.Hex2Addr(r.SimplexReceiver)
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
 	if err != nil {
-		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
-		return false, false
+		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
 	}
-	seqIndex := 0
-	if mainchain.Hex2Addr(trigger.SimplexReceiver) == addrs[0] {
-		seqIndex = 1
-	}
-	if r.SeqNum <= seqNums[seqIndex].Uint64() {
+	if r.SeqNum <= seqNum {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. Stored SeqNum %d not larger than mainchain value %s", logmsg, r.SeqNum, seqNums[seqIndex])
+			log.Errorf("%s. Stored SeqNum %d not larger than mainchain value %d", logmsg, r.SeqNum, seqNum)
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, stored SeqNum %d, mainchain value %s", logmsg, r.SeqNum, seqNums[seqIndex])
+		log.Infof("%s. mainchain block not passed, stored SeqNum %d, mainchain value %d", logmsg, r.SeqNum, seqNum)
 		return false, false
 	}
 
 	// verify triggerSeqNum
-	if trigger.TriggerSeqNum > seqNums[seqIndex].Uint64() {
-		log.Errorf("%s. TriggerSeqNum greater than mainchain value %s", logmsg, seqNums[seqIndex])
+	if trigger.TriggerSeqNum > seqNum {
+		log.Errorf("%s. TriggerSeqNum greater than mainchain value %d", logmsg, seqNum)
 		return true, false
 	}
 
