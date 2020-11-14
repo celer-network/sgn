@@ -53,37 +53,39 @@ func slashTest(t *testing.T) {
 		tc.SgnPassphrase,
 	)
 
-	amts := []*big.Int{big.NewInt(5000000000000000000), big.NewInt(5000000000000000000), big.NewInt(1000000000000000000)}
-	tc.AddValidators(t, transactor, tc.ValEthKs[:3], tc.ValAccounts[:3], amts)
+	amts := []*big.Int{big.NewInt(8000000000000000000), big.NewInt(1000000000000000000)}
+	tc.AddValidators(t, transactor, tc.ValEthKs[:2], tc.ValAccounts[:2], amts)
 
 	_, auth, err := tc.GetAuth(tc.DelEthKs[0])
 	require.NoError(t, err, "failed to get auth")
-	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[2]), big.NewInt(1000000000000000000))
+	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[1]), big.NewInt(1000000000000000000))
 	require.NoError(t, err, "failed to delegate stake")
 	_, auth, err = tc.GetAuth(tc.DelEthKs[1])
 	require.NoError(t, err, "failed to get auth")
-	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[2]), big.NewInt(1000000000000000000))
+	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[1]), big.NewInt(1000000000000000000))
 	require.NoError(t, err, "failed to delegate stake")
 
-	shutdownNode(2)
+	shutdownNode(1)
 
 	log.Infoln("Query sgn about penalty info...")
 	nonce := uint64(0)
-	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 2)
+	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 1)
 	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
-	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
-	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[2])
+	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[1])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[1])
 	expRes3 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[0])
+	expRes4 := fmt.Sprintf(`Account: 0000000000000000000000000000000000000001, Fraction: 0.100000000000000000`)
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 	assert.Equal(t, expRes3, penalty.PenalizedDelegators[1].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes3))
+	assert.Equal(t, expRes4, penalty.Beneficiaries[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes4))
 
 	nonce = uint64(1)
-	penalty, err = tc.QueryPenalty(transactor.CliCtx, nonce, 2)
+	penalty, err = tc.QueryPenalty(transactor.CliCtx, nonce, 1)
 	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
-	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[2])
+	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[1])
 	expRes2 = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
@@ -91,7 +93,7 @@ func slashTest(t *testing.T) {
 	log.Infoln("Query onchain staking pool")
 	var poolAmt string
 	for retry := 0; retry < tc.RetryLimit; retry++ {
-		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[2]))
+		ci, _ := tc.DposContract.GetCandidateInfo(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[1]))
 		poolAmt = ci.StakingPool.String()
 		if poolAmt == "2970000000000000000" {
 			break
@@ -99,4 +101,19 @@ func slashTest(t *testing.T) {
 		time.Sleep(tc.RetryPeriod)
 	}
 	assert.Equal(t, "2970000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 2970000000000000000"))
+
+	log.Infoln("Query onchain validator 0 balance")
+	var balance string
+	for retry := 0; retry < tc.RetryLimit; retry++ {
+		b, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
+		balance = b.String()
+		log.Info(balance)
+		if balance == "9999992003000000000000000" {
+			break
+		}
+		time.Sleep(tc.RetryPeriod)
+	}
+
+	assert.Equal(t, "9999992003000000000000000", balance, fmt.Sprintf("The expected balance should be 9999992003000000000000000"))
+
 }

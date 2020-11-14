@@ -34,7 +34,7 @@ func (amp AccountAmtPair) String() string {
 
 type AccountFractionPair struct {
 	Account  string  `json:"account"`
-	Fraction sdk.Dec `json:"percent"`
+	Fraction sdk.Dec `json:"fraction"`
 }
 
 func NewAccountFractionPair(account string, fraction sdk.Dec) AccountFractionPair {
@@ -42,6 +42,10 @@ func NewAccountFractionPair(account string, fraction sdk.Dec) AccountFractionPai
 		Account:  mainchain.FormatAddrHex(account),
 		Fraction: fraction,
 	}
+}
+
+func (amp AccountFractionPair) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`Account: %s, Fraction: %v`, amp.Account, amp.Fraction))
 }
 
 type Penalty struct {

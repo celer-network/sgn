@@ -73,7 +73,8 @@
         "slash_fraction_double_sign": "0.050000000000000000",
         "slash_fraction_downtime": "0.010000000000000000",
         "slash_fraction_guard_failure": "0.010000000000000000",
-        "fallback_guard_reward": "0.500000000000000000"
+        "fallback_guard_reward": "0.500000000000000000",
+        "syncer_reward": "0.100000000000000000"
       }
     },
     "params": null,

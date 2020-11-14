@@ -172,6 +172,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		}
 	}
 
+	beneficiaries = append(beneficiaries, NewAccountFractionPair("1", k.SyncerReward(ctx)))
 	penaltyNonce := k.GetPenaltyNonce(ctx)
 	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
 	penalizedDelegatorCount := len(penalizedDelegators)
