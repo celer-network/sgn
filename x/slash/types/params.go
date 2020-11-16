@@ -21,7 +21,7 @@ var (
 	DefaultSlashFractionDowntime     = sdk.NewDec(1).Quo(sdk.NewDec(100))
 	DefaultSlashFractionGuardFailure = sdk.NewDec(1).Quo(sdk.NewDec(100))
 	DefaultFallbackGuardReward       = sdk.NewDec(1).Quo(sdk.NewDec(2))
-	DefaultSyncerReward              = sdk.NewDec(1).Quo(sdk.NewDec(10))
+	DefaultSyncerReward              = sdk.NewInt(10000000000000000)
 )
 
 // nolint - Keys for parameter access
@@ -47,12 +47,12 @@ type Params struct {
 	SlashFractionDowntime     sdk.Dec `json:"slash_fraction_downtime" yaml:"slash_fraction_downtime"`
 	SlashFractionGuardFailure sdk.Dec `json:"slash_fraction_guard_failure" yaml:"slash_fraction_guard_failure"`
 	FallbackGuardReward       sdk.Dec `json:"fallback_guard_reward" yaml:"fallback_guard_reward"`
-	SyncerReward              sdk.Dec `json:"syncer_reward" yaml:"syncer_reward"`
+	SyncerReward              sdk.Int `json:"syncer_reward" yaml:"syncer_reward"`
 }
 
 // NewParams creates a new Params instance
 func NewParams(signedBlocksWindow, penaltyDelegatorSize int64, minSignedPerWindow,
-	slashFractionDoubleSign, slashFractionDowntime, slashFractionGuardFailure, fallbackGuardReward, syncerReward sdk.Dec) Params {
+	slashFractionDoubleSign, slashFractionDowntime, slashFractionGuardFailure, fallbackGuardReward sdk.Dec, syncerReward sdk.Int) Params {
 	return Params{
 		SignedBlocksWindow:        signedBlocksWindow,
 		PenaltyDelegatorSize:      penaltyDelegatorSize,
@@ -267,17 +267,13 @@ func validateFallbackGuardReward(i interface{}) error {
 }
 
 func validateSyncerReward(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	if v.IsNegative() {
-		return fmt.Errorf("slash parameter SyncerReward cannot be negative: %s", v)
-	}
-
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash parameter SyncerReward must be less or equal than 1: %s", v)
+		return fmt.Errorf("guard parameter SyncerReward cannot be negative: %s", v)
 	}
 
 	return nil

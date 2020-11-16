@@ -172,7 +172,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		}
 	}
 
-	beneficiaries = append(beneficiaries, NewAccountFractionPair("1", k.SyncerReward(ctx)))
+	syncerReward := k.SyncerReward(ctx)
 	penaltyNonce := k.GetPenaltyNonce(ctx)
 	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
 	penalizedDelegatorCount := len(penalizedDelegators)
@@ -183,7 +183,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 			up = penalizedDelegatorCount
 		}
 
-		penalty := NewPenalty(penaltyNonce, reason, identity, beneficiaries, penalizedDelegators[low:up])
+		penalty := NewPenalty(penaltyNonce, reason, identity, penalizedDelegators[low:up], beneficiaries, syncerReward)
 		penalty.GenerateProtoBytes()
 		k.SetPenalty(ctx, penalty)
 

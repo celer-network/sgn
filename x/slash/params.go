@@ -59,7 +59,7 @@ func (k Keeper) FallbackGuardReward(ctx sdk.Context) (res sdk.Dec) {
 }
 
 // SyncerReward - fraction of penalty for reward to the syncer
-func (k Keeper) SyncerReward(ctx sdk.Context) (res sdk.Dec) {
+func (k Keeper) SyncerReward(ctx sdk.Context) (res sdk.Int) {
 	k.paramstore.Get(ctx, types.KeySyncerReward, &res)
 	return
 }

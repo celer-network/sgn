@@ -49,20 +49,50 @@ func (amp AccountFractionPair) String() string {
 }
 
 type Penalty struct {
-	Nonce               uint64                `json:"nonce"`
-	ValidatorAddr       string                `json:"validator_addr"`
-	Reason              string                `json:"reason"`
-	Beneficiaries       []AccountFractionPair `json:"beneficiaries"`
-	PenalizedDelegators []AccountAmtPair      `json:"penalized_delegators"`
-	PenaltyProtoBytes   []byte                `json:"penalty_proto_bytes"`
-	Sigs                []common.Sig          `json:"sigs"`
+	Nonce               uint64           `json:"nonce"`
+	Reason              string           `json:"reason"`
+	ValidatorAddr       string           `json:"validator_addr"`
+	TotalPenalty        sdk.Int          `json:"totalPenalty"`
+	PenalizedDelegators []AccountAmtPair `json:"penalized_delegators"`
+	Beneficiaries       []AccountAmtPair `json:"beneficiaries"`
+	PenaltyProtoBytes   []byte           `json:"penalty_proto_bytes"`
+	Sigs                []common.Sig     `json:"sigs"`
 }
 
-func NewPenalty(nonce uint64, reason string, validatorAddr string, beneficiaries []AccountFractionPair, penalizedDelegators []AccountAmtPair) Penalty {
+func NewPenalty(nonce uint64, reason string, validatorAddr string, penalizedDelegators []AccountAmtPair,
+	beneficiaryFractions []AccountFractionPair, syncerReward sdk.Int) Penalty {
+	var beneficiaries []AccountAmtPair
+	totalPenalty := sdk.ZeroInt()
+	totalBeneficiary := sdk.ZeroInt()
+
+	for _, penalizedDelegator := range penalizedDelegators {
+		totalPenalty = totalPenalty.Add(penalizedDelegator.Amount)
+	}
+
+	if syncerReward.GTE(totalPenalty) {
+		beneficiaries = append(beneficiaries, NewAccountAmtPair("1", totalPenalty))
+	} else {
+		beneficiaries = append(beneficiaries, NewAccountAmtPair("1", syncerReward))
+
+		restPenalty := totalPenalty.Sub(syncerReward)
+
+		for _, beneficiaryFraction := range beneficiaryFractions {
+			amt := beneficiaryFraction.Fraction.MulInt(restPenalty).TruncateInt()
+			totalBeneficiary = totalBeneficiary.Add(amt)
+			beneficiaries = append(beneficiaries, NewAccountAmtPair(beneficiaryFraction.Account, amt))
+		}
+
+		restPenalty = restPenalty.Sub(totalBeneficiary)
+		if restPenalty.IsPositive() {
+			beneficiaries = append(beneficiaries, NewAccountAmtPair(mainchain.ZeroAddr.String(), restPenalty))
+		}
+	}
+
 	return Penalty{
 		Nonce:               nonce,
 		Reason:              reason,
 		ValidatorAddr:       mainchain.FormatAddrHex(validatorAddr),
+		TotalPenalty:        totalPenalty,
 		Beneficiaries:       beneficiaries,
 		PenalizedDelegators: penalizedDelegators,
 	}
@@ -70,17 +100,14 @@ func NewPenalty(nonce uint64, reason string, validatorAddr string, beneficiaries
 
 // implement fmt.Stringer
 func (p Penalty) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: %s`, p.Nonce, p.ValidatorAddr, p.Reason))
+	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, Reason: %s, ValidatorAddr: %s, TotalPenalty: %s`, p.Nonce, p.Reason, p.ValidatorAddr, p.TotalPenalty))
 }
 
 func (p *Penalty) GenerateProtoBytes() {
 	var penalizedDelegators []*sgn.AccountAmtPair
 	var beneficiaries []*sgn.AccountAmtPair
-	totalPenalty := sdk.ZeroInt()
-	totalBeneficiary := sdk.ZeroInt()
 
 	for _, penalizedDelegator := range p.PenalizedDelegators {
-		totalPenalty = totalPenalty.Add(penalizedDelegator.Amount)
 		penalizedDelegators = append(penalizedDelegators, &sgn.AccountAmtPair{
 			Account: mainchain.Hex2Addr(penalizedDelegator.Account).Bytes(),
 			Amt:     penalizedDelegator.Amount.BigInt().Bytes(),
@@ -88,19 +115,9 @@ func (p *Penalty) GenerateProtoBytes() {
 	}
 
 	for _, beneficiary := range p.Beneficiaries {
-		amt := beneficiary.Fraction.MulInt(totalPenalty).TruncateInt()
-		totalBeneficiary = totalBeneficiary.Add(amt)
 		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
 			Account: mainchain.Hex2Addr(beneficiary.Account).Bytes(),
-			Amt:     amt.BigInt().Bytes(),
-		})
-	}
-
-	restPenalty := totalPenalty.Sub(totalBeneficiary)
-	if restPenalty.IsPositive() {
-		beneficiaries = append(beneficiaries, &sgn.AccountAmtPair{
-			Account: mainchain.ZeroAddr.Bytes(),
-			Amt:     restPenalty.BigInt().Bytes(),
+			Amt:     beneficiary.Amount.BigInt().Bytes(),
 		})
 	}
 

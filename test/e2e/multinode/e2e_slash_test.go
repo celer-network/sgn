@@ -72,10 +72,10 @@ func slashTest(t *testing.T) {
 	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 1)
 	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
-	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[1])
+	expRes1 := fmt.Sprintf(`Nonce: %d, Reason: missing_signature, ValidatorAddr: %s, TotalPenalty: 20000000000000000`, nonce, tc.ValEthAddrs[1])
 	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[1])
 	expRes3 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[0])
-	expRes4 := fmt.Sprintf(`Account: 0000000000000000000000000000000000000001, Fraction: 0.100000000000000000`)
+	expRes4 := fmt.Sprintf(`Account: 0000000000000000000000000000000000000001, Amount: 10000000000000000`)
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 	assert.Equal(t, expRes3, penalty.PenalizedDelegators[1].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes3))
@@ -85,7 +85,7 @@ func slashTest(t *testing.T) {
 	penalty, err = tc.QueryPenalty(transactor.CliCtx, nonce, 1)
 	require.NoError(t, err, "failed to query penalty")
 	log.Infoln("Query sgn about penalty info:", penalty.String())
-	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: missing_signature`, nonce, tc.ValEthAddrs[1])
+	expRes1 = fmt.Sprintf(`Nonce: %d, Reason: missing_signature, ValidatorAddr: %s, TotalPenalty: 10000000000000000`, nonce, tc.ValEthAddrs[1])
 	expRes2 = fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
@@ -108,12 +108,12 @@ func slashTest(t *testing.T) {
 		b, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 		balance = b.String()
 		log.Info(balance)
-		if balance == "9999992003000000000000000" {
+		if balance == "9999992020000000000000000" {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
 
-	assert.Equal(t, "9999992003000000000000000", balance, fmt.Sprintf("The expected balance should be 9999992003000000000000000"))
+	assert.Equal(t, "9999992020000000000000000", balance, fmt.Sprintf("The expected balance should be 9999992020000000000000000"))
 
 }
