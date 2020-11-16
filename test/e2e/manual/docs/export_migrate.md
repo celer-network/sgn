@@ -6,7 +6,15 @@ handled by a live upgrade.
 
 ### Prerequisite
 
-Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
+1. Make sure the `sgnd` binary on the host machine is up-to-date:
+
+```sh
+cd ../../../
+make install
+cd test/e2e/manual
+``
+
+2. Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
 
 ### Halt the chain at a predetermined block height
 
@@ -32,19 +40,13 @@ go run localnet.go -stopall
 2. Export the current state of the chain:
 
 ```sh
-docker exec -it sgnnode0 sgnd export --config sgncli/config/sgn.toml --home sgncli --for-zero-height --height <last-commit-height> > sgnd/config/sgntest_genesis_export.json
-```
-
-3. Make a copy of the exported state to the host machine:
-
-```sh
-cp ../../../docker-volumes/node0/sgnd/config/sgntest_genesis_export.json /tmp/sgntest_genesis_export.json
+sgnd export --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd --for-zero-height --height <last-commit-height> > /tmp/sgntest_genesis_export.json
 ```
 
 ### Update the binary
 
-1. Make a backwards-incompatible change and implement the migration command if needed. TODO: add
-more details.
+1. Make a backwards-incompatible change and implement the migration command if needed. (TODO: add
+more details)
 
 2. Rebuild the `sgnd` binary on the container host machine:
 
@@ -56,11 +58,14 @@ cd test/e2e/manual
 
 3. With the new `sgnd` binary, migrate the exported genesis file.
 
+```sh
+sgnd migrate <new-version> sgntest_genesis_export.json --chain-id sgntest-2 > sgntest-2_genesis.json
+```
+
 4. Replace the genesis files:
 
 ```sh
-cp <path-to-new-genesis> data/node0/sgnd/config/genesis.json
-...
+cp <path-to-new-genesis> data/node0/sgnd/config/genesis.json # Repeat for all nodes
 ```
 
 5. Set `eth.monitor_start_block` to a past mainchain block number in the
@@ -77,8 +82,7 @@ go run localnet.go -rebuild
 1. Reset the local data on the nodes:
 
 ```sh
-docker exec -it sgnnode0 sgnd unsafe-reset-all
-...
+sgnd unsafe-reset-all --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd # Repeat for all nodes
 ```
 
 2. Restart all nodes:
