@@ -107,7 +107,8 @@ func slashTest(t *testing.T) {
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		b, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 		balance = b.String()
-		log.Info(balance)
+		// The validator 0 needs to submit two transactions, each transaction will reward 10000000000000000
+		// so it will receive 20000000000000000 in total
 		if balance == "9999992020000000000000000" {
 			break
 		}
