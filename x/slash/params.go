@@ -58,6 +58,12 @@ func (k Keeper) FallbackGuardReward(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
+// SyncerReward - fraction of penalty for reward to the syncer
+func (k Keeper) SyncerReward(ctx sdk.Context) (res sdk.Int) {
+	k.paramstore.Get(ctx, types.KeySyncerReward, &res)
+	return
+}
+
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
@@ -68,6 +74,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.SlashFractionDowntime(ctx),
 		k.SlashFractionGuardFailure(ctx),
 		k.FallbackGuardReward(ctx),
+		k.SyncerReward(ctx),
 	)
 }
 

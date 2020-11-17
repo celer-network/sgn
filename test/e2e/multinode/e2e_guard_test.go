@@ -89,7 +89,7 @@ func guardTest(t *testing.T) {
 	nonce := uint64(0)
 	penalty, err := slash.CLIQueryPenalty(transactor.CliCtx, slash.StoreKey, nonce)
 	require.NoError(t, err, "failed to query penalty")
-	expectedRes := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: guard_failure`, nonce, tc.ValEthAddrs[0])
+	expectedRes := fmt.Sprintf(`Nonce: %d, Reason: guard_failure, ValidatorAddr: %s, TotalPenalty: 100000000000000000`, nonce, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
 	expectedRes = fmt.Sprintf(`Account: %s, Amount: 90000000000000000`, tc.ValEthAddrs[0])
 	assert.Equal(t, expectedRes, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expectedRes))
