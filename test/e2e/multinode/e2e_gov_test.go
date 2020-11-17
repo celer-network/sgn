@@ -94,7 +94,7 @@ func sidechainGovTest(t *testing.T) {
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
 	require.NoError(t, err, "failed to query penalty 0")
-	expRes1 := fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
+	expRes1 := fmt.Sprintf(`Nonce: %d, Reason: deposit_burn, ValidatorAddr: %s, TotalPenalty: 1000000000000000000`, nonce, tc.ValEthAddrs[1])
 	expRes2 := fmt.Sprintf(`Account: %s, Amount: 1000000000000000000`, tc.ValEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
@@ -149,7 +149,7 @@ func sidechainGovTest(t *testing.T) {
 	nonce = uint64(1)
 	penalty, err = tc.QueryPenalty(transactor1.CliCtx, nonce, 3)
 	require.NoError(t, err, "failed to query penalty 1")
-	expRes1 = fmt.Sprintf(`Nonce: %d, ValidatorAddr: %s, Reason: deposit_burn`, nonce, tc.ValEthAddrs[1])
+	expRes1 = fmt.Sprintf(`Nonce: %d, Reason: deposit_burn, ValidatorAddr: %s, TotalPenalty: 1000000000000000000`, nonce, tc.ValEthAddrs[1])
 	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
 	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
 
