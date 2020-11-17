@@ -7,7 +7,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
-	e2ecommon "github.com/celer-network/sgn/test/e2e/common"
+	tec "github.com/celer-network/sgn/test/e2e/common"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -57,8 +57,11 @@ func guardTest(t *testing.T) {
 	amt.SetString("1"+strings.Repeat("0", 20), 10)
 	ethAddr, auth, err := tc.GetAuth(tc.ValEthKs[0])
 	require.NoError(t, err, "failed to get auth")
-	tc.AddCandidateWithStake(t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
+	tc.AddCandidateWithStake(
+		t, transactor, ethAddr, auth, tc.ValAccounts[0], amt, big.NewInt(1), big.NewInt(1), big.NewInt(10000), true)
 
-	// request cost is 1000000000000000000 * 2, all goes to validator
-	e2ecommon.GuardTestCommon(t, transactor, amt, tc.ValEthAddrs[0], "2000000000000000000", 1)
+	tec.Subscribe(t, transactor, amt)
+	tec.TestGuard(t, transactor, []string{tc.ValEthAddrs[0], tc.ValEthAddrs[0]})
+	// 2 requests, pre request cost is 1000000000000000000, all goes to validator
+	tec.CheckReward(t, transactor, tc.ValEthAddrs[0], "2000000000000000000", 1)
 }

@@ -3,12 +3,18 @@ package mainchain
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+)
+
+var (
+	ErrPeersNotMatch = errors.New("channel peers not match")
 )
 
 func IsBonded(dposCandidateInfo DPoSCandidateInfo) bool {
@@ -55,4 +61,28 @@ func GetAddressFromKeystore(ksBytes []byte) (string, error) {
 		return "", err
 	}
 	return ks.Address, nil
+}
+
+// GetSimplexSeqNum get the mainchain simplex seqNum
+func GetSimplexSeqNum(
+	ledger *CelerLedger, cid CidType,
+	simplexSender, simplexReceiver Addr) (seqNum uint64, err error) {
+	addrs, seqNums, err := ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	if err != nil {
+		return 0, fmt.Errorf("GetStateSeqNumMap err: %w", err)
+	}
+	seqIndex := 0
+	var match bool
+	if simplexSender == addrs[0] {
+		match = (simplexReceiver == addrs[1])
+	} else if simplexSender == addrs[1] {
+		match = (simplexReceiver == addrs[0])
+		seqIndex = 1
+	}
+	if !match {
+		return 0, fmt.Errorf("%w: cid %x, sender %x, receiver %x",
+			ErrPeersNotMatch, cid, simplexSender, simplexReceiver)
+	}
+
+	return seqNums[seqIndex].Uint64(), nil
 }

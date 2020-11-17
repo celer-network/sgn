@@ -3,6 +3,7 @@ package monitor
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -16,7 +17,6 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -325,28 +325,14 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 		return true, false
 	}
 
-	// verify addr
-	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	// verify addr and seq
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
 	if err != nil {
-		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
-		return false, false
+		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
+		return errors.Is(err, mainchain.ErrPeersNotMatch), false
 	}
-	seqIndex := 0
-	var match bool
-	if simplexSender == addrs[0] {
-		match = (simplexReceiver == addrs[1])
-	} else if simplexSender == addrs[1] {
-		match = (simplexReceiver == addrs[0])
-		seqIndex = 1
-	}
-	if !match {
-		log.Errorf("%s. simplex addrs not match mainchain value %x %x", logmsg, addrs[0], addrs[1])
-		return true, false
-	}
-
-	// verify seq
-	if simplexChannel.SeqNum <= seqNums[seqIndex].Uint64() {
-		log.Errorf("%s. SeqNum not larger than mainchain value %s", logmsg, seqNums[seqIndex])
+	if simplexChannel.SeqNum <= seqNum {
+		log.Errorf("%s. SeqNum not larger than mainchain value %d", logmsg, seqNum)
 		return true, false
 	}
 
@@ -402,25 +388,28 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 	}
 
 	// verify seqNum
-	addrs, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, mainchain.Bytes2Cid(trigger.ChannelId))
+	cid := mainchain.Bytes2Cid(trigger.ChannelId)
+	simplexSender := mainchain.Hex2Addr(r.SimplexSender)
+	simplexReceiver := mainchain.Hex2Addr(r.SimplexReceiver)
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
 	if err != nil {
-		log.Errorf("%s. GetStateSeqNumMap err: %s", logmsg, err)
-		return false, false
+		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
+		return errors.Is(err, mainchain.ErrPeersNotMatch), false
 	}
-	seqIndex := 0
-	if mainchain.Hex2Addr(trigger.SimplexReceiver) == addrs[0] {
-		seqIndex = 1
-	}
-	if r.SeqNum <= seqNums[seqIndex].Uint64() {
+	if r.SeqNum <= seqNum {
 		if m.cmpBlkNum(change.BlockNum) == 1 {
-			log.Errorf("%s. Stored SeqNum %d not larger than mainchain value %s", logmsg, r.SeqNum, seqNums[seqIndex])
+			log.Errorf("%s. Stored SeqNum %d not larger than mainchain value %d", logmsg, r.SeqNum, seqNum)
 			return true, false
 		}
-		log.Infof("%s. mainchain block not passed, stored SeqNum %d, mainchain value %s", logmsg, r.SeqNum, seqNums[seqIndex])
+		log.Infof("%s. mainchain block not passed, stored SeqNum %d, mainchain value %d", logmsg, r.SeqNum, seqNum)
 		return false, false
 	}
 
-	// TODO: verify triggerSeqNum
+	// verify triggerSeqNum
+	if trigger.TriggerSeqNum > seqNum {
+		log.Errorf("%s. TriggerSeqNum greater than mainchain value %d", logmsg, seqNum)
+		return true, false
+	}
 
 	// verify onchain trasaction receipt and status
 	receipt, err := m.EthClient.Client.TransactionReceipt(context.Background(), mainchain.Hex2Hash(trigger.TriggerTxHash))
@@ -457,6 +446,15 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 		}
 		if r.Status != guard.ChanStatus_Idle {
 			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
+			return true, false
+		}
+		event, err2 := m.EthClient.Ledger.ParseIntendWithdraw(*triggerLog)
+		if err2 != nil {
+			log.Errorf("%s. ParseIntendWithdraw event err %s", logmsg, err2)
+			return true, false
+		}
+		if event.Receiver == mainchain.Hex2Addr(r.SimplexReceiver) {
+			log.Errorf("%s intendWithdraw receiver is the simplex receiver", logmsg)
 			return true, false
 		}
 	} else {
@@ -506,7 +504,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 		log.Errorf("%s. Trigger transaction failed: %d", logmsg, receipt.Status)
 		return true, false
 	}
-	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
+	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/SnapshotStates event is the last one
 
 	// verify transaction contract address
 	if guardLog.Address != m.EthClient.LedgerAddress {
@@ -541,36 +539,29 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 	if bytes.Compare(mainchain.Hex2Addr(r.SimplexSender).Bytes(), mainchain.Hex2Addr(r.SimplexReceiver).Bytes()) > 0 {
 		seqIndex = 1
 	}
-	ledgerABI, err := abi.JSON(strings.NewReader(mainchain.CelerLedgerABI))
-	if err != nil {
-		log.Errorf("%s. Failed to parse CelerLedgerABI: %s", logmsg, err)
-		return true, false
-	}
 	var seqNum uint64
 	if r.Status == guard.ChanStatus_Settling {
 		if proof.Status != guard.ChanStatus_Settled {
 			log.Errorf("%s. Proof guard state should be settled", logmsg)
 			return true, false
 		}
-		var intendSettleEvent mainchain.CelerLedgerIntendSettle
-		err = ledgerABI.Unpack(&intendSettleEvent, "IntendSettle", guardLog.Data)
-		if err != nil {
-			log.Errorf("%s. Failed to unpack IntendSettle event: %s", logmsg, err)
+		event, err2 := m.EthClient.Ledger.ParseIntendSettle(*guardLog)
+		if err2 != nil {
+			log.Errorf("%s. ParseIntendSettle event err %s", logmsg, err2)
 			return true, false
 		}
-		seqNum = intendSettleEvent.SeqNums[seqIndex].Uint64()
+		seqNum = event.SeqNums[seqIndex].Uint64()
 	} else if r.Status == guard.ChanStatus_Withdrawing {
 		if proof.Status != guard.ChanStatus_Idle {
 			log.Errorf("%s. Proof guard state should be idle", logmsg)
 			return true, false
 		}
-		var snapshotStatesEvent mainchain.CelerLedgerSnapshotStates
-		err = ledgerABI.Unpack(&snapshotStatesEvent, "SnapshotStates", guardLog.Data)
-		if err != nil {
-			log.Errorf("%s. Failed to unpack SnapshotStates event: %s", logmsg, err)
+		event, err2 := m.EthClient.Ledger.ParseSnapshotStates(*guardLog)
+		if err2 != nil {
+			log.Errorf("%s. ParseSnapshotStates event err %s", logmsg, err2)
 			return true, false
 		}
-		seqNum = snapshotStatesEvent.SeqNums[seqIndex].Uint64()
+		seqNum = event.SeqNums[seqIndex].Uint64()
 	} else {
 		log.Errorf("%s. Current guard state is not settling or withdraw, %d", logmsg, r.Status)
 		return true, false

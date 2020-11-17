@@ -129,7 +129,9 @@ func (m *Monitor) syncIntendWithdrawChannel(intendWithdrawChannel *mainchain.Cel
 	log.Infof("%s. sync intendWithdrawChannel %x, tx hash %x", logmsg, intendWithdrawChannel.ChannelId, intendWithdrawChannel.Raw.TxHash)
 	requests, seqs := m.getGuardRequests(intendWithdrawChannel.ChannelId)
 	for i, request := range requests {
-		m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
+		if intendWithdrawChannel.Receiver == mainchain.Hex2Addr(request.SimplexSender) {
+			m.triggerGuard(request, intendWithdrawChannel.Raw, seqs[i], guard.ChanStatus_Withdrawing)
+		}
 	}
 }
 
