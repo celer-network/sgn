@@ -67,6 +67,8 @@ func slashTest(t *testing.T) {
 
 	shutdownNode(1)
 
+	prevBalance, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
+
 	log.Infoln("Query sgn about penalty info...")
 	nonce := uint64(0)
 	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 1)
@@ -103,18 +105,19 @@ func slashTest(t *testing.T) {
 	assert.Equal(t, "2970000000000000000", poolAmt, fmt.Sprintf("The expected StakingPool should be 2970000000000000000"))
 
 	log.Infoln("Query onchain validator 0 balance")
+	// The validator 0 needs to submit two transactions, each transaction will reward 10000000000000000
+	// so it will receive 20000000000000000 in total
+	expectedBalance := new(big.Int).Add(prevBalance, big.NewInt(20000000000000000)).String()
 	var balance string
 	for retry := 0; retry < tc.RetryLimit; retry++ {
 		b, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 		balance = b.String()
-		// The validator 0 needs to submit two transactions, each transaction will reward 10000000000000000
-		// so it will receive 20000000000000000 in total
-		if balance == "9999992020000000000000000" {
+		if balance == expectedBalance {
 			break
 		}
 		time.Sleep(tc.RetryPeriod)
 	}
 
-	assert.Equal(t, "9999992020000000000000000", balance, fmt.Sprintf("The expected balance should be 9999992020000000000000000"))
+	assert.Equal(t, expectedBalance, balance, fmt.Sprintf("The expected balance should be %s", expectedBalance))
 
 }
