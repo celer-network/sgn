@@ -23,7 +23,7 @@ func (status ChanStatus) String() string {
 	case ChanStatus_Idle:
 		return "Idle"
 	case ChanStatus_Withdrawing:
-		return "Withdraw"
+		return "Withdrawing"
 	case ChanStatus_Settling:
 		return "Settling"
 	case ChanStatus_Settled:
