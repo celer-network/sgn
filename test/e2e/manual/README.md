@@ -8,5 +8,5 @@ and test different scenarios on your local machine.
 - [Add validators](./docs/add_validators.md)
 - [Sidechain governance](./docs/sidechain_governance.md)
 - [Mainchain governance](./docs/mainchain_governance.md)
-- [Live upgrade](./docs/sidechain_governance.md)
+- [Live upgrade](./docs/live_upgrade.md)
 - [Export state and migrate to a new network](./docs/export_migrate.md)
