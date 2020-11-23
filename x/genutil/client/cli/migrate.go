@@ -61,7 +61,7 @@ $ sgnd migrate v0.3 /path/to/genesis.json --chain-id=sgnchain-3
 			}
 
 			var initialState extypes.AppMap
-			if err := cdc.UnmarshalJSON(genDoc.AppState, &initialState); err != nil {
+			if err = cdc.UnmarshalJSON(genDoc.AppState, &initialState); err != nil {
 				return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
 			}
 
