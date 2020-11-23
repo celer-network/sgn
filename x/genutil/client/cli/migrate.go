@@ -24,6 +24,8 @@ var migrationMap = extypes.MigrationMap{
 	"v0.3": v03.Migrate,
 }
 
+var migrationOrder = []string{"v0.2", "v0.3"}
+
 // GetMigrationVersions get all migration version in a sorted slice.
 func GetMigrationVersions() []string {
 	versions := make([]string, len(migrationMap))
@@ -38,6 +40,16 @@ func GetMigrationVersions() []string {
 	return versions
 }
 
+func findMigrationIndex(version string) int {
+	for i, v := range migrationOrder {
+		if v == version {
+			return i
+		}
+	}
+
+	return -1
+}
+
 // MigrateGenesisCmd returns a command to execute genesis state migration.
 func MigrateGenesisCmd(_ *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
@@ -46,33 +58,50 @@ func MigrateGenesisCmd(_ *server.Context, cdc *codec.Codec) *cobra.Command {
 		Long: `Migrate the source genesis into the target version and print to STDOUT.
 
 Example:
-$ sgnd migrate v0.3 /path/to/genesis.json --chain-id=sgnchain-3
+$ sgnd migrate v0.2 v0.3 /path/to/genesis.json --chain-id=sgnchain-3
 `,
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 
-			target := args[0]
-			importGenesis := args[1]
+			source := args[0]
+			target := args[1]
+			importGenesis := args[2]
+
+			sourceIndex := findMigrationIndex(source)
+			if sourceIndex == -1 {
+				return fmt.Errorf("invalid source version")
+			}
+
+			targetIndex := findMigrationIndex(target)
+			if targetIndex == -1 {
+				return fmt.Errorf("invalid target version")
+			}
+
+			if source >= target {
+				return fmt.Errorf("target must be newer than source")
+			}
 
 			genDoc, err := types.GenesisDocFromFile(importGenesis)
 			if err != nil {
 				return errors.Wrapf(err, "failed to read genesis document from file %s", importGenesis)
 			}
 
-			var initialState extypes.AppMap
-			if err = cdc.UnmarshalJSON(genDoc.AppState, &initialState); err != nil {
+			var appState extypes.AppMap
+			if err = cdc.UnmarshalJSON(genDoc.AppState, &appState); err != nil {
 				return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
 			}
 
-			migrationFunc := migrationMap[target]
-			if migrationFunc == nil {
-				return fmt.Errorf("unknown migration function for version: %s. Supported versions: %s", target, GetMigrationVersions())
+			for current := sourceIndex + 1; current <= targetIndex; current++ {
+				migrationFunc := migrationMap[target]
+				if migrationFunc == nil {
+					return fmt.Errorf("unknown migration function for version: %s. Supported versions: %s", target, GetMigrationVersions())
+				}
+
+				appState = migrationFunc(appState)
 			}
 
-			newGenState := migrationFunc(initialState)
-
-			genDoc.AppState, err = cdc.MarshalJSON(newGenState)
+			genDoc.AppState, err = cdc.MarshalJSON(appState)
 			if err != nil {
 				return errors.Wrap(err, "failed to JSON marshal migrated genesis state")
 			}
