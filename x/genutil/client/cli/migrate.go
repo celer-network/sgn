@@ -55,11 +55,13 @@ func MigrateGenesisCmd(_ *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate [target-version] [genesis-file]",
 		Short: "Migrate genesis to a specified target version",
-		Long: `Migrate the source genesis into the target version and print to STDOUT.
+		Long: fmt.Sprintf(`Migrate the source genesis into the target version and print to STDOUT.
 
 Example:
 $ sgnd migrate v0.2 v0.3 /path/to/genesis.json --chain-id=sgnchain-3
-`,
+
+Supported versions: %s
+`, migrationOrder),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
@@ -93,11 +95,7 @@ $ sgnd migrate v0.2 v0.3 /path/to/genesis.json --chain-id=sgnchain-3
 			}
 
 			for current := sourceIndex + 1; current <= targetIndex; current++ {
-				migrationFunc := migrationMap[target]
-				if migrationFunc == nil {
-					return fmt.Errorf("unknown migration function for version: %s. Supported versions: %s", target, GetMigrationVersions())
-				}
-
+				migrationFunc := migrationMap[migrationOrder[current]]
 				appState = migrationFunc(appState)
 			}
 

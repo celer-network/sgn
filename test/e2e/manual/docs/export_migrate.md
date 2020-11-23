@@ -8,7 +8,7 @@ handled by a live upgrade.
 
 1. Make sure the `sgnd` binary on the host machine is up-to-date:
 
-```sh
+````sh
 cd ../../../
 make install
 cd test/e2e/manual
@@ -25,7 +25,7 @@ cd test/e2e/manual
 ```sh
 go run localnet.go -stopall
 go run localnet.go -upall
-```
+````
 
 3. Wait for the nodes to halt.
 
@@ -43,10 +43,18 @@ go run localnet.go -stopall
 sgnd export --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd --for-zero-height --height <last-commit-height> > /tmp/sgntest_genesis_export.json
 ```
 
+### Migrate genesis to newer version
+
+1. Migrate from source version to target version for the source genesis file
+
+```sh
+sgnd migrate [source_version] [target_version] [genesis_path]
+```
+
 ### Update the binary
 
 1. Make a backwards-incompatible change and implement the migration command if needed. (TODO: add
-more details)
+   more details)
 
 2. Rebuild the `sgnd` binary on the container host machine:
 
@@ -69,7 +77,7 @@ cp <path-to-new-genesis> data/node0/sgnd/config/genesis.json # Repeat for all no
 ```
 
 5. Set `eth.monitor_start_block` to a past mainchain block number in the
-`data/nodeX/sgncli/config/sgn.toml` files.
+   `data/nodeX/sgncli/config/sgn.toml` files.
 
 6. Rebuild the Docker images:
 
@@ -92,4 +100,4 @@ go run localnet.go -upall
 ```
 
 3. Modify `../../../docker-volumes/nodeX/sgncli/config/sgn.toml` files and remove
-`eth.monitor_start_block`, so that future restarts will not try to monitor past events.
+   `eth.monitor_start_block`, so that future restarts will not try to monitor past events.
