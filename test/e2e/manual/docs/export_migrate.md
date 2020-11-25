@@ -43,14 +43,6 @@ go run localnet.go -stopall
 sgnd export --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd --for-zero-height --height <last-commit-height> > /tmp/sgntest_genesis_export.json
 ```
 
-### Migrate genesis to newer version
-
-1. Migrate from source version to target version for the source genesis file
-
-```sh
-sgnd migrate [source_version] [target_version] [genesis_path]
-```
-
 ### Update the binary
 
 1. Make a backwards-incompatible change and implement the migration command if needed. (TODO: add
@@ -67,7 +59,7 @@ cd test/e2e/manual
 3. With the new `sgnd` binary, migrate the exported genesis file.
 
 ```sh
-sgnd migrate <new-version> sgntest_genesis_export.json --chain-id sgntest-2 > sgntest-2_genesis.json
+sgnd migrate [source_version] [target_version] [genesis_path] --chain-id sgntest-2 > sgntest-2_genesis.json
 ```
 
 4. Replace the genesis files:
