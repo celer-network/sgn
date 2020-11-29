@@ -55,7 +55,7 @@ $ %s tx submit-change sync-update-sidechain-addr --candidate="0xf75f679d958b7610
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome))
+			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome), nil)
 			if err != nil {
 				return
 			}
@@ -87,7 +87,7 @@ $ %s tx submit-change sync-validator --candidate="0xf75f679d958b7610bad84e3baef2
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome))
+			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome), nil)
 			if err != nil {
 				return
 			}
@@ -119,7 +119,7 @@ $ %s tx submit-change sync-delegator --candidate="0xf75f679d958b7610bad84e3baef2
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome))
+			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome), nil)
 			if err != nil {
 				return
 			}
@@ -154,7 +154,7 @@ $ %s tx submit-change sync-subscription-balance --consumer="0xf75f679d958b7610ba
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome))
+			operator, err := monitor.NewOperator(cdc, viper.GetString(flags.FlagHome), nil)
 			if err != nil {
 				return
 			}

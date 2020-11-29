@@ -5,6 +5,7 @@ import (
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/ethtx"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
 	"github.com/celer-network/sgn/x/guard"
@@ -14,18 +15,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
+	tmDB "github.com/tendermint/tm-db"
 )
 
 type Operator struct {
 	EthClient  *mainchain.EthClient
 	Transactor *transactor.Transactor
+
+	TxSender *ethtx.TxSender
 }
 
-func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err error) {
+func NewOperator(
+	cdc *codec.Codec,
+	cliHome string,
+	txDB tmDB.DB,
+) (operator *Operator, err error) {
 	ethClient, err := common.NewEthClientFromConfig()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	txr, err := transactor.NewTransactor(
@@ -37,13 +46,41 @@ func NewOperator(cdc *codec.Codec, cliHome string) (operator *Operator, err erro
 		cdc,
 	)
 	if err != nil {
-		return
+		return nil, err
 	}
+
+	var txSender *ethtx.TxSender
+	if txDB != nil {
+		txSenderErr := common.WaitTillHeight(txr.CliCtx, 1)
+		if txSenderErr != nil {
+			return nil, txSenderErr
+		}
+		guardParams, err := guard.CLIQueryParams(txr.CliCtx, guard.RouterKey)
+		if err != nil {
+			return nil, err
+		}
+
+		txSender, txSenderErr = ethtx.NewTxSender(
+			txDB,
+			viper.GetString(common.FlagEthTxKeyDir),
+			gethCommon.HexToAddress(viper.GetString(common.FlagEthTxSenderAddress)),
+			gethCommon.HexToAddress(guardParams.LedgerAddress),
+		)
+		if txSenderErr != nil {
+			return nil, txSenderErr
+		}
+		txSenderErr = txSender.Start()
+		if txSenderErr != nil {
+			return nil, txSenderErr
+		}
+	}
+
 	txr.Run()
 
 	return &Operator{
 		EthClient:  ethClient,
 		Transactor: txr,
+		TxSender:   txSender,
 	}, nil
 }
 

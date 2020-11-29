@@ -20,6 +20,23 @@ celr_address = ""
 dpos_address = ""
 sgn_address = ""
 
+[eth.tx]
+db_poll_interval = 60
+block_time = 1
+key_dir = ""
+sender_address = "0x00078b31fa8b29a76bce074b5ea0d515a6aeaee7"
+rpc_url = "ws://127.0.0.1:8546"
+secondary_rpc_urls = ["http://127.0.0.1:8545"]
+head_tracker_history_depth = 5
+head_tracker_max_buffer_size = 100
+head_tracker_finality_depth = 5
+default_gas_price = 1
+max_gas_price = 100
+gas_bump_percent = 20
+gas_bump_wei = 10
+gas_bump_threshold = 10
+gas_bump_tx_depth = 5
+
 [log]
 color = true
 level = "debug"
