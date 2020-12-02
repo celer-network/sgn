@@ -87,9 +87,10 @@ func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Applicatio
 		panic(err)
 	}
 
-	app := app.NewSgnApp(
+	return app.NewSgnApp(
 		logger,
 		db,
+		-1, /* height */
 		skipUpgradeHeights,
 		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
 		baseapp.SetHaltTime(viper.GetUint64(server.FlagHaltTime)),
@@ -97,27 +98,17 @@ func newApp(logger tlog.Logger, db dbm.DB, traceStore io.Writer) abci.Applicatio
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetPruning(pruningOpts),
 	)
-	if err := app.LoadLatestVersion(); err != nil {
-		panic(err)
-	}
-	return app
 }
 
 func exportAppStateAndTMValidators(
-	logger tlog.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
+	logger tlog.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	height int64,
+	forZeroHeight bool,
+	jailWhiteList []string,
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-
-	if height != -1 {
-		sgnApp := app.NewSgnApp(logger, db, map[int64]bool{})
-		err := sgnApp.LoadHeight(height)
-		if err != nil {
-			return nil, nil, err
-		}
-		return sgnApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
-	}
-
-	sgnApp := app.NewSgnApp(logger, db, map[int64]bool{})
-
+	sgnApp := app.NewSgnApp(logger, db, height, map[int64]bool{})
 	return sgnApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
 

@@ -12,13 +12,15 @@ handled by a live upgrade.
 cd ../../../
 make install
 cd test/e2e/manual
-``
+```
 
 2. Run `go run localnet.go -start -auto` to start testnet and auto config all nodes as validators.
 
-### Halt the chain at a predetermined block height
+### Halt the nodes past a predetermined block height
 
-1. Set the `halt-time` field in `../../../docker-volumes/nodeX/sgnd/config/app.toml` files to a future block height:
+1. Set the `halt-height` field in `../../../docker-volumes/nodeX/sgnd/config/app.toml` files to a
+block height greater than the intended height of the upgrade. For example, if the intended height
+is `300`, set to `301`.
 
 2. Restart the nodes:
 
@@ -29,7 +31,7 @@ go run localnet.go -upall
 
 3. Wait for the nodes to halt.
 
-### Export chain state
+### Export the chain state
 
 1. Stop the node processes:
 
@@ -40,10 +42,12 @@ go run localnet.go -stopall
 2. Export the current state of the chain:
 
 ```sh
-sgnd export --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd --for-zero-height --height <last-commit-height> > /tmp/sgntest_genesis_export.json
+cd ../../../docker-volumes/node0
+sgnd export --config ./sgncli/config/sgn.toml --home ./sgnd --for-zero-height --height <upgrade-height> > /tmp/sgntest_genesis_export.json
+jq -S -M '' /tmp/sgntest_genesis_export.json # Sort and pretty-print the file
 ```
 
-### Update the binary
+### Update the binary and migrate the genesis file
 
 1. Make a backwards-incompatible change and implement the migration command if needed. (TODO: add
 more details)
@@ -59,37 +63,40 @@ cd test/e2e/manual
 3. With the new `sgnd` binary, migrate the exported genesis file.
 
 ```sh
-sgnd migrate <new-version> sgntest_genesis_export.json --chain-id sgntest-2 > sgntest-2_genesis.json
+sgnd migrate <new-version> /tmp/sgntest_genesis_export.json --chain-id sgntest-2 > /tmp/sgntest-2_genesis.json
+jq -S -M '' /tmp/sgntest-2_genesis.json # Sort and pretty-print the file
 ```
 
-4. Replace the genesis files:
-
-```sh
-cp <path-to-new-genesis> data/node0/sgnd/config/genesis.json # Repeat for all nodes
-```
-
-5. Set `eth.monitor_start_block` to a past mainchain block number in the
-`data/nodeX/sgncli/config/sgn.toml` files.
-
-6. Rebuild the Docker images:
+4. Rebuild the Docker images:
 
 ```sh
 go run localnet.go -rebuild
 ```
 
-### Reset the state and restart:
+### Reset the state and restart the nodes:
 
-1. Reset the local data on the nodes:
+1. Replace the genesis files:
+
+```sh
+cp <path-to-new-genesis> ../../../docker-volumes/node0/sgnd/config/genesis.json # Repeat for all nodes
+```
+
+2. Set `eth.monitor_start_block` to a past mainchain block number in the
+`../../../docker-volumes/nodeX/sgncli/config/sgn.toml` files.
+
+3. Set `halt-height` back to zero in `../../../docker-volumes/nodeX/sgnd/config/app.toml`.
+
+4. Reset the local data on the nodes:
 
 ```sh
 sgnd unsafe-reset-all --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd # Repeat for all nodes
 ```
 
-2. Restart all nodes:
+5. Restart all nodes:
 
 ```sh
 go run localnet.go -upall
 ```
 
-3. Modify `../../../docker-volumes/nodeX/sgncli/config/sgn.toml` files and remove
+6. Modify `../../../docker-volumes/nodeX/sgncli/config/sgn.toml` files and remove
 `eth.monitor_start_block`, so that future restarts will not try to monitor past events.
