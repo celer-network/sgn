@@ -121,7 +121,7 @@ Supported versions: %s
 				return errors.Wrap(err, "failed to sort JSON genesis doc")
 			}
 
-			cmd.Println(string(sortedBz))
+			fmt.Println(string(sortedBz))
 			return nil
 		},
 	}
