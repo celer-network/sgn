@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
@@ -32,8 +33,8 @@ type RestServer struct {
 	listener       net.Listener
 	logger         tlog.Logger
 
-	dposContract   *mainchain.DPoS
-	sgnContract    *mainchain.SGN
+	dposContract   *sgncontracts.DPoS
+	sgnContract    *sgncontracts.SGN
 	ledgerContract *mainchain.CelerLedger
 	ethClient      *ethclient.Client
 }
@@ -45,12 +46,12 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 	ethClient := ethclient.NewClient(rpcClient)
-	dposContract, err := mainchain.NewDPoS(
+	dposContract, err := sgncontracts.NewDPoS(
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)), ethClient)
 	if err != nil {
 		return nil, err
 	}
-	sgnContract, err := mainchain.NewSGN(
+	sgnContract, err := sgncontracts.NewSGN(
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress)), ethClient)
 	if err != nil {
 		return nil, err

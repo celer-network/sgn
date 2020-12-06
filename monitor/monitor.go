@@ -11,6 +11,7 @@ import (
 	"github.com/celer-network/goutils/eth/monitor"
 	"github.com/celer-network/goutils/eth/watcher"
 	"github.com/celer-network/goutils/log"
+	 "github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -62,8 +63,8 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		log.Fatalln("GetValidatorNum err", err)
 	}
 
-	dposContract := NewMonitorContractInfo(operator.EthClient.DPoSAddress, mainchain.DPoSABI)
-	sgnContract := NewMonitorContractInfo(operator.EthClient.SGNAddress, mainchain.SGNABI)
+	dposContract := NewMonitorContractInfo(operator.EthClient.DPoSAddress, sgncontracts.DPoSABI)
+	sgnContract := NewMonitorContractInfo(operator.EthClient.SGNAddress, sgncontracts.SGNABI)
 	ledgerContract := NewMonitorContractInfo(operator.EthClient.LedgerAddress, mainchain.CelerLedgerABI)
 
 	verifiedChanges, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))

@@ -98,6 +98,8 @@ github.com/celer-network/cosmos-sdk v0.39.3-celer.1 h1:HHmRKaJad5I4b9OpnujowFsMQ
 github.com/celer-network/cosmos-sdk v0.39.3-celer.1/go.mod h1:VNUluciWBFj2vkhpMcp8rYZL/kCw0FtNc7SseUjE1KM=
 github.com/celer-network/goutils v0.1.16 h1:dt2A8JX3lKPi4w18eQN5cLlM7dY2rhKhrz3d7gdbwCo=
 github.com/celer-network/goutils v0.1.16/go.mod h1:DD2usTn3Ks2/dN6iiW2SAHBquu+dtJsQiOMbuM6rs80=
+github.com/celer-network/sgn-contract v0.2.8 h1:YwJXefqFynnZv5VkSm0Qy1M1fWiS51jjDHG8r+hnMSI=
+github.com/celer-network/sgn-contract v0.2.8/go.mod h1:lw3KyOpj2DrfmI85h+BaB42cOCyvVTqdqotYH8puRcs=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/cp v0.1.0/go.mod h1:SOGHArjBr4JWaSDEVpWpo/hNg6RoKrls6Oh40hiwW+s=

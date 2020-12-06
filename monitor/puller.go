@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/guard"
@@ -46,31 +47,31 @@ func (m *Monitor) processPullerQueue() {
 		}
 
 		switch e := event.ParseEvent(m.EthClient).(type) {
-		case *mainchain.DPoSValidatorChange:
+		case *sgncontracts.DPoSValidatorChange:
 			log.Infof("%s. validator change %x type %d", logmsg, e.EthAddr, e.ChangeType)
 			validators[e.EthAddr] = true
 
-		case *mainchain.DPoSUpdateDelegatedStake:
+		case *sgncontracts.DPoSUpdateDelegatedStake:
 			log.Infof("%s. stake update delegator %x, candidate %x, stake %s, pool %s",
 				logmsg, e.Delegator, e.Candidate, e.DelegatorStake, e.CandidatePool)
 			validators[e.Candidate] = true
 			delegators[getDelegatorKey(e.Candidate, e.Delegator)] = true
 
-		case *mainchain.DPoSCandidateUnbonded:
+		case *sgncontracts.DPoSCandidateUnbonded:
 			log.Infof("%s. candidate unbonded %x", logmsg, e.Candidate)
 			validators[e.Candidate] = true
 
-		case *mainchain.DPoSUpdateCommissionRate:
+		case *sgncontracts.DPoSUpdateCommissionRate:
 			log.Infof("%s. commission update %x, %s", logmsg, e.Candidate, e.NewRate)
 			validators[e.Candidate] = true
 
-		case *mainchain.SGNUpdateSidechainAddr:
+		case *sgncontracts.SGNUpdateSidechainAddr:
 			m.syncUpdateSidechainAddr(e, logmsg)
 
-		case *mainchain.DPoSConfirmParamProposal:
+		case *sgncontracts.DPoSConfirmParamProposal:
 			m.syncConfirmParamProposal(e, logmsg)
 
-		case *mainchain.SGNAddSubscriptionBalance:
+		case *sgncontracts.SGNAddSubscriptionBalance:
 			m.syncSubscriptionBalance(e, logmsg)
 
 		case *mainchain.CelerLedgerIntendSettle:
@@ -99,13 +100,13 @@ func getDelegatorKey(candidate, delegator mainchain.Addr) string {
 	return mainchain.Addr2Hex(candidate) + ":" + mainchain.Addr2Hex(delegator)
 }
 
-func (m *Monitor) syncUpdateSidechainAddr(sidechainAddr *mainchain.SGNUpdateSidechainAddr, logmsg string) {
+func (m *Monitor) syncUpdateSidechainAddr(sidechainAddr *sgncontracts.SGNUpdateSidechainAddr, logmsg string) {
 	log.Infof("%s. sidechainAddr update %x, %s",
 		logmsg, sidechainAddr.Candidate, sdk.AccAddress(sidechainAddr.NewSidechainAddr.Bytes()))
 	m.SyncUpdateSidechainAddr(sidechainAddr.Candidate)
 }
 
-func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSConfirmParamProposal, logmsg string) {
+func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *sgncontracts.DPoSConfirmParamProposal, logmsg string) {
 	paramChange := common.NewParamChange(sdk.NewIntFromBigInt(confirmParamProposal.Record), sdk.NewIntFromBigInt(confirmParamProposal.NewValue))
 	paramChangeData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(paramChange)
 	msg := sync.NewMsgSubmitChange(sync.ConfirmParamProposal, paramChangeData, m.EthClient.Client, m.Transactor.Key.GetAddress())
@@ -113,7 +114,7 @@ func (m *Monitor) syncConfirmParamProposal(confirmParamProposal *mainchain.DPoSC
 	m.Transactor.AddTxMsg(msg)
 }
 
-func (m *Monitor) syncSubscriptionBalance(event *mainchain.SGNAddSubscriptionBalance, logmsg string) {
+func (m *Monitor) syncSubscriptionBalance(event *sgncontracts.SGNAddSubscriptionBalance, logmsg string) {
 	m.SyncSubscriptionBalance(event.Consumer)
 }
 

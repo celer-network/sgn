@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/celer-network/goutils/log"
+	 "github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -110,7 +111,7 @@ func snapshotMainchain() error {
 	return nil
 }
 
-func snapshotInitializeCandidate(dposContract *mainchain.DPoS, start, end uint64) error {
+func snapshotInitializeCandidate(dposContract *sgncontracts.DPoS, start, end uint64) error {
 	log.Infof("Snapshot InitializeCandidate event from %d to %d", start, end)
 	initializeCandidateIt, err := dposContract.FilterInitializeCandidate(&bind.FilterOpts{
 		Start: start,
@@ -136,7 +137,7 @@ func snapshotInitializeCandidate(dposContract *mainchain.DPoS, start, end uint64
 	return nil
 }
 
-func snapshotUpdateDelegatedStake(dposContract *mainchain.DPoS, start, end uint64) error {
+func snapshotUpdateDelegatedStake(dposContract *sgncontracts.DPoS, start, end uint64) error {
 	log.Infof("Snapshot UpdateDelegatedStake event from %d to %d", start, end)
 	updateDelegatedStakeIt, err := dposContract.FilterUpdateDelegatedStake(&bind.FilterOpts{
 		Start: start,
@@ -171,7 +172,7 @@ func snapshotUpdateDelegatedStake(dposContract *mainchain.DPoS, start, end uint6
 	return nil
 }
 
-func syncCandidateDelegators(dposContract *mainchain.DPoS, blkNum *big.Int) error {
+func syncCandidateDelegators(dposContract *sgncontracts.DPoS, blkNum *big.Int) error {
 	for candidateAddr, candidate := range candidateMap {
 		log.Infof("Snapshot candidate %s at %s", candidateAddr, blkNum)
 		candidateInfo, err := dposContract.GetCandidateInfo(&bind.CallOpts{BlockNumber: blkNum}, mainchain.Hex2Addr(candidateAddr))
