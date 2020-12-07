@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/eth"
-	 "github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"

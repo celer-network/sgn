@@ -11,7 +11,7 @@ import (
 	"github.com/celer-network/goutils/eth/monitor"
 	"github.com/celer-network/goutils/eth/watcher"
 	"github.com/celer-network/goutils/log"
-	 "github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"

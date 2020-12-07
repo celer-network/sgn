@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/celer-network/goutils/log"
-	 "github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
