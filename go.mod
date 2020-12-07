@@ -1,11 +1,11 @@
 module github.com/celer-network/sgn
 
-go 1.14
+go 1.15
 
 require (
 	github.com/allegro/bigcache v1.2.1
 	github.com/celer-network/goutils v0.1.16
-	github.com/cosmos/cosmos-sdk v0.39.1
+	github.com/cosmos/cosmos-sdk v0.39.2
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/deckarep/golang-set v1.7.1
 	github.com/ethereum/go-ethereum v1.9.20
@@ -19,10 +19,10 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tendermint/go-amino v0.15.1
-	github.com/tendermint/tendermint v0.33.7
+	github.com/tendermint/tendermint v0.33.9
 	github.com/tendermint/tm-db v0.5.1
 )
 
-replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.39.2-celer.4
+replace github.com/cosmos/cosmos-sdk => github.com/celer-network/cosmos-sdk v0.39.3-celer.1
 
 //replace github.com/cosmos/cosmos-sdk => ../cosmos-sdk
