@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/eth"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -22,9 +23,9 @@ type EthClient struct {
 
 	// init by SetContracts
 	DPoSAddress   Addr
-	DPoS          *DPoS
+	DPoS          *sgncontracts.DPoS
 	SGNAddress    Addr
-	SGN           *SGN
+	SGN           *sgncontracts.SGN
 	LedgerAddress Addr
 	Ledger        *CelerLedger
 }
@@ -101,13 +102,13 @@ func (ethClient *EthClient) setTransactor(ksfile string, passphrase string, tcon
 
 func (ethClient *EthClient) setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
 	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
-	dpos, err := NewDPoS(ethClient.DPoSAddress, ethClient.Client)
+	dpos, err := sgncontracts.NewDPoS(ethClient.DPoSAddress, ethClient.Client)
 	if err != nil {
 		return err
 	}
 
 	ethClient.SGNAddress = Hex2Addr(sgnAddrStr)
-	sgn, err := NewSGN(ethClient.SGNAddress, ethClient.Client)
+	sgn, err := sgncontracts.NewSGN(ethClient.SGNAddress, ethClient.Client)
 	if err != nil {
 		return err
 	}

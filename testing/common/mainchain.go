@@ -11,6 +11,7 @@ import (
 
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/proto/entity"
@@ -33,8 +34,8 @@ var (
 
 	EthClient      *ethclient.Client
 	EtherBaseAuth  *bind.TransactOpts
-	DposContract   *mainchain.DPoS
-	SgnContract    *mainchain.SGN
+	DposContract   *sgncontracts.DPoS
+	SgnContract    *sgncontracts.SGN
 	LedgerContract *mainchain.CelerLedger
 
 	Client0 *TestEthClient
@@ -82,11 +83,11 @@ func SetupTestEthClient(ksfile string) (*TestEthClient, error) {
 func SetContracts(dposAddr, sgnAddr, ledgerAddr mainchain.Addr) error {
 	log.Infof("set contracts dpos %x sgn %x ledger %x", dposAddr, sgnAddr, ledgerAddr)
 	var err error
-	DposContract, err = mainchain.NewDPoS(dposAddr, EthClient)
+	DposContract, err = sgncontracts.NewDPoS(dposAddr, EthClient)
 	if err != nil {
 		return err
 	}
-	SgnContract, err = mainchain.NewSGN(sgnAddr, EthClient)
+	SgnContract, err = sgncontracts.NewSGN(sgnAddr, EthClient)
 	if err != nil {
 		return err
 	}

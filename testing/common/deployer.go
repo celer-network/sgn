@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/testing/channel-eth-go/deploy"
@@ -46,7 +47,7 @@ func DeployERC20Contract() (*types.Transaction, mainchain.Addr, *mainchain.ERC20
 }
 
 func DeployDPoSSGNContracts(sgnParams *SGNParams) (*types.Transaction, mainchain.Addr, mainchain.Addr) {
-	dposAddr, _, _, err := mainchain.DeployDPoS(
+	dposAddr, _, _, err := sgncontracts.DeployDPoS(
 		EtherBaseAuth,
 		EthClient,
 		sgnParams.CelrAddr,
@@ -60,11 +61,11 @@ func DeployDPoSSGNContracts(sgnParams *SGNParams) (*types.Transaction, mainchain
 		sgnParams.SidechainGoLiveTimeout)
 	ChkErr(err, "failed to deploy DPoS contract")
 
-	sgnAddr, _, _, err := mainchain.DeploySGN(EtherBaseAuth, EthClient, sgnParams.CelrAddr, dposAddr)
+	sgnAddr, _, _, err := sgncontracts.DeploySGN(EtherBaseAuth, EthClient, sgnParams.CelrAddr, dposAddr)
 	ChkErr(err, "failed to deploy SGN contract")
 
 	// TODO: register SGN address on DPoS contract
-	dpos, err := mainchain.NewDPoS(dposAddr, EthClient)
+	dpos, err := sgncontracts.NewDPoS(dposAddr, EthClient)
 	ChkErr(err, "failed to new DPoS instance")
 	EtherBaseAuth.GasLimit = 8000000
 	tx, err := dpos.RegisterSidechain(EtherBaseAuth, sgnAddr)
