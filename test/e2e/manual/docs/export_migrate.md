@@ -43,8 +43,8 @@ go run localnet.go -stopall
 
 ```sh
 cd ../../../docker-volumes/node0
-sgnd export --config ./sgncli/config/sgn.toml --home ./sgnd --for-zero-height --height <upgrade-height> > /tmp/sgntest_genesis_export.json
-jq -S -M '' /tmp/sgntest_genesis_export.json # Sort and pretty-print the file
+sgnd export --config ./sgncli/config/sgn.toml --home ./sgnd --for-zero-height --height <upgrade-height> > /tmp/sgntest_genesis_export.tmp
+jq -S -M '' /tmp/sgntest_genesis_export.tmp > /tmp/sgntest_genesis_export.json # Sort and pretty-print the file
 ```
 
 ### Update the binary and migrate the genesis file
@@ -63,7 +63,8 @@ cd test/e2e/manual
 3. With the new `sgnd` binary, migrate the exported genesis file.
 
 ```sh
-sgnd migrate [source_version] [target_version] [genesis_path] --chain-id sgntest-2 > sgntest-2_genesis.json
+sgnd migrate [source_version] [target_version] [genesis_path] --chain-id sgntest-2 > sgntest-2_genesis.tmp
+jq -S -M '' sgntest-2_genesis.tmp > sgntest-2_genesis.json # Sort and pretty-print the file
 ```
 
 4. Rebuild the Docker images:
