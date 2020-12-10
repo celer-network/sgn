@@ -95,11 +95,13 @@ cp <path-to-new-genesis> ../../../docker-volumes/node0/sgnd/config/genesis.json 
 sgnd unsafe-reset-all --config ../../../docker-volumes/node0/sgncli/config/sgn.toml --home ../../../docker-volumes/node0/sgnd # Repeat for all nodes
 ```
 
-5. Restart all nodes:
+5. Update `chain_id` in `../../../docker-volumes/nodeX/sgncli/config/sgn.toml` to the chain-id in the new genesis
+
+6. Restart all nodes:
 
 ```sh
 go run localnet.go -upall
 ```
 
-6. Modify `../../../docker-volumes/nodeX/sgncli/config/sgn.toml` files and remove
+7. Modify `../../../docker-volumes/nodeX/sgncli/config/sgn.toml` files and remove
    `eth.monitor_start_block`, so that future restarts will not try to monitor past events.
