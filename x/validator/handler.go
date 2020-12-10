@@ -76,10 +76,9 @@ func handleMsgSetTransactors(ctx sdk.Context, keeper Keeper, msg MsgSetTransacto
 
 	for _, transactor := range oldTransactors {
 		if _, exist := dedup[transactor.String()]; !exist {
-			keeper.RemoveAccount(ctx, transactor)
-			err := keeper.bankKeeper.SetCoins(ctx, candidate.ValAccount, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, sdk.ZeroInt())))
+			err := keeper.RemoveTransactor(ctx, candidate.ValAccount, transactor)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to SetCoins: %s", err)
+				return nil, fmt.Errorf("Failed to RemoveTransactor: %s", err)
 			}
 		}
 	}

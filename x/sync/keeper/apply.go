@@ -182,6 +182,7 @@ func (keeper Keeper) SyncValidator(ctx sdk.Context, change types.Change) (bool, 
 	} else if validator.Status == sdk.Unbonded {
 		log.Infof("remove validator %s %s %s", valAddress, candidate.ValAccount, ethAddr)
 		keeper.stakingKeeper.RemoveValidator(ctx, valAddress)
+		keeper.validatorKeeper.RemoveTransactors(ctx, candidate)
 	} else if validator.Status == sdk.Unbonding {
 		keeper.validatorKeeper.DistributeCandidatePendingReward(ctx, ethAddr)
 	}
