@@ -436,7 +436,7 @@ func (k Keeper) ResetPendingReward(ctx sdk.Context, ethAddress string) {
 
 func (k Keeper) RemoveTransactors(ctx sdk.Context, candidate Candidate) error {
 	for _, transactor := range candidate.Transactors {
-		err := k.RemoveTransactor(ctx, candidate.ValAccount, transactor)
+		err := k.RemoveTransactor(ctx, transactor)
 		if err != nil {
 			return err
 		}
@@ -449,12 +449,12 @@ func (k Keeper) RemoveTransactors(ctx sdk.Context, candidate Candidate) error {
 	return nil
 }
 
-func (k Keeper) RemoveTransactor(ctx sdk.Context, candidateValAcc sdk.AccAddress, transactor sdk.AccAddress) error {
+func (k Keeper) RemoveTransactor(ctx sdk.Context, transactor sdk.AccAddress) error {
 	account := k.accountKeeper.GetAccount(ctx, transactor)
 	if account != nil {
 		log.Infof("Remove account %s", transactor)
 		k.accountKeeper.RemoveAccount(ctx, account)
 	}
 
-	return k.bankKeeper.SetCoins(ctx, candidateValAcc, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, sdk.ZeroInt())))
+	return k.bankKeeper.SetCoins(ctx, transactor, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, sdk.ZeroInt())))
 }
