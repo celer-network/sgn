@@ -22,6 +22,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 	slashQueryCmd.AddCommand(common.GetCommands(
 		GetCmdPenalty(storeKey, cdc),
+		GetCmdPenalties(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return slashQueryCmd
@@ -65,6 +66,37 @@ func QueryPenalty(cliCtx context.CLIContext, queryRoute string, nonce uint64) (p
 	}
 
 	err = cliCtx.Codec.UnmarshalJSON(res, &penalty)
+	return
+}
+
+// GetCmdPenalties queries penalty info
+func GetCmdPenalties(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "penalties",
+		Short: "query penalties info",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			penalties, err := QueryPenalties(cliCtx, queryRoute)
+			if err != nil {
+				log.Errorln("query error", err)
+				return err
+			}
+
+			return cliCtx.PrintOutput(penalties)
+		},
+	}
+}
+
+// Query penalties info
+func QueryPenalties(cliCtx context.CLIContext, queryRoute string) (penalties []types.Penalty, err error) {
+	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryPenalties)
+	res, err := common.RobustQuery(cliCtx, route)
+	if err != nil {
+		return
+	}
+
+	err = cliCtx.Codec.UnmarshalJSON(res, &penalties)
 	return
 }
 

@@ -17,6 +17,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case QueryPenalty:
 			return queryPenalty(ctx, req, keeper)
+		case QueryPenalties:
+			return queryPenalties(ctx, req, keeper)
 		case QueryParameters:
 			return queryParameters(ctx, keeper)
 		default:
@@ -38,6 +40,17 @@ func queryPenalty(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte
 	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, penalty)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+
+	}
+
+	return res, nil
+}
+
+func queryPenalties(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	penalties := keeper.GetPenalties(ctx)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, penalties)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 
