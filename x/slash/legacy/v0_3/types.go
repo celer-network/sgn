@@ -48,23 +48,16 @@ func NewPenalty(nonce uint64, reason string, validatorAddr string, penalizedDele
 		totalPenalty = totalPenalty.Add(penalizedDelegator.Amount)
 	}
 
-	if syncerReward.GTE(totalPenalty) {
-		beneficiaries = append(beneficiaries, v02slash.NewAccountAmtPair("1", totalPenalty))
-	} else {
-		beneficiaries = append(beneficiaries, v02slash.NewAccountAmtPair("1", syncerReward))
+	restPenalty := totalPenalty
+	for _, beneficiaryFraction := range beneficiaryFractions {
+		amt := beneficiaryFraction.Fraction.MulInt(restPenalty).TruncateInt()
+		totalBeneficiary = totalBeneficiary.Add(amt)
+		beneficiaries = append(beneficiaries, v02slash.NewAccountAmtPair(beneficiaryFraction.Account, amt))
+	}
 
-		restPenalty := totalPenalty.Sub(syncerReward)
-
-		for _, beneficiaryFraction := range beneficiaryFractions {
-			amt := beneficiaryFraction.Fraction.MulInt(restPenalty).TruncateInt()
-			totalBeneficiary = totalBeneficiary.Add(amt)
-			beneficiaries = append(beneficiaries, v02slash.NewAccountAmtPair(beneficiaryFraction.Account, amt))
-		}
-
-		restPenalty = restPenalty.Sub(totalBeneficiary)
-		if restPenalty.IsPositive() {
-			beneficiaries = append(beneficiaries, v02slash.NewAccountAmtPair(mainchain.ZeroAddr.String(), restPenalty))
-		}
+	restPenalty = restPenalty.Sub(totalBeneficiary)
+	if restPenalty.IsPositive() {
+		beneficiaries = append(beneficiaries, v02slash.NewAccountAmtPair(mainchain.ZeroAddr.String(), restPenalty))
 	}
 
 	return Penalty{
