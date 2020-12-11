@@ -2,6 +2,7 @@ package validator
 
 import (
 	"github.com/celer-network/goutils/log"
+	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -351,14 +352,6 @@ func (k Keeper) InitAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
 	}
 }
 
-func (k Keeper) RemoveAccount(ctx sdk.Context, accAddress sdk.AccAddress) {
-	account := k.accountKeeper.GetAccount(ctx, accAddress)
-	if account != nil {
-		log.Infof("Remove account %s", accAddress)
-		k.accountKeeper.RemoveAccount(ctx, account)
-	}
-}
-
 func (k Keeper) GetRewardEpoch(ctx sdk.Context) (epoch RewardEpoch) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -439,4 +432,29 @@ func (k Keeper) SetPendingReward(ctx sdk.Context, pendingReward PendingReward) {
 
 func (k Keeper) ResetPendingReward(ctx sdk.Context, ethAddress string) {
 	k.SetPendingReward(ctx, NewPendingReward(ethAddress))
+}
+
+func (k Keeper) RemoveTransactors(ctx sdk.Context, candidate Candidate) error {
+	for _, transactor := range candidate.Transactors {
+		err := k.RemoveTransactor(ctx, transactor)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	candidate.Transactors = []sdk.AccAddress{}
+	k.SetCandidate(ctx, candidate)
+
+	return nil
+}
+
+func (k Keeper) RemoveTransactor(ctx sdk.Context, transactor sdk.AccAddress) error {
+	account := k.accountKeeper.GetAccount(ctx, transactor)
+	if account != nil {
+		log.Infof("Remove account %s", transactor)
+		k.accountKeeper.RemoveAccount(ctx, account)
+	}
+
+	return k.bankKeeper.SetCoins(ctx, transactor, sdk.NewCoins(sdk.NewCoin(common.QuotaCoinName, sdk.ZeroInt())))
 }
