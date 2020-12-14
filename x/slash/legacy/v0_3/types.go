@@ -34,6 +34,10 @@ const (
 	DefaultPenaltyDelegatorSize = types.DefaultPenaltyDelegatorSize
 )
 
+var (
+	DefaultSyncerReward = types.DefaultSyncerReward
+)
+
 func NewPenalty(nonce uint64, reason string, validatorAddr string, penalizedDelegators []v02slash.AccountAmtPair,
 	beneficiaryFractions []v02slash.AccountFractionPair, syncerReward sdk.Int) Penalty {
 	var beneficiaries []v02slash.AccountAmtPair
