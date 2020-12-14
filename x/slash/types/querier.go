@@ -2,6 +2,7 @@ package types
 
 const (
 	QueryPenalty        = "penalty"
+	QueryPenalties      = "penalties"
 	QueryPenaltyRequest = "penalty-request"
 	QueryParameters     = "parameters"
 )

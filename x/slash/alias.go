@@ -11,6 +11,7 @@ const (
 	RouterKey                  = types.RouterKey
 	StoreKey                   = types.StoreKey
 	QueryPenalty               = types.QueryPenalty
+	QueryPenalties             = types.QueryPenalties
 	QueryParameters            = types.QueryParameters
 	AttributeKeyNonce          = types.AttributeKeyNonce
 	AttributeValueGuardFailure = types.AttributeValueGuardFailure
