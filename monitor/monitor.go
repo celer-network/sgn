@@ -90,7 +90,6 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		verifiedChanges: verifiedChanges,
 		bonded:          mainchain.IsBonded(dposCandidateInfo),
 		bootstrapped:    valnum.Uint64() > 0,
-		executeSlash:    viper.GetBool(common.FlagSgnExecuteSlash),
 		startBlock:      startBlock,
 	}
 	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
@@ -112,9 +111,7 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 
 	go m.monitorSidechainCreateValidator()
 	go m.monitorSidechainWithdrawReward()
-	if m.executeSlash {
-		go m.monitorSidechainSlash()
-	}
+	go m.monitorSidechainSlash()
 }
 
 func (m *Monitor) processQueues() {

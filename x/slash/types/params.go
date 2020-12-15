@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	DefaultEnableSlash          = true
 	DefaultSignedBlocksWindow   = 100
 	DefaultPenaltyDelegatorSize = 200
 )
@@ -26,6 +27,7 @@ var (
 
 // nolint - Keys for parameter access
 var (
+	KeyEnableSlash               = []byte("EnableSlash")
 	KeySignedBlocksWindow        = []byte("SignedBlocksWindow")
 	KeyPenaltyDelegatorSize      = []byte("PenaltyDelegatorSize")
 	KeyMinSignedPerWindow        = []byte("MinSignedPerWindow")
@@ -40,6 +42,7 @@ var _ params.ParamSet = (*Params)(nil)
 
 // Params defines the high level settings for slash
 type Params struct {
+	EnableSlash               bool    `json:"enable_slash" yaml:"enable_slash"`
 	SignedBlocksWindow        int64   `json:"signed_blocks_window" yaml:"signed_blocks_window"`
 	PenaltyDelegatorSize      int64   `json:"penalty_delegator_size" yaml:"penalty_delegator_size"`
 	MinSignedPerWindow        sdk.Dec `json:"min_signed_per_window" yaml:"min_signed_per_window"`
@@ -51,9 +54,10 @@ type Params struct {
 }
 
 // NewParams creates a new Params instance
-func NewParams(signedBlocksWindow, penaltyDelegatorSize int64, minSignedPerWindow,
+func NewParams(enableSlash bool, signedBlocksWindow, penaltyDelegatorSize int64, minSignedPerWindow,
 	slashFractionDoubleSign, slashFractionDowntime, slashFractionGuardFailure, fallbackGuardReward sdk.Dec, syncerReward sdk.Int) Params {
 	return Params{
+		EnableSlash:               enableSlash,
 		SignedBlocksWindow:        signedBlocksWindow,
 		PenaltyDelegatorSize:      penaltyDelegatorSize,
 		MinSignedPerWindow:        minSignedPerWindow,
@@ -68,6 +72,7 @@ func NewParams(signedBlocksWindow, penaltyDelegatorSize int64, minSignedPerWindo
 // Implements params.ParamSet
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
+		params.NewParamSetPair(KeyEnableSlash, &p.EnableSlash, validateEnableSlash),
 		params.NewParamSetPair(KeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow),
 		params.NewParamSetPair(KeyPenaltyDelegatorSize, &p.PenaltyDelegatorSize, validatePenaltyDelegatorSize),
 		params.NewParamSetPair(KeyMinSignedPerWindow, &p.MinSignedPerWindow, validateMinSignedPerWindow),
@@ -88,13 +93,14 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultSignedBlocksWindow, DefaultPenaltyDelegatorSize, DefaultMinSignedPerWindow,
+	return NewParams(DefaultEnableSlash, DefaultSignedBlocksWindow, DefaultPenaltyDelegatorSize, DefaultMinSignedPerWindow,
 		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultSlashFractionGuardFailure, DefaultFallbackGuardReward, DefaultSyncerReward)
 }
 
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
+  EnableSlash:    %b,
   SignedBlocksWindow:    %d,
   PenaltyDelegatorSize:    %d,
   MinSignedPerWindow:    %s,
@@ -103,7 +109,7 @@ func (p Params) String() string {
 	SlashFractionGuardFailure:    %s
 	FallbackGuardReward:    %s
 	SyncerReward:    %s`,
-		p.SignedBlocksWindow, p.PenaltyDelegatorSize, p.MinSignedPerWindow,
+		p.EnableSlash, p.SignedBlocksWindow, p.PenaltyDelegatorSize, p.MinSignedPerWindow,
 		p.SlashFractionDoubleSign, p.SlashFractionDowntime, p.SlashFractionGuardFailure,
 		p.FallbackGuardReward, p.SyncerReward)
 }
@@ -128,6 +134,9 @@ func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) 
 
 // validate a set of params
 func (p Params) Validate() error {
+	if err := validateEnableSlash(p.EnableSlash); err != nil {
+		return err
+	}
 	if err := validateSignedBlocksWindow(p.SignedBlocksWindow); err != nil {
 		return err
 	}
@@ -152,6 +161,15 @@ func (p Params) Validate() error {
 	if err := validateSyncerReward(p.SyncerReward); err != nil {
 		return err
 	}
+	return nil
+}
+
+func validateEnableSlash(i interface{}) error {
+	_, ok := i.(bool)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
 	return nil
 }
 
