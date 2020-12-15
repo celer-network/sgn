@@ -9,6 +9,9 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
+	"github.com/celer-network/sgn/transactor"
+	govtypes "github.com/celer-network/sgn/x/gov/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,28 +34,7 @@ func setupSlash() {
 	tc.SleepWithLog(10, "sgn syncing")
 }
 
-func TestE2ESlash(t *testing.T) {
-	setupSlash()
-
-	t.Run("e2e-slash", func(t *testing.T) {
-		t.Run("slashTest", slashTest)
-	})
-}
-
-// Test penalty slash when a validator is offline
-func slashTest(t *testing.T) {
-	log.Infoln("===================================================================")
-	log.Infoln("======================== Test slash ===========================")
-
-	transactor := tc.NewTestTransactor(
-		t,
-		tc.SgnCLIHomes[0],
-		tc.SgnChainID,
-		tc.SgnNodeURI,
-		tc.SgnCLIAddr,
-		tc.SgnPassphrase,
-	)
-
+func setupValidators(t *testing.T, transactor *transactor.Transactor) {
 	amts := []*big.Int{big.NewInt(8000000000000000000), big.NewInt(1000000000000000000)}
 	tc.AddValidators(t, transactor, tc.ValEthKs[:2], tc.ValAccounts[:2], amts)
 
@@ -64,9 +46,33 @@ func slashTest(t *testing.T) {
 	require.NoError(t, err, "failed to get auth")
 	err = tc.DelegateStake(auth, mainchain.Hex2Addr(tc.ValEthAddrs[1]), big.NewInt(1000000000000000000))
 	require.NoError(t, err, "failed to delegate stake")
+}
 
+func TestE2ESlash(t *testing.T) {
+	t.Run("e2e-slash", func(t *testing.T) {
+		t.Run("slashTest", slashTest)
+		t.Run("disableSlashTest", disableSlashTest)
+	})
+}
+
+// Test penalty slash when a validator is offline
+func slashTest(t *testing.T) {
+	log.Infoln("===================================================================")
+	log.Infoln("======================== Test slash ===========================")
+
+	setupSlash()
+
+	transactor := tc.NewTestTransactor(
+		t,
+		tc.SgnCLIHomes[0],
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.SgnCLIAddr,
+		tc.SgnPassphrase,
+	)
+
+	setupValidators(t, transactor)
 	shutdownNode(1)
-
 	prevBalance, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 
 	log.Infoln("Query sgn about penalty info...")
@@ -119,5 +125,54 @@ func slashTest(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedBalance, balance, fmt.Sprintf("The expected balance should be %s", expectedBalance))
+}
 
+// Test disable slash
+func disableSlashTest(t *testing.T) {
+	log.Infoln("===================================================================")
+	log.Infoln("======================== Test disableSlash ===========================")
+
+	setupSlash()
+
+	transactor := tc.NewTestTransactor(
+		t,
+		tc.SgnCLIHomes[0],
+		tc.SgnChainID,
+		tc.SgnNodeURI,
+		tc.ValAccounts[0],
+		tc.SgnPassphrase,
+	)
+
+	setupValidators(t, transactor)
+
+	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("slash", "EnableSlash", "false")}
+	content := govtypes.NewParameterProposal("Slasg Param Change", "Update EnableSlash", paramChanges)
+	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor.Key.GetAddress())
+	transactor.AddTxMsg(submitProposalmsg)
+
+	proposalID := uint64(1)
+	byteVoteOption, _ := govtypes.VoteOptionFromString("Yes")
+	voteMsg := govtypes.NewMsgVote(transactor.Key.GetAddress(), proposalID, byteVoteOption)
+	transactor.AddTxMsg(voteMsg)
+
+	_, err := tc.QueryProposal(transactor.CliCtx, proposalID, govtypes.StatusPassed)
+	require.NoError(t, err, "failed to query proposal 1 with passed status")
+
+	shutdownNode(1)
+
+	nonce := uint64(0)
+	_, err = tc.QueryPenalty(transactor.CliCtx, nonce, 1)
+	assert.Error(t, err, "failed to query penalty 0 with 1 sig")
+
+	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 0)
+	require.NoError(t, err, "failed to query penalty 0")
+	log.Infoln("Query sgn about penalty info:", penalty.String())
+	expRes1 := fmt.Sprintf(`Nonce: %d, Reason: missing_signature, ValidatorAddr: %s, TotalPenalty: 20000000000000000`, nonce, tc.ValEthAddrs[1])
+	expRes2 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.ValEthAddrs[1])
+	expRes3 := fmt.Sprintf(`Account: %s, Amount: 10000000000000000`, tc.DelEthAddrs[0])
+	expRes4 := fmt.Sprintf(`Account: 0000000000000000000000000000000000000001, Amount: 10000000000000000`)
+	assert.Equal(t, expRes1, penalty.String(), fmt.Sprintf("The expected result should be \"%s\"", expRes1))
+	assert.Equal(t, expRes2, penalty.PenalizedDelegators[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes2))
+	assert.Equal(t, expRes3, penalty.PenalizedDelegators[1].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes3))
+	assert.Equal(t, expRes4, penalty.Beneficiaries[0].String(), fmt.Sprintf("The expected result should be \"%s\"", expRes4))
 }

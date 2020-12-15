@@ -35,7 +35,6 @@ type Monitor struct {
 	verifiedChanges *bigcache.BigCache
 	sidechainAcct   sdk.AccAddress
 	bonded          bool
-	executeSlash    bool
 	bootstrapped    bool // SGN has bootstrapped with at least one bonded validator on the mainchain contract
 	startBlock      *big.Int
 	lock            sync.RWMutex
@@ -145,9 +144,8 @@ func (m *Monitor) processQueues() {
 			m.processGuardQueue()
 
 		case <-slashTicker.C:
-			if m.executeSlash {
-				m.processPenaltyQueue()
-			}
+			m.processPenaltyQueue()
+
 		}
 	}
 }
