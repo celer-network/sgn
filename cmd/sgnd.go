@@ -9,6 +9,7 @@ import (
 
 	"github.com/celer-network/sgn/app"
 	"github.com/celer-network/sgn/common"
+	sgngenutilcli "github.com/celer-network/sgn/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -41,11 +42,11 @@ func GetSgndExecutor() cli.Executor {
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(ctx, cdc, app.ModuleBasics, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(ctx, cdc, auth.GenesisAccountIterator{}, app.DefaultNodeHome),
-		genutilcli.MigrateGenesisCmd(ctx, cdc),
 		genutilcli.GenTxCmd(ctx, cdc, app.ModuleBasics, staking.AppModuleBasic{}, auth.GenesisAccountIterator{}, app.DefaultNodeHome, app.DefaultCLIHome),
 		genutilcli.ValidateGenesisCmd(ctx, cdc, app.ModuleBasics),
 		// addGenesisAccountCmd allows users to add accounts to the genesis file
 		addGenesisAccountCmd(ctx, cdc, app.DefaultNodeHome, app.DefaultCLIHome),
+		sgngenutilcli.MigrateGenesisCmd(ctx, cdc),
 	)
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
