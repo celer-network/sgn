@@ -25,7 +25,6 @@ level = "debug"
 
 [sgn]
 chain_id = "sgntest"
-execute_slash = true
 keyring_backend = "file"
 node_uri = "tcp://localhost:26657"
 passphrase = "12341234"

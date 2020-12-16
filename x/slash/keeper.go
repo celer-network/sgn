@@ -172,6 +172,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		}
 	}
 
+	enableSlash := k.EnableSlash(ctx)
 	syncerReward := k.SyncerReward(ctx)
 	penaltyNonce := k.GetPenaltyNonce(ctx)
 	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
@@ -187,16 +188,19 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		penalty.GenerateProtoBytes()
 		k.SetPenalty(ctx, penalty)
 
-		log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d",
-			candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce)
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				EventTypeSlash,
-				sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
-				sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
-				sdk.NewAttribute(slashing.AttributeKeyReason, reason),
-			),
-		)
+		log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d, enabled: %t",
+			candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce, enableSlash)
+
+		if enableSlash {
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					EventTypeSlash,
+					sdk.NewAttribute(sdk.AttributeKeyAction, ActionPenalty),
+					sdk.NewAttribute(AttributeKeyNonce, sdk.NewUint(penalty.Nonce).String()),
+					sdk.NewAttribute(slashing.AttributeKeyReason, reason),
+				),
+			)
+		}
 
 		low = up
 		penaltyNonce += 1

@@ -67,6 +67,7 @@
     },
     "slash": {
       "params": {
+        "enable_slash": true,
         "signed_blocks_window": "20",
         "penalty_delegator_size": "2",
         "min_signed_per_window": "0.10000000000000000",
