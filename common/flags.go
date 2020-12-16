@@ -34,7 +34,6 @@ const (
 	FlagSgnTimeoutCommit    = "sgn.timeout_commit"
 	FlagSgnKeyringBackend   = "sgn.keyring_backend"
 	FlagSgnMinGasPrices     = "sgn.min_gas_prices"
-	FlagSgnExecuteSlash     = "sgn.execute_slash"
 
 	FlagSgnCheckIntervalGuardQueue = "sgn.check_interval.guard_queue"
 	FlagSgnCheckIntervalSlashQueue = "sgn.check_interval.slash_queue"

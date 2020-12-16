@@ -16,6 +16,12 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
+// EnableSlash - if enable slash event
+func (k Keeper) EnableSlash(ctx sdk.Context) (res bool) {
+	k.paramstore.Get(ctx, types.KeyEnableSlash, &res)
+	return
+}
+
 // SignedBlocksWindow - sliding window for downtime slashing
 func (k Keeper) SignedBlocksWindow(ctx sdk.Context) (res int64) {
 	k.paramstore.Get(ctx, types.KeySignedBlocksWindow, &res)
@@ -67,6 +73,7 @@ func (k Keeper) SyncerReward(ctx sdk.Context) (res sdk.Int) {
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
+		k.EnableSlash(ctx),
 		k.SignedBlocksWindow(ctx),
 		k.PenaltyDelegatorSize(ctx),
 		k.MinSignedPerWindow(ctx),
