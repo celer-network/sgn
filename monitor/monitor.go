@@ -14,6 +14,7 @@ import (
 	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/x/guard"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -63,6 +64,15 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		log.Fatalln("GetValidatorNum err", err)
 	}
 
+	guardParams, err := guard.CLIQueryParams(operator.Transactor.CliCtx, guard.RouterKey)
+	if err != nil {
+		log.Fatalln("query guard params err", err)
+	}
+	err = operator.EthClient.SetLedgerContract(guardParams.LedgerAddress)
+	if err != nil {
+		log.Fatalln("SetLedgerContract err", err)
+	}
+
 	dposContract := NewMonitorContractInfo(operator.EthClient.DPoSAddress, sgncontracts.DPoSABI)
 	sgnContract := NewMonitorContractInfo(operator.EthClient.SGNAddress, sgncontracts.SGNABI)
 	ledgerContract := NewMonitorContractInfo(operator.EthClient.LedgerAddress, mainchain.CelerLedgerABI)
@@ -98,23 +108,23 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		log.Fatalln("Sidechain acct error")
 	}
 
-	go m.processQueues()
-
-	go m.monitorDPoSValidatorChange()
-	go m.monitorDPoSUpdateDelegatedStake()
-	go m.monitorDPoSCandidateUnbonded()
-	go m.monitorDPoSConfirmParamProposal()
-	go m.monitorDPoSUpdateCommissionRate()
-	go m.monitorSGNUpdateSidechainAddr()
-	go m.monitorSGNAddSubscriptionBalance()
-	go m.monitorCelerLedgerIntendSettle()
-	go m.monitorCelerLedgerIntendWithdraw()
+	m.monitorDPoSValidatorChange()
+	m.monitorDPoSUpdateDelegatedStake()
+	m.monitorDPoSCandidateUnbonded()
+	m.monitorDPoSConfirmParamProposal()
+	m.monitorDPoSUpdateCommissionRate()
+	m.monitorSGNUpdateSidechainAddr()
+	m.monitorSGNAddSubscriptionBalance()
+	m.monitorCelerLedgerIntendSettle()
+	m.monitorCelerLedgerIntendWithdraw()
 
 	go m.monitorSidechainCreateValidator()
 	go m.monitorSidechainWithdrawReward()
 	if m.executeSlash {
 		go m.monitorSidechainSlash()
 	}
+
+	go m.processQueues()
 }
 
 func (m *Monitor) processQueues() {

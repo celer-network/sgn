@@ -49,12 +49,22 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 }
 
 func updateSGNConfig() {
+	log.Infoln("Updating genesis.json")
+	genesisPath := "../../data/.sgnd/config/genesis.json"
+	genesisViper := viper.New()
+	genesisViper.SetConfigFile(genesisPath)
+	err := genesisViper.ReadInConfig()
+	tc.ChkErr(err, "Failed to read genesis")
+	genesisViper.Set("app_state.guard.params.ledger_address", tc.E2eProfile.LedgerAddr.Hex())
+	err = genesisViper.WriteConfig()
+	tc.ChkErr(err, "Failed to write genesis")
+
 	log.Infoln("Updating sgn.toml")
 
 	configFilePath := "../../data/.sgncli/config/sgn.toml"
 	configFileViper := viper.New()
 	configFileViper.SetConfigFile(configFilePath)
-	err := configFileViper.ReadInConfig()
+	err = configFileViper.ReadInConfig()
 	tc.ChkErr(err, "failed to read config")
 
 	keystore, err := filepath.Abs("../../keys/vethks0.json")
@@ -89,6 +99,14 @@ func installSgn() error {
 	}
 
 	cmd = exec.Command("cp", "./test/data/.sgncli/config/sgn_template.toml", "./test/data/.sgncli/config/sgn.toml")
+	// set cmd.Dir under repo root path
+	cmd.Dir, _ = filepath.Abs("../../..")
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command("cp", "./test/data/.sgnd/config/genesis_template.json", "./test/data/.sgnd/config/genesis.json")
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
 	return cmd.Run()

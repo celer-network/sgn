@@ -118,16 +118,17 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
 
+		genesisPath := fmt.Sprintf("../../../docker-volumes/node%d/sgnd/config/genesis.json", i)
+		genesisViper := viper.New()
+		genesisViper.SetConfigFile(genesisPath)
+		err = genesisViper.ReadInConfig()
+		ChkErr(err, "Failed to read genesis")
+		genesisViper.Set("app_state.guard.params.ledger_address", E2eProfile.LedgerAddr.Hex())
 		if manual {
-			genesisPath := fmt.Sprintf("../../../docker-volumes/node%d/sgnd/config/genesis.json", i)
-			genesisViper := viper.New()
-			genesisViper.SetConfigFile(genesisPath)
-			err = genesisViper.ReadInConfig()
-			ChkErr(err, "Failed to read genesis")
 			genesisViper.Set("app_state.govern.voting_params.voting_period", "120000000000")
-			err = genesisViper.WriteConfig()
-			ChkErr(err, "Failed to write genesis")
 		}
+		err = genesisViper.WriteConfig()
+		ChkErr(err, "Failed to write genesis")
 	}
 
 	// Update global viper

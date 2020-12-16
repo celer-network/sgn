@@ -34,12 +34,18 @@ func (k Keeper) MinDisputeTimeout(ctx sdk.Context) (res uint64) {
 	return
 }
 
+func (k Keeper) LedgerAddress(ctx sdk.Context) (res string) {
+	k.paramstore.Get(ctx, types.KeyLedgerAddress, &res)
+	return
+}
+
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.RequestGuardCount(ctx),
 		k.RequestCost(ctx),
 		k.MinDisputeTimeout(ctx),
+		k.LedgerAddress(ctx),
 	)
 }
 

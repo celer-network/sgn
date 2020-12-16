@@ -427,10 +427,14 @@ func (app *SgnApp) startMonitor(db dbm.DB) {
 		tmos.Exit(err.Error())
 	}
 
-	_, err = rpc.GetChainHeight(operator.Transactor.CliCtx)
-	for err != nil {
-		time.Sleep(time.Second)
-		_, err = rpc.GetChainHeight(operator.Transactor.CliCtx)
+	var height int64
+	for retry := 0; retry < 15; retry++ {
+		height, err = rpc.GetChainHeight(operator.Transactor.CliCtx)
+		if err != nil || height < 1 {
+			time.Sleep(time.Second)
+		} else {
+			break
+		}
 	}
 
 	monitor.NewMonitor(operator, db)
