@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"math/big"
+	"os"
 	"strings"
 
 	"github.com/celer-network/goutils/log"
@@ -120,7 +121,17 @@ func DeployCommand() *cobra.Command {
 			}
 
 			ledgerAddr := DeployLedgerContract()
-			configFileViper.Set(common.FlagEthLedgerAddress, ledgerAddr.Hex())
+
+			if ethurl == LocalGeth {
+				genesisPath := os.ExpandEnv("$HOME/.sgnd/config/genesis.json")
+				genesisViper := viper.New()
+				genesisViper.SetConfigFile(genesisPath)
+				err := genesisViper.ReadInConfig()
+				ChkErr(err, "Failed to read genesis")
+				genesisViper.Set("app_state.guard.params.ledger_address", ledgerAddr.Hex())
+				err = genesisViper.WriteConfig()
+				ChkErr(err, "Failed to write genesis")
+			}
 
 			_, erc20Addr, erc20 := DeployERC20Contract()
 			// NOTE: values below are for local tests

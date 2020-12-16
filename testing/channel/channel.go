@@ -14,6 +14,7 @@ import (
 	"github.com/celer-network/sgn/mainchain"
 	tc "github.com/celer-network/sgn/testing/common"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/x/guard"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -87,11 +88,16 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
+	guardParams, err := guard.CLIQueryParams(ts.CliCtx, guard.RouterKey)
+	if err != nil {
+		return nil, err
+	}
+
 	sgnContractAddress := mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress))
 	err = tc.SetContracts(
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)),
 		sgnContractAddress,
-		mainchain.Hex2Addr(viper.GetString(common.FlagEthLedgerAddress)))
+		mainchain.Hex2Addr(guardParams.LedgerAddress))
 	if err != nil {
 		return
 	}

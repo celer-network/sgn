@@ -49,11 +49,17 @@ func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 }
 
 func updateSGNConfig() {
+	cmd := exec.Command("make", "reset-test-data")
+	// set cmd.Dir under repo root path
+	cmd.Dir, _ = filepath.Abs("../../..")
+	err := cmd.Run()
+	tc.ChkErr(err, "reset test data")
+
 	log.Infoln("Updating genesis.json")
-	genesisPath := "../../data/.sgnd/config/genesis.json"
+	genesisPath := os.ExpandEnv("$HOME/.sgnd/config/genesis.json")
 	genesisViper := viper.New()
 	genesisViper.SetConfigFile(genesisPath)
-	err := genesisViper.ReadInConfig()
+	err = genesisViper.ReadInConfig()
 	tc.ChkErr(err, "Failed to read genesis")
 	genesisViper.Set("app_state.guard.params.ledger_address", tc.E2eProfile.LedgerAddr.Hex())
 	err = genesisViper.WriteConfig()
@@ -61,7 +67,7 @@ func updateSGNConfig() {
 
 	log.Infoln("Updating sgn.toml")
 
-	configFilePath := "../../data/.sgncli/config/sgn.toml"
+	configFilePath := os.ExpandEnv("$HOME/.sgncli/config/sgn.toml")
 	configFileViper := viper.New()
 	configFileViper.SetConfigFile(configFilePath)
 	err = configFileViper.ReadInConfig()
@@ -74,7 +80,6 @@ func updateSGNConfig() {
 	configFileViper.Set(common.FlagEthCelrAddress, tc.E2eProfile.CelrAddr.Hex())
 	configFileViper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr.Hex())
 	configFileViper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr.Hex())
-	configFileViper.Set(common.FlagEthLedgerAddress, tc.E2eProfile.LedgerAddr.Hex())
 	configFileViper.Set(common.FlagEthKeystore, keystore)
 	err = configFileViper.WriteConfig()
 	tc.ChkErr(err, "failed to write config")
@@ -93,36 +98,12 @@ func installSgn() error {
 
 	// set cmd.Dir under repo root path
 	cmd.Dir, _ = filepath.Abs("../../..")
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("cp", "./test/data/.sgncli/config/sgn_template.toml", "./test/data/.sgncli/config/sgn.toml")
-	// set cmd.Dir under repo root path
-	cmd.Dir, _ = filepath.Abs("../../..")
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("cp", "./test/data/.sgnd/config/genesis_template.json", "./test/data/.sgnd/config/genesis.json")
-	// set cmd.Dir under repo root path
-	cmd.Dir, _ = filepath.Abs("../../..")
 	return cmd.Run()
 }
 
 // startSidechain starts sgn sidechain with the data in test/data
 func startSidechain(rootDir, testName string) (*os.Process, error) {
-	cmd := exec.Command("make", "update-test-data")
-	// set cmd.Dir under repo root path
-	cmd.Dir, _ = filepath.Abs("../../..")
-	if err := cmd.Run(); err != nil {
-		log.Errorln("Failed to run \"make update-test-data\": ", err)
-		return nil, err
-	}
-
-	cmd = exec.Command("sgnd", "start")
+	cmd := exec.Command("sgnd", "start")
 	cmd.Dir, _ = filepath.Abs("../../..")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

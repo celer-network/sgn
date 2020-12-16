@@ -12,6 +12,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -56,11 +57,6 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	ledgerContract, err := mainchain.NewCelerLedger(
-		mainchain.Hex2Addr(viper.GetString(common.FlagEthLedgerAddress)), ethClient)
-	if err != nil {
-		return nil, err
-	}
 
 	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
@@ -78,6 +74,15 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		viper.GetString(common.FlagSgnPassphrase),
 		transactors,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	guardParams, err := guard.CLIQueryParams(transactorPool.GetTransactor().CliCtx, guard.RouterKey)
+	if err != nil {
+		return nil, err
+	}
+	ledgerContract, err := mainchain.NewCelerLedger(mainchain.Hex2Addr(guardParams.LedgerAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}

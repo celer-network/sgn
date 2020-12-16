@@ -30,9 +30,8 @@ go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinod
 From the root folder of the repo:
 
 ```sh
-cp test/data/.sgncli/config/sgn_template.toml test/data/.sgncli/config/sgn.toml
+make reset-test-data
 WITH_CLEVELDB=yes make install-all
-sgnd unsafe-reset-all
 make localnet-start-geth
 sgnops deploy
 sgnd start 2>&1 | tee sgnd.log

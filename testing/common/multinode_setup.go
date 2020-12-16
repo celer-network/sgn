@@ -112,7 +112,6 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 		ChkErr(err, "Failed to read config")
 		configFileViper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr.Hex())
 		configFileViper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr.Hex())
-		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr.Hex())
 		configFileViper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr.Hex())
 
 		err = configFileViper.WriteConfig()
@@ -138,7 +137,6 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr.Hex())
 	viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr.Hex())
-	viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr.Hex())
 	viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr.Hex())
 
 	err = SetContracts(E2eProfile.DPoSAddr, E2eProfile.SGNAddr, E2eProfile.LedgerAddr)

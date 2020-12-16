@@ -16,7 +16,6 @@ intend_withdraw_channel = 1
 [eth.contracts]
 celr_address = ""
 dpos_address = ""
-ledger_address = ""
 sgn_address = ""
 
 [log]
