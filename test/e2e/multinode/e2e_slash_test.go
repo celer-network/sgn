@@ -162,7 +162,7 @@ func disableSlashTest(t *testing.T) {
 
 	nonce := uint64(0)
 	_, err = tc.QueryPenalty(transactor.CliCtx, nonce, 1)
-	assert.Error(t, err, "failed to query penalty 0 with 1 sig")
+	assert.Error(t, err, "get penalty 0 with 1 sig should fail")
 
 	penalty, err := tc.QueryPenalty(transactor.CliCtx, nonce, 0)
 	require.NoError(t, err, "failed to query penalty 0")

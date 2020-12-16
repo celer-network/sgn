@@ -100,11 +100,11 @@ func DefaultParams() Params {
 // String returns a human readable string representation of the parameters.
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
-  EnableSlash:    %t,
-  SignedBlocksWindow:    %d,
-  PenaltyDelegatorSize:    %d,
-  MinSignedPerWindow:    %s,
-  SlashFractionDoubleSign:    %s,
+	EnableSlash:    %t,
+	SignedBlocksWindow:    %d,
+	PenaltyDelegatorSize:    %d,
+	MinSignedPerWindow:    %s,
+	SlashFractionDoubleSign:    %s,
 	SlashFractionDowntime:    %s
 	SlashFractionGuardFailure:    %s
 	FallbackGuardReward:    %s

@@ -188,8 +188,8 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 		penalty.GenerateProtoBytes()
 		k.SetPenalty(ctx, penalty)
 
-		log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d",
-			candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce)
+		log.Warnf("Slash validator: %s %x, amount: %s, reason: %s, nonce: %d, enabled: %t",
+			candidate.ValAccount, mainchain.Hex2Addr(identity), slashAmount, reason, penalty.Nonce, enableSlash)
 
 		if enableSlash {
 			ctx.EventManager().EmitEvent(
