@@ -99,19 +99,15 @@ func DeployCommand() *cobra.Command {
 			}
 			EthClient = ethclient.NewClient(rpcClient)
 
-			isLocalTest := false
-			if ethurl == LocalGeth {
-				isLocalTest = true
-			}
-
+			isLocalTest := (ethurl == LocalGeth)
 			if isLocalTest {
-				keystore, err := filepath.Abs("./test/keys/vethks0.json")
-				ChkErr(err, "get keystore path")
+				keystore, err2 := filepath.Abs("./test/keys/vethks0.json")
+				ChkErr(err2, "get keystore path")
 				configFileViper.Set(common.FlagEthKeystore, keystore)
 				err = configFileViper.WriteConfig()
-				ChkErr(err, "failed to write config")
+				ChkErr(err2, "failed to write config")
 				err = configFileViper.ReadInConfig()
-				ChkErr(err, "failed to read config")
+				ChkErr(err2, "failed to read config")
 			}
 
 			var ksBytes []byte
