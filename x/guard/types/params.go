@@ -22,7 +22,7 @@ const (
 
 var (
 	// Default cost per request
-	DefaultRequestCost = sdk.NewInt(10000000000000000)
+	DefaultRequestCost = sdk.NewInt(1000000000000000000)
 
 	// Default Ledger address in a zero address that should not be used
 	DefaultLedgerAddress string = mainchain.ZeroAddrHex

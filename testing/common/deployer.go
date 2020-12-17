@@ -169,7 +169,7 @@ func DeployCommand() *cobra.Command {
 
 			if isLocalTest {
 				amt := new(big.Int)
-				amt.SetString("1"+strings.Repeat("0", 20), 10)
+				amt.SetString("1"+strings.Repeat("0", 21), 10)
 				tx, err := erc20.Approve(EtherBaseAuth, dposAddr, amt)
 				ChkErr(err, "failed to approve erc20")
 				WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "approve erc20")

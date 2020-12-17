@@ -16,10 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
+	crpc "github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,7 +43,7 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
-	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthGateway))
+	rpcClient, err := ethrpc.Dial(viper.GetString(common.FlagEthGateway))
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,17 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	guardParams, err := guard.CLIQueryParams(transactorPool.GetTransactor().CliCtx, guard.RouterKey)
+	txr := transactorPool.GetTransactor()
+	var height int64
+	for retry := 0; retry < 15; retry++ {
+		height, err = crpc.GetChainHeight(txr.CliCtx)
+		if err != nil || height < 1 {
+			time.Sleep(time.Second)
+		} else {
+			break
+		}
+	}
+	guardParams, err := guard.CLIQueryParams(txr.CliCtx, guard.RouterKey)
 	if err != nil {
 		return nil, err
 	}

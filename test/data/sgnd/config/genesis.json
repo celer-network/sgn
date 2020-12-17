@@ -61,7 +61,7 @@
     "guard": {
       "params": {
         "request_guard_count": "3",
-        "request_cost": "10000000000000000",
+        "request_cost": "1000000000000000000",
         "min_dispute_timeout": "10"
       }
     },
