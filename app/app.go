@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"os"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
@@ -17,7 +16,6 @@ import (
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -427,14 +425,9 @@ func (app *SgnApp) startMonitor(db dbm.DB) {
 		tmos.Exit(err.Error())
 	}
 
-	var height int64
-	for retry := 0; retry < 15; retry++ {
-		height, err = rpc.GetChainHeight(operator.Transactor.CliCtx)
-		if err != nil || height < 1 {
-			time.Sleep(time.Second)
-		} else {
-			break
-		}
+	err = common.WaitTillHeight(operator.Transactor.CliCtx, 1)
+	if err != nil {
+		tmos.Exit(err.Error())
 	}
 
 	monitor.NewMonitor(operator, db)

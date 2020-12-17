@@ -9,6 +9,7 @@ import (
 	"github.com/celer-network/sgn/proto/entity"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
@@ -89,5 +90,19 @@ func SetupUserPassword() error {
 		viper.Set(FlagSgnPassphrase, pass)
 	}
 
+	return nil
+}
+
+func WaitTillHeight(cliCtx context.CLIContext, height int64) error {
+	var h int64
+	var err error
+	for retry := 0; retry < 15; retry++ {
+		h, err = rpc.GetChainHeight(cliCtx)
+		if err != nil || h < height {
+			time.Sleep(time.Second)
+		} else {
+			break
+		}
+	}
 	return nil
 }

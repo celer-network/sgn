@@ -16,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
-	crpc "github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -80,15 +79,11 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 
 	txr := transactorPool.GetTransactor()
-	var height int64
-	for retry := 0; retry < 15; retry++ {
-		height, err = crpc.GetChainHeight(txr.CliCtx)
-		if err != nil || height < 1 {
-			time.Sleep(time.Second)
-		} else {
-			break
-		}
+	err = common.WaitTillHeight(txr.CliCtx, 1)
+	if err != nil {
+		return nil, err
 	}
+
 	guardParams, err := guard.CLIQueryParams(txr.CliCtx, guard.RouterKey)
 	if err != nil {
 		return nil, err
