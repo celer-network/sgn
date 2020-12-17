@@ -2,8 +2,10 @@ package channel
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -18,10 +20,12 @@ import (
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
+	"github.com/levigross/grequests"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tlog "github.com/tendermint/tendermint/libs/log"
@@ -88,9 +92,31 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 
-	guardParams, err := guard.CLIQueryParams(ts.CliCtx, guard.RouterKey)
-	if err != nil {
-		return nil, err
+	var guardParams guard.Params
+	if sgnGateway == "" {
+		guardParams, err = guard.CLIQueryParams(ts.CliCtx, guard.RouterKey)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		resp, err2 := grequests.Get(tc.JoinURL(sgnGateway, "/guard/params"), nil)
+		if err2 != nil {
+			return nil, err2
+		}
+		if resp.StatusCode != http.StatusOK {
+			var errResponse rest.ErrorResponse
+			err = cdc.UnmarshalJSON(resp.Bytes(), &errResponse)
+			if err != nil {
+				return nil, fmt.Errorf("Parse err response err: %w", err)
+			}
+			return nil, fmt.Errorf("get params status %d, err %s", resp.StatusCode, errResponse.Error)
+		}
+		var responseWithHeight rest.ResponseWithHeight
+		err = cdc.UnmarshalJSON(resp.Bytes(), &responseWithHeight)
+		if err != nil {
+			return nil, fmt.Errorf("Parse subscription response err: %w", err)
+		}
+		cdc.MustUnmarshalJSON(responseWithHeight.Result, &guardParams)
 	}
 
 	sgnContractAddress := mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress))
@@ -111,7 +137,7 @@ func NewRestServer() (rs *RestServer, err error) {
 		return
 	}
 	amt := new(big.Int)
-	amt.SetString("1"+strings.Repeat("0", 18), 10)
+	amt.SetString("1"+strings.Repeat("0", 19), 10)
 	peer1Auth := peer0.Auth
 	allowance, err := tokenContract.Allowance(&bind.CallOpts{}, peer1Auth.From, sgnContractAddress)
 	if allowance.Cmp(amt) < 0 {
