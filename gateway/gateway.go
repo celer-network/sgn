@@ -12,13 +12,14 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
+	"github.com/celer-network/sgn/x/guard"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,7 +42,7 @@ type RestServer struct {
 
 // NewRestServer creates a new rest server instance
 func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
-	rpcClient, err := rpc.Dial(viper.GetString(common.FlagEthGateway))
+	rpcClient, err := ethrpc.Dial(viper.GetString(common.FlagEthGateway))
 	if err != nil {
 		return nil, err
 	}
@@ -53,11 +54,6 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 	}
 	sgnContract, err := sgncontracts.NewSGN(
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress)), ethClient)
-	if err != nil {
-		return nil, err
-	}
-	ledgerContract, err := mainchain.NewCelerLedger(
-		mainchain.Hex2Addr(viper.GetString(common.FlagEthLedgerAddress)), ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +74,21 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		viper.GetString(common.FlagSgnPassphrase),
 		transactors,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	txr := transactorPool.GetTransactor()
+	err = common.WaitTillHeight(txr.CliCtx, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	guardParams, err := guard.CLIQueryParams(txr.CliCtx, guard.RouterKey)
+	if err != nil {
+		return nil, err
+	}
+	ledgerContract, err := mainchain.NewCelerLedger(mainchain.Hex2Addr(guardParams.LedgerAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}

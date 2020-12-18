@@ -69,17 +69,14 @@ lint:
 	go mod verify
 
 copy-test-data:
-	cp -r test/data/.sgnd ~/.sgnd
-	cp -r test/data/.sgncli ~/.sgncli
+	cp -r test/data/sgnd ~/.sgnd
+	cp -r test/data/sgncli ~/.sgncli
 
 remove-test-data:
 	rm -rf ~/.sgnd ~/.sgncli
 
-.PHONY: update-test-data
-update-test-data: remove-test-data copy-test-data
-
-copy-test-config:
-	cp test/data/.sgnd/config/genesis.json ~/.sgnd/config/genesis.json
+.PHONY: reset-test-data
+reset-test-data: remove-test-data copy-test-data
 
 ################################ Docker related ################################
 .PHONY: build

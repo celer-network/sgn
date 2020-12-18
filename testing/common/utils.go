@@ -5,8 +5,10 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -136,4 +138,9 @@ func PrepareSignedSimplexState(seqNum uint64, channelId, peerFrom []byte, peer0,
 	}
 
 	return signedSimplexStateProto, nil
+}
+
+func JoinURL(base string, paths ...string) string {
+	p := path.Join(paths...)
+	return fmt.Sprintf("%s/%s", strings.TrimRight(base, "/"), strings.TrimLeft(p, "/"))
 }

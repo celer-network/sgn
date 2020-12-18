@@ -44,8 +44,7 @@ func NewEthClient(
 	passphrase string,
 	tconfig *TransactorConfig,
 	dposAddrStr string,
-	sgnAddrStr string,
-	ledgerAddrStr string) (*EthClient, error) {
+	sgnAddrStr string) (*EthClient, error) {
 	ethClient := &EthClient{}
 
 	rpcClient, err := ethrpc.Dial(ethurl)
@@ -54,7 +53,11 @@ func NewEthClient(
 	}
 
 	ethClient.Client = ethclient.NewClient(rpcClient)
-	err = ethClient.setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr)
+	err = ethClient.SetDPoSContract(dposAddrStr)
+	if err != nil {
+		return nil, err
+	}
+	err = ethClient.SetSgnContract(sgnAddrStr)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +70,36 @@ func NewEthClient(
 	}
 
 	return ethClient, nil
+}
+
+func (ethClient *EthClient) SetLedgerContract(ledgerAddrStr string) error {
+	ethClient.LedgerAddress = Hex2Addr(ledgerAddrStr)
+	ledger, err := NewCelerLedger(ethClient.LedgerAddress, ethClient.Client)
+	if err != nil {
+		return err
+	}
+	ethClient.Ledger = ledger
+	return nil
+}
+
+func (ethClient *EthClient) SetDPoSContract(dposAddrStr string) error {
+	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
+	dpos, err := sgncontracts.NewDPoS(ethClient.DPoSAddress, ethClient.Client)
+	if err != nil {
+		return err
+	}
+	ethClient.DPoS = dpos
+	return nil
+}
+
+func (ethClient *EthClient) SetSgnContract(sgnAddrStr string) error {
+	ethClient.SGNAddress = Hex2Addr(sgnAddrStr)
+	sgn, err := sgncontracts.NewSGN(ethClient.SGNAddress, ethClient.Client)
+	if err != nil {
+		return err
+	}
+	ethClient.SGN = sgn
+	return nil
 }
 
 func (ethClient *EthClient) setTransactor(ksfile string, passphrase string, tconfig *TransactorConfig) error {
@@ -98,31 +131,6 @@ func (ethClient *EthClient) setTransactor(ksfile string, passphrase string, tcon
 	)
 
 	return err
-}
-
-func (ethClient *EthClient) setContracts(dposAddrStr, sgnAddrStr, ledgerAddrStr string) error {
-	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
-	dpos, err := sgncontracts.NewDPoS(ethClient.DPoSAddress, ethClient.Client)
-	if err != nil {
-		return err
-	}
-
-	ethClient.SGNAddress = Hex2Addr(sgnAddrStr)
-	sgn, err := sgncontracts.NewSGN(ethClient.SGNAddress, ethClient.Client)
-	if err != nil {
-		return err
-	}
-
-	ethClient.LedgerAddress = Hex2Addr(ledgerAddrStr)
-	ledger, err := NewCelerLedger(ethClient.LedgerAddress, ethClient.Client)
-	if err != nil {
-		return err
-	}
-
-	ethClient.DPoS = dpos
-	ethClient.SGN = sgn
-	ethClient.Ledger = ledger
-	return nil
 }
 
 func (ethClient *EthClient) SignEthMessage(data []byte) ([]byte, error) {

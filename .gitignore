@@ -17,4 +17,3 @@ build
 # Test
 docker-volumes
 test/e2e/manual/data/node*
-test/data/.sgncli/config/sgn.toml

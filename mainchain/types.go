@@ -10,7 +10,7 @@ import (
 var (
 	// ZeroAddr is all 0s
 	ZeroAddr Addr
-	// ZeroAddrHex is string of 20 0s
+	// ZeroAddrHex is string of 40 0s
 	ZeroAddrHex = Addr2Hex(ZeroAddr)
 	// ZeroBigInt is big.NewInt(0)
 	ZeroBigInt = big.NewInt(0)

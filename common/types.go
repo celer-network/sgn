@@ -106,6 +106,5 @@ func NewEthClientFromConfig() (*mainchain.EthClient, error) {
 		},
 		viper.GetString(FlagEthDPoSAddress),
 		viper.GetString(FlagEthSGNAddress),
-		viper.GetString(FlagEthLedgerAddress),
 	)
 }

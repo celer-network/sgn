@@ -112,22 +112,22 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 		ChkErr(err, "Failed to read config")
 		configFileViper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr.Hex())
 		configFileViper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr.Hex())
-		configFileViper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr.Hex())
 		configFileViper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr.Hex())
 
 		err = configFileViper.WriteConfig()
 		ChkErr(err, "Failed to write config")
 
+		genesisPath := fmt.Sprintf("../../../docker-volumes/node%d/sgnd/config/genesis.json", i)
+		genesisViper := viper.New()
+		genesisViper.SetConfigFile(genesisPath)
+		err = genesisViper.ReadInConfig()
+		ChkErr(err, "Failed to read genesis")
+		genesisViper.Set("app_state.guard.params.ledger_address", E2eProfile.LedgerAddr.Hex())
 		if manual {
-			genesisPath := fmt.Sprintf("../../../docker-volumes/node%d/sgnd/config/genesis.json", i)
-			genesisViper := viper.New()
-			genesisViper.SetConfigFile(genesisPath)
-			err = genesisViper.ReadInConfig()
-			ChkErr(err, "Failed to read genesis")
 			genesisViper.Set("app_state.govern.voting_params.voting_period", "120000000000")
-			err = genesisViper.WriteConfig()
-			ChkErr(err, "Failed to write genesis")
 		}
+		err = genesisViper.WriteConfig()
+		ChkErr(err, "Failed to write genesis")
 	}
 
 	// Update global viper
@@ -137,7 +137,6 @@ func SetupNewSGNEnv(sgnParams *SGNParams, manual bool) {
 	ChkErr(err, "Failed to read config")
 	viper.Set(common.FlagEthCelrAddress, E2eProfile.CelrAddr.Hex())
 	viper.Set(common.FlagEthDPoSAddress, E2eProfile.DPoSAddr.Hex())
-	viper.Set(common.FlagEthLedgerAddress, E2eProfile.LedgerAddr.Hex())
 	viper.Set(common.FlagEthSGNAddress, E2eProfile.SGNAddr.Hex())
 
 	err = SetContracts(E2eProfile.DPoSAddr, E2eProfile.SGNAddr, E2eProfile.LedgerAddr)

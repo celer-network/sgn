@@ -4,6 +4,8 @@ import (
 	"context"
 	"io/ioutil"
 	"math/big"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/celer-network/goutils/log"
@@ -97,6 +99,17 @@ func DeployCommand() *cobra.Command {
 			}
 			EthClient = ethclient.NewClient(rpcClient)
 
+			isLocalTest := (ethurl == LocalGeth)
+			if isLocalTest {
+				keystore, err2 := filepath.Abs("./test/keys/vethks0.json")
+				ChkErr(err2, "get keystore path")
+				configFileViper.Set(common.FlagEthKeystore, keystore)
+				err = configFileViper.WriteConfig()
+				ChkErr(err2, "failed to write config")
+				err = configFileViper.ReadInConfig()
+				ChkErr(err2, "failed to read config")
+			}
+
 			var ksBytes []byte
 			ksBytes, err = ioutil.ReadFile(configFileViper.GetString(common.FlagEthKeystore))
 			if err != nil {
@@ -108,7 +121,7 @@ func DeployCommand() *cobra.Command {
 				return err
 			}
 
-			if ethurl == LocalGeth {
+			if isLocalTest {
 				SetEthBaseKs("./docker-volumes/geth-env")
 				err = FundAddrsETH("1"+strings.Repeat("0", 20),
 					[]mainchain.Addr{
@@ -120,7 +133,17 @@ func DeployCommand() *cobra.Command {
 			}
 
 			ledgerAddr := DeployLedgerContract()
-			configFileViper.Set(common.FlagEthLedgerAddress, ledgerAddr.Hex())
+
+			if isLocalTest {
+				genesisPath := os.ExpandEnv("$HOME/.sgnd/config/genesis.json")
+				genesisViper := viper.New()
+				genesisViper.SetConfigFile(genesisPath)
+				err = genesisViper.ReadInConfig()
+				ChkErr(err, "Failed to read genesis")
+				genesisViper.Set("app_state.guard.params.ledger_address", ledgerAddr.Hex())
+				err = genesisViper.WriteConfig()
+				ChkErr(err, "Failed to write genesis")
+			}
 
 			_, erc20Addr, erc20 := DeployERC20Contract()
 			// NOTE: values below are for local tests
@@ -144,9 +167,9 @@ func DeployCommand() *cobra.Command {
 			err = configFileViper.WriteConfig()
 			ChkErr(err, "failed to write config")
 
-			if ethurl == LocalGeth {
+			if isLocalTest {
 				amt := new(big.Int)
-				amt.SetString("1"+strings.Repeat("0", 19), 10)
+				amt.SetString("1"+strings.Repeat("0", 21), 10)
 				tx, err := erc20.Approve(EtherBaseAuth, dposAddr, amt)
 				ChkErr(err, "failed to approve erc20")
 				WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "approve erc20")
