@@ -97,6 +97,7 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 	}
 
 	go m.processQueues()
+	go m.syncBlkNum()
 
 	go m.monitorDPoSValidatorChange()
 	go m.monitorDPoSUpdateDelegatedStake()

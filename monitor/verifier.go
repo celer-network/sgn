@@ -61,6 +61,8 @@ func (m *Monitor) verifyActiveChanges() {
 
 func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	switch change.Type {
+	case sync.SyncBlkNum:
+		return m.verifySyncBlkNum(change)
 	case sync.ConfirmParamProposal:
 		return m.verifyConfirmParamProposal(change)
 	case sync.UpdateSidechainAddr:
@@ -80,6 +82,16 @@ func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	default:
 		return false, false
 	}
+}
+
+func (m *Monitor) verifySyncBlkNum(change sync.Change) (done, approve bool) {
+	log.Infof("Verify sync mainchain block: %s", change.BlockNum)
+
+	if m.cmpBlkNum(change.BlockNum) == 1 {
+		return true, true
+	}
+
+	return false, false
 }
 
 func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (done, approve bool) {

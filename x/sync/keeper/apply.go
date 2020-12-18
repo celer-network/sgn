@@ -24,6 +24,8 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
 	var applied bool
 	var err error
 	switch change.Type {
+	case types.SyncBlkNum:
+		applied, err = keeper.SyncBlkNum(ctx, change)
 	case types.ConfirmParamProposal:
 		applied, err = keeper.ConfirmParamProposal(ctx, change)
 	case types.UpdateSidechainAddr:
@@ -47,6 +49,18 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
 		log.Errorln("Apply change err:", err)
 	}
 	return applied
+}
+
+func (keeper Keeper) SyncBlkNum(ctx sdk.Context, change types.Change) (bool, error) {
+	log.Infoln("Sync block number", change.BlockNum)
+
+	curBlkNum := keeper.GetBlkNum(ctx)
+	if change.BlockNum < curBlkNum {
+		return false, nil
+	}
+
+	keeper.SetBlkNum(ctx, change.BlockNum)
+	return true, nil
 }
 
 func (keeper Keeper) ConfirmParamProposal(ctx sdk.Context, change types.Change) (bool, error) {

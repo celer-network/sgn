@@ -39,6 +39,7 @@ var (
 	ChangesKeyPrefix        = []byte{0x00}
 	ActiveChangeQueuePrefix = []byte{0x01}
 	ChangeIDKey             = []byte{0x03}
+	BlkNumKey               = []byte{0x04}
 )
 
 var lenTime = len(sdk.FormatTimeBytes(time.Now()))
