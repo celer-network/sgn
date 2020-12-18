@@ -1,12 +1,12 @@
 {
   "title": "Guard Param Change",
-  "description": "Update EpochLength",
+  "description": "Update LedgerAddress",
   "changes": [
     {
       "subspace": "guard",
-      "key": "EpochLength",
-      "value": "3"
+      "key": "LedgerAddress",
+      "value": ""
     }
   ],
-  "deposit": 10
+  "deposit": "10"
 }

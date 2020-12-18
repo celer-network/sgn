@@ -8,11 +8,8 @@ import (
 	"time"
 
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
-	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/transactor"
-	"github.com/celer-network/sgn/x/guard"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkFlags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -33,10 +30,6 @@ type RestServer struct {
 	transactorPool *transactor.TransactorPool
 	listener       net.Listener
 	logger         tlog.Logger
-
-	dposContract   *sgncontracts.DPoS
-	sgnContract    *sgncontracts.SGN
-	ledgerContract *mainchain.CelerLedger
 	ethClient      *ethclient.Client
 }
 
@@ -47,16 +40,6 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 	ethClient := ethclient.NewClient(rpcClient)
-	dposContract, err := sgncontracts.NewDPoS(
-		mainchain.Hex2Addr(viper.GetString(common.FlagEthDPoSAddress)), ethClient)
-	if err != nil {
-		return nil, err
-	}
-	sgnContract, err := sgncontracts.NewSGN(
-		mainchain.Hex2Addr(viper.GetString(common.FlagEthSGNAddress)), ethClient)
-	if err != nil {
-		return nil, err
-	}
 
 	transactorPool := transactor.NewTransactorPool(
 		viper.GetString(sdkFlags.FlagHome),
@@ -78,21 +61,6 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		return nil, err
 	}
 
-	txr := transactorPool.GetTransactor()
-	err = common.WaitTillHeight(txr.CliCtx, 1)
-	if err != nil {
-		return nil, err
-	}
-
-	guardParams, err := guard.CLIQueryParams(txr.CliCtx, guard.RouterKey)
-	if err != nil {
-		return nil, err
-	}
-	ledgerContract, err := mainchain.NewCelerLedger(mainchain.Hex2Addr(guardParams.LedgerAddress), ethClient)
-	if err != nil {
-		return nil, err
-	}
-
 	log.SetLevelByName(viper.GetString(common.FlagLogLevel))
 	if viper.GetBool(common.FlagLogColor) {
 		log.EnableColor()
@@ -106,9 +74,6 @@ func NewRestServer(cdc *codec.Codec) (*RestServer, error) {
 		Mux:            r,
 		transactorPool: transactorPool,
 		logger:         logger,
-		dposContract:   dposContract,
-		sgnContract:    sgnContract,
-		ledgerContract: ledgerContract,
 		ethClient:      ethClient,
 	}, nil
 }

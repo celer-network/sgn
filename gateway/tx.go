@@ -109,9 +109,23 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 		}
 
 		// Initialize first guard request
+
+		guardParams, err := guard.CLIQueryParams(transactor.CliCtx, guard.RouterKey)
+		if err != nil {
+			errmsg := fmt.Sprintf("Failed to get guard params: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
+			return
+		}
+		ledgerContract, err := mainchain.NewLedgerContract(mainchain.Hex2Addr(guardParams.LedgerAddress), rs.ethClient)
+		if err != nil {
+			errmsg := fmt.Sprintf("Failed create ledger contract: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
+			return
+		}
+
 		// verify peer addr
 		cid := mainchain.Bytes2Cid(simplexChannel.ChannelId)
-		seqNum, err := mainchain.GetSimplexSeqNum(rs.ledgerContract, cid, simplexSender, simplexReceiver)
+		seqNum, err := mainchain.GetSimplexSeqNum(ledgerContract, cid, simplexSender, simplexReceiver)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -124,9 +138,15 @@ func postRequestGuardHandlerFn(rs *RestServer) http.HandlerFunc {
 			return
 		}
 
-		disputeTimeout, err := rs.ledgerContract.GetDisputeTimeout(&bind.CallOpts{}, cid)
+		// verify dispute timeout
+		disputeTimeout, err := ledgerContract.GetDisputeTimeout(&bind.CallOpts{}, cid)
 		if err != nil {
 			errmsg := fmt.Sprintf("Failed to get dispute timeout: %s", err)
+			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
+			return
+		}
+		if disputeTimeout.Uint64() < guardParams.MinDisputeTimeout {
+			errmsg := fmt.Sprintf("dispute timeout %s smaller than min value %d", disputeTimeout, guardParams.MinDisputeTimeout)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errmsg)
 			return
 		}

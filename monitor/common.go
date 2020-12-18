@@ -15,21 +15,21 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-type MonitorContractInfo struct {
+type Contract struct {
 	address mainchain.Addr
 	abi     string
 }
 
-func (info *MonitorContractInfo) GetAddr() mainchain.Addr {
-	return info.address
+func (c *Contract) GetAddr() mainchain.Addr {
+	return c.address
 }
 
-func (info *MonitorContractInfo) GetABI() string {
-	return info.abi
+func (c *Contract) GetABI() string {
+	return c.abi
 }
 
-func NewMonitorContractInfo(address mainchain.Addr, abi string) *MonitorContractInfo {
-	return &MonitorContractInfo{
+func newContract(address mainchain.Addr, abi string) *Contract {
+	return &Contract{
 		address: address,
 		abi:     abi,
 	}
@@ -56,7 +56,7 @@ func (m *Monitor) getGuardRequest(channelId []byte, simplexReceiver string) (*gu
 // get guard requests for the channel, return an array with at most two elements
 // TODO: return proper err
 func (m *Monitor) getGuardRequests(cid mainchain.CidType) (requests []*guard.Request, seqs []uint64) {
-	addresses, seqNums, err := m.EthClient.Ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
+	addresses, seqNums, err := m.EthClient.GetLedger().GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorln("Query StateSeqNumMap err", err)
 		return

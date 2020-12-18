@@ -11,7 +11,6 @@ import (
 	"github.com/celer-network/goutils/eth/monitor"
 	"github.com/celer-network/goutils/eth/watcher"
 	"github.com/celer-network/goutils/log"
-	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/x/guard"
@@ -30,15 +29,16 @@ type Monitor struct {
 	*Operator
 	db              dbm.DB
 	ethMonitor      *monitor.Service
-	dposContract    monitor.Contract
-	sgnContract     monitor.Contract
-	ledgerContract  monitor.Contract
 	verifiedChanges *bigcache.BigCache
 	sidechainAcct   sdk.AccAddress
 	bonded          bool
 	bootstrapped    bool // SGN has bootstrapped with at least one bonded validator on the mainchain contract
-	startBlock      *big.Int
-	lock            sync.RWMutex
+
+	startEthBlock *big.Int
+	settleCbID    monitor.CallbackID
+	withdrawCbID  monitor.CallbackID
+
+	lock sync.RWMutex
 }
 
 func NewMonitor(operator *Operator, db dbm.DB) {
@@ -72,34 +72,27 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 		log.Fatalln("SetLedgerContract err", err)
 	}
 
-	dposContract := NewMonitorContractInfo(operator.EthClient.DPoSAddress, sgncontracts.DPoSABI)
-	sgnContract := NewMonitorContractInfo(operator.EthClient.SGNAddress, sgncontracts.SGNABI)
-	ledgerContract := NewMonitorContractInfo(operator.EthClient.LedgerAddress, mainchain.CelerLedgerABI)
-
 	verifiedChanges, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
 	if err != nil {
 		log.Fatalln("NewBigCache err", err)
 	}
 
 	configuredStartBlock := viper.GetInt64(common.FlagEthMonitorStartBlock)
-	var startBlock *big.Int
+	var startEthBlock *big.Int
 	if configuredStartBlock == 0 {
-		startBlock = ethMonitor.GetCurrentBlockNumber()
+		startEthBlock = ethMonitor.GetCurrentBlockNumber()
 	} else {
-		startBlock = big.NewInt(viper.GetInt64(common.FlagEthMonitorStartBlock))
+		startEthBlock = big.NewInt(viper.GetInt64(common.FlagEthMonitorStartBlock))
 	}
 
 	m := Monitor{
 		Operator:        operator,
 		db:              db,
 		ethMonitor:      ethMonitor,
-		dposContract:    dposContract,
-		sgnContract:     sgnContract,
-		ledgerContract:  ledgerContract,
 		verifiedChanges: verifiedChanges,
 		bonded:          mainchain.IsBonded(dposCandidateInfo),
 		bootstrapped:    valnum.Uint64() > 0,
-		startBlock:      startBlock,
+		startEthBlock:   startEthBlock,
 	}
 	m.sidechainAcct, err = sdk.AccAddressFromBech32(viper.GetString(common.FlagSgnValidatorAccount))
 	if err != nil {
@@ -164,8 +157,8 @@ func (m *Monitor) monitorSGNUpdateSidechainAddr() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(UpdateSidechainAddr),
-			Contract:      m.sgnContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.SGN,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateSidechainAddr),
 		},
@@ -197,8 +190,8 @@ func (m *Monitor) monitorSGNAddSubscriptionBalance() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(AddSubscriptionBalance),
-			Contract:      m.sgnContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.SGN,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(AddSubscriptionBalance),
 		},
@@ -220,8 +213,8 @@ func (m *Monitor) monitorDPoSCandidateUnbonded() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(CandidateUnbonded),
-			Contract:      m.dposContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.DPoS,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(CandidateUnbonded),
 		},
@@ -242,8 +235,8 @@ func (m *Monitor) monitorDPoSConfirmParamProposal() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(ConfirmParamProposal),
-			Contract:      m.dposContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.DPoS,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(ConfirmParamProposal),
 		},
@@ -264,8 +257,8 @@ func (m *Monitor) monitorDPoSUpdateCommissionRate() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(UpdateCommissionRate),
-			Contract:      m.dposContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.DPoS,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateCommissionRate),
 		},
@@ -286,8 +279,8 @@ func (m *Monitor) monitorDPoSValidatorChange() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(ValidatorChange),
-			Contract:      m.dposContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.DPoS,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(ValidatorChange),
 		},
@@ -330,8 +323,8 @@ func (m *Monitor) monitorDPoSUpdateDelegatedStake() {
 	_, err := m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(UpdateDelegatedStake),
-			Contract:      m.dposContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.DPoS,
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(UpdateDelegatedStake),
 		},
@@ -359,17 +352,21 @@ func (m *Monitor) monitorDPoSUpdateDelegatedStake() {
 }
 
 func (m *Monitor) monitorCelerLedgerIntendSettle() {
-	_, err := m.ethMonitor.Monitor(
+	if m.settleCbID != 0 {
+		m.ethMonitor.RemoveEvent(m.settleCbID)
+	}
+	var err error
+	m.settleCbID, err = m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(IntendSettle),
-			Contract:      m.ledgerContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.GetLedger(),
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(IntendSettle),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendSettle, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
-			err := m.dbSet(GetPullerKey(eLog), NewEvent(IntendSettle, eLog).MustMarshal())
+			err = m.dbSet(GetPullerKey(eLog), NewEvent(IntendSettle, eLog).MustMarshal())
 			if err != nil {
 				log.Errorln("db Set err", err)
 			}
@@ -381,20 +378,24 @@ func (m *Monitor) monitorCelerLedgerIntendSettle() {
 }
 
 func (m *Monitor) monitorCelerLedgerIntendWithdraw() {
-	_, err := m.ethMonitor.Monitor(
+	if m.withdrawCbID != 0 {
+		m.ethMonitor.RemoveEvent(m.withdrawCbID)
+	}
+	var err error
+	m.withdrawCbID, err = m.ethMonitor.Monitor(
 		&monitor.Config{
 			EventName:     string(IntendWithdraw),
-			Contract:      m.ledgerContract,
-			StartBlock:    m.startBlock,
+			Contract:      m.EthClient.GetLedger(),
+			StartBlock:    m.startEthBlock,
 			Reset:         true,
 			CheckInterval: getEventCheckInterval(IntendWithdrawChannel),
 		},
 		func(cb monitor.CallbackID, eLog ethtypes.Log) {
 			log.Infof("Catch event IntendWithdrawChannel, tx hash: %x, blknum: %d", eLog.TxHash, eLog.BlockNumber)
 			event := NewEvent(IntendWithdrawChannel, eLog).MustMarshal()
-			dberr := m.dbSet(GetPullerKey(eLog), event)
-			if dberr != nil {
-				log.Errorln("db Set err", dberr)
+			err = m.dbSet(GetPullerKey(eLog), event)
+			if err != nil {
+				log.Errorln("db Set err", err)
 			}
 			m.setGuardEvent(eLog, ChanInfoState_CaughtWithdraw)
 		})

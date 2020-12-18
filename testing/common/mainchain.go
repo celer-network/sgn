@@ -99,7 +99,7 @@ func SetContracts(dposAddr, sgnAddr, ledgerAddr mainchain.Addr) error {
 }
 
 func SetupE2eProfile() {
-	ledgerAddr := DeployLedgerContract()
+	_, ledgerAddr := DeployLedgerContract()
 	// Deploy sample ERC20 contract (CELR)
 	tx, erc20Addr, erc20 := DeployERC20Contract()
 	WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "DeployERC20")
@@ -264,12 +264,11 @@ func OpenChannel(peer0, peer1 *TestEthClient) (channelId [32]byte, err error) {
 
 func IntendWithdraw(auth *bind.TransactOpts, candidateAddr mainchain.Addr, amt *big.Int) error {
 	conn := EthClient
-	dposContract := DposContract
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
 	log.Info("Call intendWithdraw on dpos contract using the validator eth address...")
-	tx, err := dposContract.IntendWithdraw(auth, candidateAddr, amt)
+	tx, err := DposContract.IntendWithdraw(auth, candidateAddr, amt)
 	if err != nil {
 		return err
 	}
@@ -292,11 +291,8 @@ func ConfirmUnbondedCandidate(auth *bind.TransactOpts, candidateAddr mainchain.A
 
 func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSelfStake *big.Int, commissionRate *big.Int, rateLockEndTime *big.Int) error {
 	conn := EthClient
-	dposContract := DposContract
-	sgnContract := SgnContract
-
 	log.Infof("Call initializeCandidate on dpos contract using the validator eth address %x, minSelfStake: %d, commissionRate: %d, rateLockEndTime: %d", auth.From.Bytes(), minSelfStake, commissionRate, rateLockEndTime)
-	_, err := dposContract.InitializeCandidate(auth, minSelfStake, commissionRate, rateLockEndTime)
+	_, err := DposContract.InitializeCandidate(auth, minSelfStake, commissionRate, rateLockEndTime)
 	if err != nil {
 		return err
 	}
@@ -305,7 +301,7 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 	defer cancel()
 	log.Infof("Call updateSidechainAddr on sgn contract using the validator eth address, sgnAddr: %s", sgnAddr)
 	auth.GasLimit = 8000000
-	tx, err := sgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
+	tx, err := SgnContract.UpdateSidechainAddr(auth, sgnAddr.Bytes())
 	auth.GasLimit = 0
 	if err != nil {
 		return err
@@ -317,7 +313,6 @@ func InitializeCandidate(auth *bind.TransactOpts, sgnAddr sdk.AccAddress, minSel
 
 func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt *big.Int) error {
 	conn := EthClient
-	dposContract := DposContract
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancel()
 
@@ -328,7 +323,7 @@ func DelegateStake(fromAuth *bind.TransactOpts, toEthAddress mainchain.Addr, amt
 	}
 
 	fromAuth.GasLimit = 8000000
-	tx, err := dposContract.Delegate(fromAuth, toEthAddress, amt)
+	tx, err := DposContract.Delegate(fromAuth, toEthAddress, amt)
 	fromAuth.GasLimit = 0
 	if err != nil {
 		return err

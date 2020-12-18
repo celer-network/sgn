@@ -33,7 +33,7 @@ From the root folder of the repo:
 WITH_CLEVELDB=yes make install-all
 make reset-test-data
 make localnet-start-geth
-sgnops deploy
+sgnops deploy --contract all
 sgnd start 2>&1 | tee sgnd.log
 ```
 
