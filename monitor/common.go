@@ -15,26 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-type Contract struct {
-	address mainchain.Addr
-	abi     string
-}
-
-func (c *Contract) GetAddr() mainchain.Addr {
-	return c.address
-}
-
-func (c *Contract) GetABI() string {
-	return c.abi
-}
-
-func newContract(address mainchain.Addr, abi string) *Contract {
-	return &Contract{
-		address: address,
-		abi:     abi,
-	}
-}
-
 func (m *Monitor) isSyncer() bool {
 	syncer, err := validator.CLIQuerySyncer(m.Transactor.CliCtx, validator.StoreKey)
 	if err != nil {
