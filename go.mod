@@ -15,6 +15,7 @@ require (
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/iancoleman/strcase v0.1.0
+	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5

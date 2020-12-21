@@ -14,7 +14,6 @@ const (
 	FlagEthCelrAddress       = "eth.contracts.celr_address"
 	FlagEthDPoSAddress       = "eth.contracts.dpos_address"
 	FlagEthSGNAddress        = "eth.contracts.sgn_address"
-	FlagEthLedgerAddress     = "eth.contracts.ledger_address"
 	FlagEthKeystore          = "eth.keystore"
 	FlagEthPassphrase        = "eth.passphrase"
 	FlagEthPollInterval      = "eth.poll_interval"

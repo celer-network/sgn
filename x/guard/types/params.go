@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/celer-network/sgn/mainchain"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	ec "github.com/ethereum/go-ethereum/common"
 )
 
 // guard params default values
@@ -21,6 +23,9 @@ const (
 var (
 	// Default cost per request
 	DefaultRequestCost = sdk.NewInt(1000000000000000000)
+
+	// Default Ledger address in a zero address that should not be used
+	DefaultLedgerAddress string = mainchain.ZeroAddrHex
 )
 
 // nolint - Keys for parameter access
@@ -28,6 +33,7 @@ var (
 	KeyRequestGuardCount = []byte("RequestGuardCount")
 	KeyRequestCost       = []byte("RequestCost")
 	KeyMinDisputeTimeout = []byte("MinDisputeTimeout")
+	KeyLedgerAddress     = []byte("LedgerAddress")
 )
 
 var _ params.ParamSet = (*Params)(nil)
@@ -37,16 +43,17 @@ type Params struct {
 	RequestGuardCount uint64  `json:"request_guard_count" yaml:"request_guard_count"` // request guard count
 	RequestCost       sdk.Int `json:"request_cost" yaml:"request_cost"`               // request cost
 	MinDisputeTimeout uint64  `json:"min_dispute_timeout" yaml:"min_dispute_timeout"` // minimal channel dispute timeout in mainchain blocks
-
+	LedgerAddress     string  `json:"ledger_address" yaml:"ledger_address"`           // ledger contract address
 }
 
 // NewParams creates a new Params instance
-func NewParams(requestGuardCount uint64, requestCost sdk.Int, minDisputeTimeout uint64) Params {
+func NewParams(requestGuardCount uint64, requestCost sdk.Int, minDisputeTimeout uint64, ledgerAddress string) Params {
 
 	return Params{
 		RequestGuardCount: requestGuardCount,
 		RequestCost:       requestCost,
 		MinDisputeTimeout: minDisputeTimeout,
+		LedgerAddress:     ledgerAddress,
 	}
 }
 
@@ -56,6 +63,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyRequestGuardCount, &p.RequestGuardCount, validateRequestGuardCount),
 		params.NewParamSetPair(KeyRequestCost, &p.RequestCost, validateRequestCost),
 		params.NewParamSetPair(KeyMinDisputeTimeout, &p.MinDisputeTimeout, validateMinDisputeTimeout),
+		params.NewParamSetPair(KeyLedgerAddress, &p.LedgerAddress, validateLedgerAddress),
 	}
 }
 
@@ -68,7 +76,7 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultRequestGuardCount, DefaultRequestCost, DefaultMinDisputeTimeout)
+	return NewParams(DefaultRequestGuardCount, DefaultRequestCost, DefaultMinDisputeTimeout, DefaultLedgerAddress)
 }
 
 // String returns a human readable string representation of the parameters.
@@ -150,5 +158,17 @@ func validateMinDisputeTimeout(i interface{}) error {
 		return fmt.Errorf("guard parameter MinDisputeTimeout must be positive: %d", v)
 	}
 
+	return nil
+}
+
+func validateLedgerAddress(i interface{}) error {
+	v, ok := i.(string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if !ec.IsHexAddress(v) {
+		return fmt.Errorf("invalid LedgerAddress: %s", v)
+	}
 	return nil
 }
