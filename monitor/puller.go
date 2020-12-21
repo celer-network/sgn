@@ -106,7 +106,7 @@ func (m *Monitor) syncBlkNum() {
 	}
 
 	msg := sync.NewMsgSubmitChange(sync.SyncBlkNum, []byte{0}, m.EthClient.Client, m.Transactor.Key.GetAddress())
-	log.Infof("submit change tx: sync maichain block number", msg.BlockNum)
+	log.Infof("submit change tx: sync maichain block number %d", msg.BlockNum)
 	m.Transactor.AddTxMsg(msg)
 
 }

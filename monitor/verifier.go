@@ -86,7 +86,7 @@ func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 }
 
 func (m *Monitor) verifySyncBlkNum(change sync.Change) (done, approve bool) {
-	log.Infof("Verify sync mainchain block: %s", change.BlockNum)
+	log.Infof("Verify sync mainchain block: %d", change.BlockNum)
 	accceptedBlkRange := viper.GetUint64(common.FlagEthAcceptedBlkRange)
 	currentBlkNum := m.getCurrentBlockNumber().Uint64()
 
