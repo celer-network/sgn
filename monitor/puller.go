@@ -3,7 +3,6 @@ package monitor
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
@@ -102,16 +101,14 @@ func getDelegatorKey(candidate, delegator mainchain.Addr) string {
 }
 
 func (m *Monitor) syncBlkNum() {
-	for {
-		time.Sleep(time.Minute)
-		if !m.isSyncer() {
-			continue
-		}
-
-		msg := sync.NewMsgSubmitChange(sync.SyncBlkNum, []byte{0}, m.EthClient.Client, m.Transactor.Key.GetAddress())
-		log.Infof("submit change tx: sync maichain block number", msg.BlockNum)
-		m.Transactor.AddTxMsg(msg)
+	if !m.isSyncer() {
+		return
 	}
+
+	msg := sync.NewMsgSubmitChange(sync.SyncBlkNum, []byte{0}, m.EthClient.Client, m.Transactor.Key.GetAddress())
+	log.Infof("submit change tx: sync maichain block number", msg.BlockNum)
+	m.Transactor.AddTxMsg(msg)
+
 }
 
 func (m *Monitor) syncUpdateSidechainAddr(sidechainAddr *sgncontracts.SGNUpdateSidechainAddr, logmsg string) {

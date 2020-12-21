@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -86,8 +87,10 @@ func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 
 func (m *Monitor) verifySyncBlkNum(change sync.Change) (done, approve bool) {
 	log.Infof("Verify sync mainchain block: %s", change.BlockNum)
+	accceptedBlkRange := viper.GetUint64(common.FlagEthAcceptedBlkRange)
+	currentBlkNum := m.getCurrentBlockNumber().Uint64()
 
-	if m.cmpBlkNum(change.BlockNum) == 1 {
+	if change.BlockNum-currentBlkNum < accceptedBlkRange || currentBlkNum-change.BlockNum < accceptedBlkRange {
 		return true, true
 	}
 

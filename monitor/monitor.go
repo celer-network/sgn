@@ -97,7 +97,6 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 	}
 
 	go m.processQueues()
-	go m.syncBlkNum()
 
 	go m.monitorDPoSValidatorChange()
 	go m.monitorDPoSUpdateDelegatedStake()
@@ -140,6 +139,7 @@ func (m *Monitor) processQueues() {
 			blkNum = newblk
 			m.processPullerQueue()
 			m.verifyActiveChanges()
+			m.syncBlkNum()
 
 		case <-guardTicker.C:
 			m.processGuardQueue()
