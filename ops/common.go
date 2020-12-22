@@ -23,7 +23,7 @@ func calcRawAmount(amount string) *big.Int {
 }
 
 func approveCelrToDPoS(ethClient *mainchain.EthClient, amount *big.Int) error {
-	dPoSAddress := ethClient.DPoSAddress
+	dposAddress := ethClient.DPoS.Address
 	celrContract, err := mainchain.NewERC20(
 		mainchain.Hex2Addr(viper.GetString(common.FlagEthCelrAddress)),
 		ethClient.Client,
@@ -32,7 +32,7 @@ func approveCelrToDPoS(ethClient *mainchain.EthClient, amount *big.Int) error {
 		return err
 	}
 	allowance, err :=
-		celrContract.Allowance(&bind.CallOpts{}, ethClient.Transactor.Address(), dPoSAddress)
+		celrContract.Allowance(&bind.CallOpts{}, ethClient.Transactor.Address(), dposAddress)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func approveCelrToDPoS(ethClient *mainchain.EthClient, amount *big.Int) error {
 		_, approveErr := ethClient.Transactor.TransactWaitMined(
 			"Approve",
 			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-				return celrContract.Approve(opts, dPoSAddress, amount)
+				return celrContract.Approve(opts, dposAddress, amount)
 			},
 		)
 		if approveErr != nil {

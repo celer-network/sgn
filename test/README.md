@@ -1,52 +1,57 @@
-## Local Testing
+# Local E2E Testing
 
-### Multinode E2E Tests
+Requirements for multi-node or manual testing: Install [docker](https://docs.docker.com/install/) and [docker-compose](https://docs.docker.com/compose/install/). Start Docker daemon
 
-#### Requirements
+## Automated Testing
 
-- Install [docker](https://docs.docker.com/install/)
-- Install [docker-compose](https://docs.docker.com/compose/install/)
+### Multi-Node Automated Testing
 
-#### Steps
-
-1. Start Docker daemon
-2. `cd` into the root folder of the repo and run the following command (`sudo` may be required)
+Run the following command from the sgn repo root folder
 
 ```sh
 go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/multinode
 ```
-
-#### Test Logs
-
+Logs are located at
 - geth log path: docker-volumes/geth-env/geth.log
 - sgn nodeN log path: docker-volumes/nodeN/sgn/sgnd.log
 
-### [Multinode Manual Tests](./e2e/manual/README.md)
+### Single-Node Automated Testing
 
-### SingleNode Manual Tests
-
-#### Setup
-
-From the root folder of the repo:
+Run the following command from the sgn repo root folder
 
 ```sh
-WITH_CLEVELDB=yes make install-all
+go test -failfast -v -timeout 30m github.com/celer-network/sgn/test/e2e/singlenode
+```
+
+## Manual Testing
+
+### Multi-Node Manual Testing
+
+Follow instructions in [test/e2e/manual](./e2e/manual/README.md) for multi-node manual testing in a local docker environment.
+
+### Single-Node Manual Testing
+
+#### Reset, Build, Start
+
+Run following commands in sgn repo root folder
+```sh
 make reset-test-data
+WITH_CLEVELDB=yes make install-all
 make localnet-start-geth
-sgnops deploy
+sgnops deploy --contract all
 sgnd start 2>&1 | tee sgnd.log
 ```
 
 #### Test Validator and Delegator
 
-Note: wait for a few seconds between steps:
-
+Note: wait for a few seconds between steps
 ```sh
 sgnops init-candidate --commission-rate 150 --min-self-stake 1000 --rate-lock-period 300
 sgncli tx validator set-transactors
 sgncli query validator candidate 00078b31fa8b29a76bce074b5ea0d515a6aeaee7
 sgnops delegate --candidate 00078b31fa8b29a76bce074b5ea0d515a6aeaee7 --amount 10000
 sgncli query validator validator sgn1qehw7sn3u3nhnjeqk8kjccj263rq5fv002l5fk
+
 sgncli tx validator withdraw-reward 00078b31fa8b29a76bce074b5ea0d515a6aeaee7
 ```
 
@@ -54,7 +59,7 @@ sgncli tx validator withdraw-reward 00078b31fa8b29a76bce074b5ea0d515a6aeaee7
 
 ```sh
 sgncli gateway --laddr tcp://0.0.0.0:1318
-sgnops guard-test --sgn-gateway http://127.0.0.1:1318
+sgnops guard-test --sgn-gateway http://127.0.0.1:1318 # run in sgn repo root folder
 curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "10" }' # should succeed
 curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "12" }' # should succeed
 curl -X POST http://127.0.0.1:1317/requestGuard -d '{ "seq_num": "11" }' # should fail

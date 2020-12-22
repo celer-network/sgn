@@ -315,7 +315,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 	}
 
 	// verify channel state
-	chanState, err := m.EthClient.Ledger.GetChannelStatus(&bind.CallOpts{}, cid)
+	chanState, err := m.EthClient.GetLedger().GetChannelStatus(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorf("%s. GetChannelStatus err: %s", logmsg, err)
 		return false, false
@@ -326,7 +326,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 	}
 
 	// verify addr and seq
-	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.GetLedger(), cid, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
 		return errors.Is(err, mainchain.ErrPeersNotMatch), false
@@ -337,7 +337,7 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 	}
 
 	// verify dispute timeout
-	disputeTimeout, err := m.EthClient.Ledger.GetDisputeTimeout(&bind.CallOpts{}, cid)
+	disputeTimeout, err := m.EthClient.GetLedger().GetDisputeTimeout(&bind.CallOpts{}, cid)
 	if err != nil {
 		log.Errorf("%s. get dispute timeout err: %s", logmsg, err)
 		return false, false
@@ -346,18 +346,18 @@ func (m *Monitor) verifyInitGuardRequest(change sync.Change) (done, approve bool
 		log.Errorf("%s. dispute timeout not match mainchain value %s", logmsg, disputeTimeout)
 		return true, false
 	}
-	params, err := guard.CLIQueryParams(m.Transactor.CliCtx, guard.RouterKey)
+	guardParams, err := guard.CLIQueryParams(m.Transactor.CliCtx, guard.RouterKey)
 	if err != nil {
 		log.Errorf("%s. query guard params err: %s", logmsg, err)
 		return false, false
 	}
-	if request.DisputeTimeout < params.MinDisputeTimeout {
-		log.Errorf("%s. dispute timeout smaller than min value %d", logmsg, params.MinDisputeTimeout)
+	if request.DisputeTimeout < guardParams.MinDisputeTimeout {
+		log.Errorf("%s. dispute timeout smaller than min value %d", logmsg, guardParams.MinDisputeTimeout)
 		return true, false
 	}
 
 	// verify not in active unilateral withdraw state
-	wrecv, _, wblk, _, err := m.EthClient.Ledger.GetWithdrawIntent(&bind.CallOpts{}, cid)
+	wrecv, _, wblk, _, err := m.EthClient.GetLedger().GetWithdrawIntent(&bind.CallOpts{}, cid)
 	if wrecv != mainchain.ZeroAddr {
 		if m.getCurrentBlockNumber().Uint64() <= wblk.Uint64()+request.DisputeTimeout {
 			log.Errorf("%s. channel has pending unilateral withdrawal request", logmsg)
@@ -391,7 +391,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 	cid := mainchain.Bytes2Cid(trigger.ChannelId)
 	simplexSender := mainchain.Hex2Addr(r.SimplexSender)
 	simplexReceiver := mainchain.Hex2Addr(r.SimplexReceiver)
-	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.Ledger, cid, simplexSender, simplexReceiver)
+	seqNum, err := mainchain.GetSimplexSeqNum(m.EthClient.GetLedger(), cid, simplexSender, simplexReceiver)
 	if err != nil {
 		log.Errorf("%s. GetSimplexSeqNum err: %s", logmsg, err)
 		return errors.Is(err, mainchain.ErrPeersNotMatch), false
@@ -424,7 +424,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 	triggerLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/IntendWithdraw event is the last one
 
 	// verify transaction contract address
-	if triggerLog.Address != m.EthClient.LedgerAddress {
+	if triggerLog.Address != m.EthClient.GetLedger().Address {
 		log.Errorf("%s. Trigger tx contract address not match: %x", logmsg, triggerLog.Address)
 		return true, false
 	}
@@ -448,7 +448,7 @@ func (m *Monitor) verifyGuardTrigger(change sync.Change) (done, approve bool) {
 			log.Errorf("%s. Invalid ChanStatus current state: %d", logmsg, r.Status)
 			return true, false
 		}
-		event, err2 := m.EthClient.Ledger.ParseIntendWithdraw(*triggerLog)
+		event, err2 := m.EthClient.GetLedger().ParseIntendWithdraw(*triggerLog)
 		if err2 != nil {
 			log.Errorf("%s. ParseIntendWithdraw event err %s", logmsg, err2)
 			return true, false
@@ -507,7 +507,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 	guardLog := receipt.Logs[len(receipt.Logs)-1] // IntendSettle/SnapshotStates event is the last one
 
 	// verify transaction contract address
-	if guardLog.Address != m.EthClient.LedgerAddress {
+	if guardLog.Address != m.EthClient.GetLedger().Address {
 		log.Errorf("%s. Guard tx contract address not match: %x", logmsg, guardLog.Address)
 		return true, false
 	}
@@ -545,7 +545,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 			log.Errorf("%s. Proof guard state should be settled", logmsg)
 			return true, false
 		}
-		event, err2 := m.EthClient.Ledger.ParseIntendSettle(*guardLog)
+		event, err2 := m.EthClient.GetLedger().ParseIntendSettle(*guardLog)
 		if err2 != nil {
 			log.Errorf("%s. ParseIntendSettle event err %s", logmsg, err2)
 			return true, false
@@ -556,7 +556,7 @@ func (m *Monitor) verifyGuardProof(change sync.Change) (done, approve bool) {
 			log.Errorf("%s. Proof guard state should be idle", logmsg)
 			return true, false
 		}
-		event, err2 := m.EthClient.Ledger.ParseSnapshotStates(*guardLog)
+		event, err2 := m.EthClient.GetLedger().ParseSnapshotStates(*guardLog)
 		if err2 != nil {
 			log.Errorf("%s. ParseSnapshotStates event err %s", logmsg, err2)
 			return true, false

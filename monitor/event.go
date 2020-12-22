@@ -81,9 +81,9 @@ func (e *EventWrapper) ParseEvent(ethClient *mainchain.EthClient) interface{} {
 	case UpdateCommissionRate:
 		res, err = ethClient.DPoS.ParseUpdateCommissionRate(e.Log)
 	case IntendWithdrawChannel:
-		res, err = ethClient.Ledger.ParseIntendWithdraw(e.Log)
+		res, err = ethClient.GetLedger().ParseIntendWithdraw(e.Log)
 	case IntendSettle:
-		res, err = ethClient.Ledger.ParseIntendSettle(e.Log)
+		res, err = ethClient.GetLedger().ParseIntendSettle(e.Log)
 	default:
 		panic("Unsupported event")
 	}

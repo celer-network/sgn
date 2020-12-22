@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/celer-network/goutils/eth"
-	"github.com/celer-network/sgn-contract/bindings/go/sgncontracts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,14 +20,12 @@ type EthClient struct {
 	Transactor *eth.Transactor
 	Signer     eth.Signer
 	Address    Addr
+	DPoS       *DposContract
+	SGN        *SgnContract
 
-	// init by SetContracts
-	DPoSAddress   Addr
-	DPoS          *sgncontracts.DPoS
-	SGNAddress    Addr
-	SGN           *sgncontracts.SGN
-	LedgerAddress Addr
-	Ledger        *CelerLedger
+	// ledger could be updated, need lock protection
+	Ledger     *LedgerContract
+	ledgerLock sync.RWMutex
 }
 
 type TransactorConfig struct {
@@ -53,11 +51,7 @@ func NewEthClient(
 	}
 
 	ethClient.Client = ethclient.NewClient(rpcClient)
-	err = ethClient.SetDPoSContract(dposAddrStr)
-	if err != nil {
-		return nil, err
-	}
-	err = ethClient.SetSgnContract(sgnAddrStr)
+	err = ethClient.setDposSgnContracts(dposAddrStr, sgnAddrStr)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +67,9 @@ func NewEthClient(
 }
 
 func (ethClient *EthClient) SetLedgerContract(ledgerAddrStr string) error {
-	ethClient.LedgerAddress = Hex2Addr(ledgerAddrStr)
-	ledger, err := NewCelerLedger(ethClient.LedgerAddress, ethClient.Client)
+	ethClient.ledgerLock.Lock()
+	defer ethClient.ledgerLock.Unlock()
+	ledger, err := NewLedgerContract(Hex2Addr(ledgerAddrStr), ethClient.Client)
 	if err != nil {
 		return err
 	}
@@ -82,23 +77,25 @@ func (ethClient *EthClient) SetLedgerContract(ledgerAddrStr string) error {
 	return nil
 }
 
-func (ethClient *EthClient) SetDPoSContract(dposAddrStr string) error {
-	ethClient.DPoSAddress = Hex2Addr(dposAddrStr)
-	dpos, err := sgncontracts.NewDPoS(ethClient.DPoSAddress, ethClient.Client)
+func (ethClient *EthClient) GetLedger() *LedgerContract {
+	ethClient.ledgerLock.RLock()
+	defer ethClient.ledgerLock.RUnlock()
+	return ethClient.Ledger
+}
+
+func (ethClient *EthClient) setDposSgnContracts(dposAddrStr, sgnAddrStr string) error {
+	dpos, err := NewDposContract(Hex2Addr(dposAddrStr), ethClient.Client)
 	if err != nil {
 		return err
 	}
 	ethClient.DPoS = dpos
-	return nil
-}
 
-func (ethClient *EthClient) SetSgnContract(sgnAddrStr string) error {
-	ethClient.SGNAddress = Hex2Addr(sgnAddrStr)
-	sgn, err := sgncontracts.NewSGN(ethClient.SGNAddress, ethClient.Client)
+	sgn, err := NewSgnContract(Hex2Addr(sgnAddrStr), ethClient.Client)
 	if err != nil {
 		return err
 	}
 	ethClient.SGN = sgn
+
 	return nil
 }
 

@@ -65,7 +65,7 @@ func GetAddressFromKeystore(ksBytes []byte) (string, error) {
 
 // GetSimplexSeqNum get the mainchain simplex seqNum
 func GetSimplexSeqNum(
-	ledger *CelerLedger, cid CidType,
+	ledger *LedgerContract, cid CidType,
 	simplexSender, simplexReceiver Addr) (seqNum uint64, err error) {
 	addrs, seqNums, err := ledger.GetStateSeqNumMap(&bind.CallOpts{}, cid)
 	if err != nil {
