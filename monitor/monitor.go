@@ -125,11 +125,13 @@ func NewMonitor(operator *Operator, db dbm.DB) {
 
 func (m *Monitor) processQueues() {
 	pullerInterval := time.Duration(viper.GetUint64(common.FlagEthPollInterval)) * time.Second
+	syncBlkInterval := time.Duration(viper.GetUint64(common.FlagEthSyncBlkInterval)) * time.Second
 	guardInterval := time.Duration(viper.GetUint64(common.FlagSgnCheckIntervalGuardQueue)) * time.Second
 	slashInterval := time.Duration(viper.GetUint64(common.FlagSgnCheckIntervalSlashQueue)) * time.Second
 	log.Infof("Queue process interval: puller %s, guard %s, slash %s", pullerInterval, guardInterval, slashInterval)
 
 	pullerTicker := time.NewTicker(pullerInterval)
+	syncBlkTicker := time.NewTicker(syncBlkInterval)
 	guardTicker := time.NewTicker(guardInterval)
 	slashTicker := time.NewTicker(slashInterval)
 	defer func() {
@@ -149,6 +151,8 @@ func (m *Monitor) processQueues() {
 			blkNum = newblk
 			m.processPullerQueue()
 			m.verifyActiveChanges()
+
+		case <-syncBlkTicker.C:
 			m.syncBlkNum()
 
 		case <-guardTicker.C:
