@@ -7,6 +7,7 @@ gateway = "http://192.168.10.1:8545"
 keystore = "./keys/vethks0.json"
 passphrase = ""
 poll_interval = 1
+sync_blk_interval = 5
 accepted_blk_range = 5
 
 [eth.check_interval]
