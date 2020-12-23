@@ -26,6 +26,7 @@ const (
 	QueryChange          = types.QueryChange
 	ParamVoting          = types.ParamVoting
 	ParamTallying        = types.ParamTallying
+	SyncBlkNum           = types.SyncBlkNum
 	ConfirmParamProposal = types.ConfirmParamProposal
 	UpdateSidechainAddr  = types.UpdateSidechainAddr
 	SyncDelegator        = types.SyncDelegator
@@ -70,6 +71,7 @@ var (
 
 	// variable aliases
 	ModuleCdc                 = types.ModuleCdc
+	BlkNumKey                 = types.BlkNumKey
 	ChangesKeyPrefix          = types.ChangesKeyPrefix
 	ActiveChangeQueuePrefix   = types.ActiveChangeQueuePrefix
 	ChangeIDKey               = types.ChangeIDKey

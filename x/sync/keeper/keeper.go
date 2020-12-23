@@ -72,3 +72,20 @@ func (keeper Keeper) PullerReward(ctx sdk.Context) sdk.Int {
 func (keeper Keeper) AddPullerReward(ctx sdk.Context, ethAddress string, amount sdk.Int) {
 	keeper.validatorKeeper.AddReward(ctx, ethAddress, amount, sdk.ZeroInt())
 }
+
+func (keeper Keeper) GetBlkNum(ctx sdk.Context) (blkNum uint64) {
+	store := ctx.KVStore(keeper.storeKey)
+	bz := store.Get(types.BlkNumKey)
+	if bz == nil {
+		return
+	}
+	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &blkNum)
+	return
+
+}
+
+func (keeper Keeper) SetBlkNum(ctx sdk.Context, blkNum uint64) {
+	store := ctx.KVStore(keeper.storeKey)
+	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(blkNum)
+	store.Set(types.BlkNumKey, bz)
+}

@@ -17,6 +17,8 @@ const (
 	FlagEthKeystore          = "eth.keystore"
 	FlagEthPassphrase        = "eth.passphrase"
 	FlagEthPollInterval      = "eth.poll_interval"
+	FlagEthSyncBlkInterval   = "eth.sync_blk_interval"
+	FlagEthAcceptedBlkRange  = "eth.accepted_blk_range"
 	FlagEthBlockDelay        = "eth.block_delay"
 	FlagEthChainID           = "eth.chain_id"
 	FlagEthCheckInterval     = "eth.check_interval"

@@ -8,6 +8,7 @@ import (
 
 // query endpoints supported by the sync Querier
 const (
+	QueryBlkNum        = "blkNum"
 	QueryParams        = "params"
 	QueryChange        = "change"
 	QueryChanges       = "changes"

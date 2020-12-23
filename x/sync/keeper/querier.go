@@ -13,6 +13,8 @@ import (
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
+		case types.QueryBlkNum:
+			return queryBlkNum(ctx, path[1:], req, keeper)
 		case types.QueryParams:
 			return queryParams(ctx, path[1:], req, keeper)
 		case types.QueryChange:
@@ -25,6 +27,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
 	}
+}
+
+func queryBlkNum(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	blkNum := keeper.GetBlkNum(ctx)
+	bz, err := codec.Cdc.MarshalBinaryBare(blkNum)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
 }
 
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {

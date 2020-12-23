@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -61,6 +62,8 @@ func (m *Monitor) verifyActiveChanges() {
 
 func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	switch change.Type {
+	case sync.SyncBlkNum:
+		return m.verifySyncBlkNum(change)
 	case sync.ConfirmParamProposal:
 		return m.verifyConfirmParamProposal(change)
 	case sync.UpdateSidechainAddr:
@@ -80,6 +83,18 @@ func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	default:
 		return false, false
 	}
+}
+
+func (m *Monitor) verifySyncBlkNum(change sync.Change) (done, approve bool) {
+	log.Infof("Verify sync mainchain block: %d", change.BlockNum)
+	accceptedBlkRange := viper.GetUint64(common.FlagEthAcceptedBlkRange)
+	currentBlkNum := m.getCurrentBlockNumber().Uint64()
+
+	if change.BlockNum-currentBlkNum < accceptedBlkRange || currentBlkNum-change.BlockNum < accceptedBlkRange {
+		return true, true
+	}
+
+	return true, false
 }
 
 func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (done, approve bool) {

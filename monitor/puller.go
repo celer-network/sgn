@@ -100,6 +100,17 @@ func getDelegatorKey(candidate, delegator mainchain.Addr) string {
 	return mainchain.Addr2Hex(candidate) + ":" + mainchain.Addr2Hex(delegator)
 }
 
+func (m *Monitor) syncBlkNum() {
+	if !m.isSyncer() {
+		return
+	}
+
+	msg := sync.NewMsgSubmitChange(sync.SyncBlkNum, []byte{0}, m.EthClient.Client, m.Transactor.Key.GetAddress())
+	log.Infof("submit change tx: sync maichain block number %d", msg.BlockNum)
+	m.Transactor.AddTxMsg(msg)
+
+}
+
 func (m *Monitor) syncUpdateSidechainAddr(sidechainAddr *sgncontracts.SGNUpdateSidechainAddr, logmsg string) {
 	log.Infof("%s. sidechainAddr update %x, %s",
 		logmsg, sidechainAddr.Candidate, sdk.AccAddress(sidechainAddr.NewSidechainAddr.Bytes()))
