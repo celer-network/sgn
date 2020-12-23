@@ -94,7 +94,7 @@ func (m *Monitor) verifySyncBlkNum(change sync.Change) (done, approve bool) {
 		return true, true
 	}
 
-	return false, false
+	return true, false
 }
 
 func (m *Monitor) verifyConfirmParamProposal(change sync.Change) (done, approve bool) {

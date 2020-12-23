@@ -52,7 +52,7 @@ func (keeper Keeper) ApplyChange(ctx sdk.Context, change types.Change) bool {
 }
 
 func (keeper Keeper) SyncBlkNum(ctx sdk.Context, change types.Change) (bool, error) {
-	log.Infoln("Sync block number", change.BlockNum)
+	log.Infoln("Sync mainchain block number", change.BlockNum)
 
 	curBlkNum := keeper.GetBlkNum(ctx)
 	if change.BlockNum < curBlkNum {
