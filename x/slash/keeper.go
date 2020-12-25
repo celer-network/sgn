@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/validator"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,15 +22,17 @@ import (
 type Keeper struct {
 	storeKey        sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc             *codec.Codec // The wire codec for binary encoding/decoding.
+	globalKeeper    global.Keeper
 	validatorKeeper validator.Keeper
 	paramstore      params.Subspace
 }
 
 // NewKeeper creates new instances of the slash Keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
+func NewKeeper(storeKey sdk.StoreKey, cdc *codec.Codec, globalKeeper global.Keeper, validatorKeeper validator.Keeper, paramstore params.Subspace) Keeper {
 	return Keeper{
 		storeKey:        storeKey,
 		cdc:             cdc,
+		globalKeeper:    globalKeeper,
 		validatorKeeper: validatorKeeper,
 		paramstore:      paramstore.WithKeyTable(ParamKeyTable()),
 	}
@@ -176,6 +179,8 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	syncerReward := k.SyncerReward(ctx)
 	penaltyNonce := k.GetPenaltyNonce(ctx)
 	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
+	penaltyLifeSpan := k.PenaltyLifeSpan(ctx)
+	penaltyExpireTime := k.globalKeeper.GetEthBlkNum(ctx) + penaltyLifeSpan
 	penalizedDelegatorCount := len(penalizedDelegators)
 	low := 0
 	for low < penalizedDelegatorCount {
@@ -184,7 +189,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 			up = penalizedDelegatorCount
 		}
 
-		penalty := NewPenalty(penaltyNonce, reason, identity, penalizedDelegators[low:up], beneficiaries, syncerReward)
+		penalty := NewPenalty(penaltyNonce, reason, identity, penalizedDelegators[low:up], beneficiaries, syncerReward, penaltyExpireTime)
 		penalty.GenerateProtoBytes()
 		k.SetPenalty(ctx, penalty)
 
