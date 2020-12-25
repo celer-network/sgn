@@ -32,7 +32,6 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	syncQueryCmd.AddCommand(common.GetCommands(
-		GetCmdQueryBlkNum(queryRoute, cdc),
 		GetCmdQueryChange(queryRoute, cdc),
 		GetCmdQueryChanges(queryRoute, cdc),
 		GetCmdQueryParam(queryRoute, cdc),
@@ -40,31 +39,6 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	)...)
 
 	return syncQueryCmd
-}
-
-// GetCmdQueryBlkNum implements the query block number command.
-func GetCmdQueryBlkNum(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "blkNum",
-		Args:  cobra.ExactArgs(0),
-		Short: "Query latest mainchain block number synced to sidechain",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := common.NewQueryCLIContext(cdc)
-
-			res, err := common.RobustQuery(cliCtx, fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryBlkNum))
-			if err != nil {
-				return err
-			}
-
-			var blkNum uint64
-			cdc.MustUnmarshalBinaryBare(res, &blkNum)
-			if err != nil {
-				return err
-			}
-
-			return cliCtx.PrintOutput(blkNum) // nolint:errcheck
-		},
-	}
 }
 
 // GetCmdQueryChange implements the query change command.

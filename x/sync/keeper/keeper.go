@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/guard"
 	"github.com/celer-network/sgn/x/slash"
 	"github.com/celer-network/sgn/x/sync/types"
@@ -20,6 +21,8 @@ type Keeper struct {
 	paramsKeeper params.Keeper
 
 	bankKeeper bank.Keeper
+
+	globalKeeper global.Keeper
 
 	slashKeeper slash.Keeper
 
@@ -45,7 +48,7 @@ type Keeper struct {
 // CONTRACT: the parameter Subspace must have the param key table already initialized
 func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramSpace types.ParamSubspace,
-	paramsKeeper params.Keeper, bankKeeper bank.Keeper, slashKeeper slash.Keeper, stakingKeeper staking.Keeper,
+	paramsKeeper params.Keeper, bankKeeper bank.Keeper, globalKeeper global.Keeper, slashKeeper slash.Keeper, stakingKeeper staking.Keeper,
 	guardKeeper guard.Keeper, validatorKeeper validator.Keeper,
 ) Keeper {
 	return Keeper{
@@ -53,6 +56,7 @@ func NewKeeper(
 		paramSpace:      paramSpace,
 		paramsKeeper:    paramsKeeper,
 		bankKeeper:      bankKeeper,
+		globalKeeper:    globalKeeper,
 		slashKeeper:     slashKeeper,
 		stakingKeeper:   stakingKeeper,
 		guardKeeper:     guardKeeper,
@@ -71,21 +75,4 @@ func (keeper Keeper) PullerReward(ctx sdk.Context) sdk.Int {
 
 func (keeper Keeper) AddPullerReward(ctx sdk.Context, ethAddress string, amount sdk.Int) {
 	keeper.validatorKeeper.AddReward(ctx, ethAddress, amount, sdk.ZeroInt())
-}
-
-func (keeper Keeper) GetBlkNum(ctx sdk.Context) (blkNum uint64) {
-	store := ctx.KVStore(keeper.storeKey)
-	bz := store.Get(types.BlkNumKey)
-	if bz == nil {
-		return
-	}
-	keeper.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &blkNum)
-	return
-
-}
-
-func (keeper Keeper) SetBlkNum(ctx sdk.Context, blkNum uint64) {
-	store := ctx.KVStore(keeper.storeKey)
-	bz := keeper.cdc.MustMarshalBinaryLengthPrefixed(blkNum)
-	store.Set(types.BlkNumKey, bz)
 }

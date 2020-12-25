@@ -12,7 +12,7 @@ const (
 	TypeMsgApprove      = "approve_change"
 	TypeMsgSubmitChange = "submit_change"
 
-	SyncBlkNum           = "sync_blk_num"
+	SyncEthBlkNum        = "sync_blk_num"
 	ConfirmParamProposal = "confirm_param_proposal"
 	UpdateSidechainAddr  = "update_sidechain_addr"
 	SyncDelegator        = "sync_delegator"
