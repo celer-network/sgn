@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/monitor"
 	"github.com/celer-network/sgn/x/cron"
+	"github.com/celer-network/sgn/x/global"
 	"github.com/celer-network/sgn/x/gov"
 	govclient "github.com/celer-network/sgn/x/gov/client"
 	"github.com/celer-network/sgn/x/guard"
@@ -54,6 +55,7 @@ var (
 		upgrade.AppModuleBasic{},
 
 		cron.AppModule{},
+		global.AppModule{},
 		gov.NewAppModuleBasic(govclient.ParamProposalHandler, govclient.UpgradeProposalHandler),
 		slash.AppModule{},
 		guard.AppModule{},
@@ -91,6 +93,7 @@ type SgnApp struct {
 	keyParams    *sdk.KVStoreKey
 	keyUpgrade   *sdk.KVStoreKey
 	keyCron      *sdk.KVStoreKey
+	keyGlobal    *sdk.KVStoreKey
 	keyGov       *sdk.KVStoreKey
 	keySlash     *sdk.KVStoreKey
 	keyGuard     *sdk.KVStoreKey
@@ -105,6 +108,7 @@ type SgnApp struct {
 	paramsKeeper    params.Keeper
 	upgradeKeeper   upgrade.Keeper
 	cronKeeper      cron.Keeper
+	globalKeeper    global.Keeper
 	govKeeper       gov.Keeper
 	slashKeeper     slash.Keeper
 	guardKeeper     guard.Keeper
@@ -163,6 +167,7 @@ func NewSgnApp(
 		keyUpgrade:   sdk.NewKVStoreKey(upgrade.StoreKey),
 		keyCron:      sdk.NewKVStoreKey(cron.StoreKey),
 		keyGov:       sdk.NewKVStoreKey(gov.StoreKey),
+		keyGlobal:    sdk.NewKVStoreKey(global.StoreKey),
 		keySlash:     sdk.NewKVStoreKey(slash.StoreKey),
 		keyGuard:     sdk.NewKVStoreKey(guard.StoreKey),
 		keySync:      sdk.NewKVStoreKey(sync.StoreKey),
@@ -175,6 +180,7 @@ func NewSgnApp(
 	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
 	bankSupspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
+	globalSubspace := app.paramsKeeper.Subspace(global.DefaultParamspace)
 	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	validatorSubspace := app.paramsKeeper.Subspace(validator.DefaultParamspace)
 	slashSubspace := app.paramsKeeper.Subspace(slash.DefaultParamspace)
@@ -250,6 +256,12 @@ func NewSgnApp(
 		app.validatorKeeper,
 	)
 
+	app.globalKeeper = global.NewKeeper(
+		app.cdc,
+		app.keyGlobal,
+		globalSubspace,
+	)
+
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
 		AddRoute(params.RouterKey, gov.NewParamChangeProposalHandler(app.paramsKeeper)).
@@ -269,6 +281,7 @@ func NewSgnApp(
 		syncSubspace,
 		app.paramsKeeper,
 		app.bankKeeper,
+		app.globalKeeper,
 		app.slashKeeper,
 		app.stakingKeeper,
 		app.guardKeeper,
@@ -283,6 +296,7 @@ func NewSgnApp(
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		cron.NewAppModule(app.cronKeeper),
+		global.NewAppModule(app.globalKeeper),
 		slash.NewAppModule(app.slashKeeper),
 		guard.NewAppModule(app.guardKeeper),
 		validator.NewAppModule(app.validatorKeeper),
@@ -301,8 +315,9 @@ func NewSgnApp(
 		supply.ModuleName,
 		genutil.ModuleName,
 		cron.ModuleName,
-		slash.ModuleName,
+		global.ModuleName,
 		guard.ModuleName,
+		slash.ModuleName,
 		validator.ModuleName,
 		gov.ModuleName,
 		sync.ModuleName,
@@ -335,6 +350,7 @@ func NewSgnApp(
 		app.keyParams,
 		app.keyUpgrade,
 		app.keyCron,
+		app.keyGlobal,
 		app.keySlash,
 		app.keyGuard,
 		app.keyValidator,

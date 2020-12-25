@@ -62,8 +62,8 @@ func (m *Monitor) verifyActiveChanges() {
 
 func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	switch change.Type {
-	case sync.SyncBlkNum:
-		return m.verifySyncBlkNum(change)
+	case sync.SyncEthBlkNum:
+		return m.verifySyncEthBlkNum(change)
 	case sync.ConfirmParamProposal:
 		return m.verifyConfirmParamProposal(change)
 	case sync.UpdateSidechainAddr:
@@ -85,7 +85,7 @@ func (m *Monitor) verifyChange(change sync.Change) (done, approve bool) {
 	}
 }
 
-func (m *Monitor) verifySyncBlkNum(change sync.Change) (done, approve bool) {
+func (m *Monitor) verifySyncEthBlkNum(change sync.Change) (done, approve bool) {
 	log.Infof("Verify sync mainchain block: %d", change.BlockNum)
 	accceptedBlkRange := viper.GetUint64(common.FlagEthAcceptedBlkRange)
 	currentBlkNum := m.getCurrentBlockNumber().Uint64()

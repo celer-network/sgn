@@ -8,7 +8,6 @@ import (
 
 // query endpoints supported by the sync Querier
 const (
-	QueryBlkNum        = "blkNum"
 	QueryParams        = "params"
 	QueryChange        = "change"
 	QueryChanges       = "changes"
@@ -20,8 +19,6 @@ const (
 
 // QueryChangeParams Params for queries:
 // - 'custom/sync/change'
-// - 'custom/sync/deposits'
-// - 'custom/sync/tally'
 type QueryChangeParams struct {
 	ID uint64
 }
