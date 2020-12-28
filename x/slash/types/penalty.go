@@ -12,10 +12,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-const (
-	expireTime = ^uint64(0)
-)
-
 type AccountAmtPair struct {
 	Account string  `json:"account"`
 	Amount  sdk.Int `json:"amount"`
@@ -50,6 +46,7 @@ func (amp AccountFractionPair) String() string {
 
 type Penalty struct {
 	Nonce               uint64           `json:"nonce"`
+	ExpireTime          uint64           `json:"expire_time"`
 	Reason              string           `json:"reason"`
 	ValidatorAddr       string           `json:"validator_addr"`
 	TotalPenalty        sdk.Int          `json:"totalPenalty"`
@@ -60,7 +57,7 @@ type Penalty struct {
 }
 
 func NewPenalty(nonce uint64, reason string, validatorAddr string, penalizedDelegators []AccountAmtPair,
-	beneficiaryFractions []AccountFractionPair, syncerReward sdk.Int) Penalty {
+	beneficiaryFractions []AccountFractionPair, syncerReward sdk.Int, expireTime uint64) Penalty {
 	var beneficiaries []AccountAmtPair
 	totalPenalty := sdk.ZeroInt()
 	totalBeneficiary := sdk.ZeroInt()
@@ -90,6 +87,7 @@ func NewPenalty(nonce uint64, reason string, validatorAddr string, penalizedDele
 
 	return Penalty{
 		Nonce:               nonce,
+		ExpireTime:          expireTime,
 		Reason:              reason,
 		ValidatorAddr:       mainchain.FormatAddrHex(validatorAddr),
 		TotalPenalty:        totalPenalty,
@@ -100,7 +98,8 @@ func NewPenalty(nonce uint64, reason string, validatorAddr string, penalizedDele
 
 // implement fmt.Stringer
 func (p Penalty) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, Reason: %s, ValidatorAddr: %s, TotalPenalty: %s`, p.Nonce, p.Reason, p.ValidatorAddr, p.TotalPenalty))
+	return strings.TrimSpace(fmt.Sprintf(`Nonce: %d, Reason: %s, ValidatorAddr: %s, TotalPenalty: %s`,
+		p.Nonce, p.Reason, p.ValidatorAddr, p.TotalPenalty))
 }
 
 func (p *Penalty) GenerateProtoBytes() {
@@ -123,7 +122,7 @@ func (p *Penalty) GenerateProtoBytes() {
 
 	penaltyBytes, _ := proto.Marshal(&sgn.Penalty{
 		Nonce:               p.Nonce,
-		ExpireTime:          expireTime,
+		ExpireTime:          p.ExpireTime,
 		ValidatorAddress:    mainchain.Hex2Addr(p.ValidatorAddr).Bytes(),
 		PenalizedDelegators: penalizedDelegators,
 		Beneficiaries:       beneficiaries,

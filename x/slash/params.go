@@ -28,9 +28,15 @@ func (k Keeper) SignedBlocksWindow(ctx sdk.Context) (res int64) {
 	return
 }
 
-// PenaltyDelegatorSize - sliding window for downtime slashing
+// PenaltyDelegatorSize - how many delegators can fit into one penalty
 func (k Keeper) PenaltyDelegatorSize(ctx sdk.Context) (res int64) {
 	k.paramstore.Get(ctx, types.KeyPenaltyDelegatorSize, &res)
+	return
+}
+
+// PenaltyTimeout - how many block number does penalty stay valid
+func (k Keeper) PenaltyTimeout(ctx sdk.Context) (res uint64) {
+	k.paramstore.Get(ctx, types.KeyPenaltyTimeout, &res)
 	return
 }
 
@@ -76,6 +82,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.EnableSlash(ctx),
 		k.SignedBlocksWindow(ctx),
 		k.PenaltyDelegatorSize(ctx),
+		k.PenaltyTimeout(ctx),
 		k.MinSignedPerWindow(ctx),
 		k.SlashFractionDoubleSign(ctx),
 		k.SlashFractionDowntime(ctx),

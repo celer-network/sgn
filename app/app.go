@@ -224,6 +224,12 @@ func NewSgnApp(
 		staking.NewMultiStakingHooks(),
 	)
 
+	app.globalKeeper = global.NewKeeper(
+		app.cdc,
+		app.keyGlobal,
+		globalSubspace,
+	)
+
 	app.validatorKeeper = validator.NewKeeper(
 		app.keyValidator,
 		app.cdc,
@@ -238,6 +244,7 @@ func NewSgnApp(
 	app.slashKeeper = slash.NewKeeper(
 		app.keySlash,
 		app.cdc,
+		app.globalKeeper,
 		app.validatorKeeper,
 		slashSubspace,
 	)
@@ -254,12 +261,6 @@ func NewSgnApp(
 		app.cdc,
 		app.bankKeeper,
 		app.validatorKeeper,
-	)
-
-	app.globalKeeper = global.NewKeeper(
-		app.cdc,
-		app.keyGlobal,
-		globalSubspace,
 	)
 
 	govRouter := gov.NewRouter()
