@@ -70,7 +70,7 @@
         "enable_slash": true,
         "signed_blocks_window": "20",
         "penalty_delegator_size": "2",
-        "penalty_life_span": "100",
+        "penalty_timeout": "100",
         "min_signed_per_window": "0.10000000000000000",
         "slash_fraction_double_sign": "0.050000000000000000",
         "slash_fraction_downtime": "0.010000000000000000",

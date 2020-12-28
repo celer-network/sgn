@@ -13,7 +13,7 @@ const (
 	DefaultEnableSlash          = true
 	DefaultSignedBlocksWindow   = 100
 	DefaultPenaltyDelegatorSize = 200
-	DefaultPenaltyLifeSpan      = 10000
+	DefaultPenaltyTimeout       = 10000 // in unit of EthBlkNum
 )
 
 // slash params default values
@@ -31,7 +31,7 @@ var (
 	KeyEnableSlash               = []byte("EnableSlash")
 	KeySignedBlocksWindow        = []byte("SignedBlocksWindow")
 	KeyPenaltyDelegatorSize      = []byte("PenaltyDelegatorSize")
-	KeyPenaltyLifeSpan           = []byte("PenaltyLifeSpan")
+	KeyPenaltyTimeout            = []byte("PenaltyTimeout")
 	KeyMinSignedPerWindow        = []byte("MinSignedPerWindow")
 	KeySlashFractionDoubleSign   = []byte("SlashFractionDoubleSign")
 	KeySlashFractionDowntime     = []byte("SlashFractionDowntime")
@@ -47,7 +47,7 @@ type Params struct {
 	EnableSlash               bool    `json:"enable_slash" yaml:"enable_slash"`
 	SignedBlocksWindow        int64   `json:"signed_blocks_window" yaml:"signed_blocks_window"`
 	PenaltyDelegatorSize      int64   `json:"penalty_delegator_size" yaml:"penalty_delegator_size"`
-	PenaltyLifeSpan           uint64  `json:"penalty_life_span" yaml:"penalty_life_span"`
+	PenaltyTimeout            uint64  `json:"penalty_timeout" yaml:"penalty_timeout"`
 	MinSignedPerWindow        sdk.Dec `json:"min_signed_per_window" yaml:"min_signed_per_window"`
 	SlashFractionDoubleSign   sdk.Dec `json:"slash_fraction_double_sign" yaml:"slash_fraction_double_sign"`
 	SlashFractionDowntime     sdk.Dec `json:"slash_fraction_downtime" yaml:"slash_fraction_downtime"`
@@ -57,13 +57,13 @@ type Params struct {
 }
 
 // NewParams creates a new Params instance
-func NewParams(enableSlash bool, signedBlocksWindow, penaltyDelegatorSize int64, penaltyLifeSpan uint64, minSignedPerWindow,
+func NewParams(enableSlash bool, signedBlocksWindow, penaltyDelegatorSize int64, penaltyTimeout uint64, minSignedPerWindow,
 	slashFractionDoubleSign, slashFractionDowntime, slashFractionGuardFailure, fallbackGuardReward sdk.Dec, syncerReward sdk.Int) Params {
 	return Params{
 		EnableSlash:               enableSlash,
 		SignedBlocksWindow:        signedBlocksWindow,
 		PenaltyDelegatorSize:      penaltyDelegatorSize,
-		PenaltyLifeSpan:           penaltyLifeSpan,
+		PenaltyTimeout:            penaltyTimeout,
 		MinSignedPerWindow:        minSignedPerWindow,
 		SlashFractionDoubleSign:   slashFractionDoubleSign,
 		SlashFractionDowntime:     slashFractionDowntime,
@@ -79,7 +79,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyEnableSlash, &p.EnableSlash, validateEnableSlash),
 		params.NewParamSetPair(KeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow),
 		params.NewParamSetPair(KeyPenaltyDelegatorSize, &p.PenaltyDelegatorSize, validatePenaltyDelegatorSize),
-		params.NewParamSetPair(KeyPenaltyLifeSpan, &p.PenaltyLifeSpan, validatePenaltyLifeSpan),
+		params.NewParamSetPair(KeyPenaltyTimeout, &p.PenaltyTimeout, validatePenaltyTimeout),
 		params.NewParamSetPair(KeyMinSignedPerWindow, &p.MinSignedPerWindow, validateMinSignedPerWindow),
 		params.NewParamSetPair(KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign, validateSlashFractionDoubleSign),
 		params.NewParamSetPair(KeySlashFractionDowntime, &p.SlashFractionDowntime, validateSlashFractionDowntime),
@@ -98,7 +98,7 @@ func (p Params) Equal(p2 Params) bool {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultEnableSlash, DefaultSignedBlocksWindow, DefaultPenaltyDelegatorSize, DefaultPenaltyLifeSpan, DefaultMinSignedPerWindow,
+	return NewParams(DefaultEnableSlash, DefaultSignedBlocksWindow, DefaultPenaltyDelegatorSize, DefaultPenaltyTimeout, DefaultMinSignedPerWindow,
 		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultSlashFractionGuardFailure, DefaultFallbackGuardReward, DefaultSyncerReward)
 }
 
@@ -108,14 +108,14 @@ func (p Params) String() string {
 	EnableSlash:    %t,
 	SignedBlocksWindow:    %d,
 	PenaltyDelegatorSize:    %d,
-	PenaltyLifeSpan:    %d,
+	PenaltyTimeout:    %d,
 	MinSignedPerWindow:    %s,
 	SlashFractionDoubleSign:    %s,
 	SlashFractionDowntime:    %s
 	SlashFractionGuardFailure:    %s
 	FallbackGuardReward:    %s
 	SyncerReward:    %s`,
-		p.EnableSlash, p.SignedBlocksWindow, p.PenaltyDelegatorSize, p.PenaltyLifeSpan, p.MinSignedPerWindow,
+		p.EnableSlash, p.SignedBlocksWindow, p.PenaltyDelegatorSize, p.PenaltyTimeout, p.MinSignedPerWindow,
 		p.SlashFractionDoubleSign, p.SlashFractionDowntime, p.SlashFractionGuardFailure,
 		p.FallbackGuardReward, p.SyncerReward)
 }
@@ -149,7 +149,7 @@ func (p Params) Validate() error {
 	if err := validatePenaltyDelegatorSize(p.PenaltyDelegatorSize); err != nil {
 		return err
 	}
-	if err := validatePenaltyLifeSpan(p.PenaltyLifeSpan); err != nil {
+	if err := validatePenaltyTimeout(p.PenaltyTimeout); err != nil {
 		return err
 	}
 	if err := validateMinSignedPerWindow(p.MinSignedPerWindow); err != nil {
@@ -208,14 +208,14 @@ func validatePenaltyDelegatorSize(i interface{}) error {
 	return nil
 }
 
-func validatePenaltyLifeSpan(i interface{}) error {
+func validatePenaltyTimeout(i interface{}) error {
 	v, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	if v == 0 {
-		return fmt.Errorf("slash parameter PenaltyLifeSpan must be positive: %d", v)
+		return fmt.Errorf("slash parameter PenaltyTimeout must be positive: %d", v)
 	}
 
 	return nil

@@ -203,8 +203,8 @@ func expirePenaltyTest(t *testing.T) {
 	setupValidators(t, transactor)
 	prevBalance, _ := tc.E2eProfile.CelrContract.BalanceOf(&bind.CallOpts{}, mainchain.Hex2Addr(tc.ValEthAddrs[0]))
 
-	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("slash", "PenaltyLifeSpan", string(transactor.CliCtx.Codec.MustMarshalJSON(1)))}
-	content := govtypes.NewParameterProposal("Slash Param Change", "Update PenaltyLifeSpan", paramChanges)
+	paramChanges := []govtypes.ParamChange{govtypes.NewParamChange("slash", "PenaltyTimeout", string(transactor.CliCtx.Codec.MustMarshalJSON(1)))}
+	content := govtypes.NewParameterProposal("Slash Param Change", "Update PenaltyTimeout", paramChanges)
 	submitProposalmsg := govtypes.NewMsgSubmitProposal(content, sdk.NewInt(1), transactor.Key.GetAddress())
 	transactor.AddTxMsg(submitProposalmsg)
 

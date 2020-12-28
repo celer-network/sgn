@@ -179,8 +179,7 @@ func (k Keeper) Slash(ctx sdk.Context, reason string, failedValidator staking.Va
 	syncerReward := k.SyncerReward(ctx)
 	penaltyNonce := k.GetPenaltyNonce(ctx)
 	penaltyDelegatorSize := int(k.PenaltyDelegatorSize(ctx))
-	penaltyLifeSpan := k.PenaltyLifeSpan(ctx)
-	penaltyExpireTime := k.globalKeeper.GetEthBlkNum(ctx) + penaltyLifeSpan
+	penaltyExpireTime := k.globalKeeper.GetEthBlkNum(ctx) + k.PenaltyTimeout(ctx)
 	penalizedDelegatorCount := len(penalizedDelegators)
 	low := 0
 	for low < penalizedDelegatorCount {
