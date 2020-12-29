@@ -99,12 +99,9 @@ func GetCmdQueryChanges(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Short: "Query changes with optional filters",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query for a all  changes:
-
 Example:
 $ %s query sync changes
-`,
-				version.ClientName, version.ClientName, version.ClientName, version.ClientName,
-			),
+`),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
