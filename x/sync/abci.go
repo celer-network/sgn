@@ -59,7 +59,6 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 		}
 
 		if change.Status != StatusActive {
-			keeper.SetChange(ctx, change)
 			keeper.RemoveChange(ctx, change.ID)
 
 			ctx.EventManager().EmitEvent(
