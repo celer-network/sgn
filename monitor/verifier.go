@@ -33,13 +33,13 @@ func (m *Monitor) verifyActiveChanges() {
 		log.Traceln("skip verifying changes as I am not a bonded validator")
 		return
 	}
-	activeChanges, err := sync.CLIQueryActiveChanges(m.Transactor.CliCtx, sync.RouterKey)
+	changes, err := sync.CLIQueryChanges(m.Transactor.CliCtx, sync.RouterKey)
 	if err != nil {
 		log.Errorln("Query active changes error:", err)
 		return
 	}
 
-	for _, change := range activeChanges {
+	for _, change := range changes {
 		_, err = m.verifiedChanges.Get(strconv.Itoa(int(change.ID)))
 		if err == nil {
 			continue

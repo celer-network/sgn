@@ -55,7 +55,6 @@ var (
 	GetChangeIDBytes        = types.GetChangeIDBytes
 	GetChangeIDFromBytes    = types.GetChangeIDFromBytes
 	ChangeKey               = types.ChangeKey
-	ActiveChangeQueueKey    = types.ActiveChangeQueueKey
 	NewMsgApprove           = types.NewMsgApprove
 	ParamKeyTable           = types.ParamKeyTable
 	NewTallyParams          = types.NewTallyParams
@@ -65,31 +64,28 @@ var (
 	ChangeStatusFromString  = types.ChangeStatusFromString
 	ValidChangeStatus       = types.ValidChangeStatus
 	NewQueryChangeParams    = types.NewQueryChangeParams
-	NewQueryChangesParams   = types.NewQueryChangesParams
-	CLIQueryActiveChanges   = cli.QueryActiveChanges
 	CLIQueryChange          = cli.QueryChange
+	CLIQueryChanges         = cli.QueryChanges
 
 	// variable aliases
 	ModuleCdc                 = types.ModuleCdc
 	ChangesKeyPrefix          = types.ChangesKeyPrefix
-	ActiveChangeQueuePrefix   = types.ActiveChangeQueuePrefix
 	ChangeIDKey               = types.ChangeIDKey
 	ParamStoreKeyVotingParams = types.ParamStoreKeyVotingParams
 	ParamStoreKeyTallyParams  = types.ParamStoreKeyTallyParams
 )
 
 type (
-	Keeper             = keeper.Keeper
-	GenesisState       = types.GenesisState
-	MsgSubmitChange    = types.MsgSubmitChange
-	MsgApprove         = types.MsgApprove
-	TallyParams        = types.TallyParams
-	VotingParams       = types.VotingParams
-	Params             = types.Params
-	Change             = types.Change
-	Changes            = types.Changes
-	ChangeQueue        = types.ChangeQueue
-	ChangeStatus       = types.ChangeStatus
-	QueryChangeParams  = types.QueryChangeParams
-	QueryChangesParams = types.QueryChangesParams
+	Keeper            = keeper.Keeper
+	GenesisState      = types.GenesisState
+	MsgSubmitChange   = types.MsgSubmitChange
+	MsgApprove        = types.MsgApprove
+	TallyParams       = types.TallyParams
+	VotingParams      = types.VotingParams
+	Params            = types.Params
+	Change            = types.Change
+	Changes           = types.Changes
+	ChangeQueue       = types.ChangeQueue
+	ChangeStatus      = types.ChangeStatus
+	QueryChangeParams = types.QueryChangeParams
 )

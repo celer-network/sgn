@@ -23,9 +23,9 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 
 	threshold := keeper.GetTallyParams(ctx).Threshold.MulInt(totalToken).TruncateInt()
 	pullerReward := keeper.PullerReward(ctx)
-	activeChanges := keeper.GetActiveChanges(ctx)
+	changes := keeper.GetChanges(ctx)
 
-	for _, change := range activeChanges {
+	for _, change := range changes {
 		totalVote := sdk.ZeroInt()
 		for _, voter := range change.Voters {
 			v, ok := validatorsByAddr[voter.String()]
@@ -60,7 +60,7 @@ func EndBlocker(ctx sdk.Context, keeper Keeper) {
 
 		if change.Status != StatusActive {
 			keeper.SetChange(ctx, change)
-			keeper.RemoveFromActiveChangeQueue(ctx, change.ID)
+			keeper.RemoveChange(ctx, change.ID)
 
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(

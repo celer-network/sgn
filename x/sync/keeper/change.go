@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/celer-network/sgn/x/sync/types"
-	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -22,7 +21,6 @@ func (keeper Keeper) SubmitChange(ctx sdk.Context, changeType string, data []byt
 	change.Rewardable = keeper.checkRewardable(ctx, change)
 
 	keeper.SetChange(ctx, change)
-	keeper.InsertActiveChangeQueue(ctx, changeID)
 	keeper.SetChangeID(ctx, changeID+1)
 
 	ctx.EventManager().EmitEvent(
@@ -91,6 +89,12 @@ func (keeper Keeper) SetChange(ctx sdk.Context, change types.Change) {
 	store.Set(types.ChangeKey(change.ID), bz)
 }
 
+// RemoveChange removes a change based on id
+func (keeper Keeper) RemoveChange(ctx sdk.Context, changeID uint64) {
+	store := ctx.KVStore(keeper.storeKey)
+	store.Delete(types.ChangeKey(changeID))
+}
+
 // IterateChanges iterates over the all the changes and performs a callback function
 func (keeper Keeper) IterateChanges(ctx sdk.Context, cb func(change types.Change) (stop bool)) {
 	store := ctx.KVStore(keeper.storeKey)
@@ -116,42 +120,6 @@ func (keeper Keeper) GetChanges(ctx sdk.Context) (changes types.Changes) {
 	return
 }
 
-// GetChangesFiltered retrieves changes filtered by a given set of params which
-// include pagination parameters along with voter and depositor addresses and a
-// change status. The voter address will filter changes by whether or not
-// that address has voted on changes. The depositor address will filter changes
-// by whether or not that address has deposited to them. Finally, status will filter
-// changes by status.
-//
-// NOTE: If no filters are provided, all changes will be returned in paginated
-// form.
-func (keeper Keeper) GetChangesFiltered(ctx sdk.Context, params types.QueryChangesParams) []types.Change {
-	changes := keeper.GetChanges(ctx)
-	filteredChanges := make([]types.Change, 0, len(changes))
-
-	for _, p := range changes {
-		matchStatus := true
-
-		// match status (if supplied/valid)
-		if types.ValidChangeStatus(params.ChangeStatus) {
-			matchStatus = p.Status == params.ChangeStatus
-		}
-
-		if matchStatus {
-			filteredChanges = append(filteredChanges, p)
-		}
-	}
-
-	start, end := client.Paginate(len(filteredChanges), params.Page, params.Limit, 100)
-	if start < 0 || end < 0 {
-		filteredChanges = []types.Change{}
-	} else {
-		filteredChanges = filteredChanges[start:end]
-	}
-
-	return filteredChanges
-}
-
 // GetChangeID gets the highest change ID
 func (keeper Keeper) GetChangeID(ctx sdk.Context) (changeID uint64, err error) {
 	store := ctx.KVStore(keeper.storeKey)
@@ -168,36 +136,4 @@ func (keeper Keeper) GetChangeID(ctx sdk.Context) (changeID uint64, err error) {
 func (keeper Keeper) SetChangeID(ctx sdk.Context, changeID uint64) {
 	store := ctx.KVStore(keeper.storeKey)
 	store.Set(types.ChangeIDKey, types.GetChangeIDBytes(changeID))
-}
-
-// InsertActiveChangeQueue inserts a ID into the active change queue
-func (keeper Keeper) InsertActiveChangeQueue(ctx sdk.Context, changeID uint64) {
-	store := ctx.KVStore(keeper.storeKey)
-	bz := types.GetChangeIDBytes(changeID)
-	store.Set(types.ActiveChangeQueueKey(changeID), bz)
-}
-
-// RemoveFromActiveChangeQueue removes a changeID from the Active Change Queue
-func (keeper Keeper) RemoveFromActiveChangeQueue(ctx sdk.Context, changeID uint64) {
-	store := ctx.KVStore(keeper.storeKey)
-	store.Delete(types.ActiveChangeQueueKey(changeID))
-}
-
-// GetActiveChanges get all the active changes
-func (keeper Keeper) GetActiveChanges(ctx sdk.Context) (changes types.Changes) {
-	store := ctx.KVStore(keeper.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.ActiveChangeQueuePrefix)
-
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		changeID := types.GetChangeIDFromBytes(iterator.Value())
-		change, found := keeper.GetChange(ctx, changeID)
-		if !found {
-			panic(fmt.Sprintf("change %d does not exist", changeID))
-		}
-
-		changes = append(changes, change)
-	}
-
-	return
 }

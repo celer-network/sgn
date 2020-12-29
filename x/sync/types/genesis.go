@@ -10,7 +10,6 @@ import (
 // GenesisState - all staking state that must be provided at genesis
 type GenesisState struct {
 	StartingChangeID uint64       `json:"starting_change_id" yaml:"starting_change_id"`
-	Changes          Changes      `json:"changes" yaml:"changes"`
 	VotingParams     VotingParams `json:"voting_params" yaml:"voting_params"`
 	TallyParams      TallyParams  `json:"tally_params" yaml:"tally_params"`
 }
