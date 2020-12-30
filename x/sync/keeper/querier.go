@@ -19,8 +19,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryChange(ctx, path[1:], req, keeper)
 		case types.QueryChanges:
 			return queryChanges(ctx, path[1:], req, keeper)
-		case types.QueryActiveChanges:
-			return queryActiveChanges(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
@@ -70,29 +68,12 @@ func queryChange(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 }
 
 func queryChanges(ctx sdk.Context, _ []string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	var params types.QueryChangesParams
-	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
-	}
-
-	changes := keeper.GetChangesFiltered(ctx, params)
+	changes := keeper.GetChanges(ctx)
 	if changes == nil {
 		changes = types.Changes{}
 	}
 
 	bz, err := codec.MarshalJSONIndent(keeper.cdc, changes)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-
-	return bz, nil
-}
-
-func queryActiveChanges(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	activeChanges := keeper.GetActiveChanges(ctx)
-
-	bz, err := codec.MarshalJSONIndent(keeper.cdc, activeChanges)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

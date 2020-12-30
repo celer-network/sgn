@@ -6,13 +6,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/x/sync/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/version"
 )
@@ -100,74 +98,34 @@ func GetCmdQueryChanges(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Use:   "changes",
 		Short: "Query changes with optional filters",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query for a all paginated changes that match optional filters:
-
+			fmt.Sprintf(`Query for a all  changes:
 Example:
-$ %s query sync changes --depositor sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
-$ %s query sync changes --voter sgn1skjwj5whet0lpe65qaq4rpq03hjxlwd96yrvvt
-$ %s query sync changes --status (VotingPeriod|Passed|Rejected)
-$ %s query sync changes --page=2 --limit=100
-`,
-				version.ClientName, version.ClientName, version.ClientName, version.ClientName,
-			),
+$ query sync changes
+`),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			strChangeStatus := viper.GetString(flagStatus)
-			page := viper.GetInt(flags.FlagPage)
-			limit := viper.GetInt(flags.FlagLimit)
 
 			cliCtx := common.NewQueryCLIContext(cdc)
-			matchingChanges, err := QueryChanges(cliCtx, queryRoute, page, limit, strChangeStatus)
+			changes, err := QueryChanges(cliCtx, queryRoute)
 			if err != nil {
 				return err
 			}
 
-			if len(matchingChanges) == 0 {
+			if len(changes) == 0 {
 				return fmt.Errorf("no matching changes found")
 			}
 
-			return cliCtx.PrintOutput(matchingChanges) // nolint:errcheck
+			return cliCtx.PrintOutput(changes) // nolint:errcheck
 		},
 	}
-
-	cmd.Flags().Int(flags.FlagPage, 1, "pagination page of changes to to query for")
-	cmd.Flags().Int(flags.FlagLimit, 100, "pagination limit of changes to query for")
-	cmd.Flags().String(flagStatus, "", "(optional) filter changes by change status, status: deposit_period/voting_period/passed/rejected")
 
 	return cmd
 }
 
-func QueryChanges(cliCtx context.CLIContext, queryRoute string, page, limit int, strChangeStatus string) (matchingChanges types.Changes, err error) {
+func QueryChanges(cliCtx context.CLIContext, queryRoute string) (changes types.Changes, err error) {
 	cdc := cliCtx.Codec
-	var changeStatus types.ChangeStatus
 
-	params := types.NewQueryChangesParams(page, limit, changeStatus)
-
-	if len(strChangeStatus) != 0 {
-		changeStatus, err = types.ChangeStatusFromString(strChangeStatus)
-		if err != nil {
-			return
-		}
-		params.ChangeStatus = changeStatus
-	}
-
-	bz, err := cdc.MarshalJSON(params)
-	if err != nil {
-		return
-	}
-
-	res, err := common.RobustQueryWithData(cliCtx, fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryChanges), bz)
-	if err != nil {
-		return
-	}
-
-	err = cdc.UnmarshalJSON(res, &matchingChanges)
-	return
-}
-
-func QueryActiveChanges(cliCtx context.CLIContext, queryRoute string) (changes types.Changes, err error) {
-	cdc := cliCtx.Codec
-	res, err := common.RobustQuery(cliCtx, fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryActiveChanges))
+	res, err := common.RobustQuery(cliCtx, fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryChanges))
 	if err != nil {
 		return
 	}

@@ -1,17 +1,12 @@
 package types
 
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
 // DONTCOVER
 
 // query endpoints supported by the sync Querier
 const (
-	QueryParams        = "params"
-	QueryChange        = "change"
-	QueryChanges       = "changes"
-	QueryActiveChanges = "activeChanges"
+	QueryParams  = "params"
+	QueryChange  = "change"
+	QueryChanges = "changes"
 
 	ParamVoting   = "voting"
 	ParamTallying = "tallying"
@@ -27,22 +22,5 @@ type QueryChangeParams struct {
 func NewQueryChangeParams(changeID uint64) QueryChangeParams {
 	return QueryChangeParams{
 		ID: changeID,
-	}
-}
-
-// QueryChangesParams Params for query 'custom/sync/changes'
-type QueryChangesParams struct {
-	Page         int
-	Limit        int
-	Voter        sdk.AccAddress
-	ChangeStatus ChangeStatus
-}
-
-// NewQueryChangesParams creates a new instance of QueryChangesParams
-func NewQueryChangesParams(page, limit int, status ChangeStatus) QueryChangesParams {
-	return QueryChangesParams{
-		Page:         page,
-		Limit:        limit,
-		ChangeStatus: status,
 	}
 }

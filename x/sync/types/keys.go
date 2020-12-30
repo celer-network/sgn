@@ -36,9 +36,8 @@ const (
 // - 0x03: nextChangeID
 
 var (
-	ChangesKeyPrefix        = []byte{0x00}
-	ActiveChangeQueuePrefix = []byte{0x01}
-	ChangeIDKey             = []byte{0x03}
+	ChangesKeyPrefix = []byte{0x00}
+	ChangeIDKey      = []byte{0x01}
 )
 
 var lenTime = len(sdk.FormatTimeBytes(time.Now()))
@@ -58,9 +57,4 @@ func GetChangeIDFromBytes(bz []byte) (changeID uint64) {
 // ChangeKey gets a specific change from the store
 func ChangeKey(changeID uint64) []byte {
 	return append(ChangesKeyPrefix, GetChangeIDBytes(changeID)...)
-}
-
-// ActiveChangeQueueKey returns the key for a changeID in the activeChangeQueue
-func ActiveChangeQueueKey(changeID uint64) []byte {
-	return append(ActiveChangeQueuePrefix, GetChangeIDBytes(changeID)...)
 }
