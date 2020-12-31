@@ -19,43 +19,47 @@ const (
 )
 
 var (
-	DefaultMiningReward = sdk.NewInt(10000000000000)
-	DefaultPullerReward = sdk.NewInt(500000000000)
+	DefaultMiningReward               = sdk.NewInt(10000000000000)
+	DefaultPullerReward               = sdk.NewInt(500000000000)
+	DefaultProportionalRewardFraction = sdk.NewDec(50).Quo(sdk.NewDec(100))
 )
 
 // nolint - Keys for parameter access
 var (
-	KeySyncerDuration   = []byte("SyncerDuration")
-	KeyEpochLength      = []byte("EpochLength")
-	KeyMaxValidatorDiff = []byte("KeyMaxValidatorDiff")
-	KeyWithdrawWindow   = []byte("WithdrawWindow")
-	KeyMiningReward     = []byte("MiningReward")
-	KeyPullerReward     = []byte("PullerReward")
+	KeySyncerDuration             = []byte("SyncerDuration")
+	KeyEpochLength                = []byte("EpochLength")
+	KeyMaxValidatorDiff           = []byte("KeyMaxValidatorDiff")
+	KeyWithdrawWindow             = []byte("WithdrawWindow")
+	KeyMiningReward               = []byte("MiningReward")
+	KeyPullerReward               = []byte("PullerReward")
+	KeyProportionalRewardFraction = []byte("ProportionalRewardFraction")
 )
 
 var _ params.ParamSet = (*Params)(nil)
 
 type Params struct {
-	SyncerDuration   uint          `json:"syncer_duration" yaml:"syncer_duration"`
-	EpochLength      uint          `json:"epoch_length" yaml:"epoch_length"`
-	MaxValidatorDiff uint          `json:"max_validator_diff" yaml:"max_validator_diff"`
-	WithdrawWindow   time.Duration `json:"withdraw_window" yaml:"withdraw_window"`
-	MiningReward     sdk.Int       `json:"mining_reward" yaml:"mining_reward"`
-	PullerReward     sdk.Int       `json:"puller_reward" yaml:"puller_reward"`
+	SyncerDuration             uint          `json:"syncer_duration" yaml:"syncer_duration"`
+	EpochLength                uint          `json:"epoch_length" yaml:"epoch_length"`
+	MaxValidatorDiff           uint          `json:"max_validator_diff" yaml:"max_validator_diff"`
+	WithdrawWindow             time.Duration `json:"withdraw_window" yaml:"withdraw_window"`
+	MiningReward               sdk.Int       `json:"mining_reward" yaml:"mining_reward"`
+	PullerReward               sdk.Int       `json:"puller_reward" yaml:"puller_reward"`
+	ProportionalRewardFraction sdk.Dec       `json:"proportional_reward_fraction" yaml:"proportional_reward_fraction"`
 }
 
 // NewParams creates a new Params instance
 func NewParams(
 	syncerDuration, epochLength, maxValidatorDiff uint,
 	withdrawWindow time.Duration,
-	miningReward, pullerReward sdk.Int) Params {
+	miningReward, pullerReward sdk.Int, proportionalRewardFraction sdk.Dec) Params {
 
 	return Params{
-		SyncerDuration: syncerDuration,
-		EpochLength:    epochLength,
-		WithdrawWindow: withdrawWindow,
-		MiningReward:   miningReward,
-		PullerReward:   pullerReward,
+		SyncerDuration:             syncerDuration,
+		EpochLength:                epochLength,
+		WithdrawWindow:             withdrawWindow,
+		MiningReward:               miningReward,
+		PullerReward:               pullerReward,
+		ProportionalRewardFraction: proportionalRewardFraction,
 	}
 }
 
@@ -68,6 +72,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyWithdrawWindow, &p.WithdrawWindow, validateWithdrawWindow),
 		params.NewParamSetPair(KeyMiningReward, &p.MiningReward, validateMiningReward),
 		params.NewParamSetPair(KeyPullerReward, &p.PullerReward, validatePullerReward),
+		params.NewParamSetPair(KeyProportionalRewardFraction, &p.ProportionalRewardFraction, validateProportionalRewardFraction),
 	}
 }
 
@@ -82,7 +87,7 @@ func (p Params) Equal(p2 Params) bool {
 func DefaultParams() Params {
 	return NewParams(
 		DefaultSyncerDuration, DefaultEpochLength, DefaultMaxValidatorDiff,
-		DefaultWithdrawWindow, DefaultMiningReward, DefaultPullerReward)
+		DefaultWithdrawWindow, DefaultMiningReward, DefaultPullerReward, DefaultProportionalRewardFraction)
 }
 
 // String returns a human readable string representation of the parameters.
@@ -93,8 +98,9 @@ func (p Params) String() string {
   MaxValidatorDiff: %d,
   WithdrawWindow:   %s,
   MiningReward:     %s,
-  PullerReward:     %s`,
-		p.SyncerDuration, p.EpochLength, p.MaxValidatorDiff, p.WithdrawWindow, p.MiningReward, p.PullerReward)
+  PullerReward:     %s,
+  ProportionalRewardFraction:     %s`,
+		p.SyncerDuration, p.EpochLength, p.MaxValidatorDiff, p.WithdrawWindow, p.MiningReward, p.PullerReward, p.ProportionalRewardFraction)
 }
 
 // unmarshal the current validator params value from store key or panic
@@ -208,6 +214,23 @@ func validatePullerReward(i interface{}) error {
 
 	if v.IsNegative() {
 		return fmt.Errorf("guard parameter PullerReward cannot be negative: %s", v)
+	}
+
+	return nil
+}
+
+func validateProportionalRewardFraction(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("guard parameter ProportionalRewardFraction cannot be negative: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slash parameter ProportionalRewardFraction must be less or equal than 1: %s", v)
 	}
 
 	return nil

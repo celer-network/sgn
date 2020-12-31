@@ -54,6 +54,12 @@ func (k Keeper) PullerReward(ctx sdk.Context) (res sdk.Int) {
 	return
 }
 
+// ProportionalRewardFraction - The percentage reward based on validator stakepool proportionaly
+func (k Keeper) ProportionalRewardFraction(ctx sdk.Context) (res sdk.Dec) {
+	k.paramstore.Get(ctx, types.KeyProportionalRewardFraction, &res)
+	return
+}
+
 // Get all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
@@ -63,6 +69,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.WithdrawWindow(ctx),
 		k.MiningReward(ctx),
 		k.PullerReward(ctx),
+		k.ProportionalRewardFraction(ctx),
 	)
 }
 
