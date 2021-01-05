@@ -240,7 +240,8 @@ func (k Keeper) distributeEpochReward(ctx sdk.Context) {
 			return
 		}
 		totalStake = totalStake.Add(candidate.StakingPool)
-		totalSqrtStake = totalSqrtStake.Add(sdk.NewIntFromBigInt(new(big.Int).Sqrt(totalStake.BigInt())))
+		totalSqrtStake = totalSqrtStake.Add(sdk.NewIntFromBigInt(new(big.Int).Sqrt(candidate.StakingPool.BigInt())))
+		log.Errorln("totalSqrtStake", totalSqrtStake.String(), "candidate", candidate.StakingPool.String(), "sub", new(big.Int).Sqrt(candidate.StakingPool.BigInt()).String())
 	}
 	if totalStake.IsZero() {
 		return
@@ -249,15 +250,15 @@ func (k Keeper) distributeEpochReward(ctx sdk.Context) {
 	proportionalRewardFraction := k.ProportionalRewardFraction(ctx)
 	proportionalMiningReward := proportionalRewardFraction.MulInt(epoch.MiningReward).TruncateInt()
 	proportionalServiceReward := proportionalRewardFraction.MulInt(epoch.ServiceReward).TruncateInt()
-	restMiningReward := epoch.MiningReward.Sub(proportionalMiningReward)
-	restServiceReward := epoch.ServiceReward.Sub(proportionalServiceReward)
+	sqrtMiningReward := epoch.MiningReward.Sub(proportionalMiningReward)
+	sqrtServiceReward := epoch.ServiceReward.Sub(proportionalServiceReward)
 
 	for _, candidate := range candidates {
-		sqrtStakingPool := sdk.NewIntFromBigInt(new(big.Int).Sqrt(totalStake.BigInt()))
+		sqrtStakingPool := sdk.NewIntFromBigInt(new(big.Int).Sqrt(candidate.StakingPool.BigInt()))
 		candidateMiningReward := proportionalMiningReward.Mul(candidate.StakingPool).Quo(totalStake)
-		candidateMiningReward = candidateMiningReward.Add(restMiningReward.Mul(sqrtStakingPool).Quo(totalSqrtStake))
+		candidateMiningReward = candidateMiningReward.Add(sqrtMiningReward.Mul(sqrtStakingPool).Quo(totalSqrtStake))
 		candidateServiceReward := proportionalServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
-		candidateServiceReward = candidateServiceReward.Add(restServiceReward.Mul(sqrtStakingPool).Quo(totalSqrtStake))
+		candidateServiceReward = candidateServiceReward.Add(sqrtServiceReward.Mul(sqrtStakingPool).Quo(totalSqrtStake))
 
 		pendingReward := k.GetPendingReward(ctx, candidate.EthAddress)
 		pendingReward.MiningReward = pendingReward.MiningReward.Add(candidateMiningReward)

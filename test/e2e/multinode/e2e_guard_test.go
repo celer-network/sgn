@@ -81,12 +81,12 @@ func guardTest(t *testing.T) {
 	tec.TestGuard(t, transactor, []string{tc.ValEthAddrs[1], tc.ValEthAddrs[3]})
 
 	/* Request cost is 1000000000000000000 * 2, validator0 has a 10/32 of stake and 0.2809 of sqrt stake,
-	so it is going to get 593403611222177500 to distribute to its delegators based on 0.5 proportionalRewardFraction.
-	validators0 commission rate is 0.01%, so the comission fee it collections is 59340361122217
+	so it is going to get 593400000000000000 to distribute to its delegators based on 0.5 proportionalRewardFraction.
+	validators0 commission rate is 0.01%, so the comission fee it collections is 59340000000000
 	The self delegated stake of validator0 is 9/10 of total stake of validator0,
-	so validator0 gets (593403611222177500 - 59340361122217) * 9/10 = 534009843774949800 reward.
-	The total service reward of validator0 is 534009843774949800 + 59340361122217 = 534069184136072060 */
-	tec.CheckReward(t, transactor, tc.ValEthAddrs[0], "562506250000000000", 4)
+	so validator0 gets (593400000000000000 - 59340000000000) * 9/10 = 534006594000000000 reward.
+	The total service reward of validator0 is 534006594000000000 + 59340000000000 = 534065934000000000 */
+	tec.CheckReward(t, transactor, tc.ValEthAddrs[0], "534069184145430618", 4)
 
 	log.Infoln("Query sgn to check penalty")
 	nonce := uint64(0)

@@ -96,7 +96,7 @@
         "withdraw_window": "3000000000",
         "mining_reward": "10000000000000",
         "puller_reward": "500000000000",
-        "proportional_reward_fraction": "1"
+        "proportional_reward_fraction": "0.500000000000000000"
       }
     },
     "govern": {
