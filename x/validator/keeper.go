@@ -236,12 +236,10 @@ func (k Keeper) distributeEpochReward(ctx sdk.Context) {
 
 	for _, candidate := range candidates {
 		if !candidate.StakingPool.IsPositive() {
-			log.Errorln("invalid candidate staking pool", candidate.EthAddress)
 			return
 		}
 		totalStake = totalStake.Add(candidate.StakingPool)
 		totalSqrtStake = totalSqrtStake.Add(sdk.NewIntFromBigInt(new(big.Int).Sqrt(candidate.StakingPool.BigInt())))
-		log.Errorln("totalSqrtStake", totalSqrtStake.String(), "candidate", candidate.StakingPool.String(), "sub", new(big.Int).Sqrt(candidate.StakingPool.BigInt()).String())
 	}
 	if totalStake.IsZero() {
 		return
