@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"math/big"
+
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
@@ -230,6 +232,7 @@ func (k Keeper) distributeEpochReward(ctx sdk.Context) {
 
 	candidates := k.GetValidatorCandidates(ctx)
 	totalStake := sdk.ZeroInt()
+	totalSqrtStake := sdk.ZeroInt()
 
 	for _, candidate := range candidates {
 		if !candidate.StakingPool.IsPositive() {
@@ -237,14 +240,24 @@ func (k Keeper) distributeEpochReward(ctx sdk.Context) {
 			return
 		}
 		totalStake = totalStake.Add(candidate.StakingPool)
+		totalSqrtStake = totalSqrtStake.Add(sdk.NewIntFromBigInt(new(big.Int).Sqrt(candidate.StakingPool.BigInt())))
 	}
 	if totalStake.IsZero() {
 		return
 	}
 
+	proportionalRewardFraction := k.ProportionalRewardFraction(ctx)
+	proportionalMiningReward := proportionalRewardFraction.MulInt(epoch.MiningReward).TruncateInt()
+	proportionalServiceReward := proportionalRewardFraction.MulInt(epoch.ServiceReward).TruncateInt()
+	sqrtMiningReward := epoch.MiningReward.Sub(proportionalMiningReward)
+	sqrtServiceReward := epoch.ServiceReward.Sub(proportionalServiceReward)
+
 	for _, candidate := range candidates {
-		candidateMiningReward := epoch.MiningReward.Mul(candidate.StakingPool).Quo(totalStake)
-		candidateServiceReward := epoch.ServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
+		sqrtStakingPool := sdk.NewIntFromBigInt(new(big.Int).Sqrt(candidate.StakingPool.BigInt()))
+		candidateMiningReward := proportionalMiningReward.Mul(candidate.StakingPool).Quo(totalStake)
+		candidateMiningReward = candidateMiningReward.Add(sqrtMiningReward.Mul(sqrtStakingPool).Quo(totalSqrtStake))
+		candidateServiceReward := proportionalServiceReward.Mul(candidate.StakingPool).Quo(totalStake)
+		candidateServiceReward = candidateServiceReward.Add(sqrtServiceReward.Mul(sqrtStakingPool).Quo(totalSqrtStake))
 
 		pendingReward := k.GetPendingReward(ctx, candidate.EthAddress)
 		pendingReward.MiningReward = pendingReward.MiningReward.Add(candidateMiningReward)
