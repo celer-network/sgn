@@ -13,7 +13,7 @@ sgnops update-min-self-stake [flags]
 ### Options
 
 ```
-      --amount string   Minimal self-delegated stake
+      --amount string   Minimal self-delegated stake (integer in unit of CELR)
   -h, --help            help for update-min-self-stake
 ```
 

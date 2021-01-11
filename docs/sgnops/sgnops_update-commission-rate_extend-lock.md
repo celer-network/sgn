@@ -13,7 +13,7 @@ sgnops update-commission-rate extend-lock [flags]
 ### Options
 
 ```
-      --add-lock-time string   additional rate lock period
+      --add-lock-time string   additional rate lock period in unit of ETH block number
   -h, --help                   help for extend-lock
 ```
 

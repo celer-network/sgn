@@ -13,7 +13,7 @@ sgnops delegate [flags]
 ### Options
 
 ```
-      --amount string      Stake amount
+      --amount string      Stake amount (integer in unit of CELR)
       --candidate string   Candidate ETH address
   -h, --help               help for delegate
 ```
