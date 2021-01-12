@@ -47,7 +47,7 @@ func DelegateCommand() *cobra.Command {
 			return delegate()
 		},
 	}
-	cmd.Flags().String(amountFlag, "", "Stake amount")
+	cmd.Flags().String(amountFlag, "", "Stake amount (integer in unit of CELR)")
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
 	cmd.MarkFlagRequired(amountFlag)
 	cmd.MarkFlagRequired(candidateFlag)

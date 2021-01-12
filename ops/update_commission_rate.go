@@ -22,7 +22,7 @@ const (
 func flagSetCommissionRate() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
 	fs.String(rateFlag, "", "Commission rate in unit of 0.01% (e.g., 120 is 1.2%)")
-	fs.String(addLockTime, "", "(optional) additional rate lock period")
+	fs.String(addLockTime, "", "(optional) additional rate lock period in unit of ETH block number")
 	return fs
 }
 
@@ -202,7 +202,7 @@ func extendCommissionRateLockTime() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String(addLockTime, "", "additional rate lock period")
+	cmd.Flags().String(addLockTime, "", "additional rate lock period in unit of ETH block number")
 	cmd.MarkFlagRequired(addLockTime)
 	return cmd
 }

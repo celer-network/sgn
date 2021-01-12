@@ -15,7 +15,7 @@ sgnops init-candidate [flags]
 ```
       --commission-rate string    Commission rate in unit of 0.01% (e.g., 120 is 1.2%)
   -h, --help                      help for init-candidate
-      --min-self-stake string     Minimum self-delegated stake
+      --min-self-stake string     Minimum self-delegated stake (integer in unit of CELR)
       --rate-lock-period string   Rate lock period in unit of ETH block number
 ```
 

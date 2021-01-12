@@ -13,7 +13,7 @@ sgnops update-commission-rate announce-increase-rate [flags]
 ### Options
 
 ```
-      --add-lock-time string   (optional) additional rate lock period
+      --add-lock-time string   (optional) additional rate lock period in unit of ETH block number
   -h, --help                   help for announce-increase-rate
       --rate string            Commission rate in unit of 0.01% (e.g., 120 is 1.2%)
 ```
