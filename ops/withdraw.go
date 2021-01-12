@@ -53,7 +53,7 @@ func intendWithdrawCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
-	cmd.Flags().String(amountFlag, "", "Withdraw amount")
+	cmd.Flags().String(amountFlag, "", "Withdraw amount (integer in unit of CELR)")
 	cmd.MarkFlagRequired(candidateFlag)
 	cmd.MarkFlagRequired(amountFlag)
 	return cmd
@@ -121,7 +121,7 @@ func withdrawFromUnbondedCandidateCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().String(candidateFlag, "", "Candidate ETH address")
-	cmd.Flags().String(amountFlag, "", "Withdraw amount")
+	cmd.Flags().String(amountFlag, "", "Withdraw amount (integer in unit of CELR)")
 	cmd.MarkFlagRequired(candidateFlag)
 	cmd.MarkFlagRequired(amountFlag)
 	return cmd

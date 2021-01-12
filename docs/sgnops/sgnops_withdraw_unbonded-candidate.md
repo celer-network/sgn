@@ -13,7 +13,7 @@ sgnops withdraw unbonded-candidate [flags]
 ### Options
 
 ```
-      --amount string      Withdraw amount
+      --amount string      Withdraw amount (integer in unit of CELR)
       --candidate string   Candidate ETH address
   -h, --help               help for unbonded-candidate
 ```

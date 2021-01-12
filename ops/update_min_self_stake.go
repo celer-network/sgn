@@ -37,7 +37,7 @@ func UpdateMinSelfStakeCommand() *cobra.Command {
 			return updateMinSelfStake()
 		},
 	}
-	cmd.Flags().String(amountFlag, "", "Minimal self-delegated stake")
+	cmd.Flags().String(amountFlag, "", "Minimal self-delegated stake (integer in unit of CELR)")
 	cmd.MarkFlagRequired(amountFlag)
 	return cmd
 }
