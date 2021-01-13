@@ -14,6 +14,15 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	CLIHome = os.ExpandEnv("$HOME/.sgncli")
+
+	// root dir with ending / for all files, OutRootDirPrefix + epoch seconds
+	// due to testframework etc in a different testing package, we have to define
+	// same var in testframework.go and expose a set api
+	outRootDir string
+)
+
 func setupNewSGNEnv(sgnParams *tc.SGNParams, testName string) []tc.Killable {
 	if sgnParams == nil {
 		sgnParams = &tc.SGNParams{
