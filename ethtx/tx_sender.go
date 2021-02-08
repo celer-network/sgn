@@ -126,14 +126,18 @@ func (s *TxSender) Start() error {
 	return s.txManager.Start()
 }
 
-func (s *TxSender) AddTx(
+func (s *TxSender) sendTx(
 	from gethCommon.Address,
-	to gethCommon.Address,
+	contract *ContractInfo,
 	value *big.Int,
 	encodedPayload []byte,
-	gasLimit uint64,
 	handler esTxManager.JobHandler,
 ) error {
+	to := contract.Address
+	gasLimit, err := s.estimateGas(from, &to, value, encodedPayload)
+	if err != nil {
+		return err
+	}
 	txID, err := s.txManager.AddTx(from, to, value, encodedPayload, gasLimit)
 	if err != nil {
 		return err
@@ -144,20 +148,6 @@ func (s *TxSender) AddTx(
 	}
 	s.txManager.MonitorJob(jobID, handler)
 	return nil
-}
-
-func (s *TxSender) sendTx(
-	from gethCommon.Address,
-	contract *ContractInfo,
-	value *big.Int,
-	data []byte,
-	handler esTxManager.JobHandler,
-) error {
-	gasLimit, err := s.estimateGas(from, &contract.Address, value, data)
-	if err != nil {
-		return err
-	}
-	return s.AddTx(from, contract.Address, value, data, gasLimit, handler)
 }
 
 func (s *TxSender) estimateGas(
