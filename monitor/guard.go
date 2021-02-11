@@ -6,17 +6,20 @@ import (
 	"math/big"
 	"strings"
 
+	esTxManager "github.com/celer-network/eth-services/txmanager"
 	"github.com/celer-network/goutils/eth"
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
 	"github.com/celer-network/sgn/mainchain"
 	"github.com/celer-network/sgn/proto/chain"
 	"github.com/celer-network/sgn/x/guard"
+	"github.com/celer-network/sgn/x/guard/types"
 	"github.com/celer-network/sgn/x/sync"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 )
 
 const (
@@ -171,6 +174,47 @@ func (m *Monitor) processGuardQueue() {
 	}
 }
 
+func (m *Monitor) sendGuardTx(request *guard.Request, signedSimplexStateArrayBytes []byte) (success bool, err error) {
+	if m.Operator.TxSender == nil {
+		var tx *ethtypes.Transaction
+		switch request.Status {
+		case guard.ChanStatus_Withdrawing:
+			tx, err = m.EthClient.Transactor.Transact(
+				m.guardTxHandler("SnapshotStates", request),
+				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+					return m.EthClient.GetLedger().SnapshotStates(opts, signedSimplexStateArrayBytes)
+				})
+		case guard.ChanStatus_Settling:
+			tx, err = m.EthClient.Transactor.Transact(
+				m.guardTxHandler("IntendSettle", request),
+				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+					return m.EthClient.GetLedger().IntendSettle(opts, signedSimplexStateArrayBytes)
+				})
+		default:
+			return false, fmt.Errorf("Invalid guard state %d", request.Status)
+		}
+		if err != nil {
+			return false, fmt.Errorf("tx err %w", err)
+		}
+		log.Infof("submitted guard tx %x", tx.Hash())
+	} else {
+		var guardErr error
+		switch request.Status {
+		case guard.ChanStatus_Withdrawing:
+			guardErr = m.Operator.TxSender.SnapshotStates(signedSimplexStateArrayBytes, m.guardJobHandler("SnapshotStates", request))
+		case guard.ChanStatus_Settling:
+			guardErr = m.Operator.TxSender.IntendSettle(signedSimplexStateArrayBytes, m.guardJobHandler("IntendSettle", request))
+		default:
+			return false, fmt.Errorf("Invalid guard state %d", request.Status)
+		}
+		if guardErr != nil {
+			return false, guardErr
+		}
+		log.Infof("submitted guard tx via TxSender")
+	}
+	return true, nil
+}
+
 func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, err error) {
 	log.Infof("start to guard %s", request)
 
@@ -211,31 +255,39 @@ func (m *Monitor) guardChannel(request *guard.Request) (guarded, delete bool, er
 		return false, true, fmt.Errorf("marshal stateArray err %w", err)
 	}
 
-	// submit guard tx
-	var tx *ethtypes.Transaction
-	switch request.Status {
-	case guard.ChanStatus_Withdrawing:
-		tx, err = m.EthClient.Transactor.Transact(
-			m.guardTxHandler("SnapshotStates", request),
-			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-				return m.EthClient.GetLedger().SnapshotStates(opts, signedSimplexStateArrayBytes)
-			})
-	case guard.ChanStatus_Settling:
-		tx, err = m.EthClient.Transactor.Transact(
-			m.guardTxHandler("IntendSettle", request),
-			func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-				return m.EthClient.GetLedger().IntendSettle(opts, signedSimplexStateArrayBytes)
-			})
-	default:
-		return false, false, fmt.Errorf("Invalid guard state %d", request.Status)
+	// send guard tx
+	sent, err := m.sendGuardTx(request, signedSimplexStateArrayBytes)
+	if sent {
+		return true, false, nil
 	}
-	if err != nil {
-		return false, false, fmt.Errorf("tx err %w", err)
-	} else {
-		log.Infof("submitted guard tx %x", tx.Hash())
-	}
+	return false, false, err
+}
 
-	return true, false, nil
+func (m *Monitor) handleGuardTxReceipt(
+	receipt *ethtypes.Receipt,
+	description string,
+	request *guard.Request,
+	guardState types.ChanStatus) {
+	if receipt.Status == ethtypes.ReceiptStatusSuccessful {
+		log.Infof("%s transaction %x succeeded", description, receipt.TxHash)
+		guardProof := guard.NewGuardProof(
+			mainchain.Bytes2Cid(request.ChannelId),
+			mainchain.Hex2Addr(request.SimplexReceiver),
+			receipt.TxHash,
+			receipt.BlockNumber.Uint64(),
+			m.EthClient.Address,
+			guardState)
+		syncData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
+		msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.EthClient.Client, m.Transactor.Key.GetAddress())
+		log.Infof("submit change tx: guard proof request %s", request)
+		m.Transactor.AddTxMsg(msg)
+		err := m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
+		if err != nil {
+			log.Errorln("db Delete err", err)
+		}
+	} else {
+		log.Errorf("%s transaction %x failed", description, receipt.TxHash)
+	}
 }
 
 func (m *Monitor) guardTxHandler(
@@ -246,30 +298,22 @@ func (m *Monitor) guardTxHandler(
 	}
 	return &eth.TransactionStateHandler{
 		OnMined: func(receipt *ethtypes.Receipt) {
-			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
-				log.Infof("%s transaction %x succeeded", description, receipt.TxHash)
-				guardProof := guard.NewGuardProof(
-					mainchain.Bytes2Cid(request.ChannelId),
-					mainchain.Hex2Addr(request.SimplexReceiver),
-					receipt.TxHash,
-					receipt.BlockNumber.Uint64(),
-					m.EthClient.Address,
-					guardState)
-				syncData := m.Transactor.CliCtx.Codec.MustMarshalBinaryBare(guardProof)
-				msg := sync.NewMsgSubmitChange(sync.GuardProof, syncData, m.EthClient.Client, m.Transactor.Key.GetAddress())
-				log.Infof("submit change tx: guard proof request %s", request)
-				m.Transactor.AddTxMsg(msg)
-				err := m.dbDelete(GetGuardKey(mainchain.Bytes2Cid(request.ChannelId), mainchain.Hex2Addr(request.SimplexReceiver)))
-				if err != nil {
-					log.Errorln("db Delete err", err)
-				}
-			} else {
-				log.Errorf("%s transaction %x failed", description, receipt.TxHash)
-			}
+			m.handleGuardTxReceipt(receipt, description, request, guardState)
 		},
 		OnError: func(tx *ethtypes.Transaction, err error) {
 			log.Errorf("%s transaction %x err: %s", description, tx.Hash(), err)
 		},
+	}
+}
+
+func (m *Monitor) guardJobHandler(description string, request *guard.Request) esTxManager.JobHandler {
+	guardState := guard.ChanStatus_Idle
+	if description == "IntendSettle" {
+		guardState = guard.ChanStatus_Settled
+	}
+	return func(jobID uuid.UUID, receipt *ethtypes.Receipt) error {
+		m.handleGuardTxReceipt(receipt, description, request, guardState)
+		return nil
 	}
 }
 

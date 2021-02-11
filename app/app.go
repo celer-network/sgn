@@ -437,7 +437,7 @@ func (app *SgnApp) ModuleAccountAddrs() map[string]bool {
 }
 
 func (app *SgnApp) startMonitor(db dbm.DB) {
-	operator, err := monitor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome))
+	operator, err := monitor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome), db)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}

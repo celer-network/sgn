@@ -85,11 +85,16 @@ func updateSGNConfig() {
 	keystore, err := filepath.Abs("../../keys/vethks0.json")
 	tc.ChkErr(err, "get keystore path")
 
+	ksDir, err := filepath.Abs("../../keys")
+	tc.ChkErr(err, "get keystore directory")
+
 	configFileViper.Set(common.FlagEthGateway, tc.LocalGeth)
 	configFileViper.Set(common.FlagEthCelrAddress, tc.E2eProfile.CelrAddr.Hex())
 	configFileViper.Set(common.FlagEthDPoSAddress, tc.E2eProfile.DPoSAddr.Hex())
 	configFileViper.Set(common.FlagEthSGNAddress, tc.E2eProfile.SGNAddr.Hex())
 	configFileViper.Set(common.FlagEthKeystore, keystore)
+
+	configFileViper.Set(common.FlagEthTxKeyDir, ksDir)
 	err = configFileViper.WriteConfig()
 	tc.ChkErr(err, "failed to write config")
 	// Update global viper
