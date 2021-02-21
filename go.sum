@@ -106,8 +106,6 @@ github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46f
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/celer-network/cosmos-sdk v0.39.3-celer.1 h1:HHmRKaJad5I4b9OpnujowFsMQXeaqAag8vldIUKw7OA=
 github.com/celer-network/cosmos-sdk v0.39.3-celer.1/go.mod h1:VNUluciWBFj2vkhpMcp8rYZL/kCw0FtNc7SseUjE1KM=
-github.com/celer-network/eth-services v0.0.0-20210203173505-07e0d223cba3 h1:FyotdTGnamWO5P9Dy1blvFQ3BWygVWaKQepIzcHskd4=
-github.com/celer-network/eth-services v0.0.0-20210203173505-07e0d223cba3/go.mod h1:JgnttOX1wxsD9XJ26iROZtD1UbOpjmdRdkwTe/x2bD4=
 github.com/celer-network/eth-services v0.0.0-20210210185550-26d7e6f75ead h1:AxzXiKmdPNUKxbvPKfdwhl7mv99gGSo8lf/HLGj4Pa8=
 github.com/celer-network/eth-services v0.0.0-20210210185550-26d7e6f75ead/go.mod h1:JgnttOX1wxsD9XJ26iROZtD1UbOpjmdRdkwTe/x2bD4=
 github.com/celer-network/goutils v0.1.16 h1:dt2A8JX3lKPi4w18eQN5cLlM7dY2rhKhrz3d7gdbwCo=

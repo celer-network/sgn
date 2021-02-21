@@ -8,6 +8,7 @@ import (
 	"github.com/celer-network/sgn/seal"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 // NewHandler returns a handler for "validator" type messages.
@@ -97,6 +98,7 @@ func handleMsgEditCandidateDescription(ctx sdk.Context, keeper Keeper, msg MsgEd
 	if !found {
 		return nil, fmt.Errorf("Candidate does not exist")
 	}
+	msg.Description.Identity = staking.DoNotModifyDesc
 
 	description, err := candidate.Description.UpdateDescription(msg.Description)
 	if err != nil {
