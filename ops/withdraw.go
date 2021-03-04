@@ -3,6 +3,8 @@ package ops
 import (
 	"github.com/celer-network/goutils/log"
 	"github.com/celer-network/sgn/common"
+	"github.com/celer-network/sgn/x/validator"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -10,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func WithdrawCommand() *cobra.Command {
+func WithdrawCommand(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw",
 		Short: "Withdraw delegated stake",
@@ -19,6 +21,7 @@ func WithdrawCommand() *cobra.Command {
 		intendWithdrawCommand(),
 		confirmWithdrawCommand(),
 		withdrawFromUnbondedCandidateCommand(),
+		withdrawReward(cdc),
 	)
 	return cmd
 }
@@ -124,5 +127,42 @@ func withdrawFromUnbondedCandidateCommand() *cobra.Command {
 	cmd.Flags().String(amountFlag, "", "Withdraw amount (integer in unit of CELR)")
 	cmd.MarkFlagRequired(candidateFlag)
 	cmd.MarkFlagRequired(amountFlag)
+	return cmd
+}
+
+func withdrawReward(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reward [eth-address]",
+		Short: "Withdraw reward on mainchain",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := common.NewQueryCLIContext(cdc)
+			reward, err := validator.CLIQueryReward(cliCtx, validator.RouterKey, args[0])
+			if err != nil {
+				log.Errorln("query reward error", err)
+				return err
+			}
+
+			ethClient, err := common.NewEthClientFromConfig()
+			if err != nil {
+				return err
+			}
+
+			log.Infof("Withdrawing reward for %s", args[0])
+
+			_, err = ethClient.Transactor.TransactWaitMined(
+				"WithdrawFromUnbondedCandidate",
+				func(transactor bind.ContractTransactor, opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+					return ethClient.SGN.RedeemReward(opts, reward.GetRewardRequest())
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
 	return cmd
 }
