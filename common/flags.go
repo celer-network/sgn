@@ -26,6 +26,7 @@ const (
 	FlagEthMinGasPriceGwei   = "eth.min_gas_price_gwei"
 	FlagEthAddGasPriceGwei   = "eth.add_gas_price_gwei"
 
+	FlagEthTxEnableTxSender           = "eth.tx.enable_tx_sender"
 	FlagEthTxDBPollInterval           = "eth.tx.db_poll_interval"
 	FlagEthTxBlockTime                = "eth.tx.block_time"
 	FlagEthTxKeyDir                   = "eth.tx.key_dir"

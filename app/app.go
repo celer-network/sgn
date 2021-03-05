@@ -368,7 +368,8 @@ func NewSgnApp(
 		tmos.Exit("Failed to load height:" + err.Error())
 	}
 
-	go app.startMonitor(db)
+	enableTxSender := viper.GetBool(common.FlagEthTxEnableTxSender)
+	go app.startMonitor(db, enableTxSender)
 
 	return app
 }
@@ -436,8 +437,12 @@ func (app *SgnApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-func (app *SgnApp) startMonitor(db dbm.DB) {
-	operator, err := monitor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome), db)
+func (app *SgnApp) startMonitor(db dbm.DB, useTxSender bool) {
+	var txDB dbm.DB
+	if useTxSender {
+		txDB = db
+	}
+	operator, err := monitor.NewOperator(app.cdc, viper.GetString(common.FlagCLIHome), txDB)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
