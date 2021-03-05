@@ -21,6 +21,7 @@ dpos_address = ""
 sgn_address = ""
 
 [eth.tx]
+enable_tx_sender = true
 db_poll_interval = 60
 block_time = 1
 key_dir = ""
