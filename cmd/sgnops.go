@@ -49,7 +49,7 @@ func GetSgnopsExecutor() cli.Executor {
 		ops.SnapshotMainchainCommand(),
 		ops.InitCandidateCommand(),
 		ops.DelegateCommand(),
-		ops.WithdrawCommand(),
+		ops.WithdrawCommand(cdc),
 		ops.ClaimValidatorCommand(),
 		ops.ConfirmUnbondedCandidateCommand(),
 		ops.UpdateMinSelfStakeCommand(),
