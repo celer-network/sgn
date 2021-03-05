@@ -210,6 +210,9 @@ func deployContracts() error {
 			tx, err := erc20.Approve(EtherBaseAuth, dposAddr, amt)
 			ChkErr(err, "failed to approve erc20")
 			WaitMinedWithChk(context.Background(), EthClient, tx, BlockDelay, PollingInterval, "approve erc20")
+			DposContract, err = sgncontracts.NewDPoS(dposAddr, EthClient)
+			_, err = DposContract.ContributeToMiningPool(EtherBaseAuth, amt)
+			ChkErr(err, "failed to call ContributeToMiningPool of DPoS contract")
 			err = FundAddrsErc20(erc20Addr,
 				[]mainchain.Addr{
 					mainchain.Hex2Addr(ClientEthAddrs[0]),
@@ -219,7 +222,6 @@ func deployContracts() error {
 			)
 			ChkErr(err, "fund test CELR to clients")
 		}
-
 	}
 
 	return nil
