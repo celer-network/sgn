@@ -10,7 +10,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.39.2
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/deckarep/golang-set v1.7.1
-	github.com/ethereum/go-ethereum v1.9.20
+	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gammazero/deque v0.0.0-20200721202602-07291166fe33
 	github.com/golang/mock v1.4.4 // indirect
 	github.com/golang/protobuf v1.4.3
