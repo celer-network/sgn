@@ -2,7 +2,6 @@ package validator
 
 import (
 	"bytes"
-	"fmt"
 	"sort"
 
 	"github.com/celer-network/goutils/log"
@@ -59,6 +58,7 @@ func applyAndReturnValidatorSetUpdates(ctx sdk.Context, keeper Keeper) (updates 
 	// Iterate over validators, highest power to lowest.
 	iterator := stakingKeeper.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
+	var valByPowerIndexKeysToRemove [][]byte
 	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
@@ -66,7 +66,9 @@ func applyAndReturnValidatorSetUpdates(ctx sdk.Context, keeper Keeper) (updates 
 		valAddr := sdk.ValAddress(iterator.Value())
 		validator, found := stakingKeeper.GetValidator(ctx, valAddr)
 		if !found {
-			panic(fmt.Sprintf("validator record not found for address: %X\n", valAddr))
+			log.Errorf("validator record not found for address: %X, skipping", valAddr)
+			valByPowerIndexKeysToRemove = append(valByPowerIndexKeysToRemove, iterator.Key())
+			continue
 		}
 
 		if validator.Jailed {
@@ -99,12 +101,19 @@ func applyAndReturnValidatorSetUpdates(ctx sdk.Context, keeper Keeper) (updates 
 		count++
 		totalPower = totalPower.Add(sdk.NewInt(newPower))
 	}
+	store := ctx.KVStore(keeper.storeKey)
+	for _, key := range valByPowerIndexKeysToRemove {
+		store.Delete(key)
+	}
 
 	noLongerBonded := sortNoLongerBonded(last)
 	for _, valAddrBytes := range noLongerBonded {
-		validator, found := stakingKeeper.GetValidator(ctx, sdk.ValAddress(valAddrBytes))
+		valAddr := sdk.ValAddress(valAddrBytes)
+		validator, found := stakingKeeper.GetValidator(ctx, valAddr)
 		if !found {
-			panic(fmt.Sprintf("validator record not found for address: %X\n", sdk.ValAddress(valAddrBytes)))
+			log.Errorf("validator record not found for address: %X\n", valAddr)
+			stakingKeeper.DeleteLastValidatorPower(ctx, valAddr)
+			continue
 		}
 
 		stakingKeeper.DeleteLastValidatorPower(ctx, validator.GetOperator())

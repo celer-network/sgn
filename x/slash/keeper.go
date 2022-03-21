@@ -76,7 +76,7 @@ func (k Keeper) HandleDoubleSign(ctx sdk.Context, addr crypto.Address, power int
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
-		log.Errorf("Cannot find validator %s", consAddr)
+		log.Warnf("Cannot find validator %s", consAddr)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (k Keeper) HandleValidatorSignature(ctx sdk.Context, addr crypto.Address, p
 	consAddr := sdk.ConsAddress(addr)
 	validator, found := k.validatorKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if !found {
-		log.Errorf("Cannot find validator %s", consAddr)
+		log.Warnf("Cannot find validator %s", consAddr)
 		return
 	}
 
