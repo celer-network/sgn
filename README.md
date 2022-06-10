@@ -2,7 +2,9 @@
 
 [![CircleCI](https://circleci.com/gh/celer-network/sgn/tree/master.svg?style=svg)](https://circleci.com/gh/celer-network/sgn/tree/master)
 
-Official implementation of the [Celer State Guardian Network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html).
+Official implementation of the [Celer State Guardian Network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html) V1.
+
+**DEPRECATED**: SGN V1 has been deprecated. Please stay tuned for the open source repo of SGN V2.
 
 ## Run local tests
 
