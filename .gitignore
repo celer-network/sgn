@@ -17,3 +17,4 @@ build
 # Test
 docker-volumes
 test/e2e/manual/data/node*
+.git/
