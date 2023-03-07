@@ -9,23 +9,22 @@ require (
 	github.com/celer-network/sgn-contract v0.2.8
 	github.com/cosmos/cosmos-sdk v0.39.2
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
-	github.com/deckarep/golang-set v1.7.1
-	github.com/ethereum/go-ethereum v1.9.20
+	github.com/deckarep/golang-set v1.8.0
+	github.com/ethereum/go-ethereum v1.10.22
 	github.com/gammazero/deque v0.0.0-20200721202602-07291166fe33
 	github.com/golang/mock v1.4.4 // indirect
-	github.com/golang/protobuf v1.4.3
-	github.com/google/uuid v1.1.4
-	github.com/gorilla/mux v1.7.4
+	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.2.0
+	github.com/gorilla/mux v1.8.0
 	github.com/iancoleman/strcase v0.1.0
 	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a
-	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.2
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/tendermint v0.33.9
 	github.com/tendermint/tm-db v0.5.2
